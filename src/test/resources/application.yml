@@ -1,0 +1,78 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      cache:
+        use_second_level_cache: false
+
+      ddl-auto: none
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+app:
+  kafka:
+    servers: vm-kafka-stp01t.tcsbank.ru:9092,vm-kafka-stp02t.tcsbank.ru:9092,vm-kafka-stp03t.tcsbank.ru:9092
+    schema-registry-url: http://vm-kafka-stp01t.tcsbank.ru:8081
+    key-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+    value-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+    value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+  datasource:
+    billing:
+#      url: jdbc:postgresql://db-account.trading.local:5432/account
+#      url: jdbc:postgresql://db-account.ds.trading.local:5432/account
+      url: jdbc:postgresql://pg-invest-account-qa.ds.invest.cloud:5432/account
+      username: account_reader
+      password: account_reader
+      driver-class-name: org.postgresql.Driver
+      configuration:
+        maximum-pool-size: 5
+    tracking:
+     #url: jdbc:postgresql://db-tracking.trading.local:5940/tracking
+      url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5940/tracking
+      username: tracking
+      password: tracking
+      driver-class-name: org.postgresql.Driver
+      configuration:
+        maximum-pool-size: 5
+      hikari:
+        idle-timeout: 10000
+    social:
+      #url: jdbc:postgresql://db.social.trading.local:5640/social
+      url: jdbc:postgresql://pg-invest-social-qa.ds.invest.cloud:5640/social
+      username: social
+      password: social
+      driver-class-name: org.postgresql.Driver
+      configuration:
+        maximum-pool-size: 5
+    cassandra:
+      tracking:
+        #contactpoints: m1-qa-common-transit-cas-1.ost.tinkoff
+        contactpoints: ds-qa-common-transit-cas-1.ost.tinkoff,ds-qa-common-transit-cas-2.ost.tinkoff,ds-qa-common-transit-cas-3.ost.tinkoff,ds-qa-common-transit-cas-4.ost.tinkoff,ds-qa-common-transit-cas-5.ost.tinkoff
+        cluster-name: m1
+        port: 9042
+        keyspace-name: invest_tracking
+        username: qa_invest_tracking
+        password: L3j3Og2[6xoh
+
+#      investTracking:
+#        url: jdbc:cassandra://m1-qa-common-transit-cas-1.ost.tinkoff:9042/invest_tracking
+#        username: qa_invest_tracking
+#        password: L3j3Og2[6xoh
+#        driver-class-name: org.cassandra.Driver
+#        configuration:
+#          maximum-pool-size: 5
+
+kafka:
+  bootstrapAddress: vm-kafka-stp01t.tcsbank.ru:9092,vm-kafka-stp02t.tcsbank.ru:9092,vm-kafka-stp03t.tcsbank.ru:9092
+  producer:
+    id: client1
+grpc:
+  tracking:
+    #url: trading-test.tinkoff.ru
+    #port: 30001
+    url: internal.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru
+    port: 80
+#logging.level.com.baeldung.cloud.openfeign.client: DEBUG
+logging.level.ru.qa.tinkoff.swagger.tracking.api: DEBUG

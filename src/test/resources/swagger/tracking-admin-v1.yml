@@ -1,0 +1,503 @@
+openapi: 3.0.3
+
+info:
+  title: Tinkoff Investments Tracking administrative API
+  description: Tracking admin API
+  contact:
+    name: Vyacheslav Klapatnyuk
+    email: v.klapatnyuk@tinkoff.ru
+  version: 1.0.1
+
+servers:
+ # - url: http://trading-test.tcsbank.ru/tracking/admin/v1/
+  - url: http://tracking-admin.dev2.k8s.tcsbank.ru/tracking/admin/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
+
+tags:
+  - name: client
+    description: Клиент
+  - name: strategy
+    description: Торговая стратегия
+  - name: exchange-position
+    description: Торговая позиция на бирже
+
+paths:
+
+  /client/{clientId}/master/confirm:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+
+    post:
+      tags:
+        - client
+      summary: confirmMasterClient
+      description: Подтверждает право участия клиента {clientId} в роли master
+      operationId: confirmMasterClient
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/StrategyId'
+
+    get:
+      tags:
+        - strategy
+      summary: getStrategy
+      description: Возвращает торговую стратегию {strategyId}
+      operationId: getStrategy
+      security:
+        - apiKey: []
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStrategyResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+    patch:
+      tags:
+        - strategy
+      summary: updateStrategy
+      description: Обновляет торговую стратегию {strategyId}
+      operationId: updateStrategy
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStrategyRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}/status/active:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+
+    post:
+      tags:
+        - strategy
+      summary: activateStrategy
+      description: Активирует торговую стратегию {strategyId}
+      operationId: activateStrategy
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /exchange-position:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+
+    post:
+      tags:
+        - exchange-position
+      summary: createExchangePosition
+      description: Создаёт торговую биржевую позицию
+      operationId: createExchangePosition
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExchangePositionRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateExchangePositionResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+    patch:
+      tags:
+        - exchange-position
+      summary: updateExchangePosition
+      description: Обновляет торговую биржевую позицию
+      operationId: updateExchangePosition
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExchangePositionRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateExchangePositionResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+components:
+
+  securitySchemes:
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+  headers:
+
+    XTraceId:
+      description: Идентификатор ответа
+      schema:
+        type: string
+        minLength: 1
+      required: true
+
+    XServerTime:
+      description: Метка времени формирования ответа
+      schema:
+        type: string
+        format: date-time
+      required: true
+
+  parameters:
+
+    ApplicationName:
+      description: Название вызывающего приложения
+      name: x-app-name
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: investing
+
+    ApplicationVersion:
+      description: Версия вызывающего приложения
+      name: x-app-version
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      example: 5.0.0
+
+    Platform:
+      description: 'Платформа: "ios", "android", другое'
+      name: x-platform
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      example: android
+
+    DeviceId:
+      description: Идентификатор устройства
+      name: x-device-id
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+
+    Login:
+      name: x-tcs-login
+      in: header
+      required: true
+      description: Логин авторизованного пользователя
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 20
+      example: v.klapatnyuk
+
+    ClientId:
+      description: Единый идентификатор клиента
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    StrategyId:
+      description: Идентификатор торговой стратегии
+      name: strategyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+  responses:
+
+    Error:
+      description: Error
+      headers:
+        x-trace-id:
+          $ref: '#/components/headers/XTraceId'
+        x-server-time:
+          $ref: '#/components/headers/XServerTime'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    CreateExchangePositionRequest:
+      allOf:
+        - $ref: '#/components/schemas/ExchangePosition'
+
+    CreateExchangePositionResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExchangePosition'
+
+    UpdateExchangePositionRequest:
+      allOf:
+        - $ref: '#/components/schemas/ExchangePosition'
+
+    UpdateExchangePositionResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExchangePosition'
+
+    ExchangePosition:
+      type: object
+      required:
+        - ticker
+        - tradingClearingAccount
+        - exchange
+        - trackingAllowed
+        - orderQuantityLimits
+      properties:
+        ticker:
+          description: Тикер на бирже
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: TCS
+        tradingClearingAccount:
+          description: Торгово-клиринговый счёт
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: L01+00002F00
+        exchange:
+          description: Биржа (торговая площадка)
+          type: string
+          enum: [MOEX, MOEX_PLUS, FX, SPB]
+        trackingAllowed:
+          description: Признак разрешённой для торговли в автоследовании позиции
+          type: boolean
+        dailyQuantityLimit:
+          description: Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
+          type: integer
+          minimum: 1
+        orderQuantityLimits:
+          description: Лимиты кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderQuantityLimit'
+          minItems: 1
+        otcTicker:
+          description: Тикер вне биржи (например, сплитованные валюты)
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: USDRUB
+        otcClassCode:
+          description: Код класса инструмента вне биржи (например, сплитованные валюты)
+          type: string
+          minLength: 1
+          maxLength: 10
+          example: EES_CETS
+
+    OrderQuantityLimit:
+      type: object
+      required:
+        - periodId
+        - limit
+      properties:
+        periodId:
+          description: Идентификатор периода
+          type: string
+          minLength: 1
+          example: additional_liquidity
+        limit:
+          description: Лимит кол-ва единиц актива
+          type: integer
+          minimum: 0
+
+    UpdateStrategyRequest:
+      type: object
+      properties:
+        title:
+          description: Название стратегии
+          type: string
+          minLength: 1
+          nullable: true
+          example: Ракета
+        description:
+          description: Описание стратегии
+          type: string
+          minLength: 1
+          nullable: true
+          example: Пушка
+
+    GetStrategyResponse:
+      type: object
+      properties:
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfile'
+
+    SocialProfile:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор социального профиля
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    ErrorResponse:
+      description: Ответ с ошибкой
+      type: object
+      required:
+        - errorId
+        - errorCode
+        - errorMessage
+      properties:
+        errorId:
+          description: Уникальный идентификатор ошибки
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: 02d55cabb05b44f0
+        errorCode:
+          description: Служебный код ошибки
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: 0344-01-Z99
+        errorMessage:
+          description: Служебное описание ошибки
+          type: string
+          minLength: 1
+          example: Сервис временно недоступен

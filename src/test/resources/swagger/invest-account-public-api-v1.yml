@@ -1,0 +1,645 @@
+openapi: 3.0.3
+
+info:
+  title: Tinkoff Investments Account public API
+  description: Account public API
+  contact:
+    name: Kudryashov Dmitriy
+    email: d.kudryashov1@tinkoff.ru
+  version: 1.1.0
+
+servers:
+  - url:  http://invest-qa.tinkoff.ru/account/public/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
+
+
+tags:
+  - name: broker-account
+    description: Брокерский договор
+  - name: invest
+    description: Инвестиционный клиент
+  - name: siebel
+    description: Siebel
+  - name: client-code
+    description: Клиентский код
+
+paths:
+
+  /broker-account/{brokerAccountId}:
+
+    get:
+      tags:
+        - broker-account
+      summary: getBrokerAccount
+      description: Возвращает детализацию брокеского счета {brokerAccountId}
+      operationId: getBrokerAccount
+      parameters:
+        - $ref: '#/components/parameters/BrokerAccountId'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerAccountResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+
+  /broker-account/invest/{investId}:
+
+    get:
+      tags:
+        - broker-account
+      summary: getBrokerAccounts
+      description: Возвращает счета пользователя по {investId}
+      operationId: getBrokerAccounts
+      parameters:
+        - $ref: '#/components/parameters/InvestId'
+        - $ref: '#/components/parameters/BrokerType'
+        - $ref: '#/components/parameters/BrokerStatus'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBrokerAccountsResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /broker-account/siebel/{siebelId}:
+
+    get:
+      tags:
+        - broker-account
+      summary: getBrokerAccountsBySiebel
+      description: Возвращает {brokerType} счета пользователя по {siebelId}
+      operationId: getBrokerAccountsBySiebel
+      parameters:
+        - $ref: '#/components/parameters/SiebelId'
+        - $ref: '#/components/parameters/BrokerType'
+        - $ref: '#/components/parameters/BrokerStatus'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBrokerAccountsResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /invest/{investId}/client/info:
+
+    get:
+      tags:
+        - invest
+      summary: getClientInformation
+      description: Возвращает персональные данные клиента по {investId}
+      operationId: getClientInformation
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/InvestId'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetClientInformationResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /invest/siebel/{siebelId}:
+
+    get:
+      tags:
+        - invest
+      summary: getInvestId
+      description: Возвращает инвестиционный идентификатор по {siebelId}
+      operationId: getInvestId
+      parameters:
+        - $ref: '#/components/parameters/SiebelId'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvestIdResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /siebel/{investId}/actual:
+
+    get:
+      tags:
+        - siebel
+      summary: getActualSiebel
+      description: Возращает актуальный sibelId по {investId}
+      operationId: getActualSiebel
+      parameters:
+        - $ref: '#/components/parameters/InvestId'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActualSiebelResponse'
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /client-code/{clientCode}:
+
+    get:
+      tags:
+        - client-code
+      summary: getClientCodeDetail
+      description: Возвращает детализацию по клиентскому счёту {clientCode}
+      operationId: getClientCodeDetail
+      parameters:
+        - $ref: '#/components/parameters/ClientCode'
+        - $ref: '#/components/parameters/XAppName'
+        - $ref: '#/components/parameters/XAppVersion'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerAccountResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+components:
+
+  securitySchemes:
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+  headers:
+
+    XTraceId:
+      description: Идентификатор ответа
+      schema:
+        type: string
+        minLength: 1
+      required: true
+
+    XServerTime:
+      description: Метка времени формирования ответа
+      schema:
+        type: string
+        format: date-time
+      required: true
+
+  parameters:
+
+    XAppName:
+      in: header
+      name: x-app-name
+      description: Название приложения
+      required: false
+      schema:
+        type: string
+
+    XAppVersion:
+      in: header
+      name: x-app-version
+      description: Версия приложения
+      required: false
+      schema:
+        type: string
+
+    InvestId:
+      description: Инвестиционный идентификатор
+      name: investId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 5fb43721-2157-493f-be11-1f295cd24656
+
+    SiebelId:
+      description: Уникальный идентификатор siebel
+      name: siebelId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 5-14HDAHOW7
+
+    BrokerAccountId:
+      description: Номер брокерский договора
+      name: brokerAccountId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 2011907447
+
+    ClientCode:
+      description: Номер клиентского кода
+      name: clientCode
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 770000993692
+
+    BrokerType:
+      description: Тип брокерского счёта
+      name: brokerType
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [broker, iis, invest-box]
+
+    BrokerStatus:
+      description: Статус брокерского счёта
+      name: brokerStatus
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [new, opened, closed]
+
+  responses:
+
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      headers:
+        x-trace-id:
+          $ref: '#/components/headers/XTraceId'
+        x-server-time:
+          $ref: '#/components/headers/XServerTime'
+
+  schemas:
+
+    GetBrokerAccountsResponse:
+      type: object
+      required:
+        - investId
+        - brokerAccounts
+      properties:
+        investId:
+          description: Инвестиционный идентификатор
+          type: string
+          format: uuid
+          example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
+        brokerAccounts:
+          description: Список счетов клиента
+          type: array
+          items:
+            $ref: '#/components/schemas/BrokerAccount'
+
+    GetActualSiebelResponse:
+      type: object
+      required:
+        - actualSiebelId
+      properties:
+        actualSiebelId:
+          description: Актуальный siebel id
+          type: string
+          minLength: 1
+          maxLength: 40
+
+    GetClientInformationResponse:
+      type: object
+      required:
+        - resident
+        - firstName
+        - lastName
+        - adresses
+      properties:
+        sex:
+          description: Пол
+          format: string
+          enum: [male, female]
+        resident:
+          description: Признак резидентства
+          type: boolean
+        firstName:
+          description: Имя
+          type: string
+          minLength: 1
+        middleName:
+          description: Отчество
+          type: string
+          nullable: true
+        lastName:
+          description: Фамилия
+          type: string
+          minLength: 1
+        birthDate:
+          description: Дата рождения
+          type: string
+          format: date
+        document:
+          $ref: '#/components/schemas/Document'
+        adresses:
+          description: Список адресов
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        cellphone:
+          description: Мобильный номер
+          type: string
+          nullable: true
+        emailAddress: # todo: add regexp
+          description: Адрес электронной почты
+          type: string
+          nullable: true
+
+    Document:
+      description: Документ
+      type: object
+      properties:
+        id:
+          description: Идентификатор
+          type: string
+        type:
+          description: Тип документа
+          type: string
+        createdDate:
+          description: Дата создания
+          type: string
+          format: date
+        issuingOrganization:
+          description: Организация выдачи
+          type: string
+        divisionCode:
+          description: Код подразделения
+          type: string
+        birthPlace:
+          description: Место рождения
+          type: string
+
+    Address:
+      description: Адрес
+      type: object
+      required:
+        - type
+      properties:
+        country:
+          description: Страна
+          type: string
+          nullable: true
+        city:
+          description: Город
+          type: string
+          nullable: true
+        postalCode:
+          description: Почтовый код
+          type: string
+          nullable: true
+        type:
+          description: Тип адреса
+          type: string
+          minLength: 1
+        house:
+          description: Номер дома
+          type: string
+          nullable: true
+        building:
+          description: Строение
+          type: string
+          nullable: true
+        isCorrespondence:
+          description: Признак корреспонденции
+          type: boolean
+          nullable: true
+        settlement:
+          description: Строение
+          type: string
+          nullable: true
+        street:
+          description: Улица
+          type: string
+          nullable: true
+        district:
+          description: Район
+          type: string
+          nullable: true
+        construction:
+          description: Строение
+          type: string
+          nullable: true
+        kladr:
+          description: КЛАДР
+          type: string
+          nullable: true
+        region:
+          description: Регион
+          type: string
+        apartment:
+          description: Номер квартиры
+          type: string
+          nullable: true
+
+    GetInvestIdResponse:
+      type: object
+      required:
+        - investId
+      properties:
+        investId:
+          description: Инвестиционный идентификатор
+          type: string
+          format: uuid
+          example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
+
+    BrokerAccountResponse:
+      type: object
+      required:
+        - investId
+        - brokerAccount
+      properties:
+        investId:
+          description: Инвестиционный идентификатор
+          type: string
+          format: uuid
+          example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
+        brokerAccount:
+          $ref: '#/components/schemas/BrokerAccount'
+
+    BrokerAccount:
+      description: Брокерский счёт
+      type: object
+      required:
+        - id
+        - type
+        - status
+        - openedDate
+        - clientCodes
+      properties:
+        id:
+          description: Номер договора
+          type: string
+          minLength: 1
+          maxLength: 40
+        type:
+          $ref: '#/components/schemas/BrokerAccountType'
+        status:
+          $ref: '#/components/schemas/BrokerAccountStatus'
+        openedDate:
+          description: Дата открытия договора
+          type: string
+          format: date
+        closedDate:
+          description: Дата закрытия договора
+          type: string
+          format: date
+          nullable: true
+        clientCodes:
+          description: Список клиентских кодов
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientCode'
+
+    BrokerAccountType:
+      description: Тип договора
+      type: string
+      enum: [broker, iis, invest-box]
+
+    BrokerAccountStatus:
+      description: Статус договора
+      type: string
+      enum: [new, opened, closed]
+
+    ClientCode:
+      description: Клиентский код
+      type: object
+      required:
+        - id
+        - exchangeCode
+        - exchangeSection
+      properties:
+        id:
+          description: Идентификатор клиентского кода
+          type: string
+          minLength: 1
+          maxLength: 40
+        exchangeCode:
+          description: Код биржи
+          type: string
+          enum: [moex, spb]
+        exchangeSection:
+          description: Секция биржи
+          type: string
+          minLength: 1
+          maxLength: 20
+
+    ErrorResponse:
+      description: Данные об ошибке
+      type: object
+      required:
+        - errorId
+        - errorMessage
+        - errorCode
+      properties:
+        errorId:
+          description: Уникальный идентификатор ошибки
+          type: string
+          minLength: 1
+          example: 5b23a9529c0f48bc
+        errorMessage:
+          description: Пользовательское сообщение об ошибке
+          type: string
+          minLength: 1
+          example: Сервис временно недоступен
+        errorCode:
+          description: Код ошибки
+          type: string
+          minLength: 1
+          maxLength: 8
+          example: 01-Z99
+        errorDetails:
+          description: Дополнительная информация об ошибке
+          type: object
+          example: {"key": "value"}

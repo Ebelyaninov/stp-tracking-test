@@ -1,0 +1,1 @@
+{"event_name":"PriceUpdatedEvent","event_id":"$eventId","created_at":"$createdAt","created_by":"MD","domain":"SECURITIES","priceUpdatedTick":{"instrument_id":"$instrumentId","price_type":"$priceType","old_price":$oldPrice,"new_price":$newPrice,"ts":"$ts"}}

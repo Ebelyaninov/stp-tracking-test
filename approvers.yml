@@ -1,0 +1,10 @@
+maintainers:
+  count: 1
+  users:
+    - "a.a.kochergin@tinkoff.ru"
+    - "e.kolyakov@tinkoff.ru"
+developers:
+  count: 1
+  users:
+    - "a.s.shevchenko@tinkoff.ru"
+    - "a.tepanov@tinkoff.ru"

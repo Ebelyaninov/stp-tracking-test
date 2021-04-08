@@ -1,0 +1,26 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "ru.tinkoff.trading.tracking.internal";
+package trading_tracking_private;
+
+import "google/protobuf/wrappers.proto";
+
+//  title: Tinkoff Investments Tracking internal private gRPC API
+//  description: Tracking internal private gRPC API
+//  version: 1.0.0
+
+// Сервис предоставляет информацию о кэшах
+service CacheService {
+
+    // Возвращает содержимое кэша по его имени
+    rpc GetAll (google.protobuf.StringValue) returns (CacheView);
+}
+
+message CacheView {
+    repeated Entry entries = 1;
+
+    message Entry {
+        string key = 1;
+        string value = 2;
+    }
+}

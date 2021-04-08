@@ -1,0 +1,1384 @@
+
+info:
+  title: Market Data Service API
+  version: "0.20"
+  description: API для работы с рыночной информацией
+
+servers:
+  - url: http://trading-test.tcsbank.ru/v1/md/
+    variables: {}
+
+schemes:
+  - http
+consumes:
+  - 'application/json'
+produces:
+  - 'application/json'
+
+basePath: trading-test.tcsbank.ru/v1/md/
+
+paths:
+  /exchanges/{exchange_id}/instruments:
+    get:
+      description: |
+        Список доступных инструментов на бирже
+      operationId: md-instruments
+      parameters:
+        - name: exchange_id
+          in: path
+          type: string
+          description: Идентификатор биржи
+          enum:
+            - moex
+            - rts
+            - lse
+            - forts
+          required: true
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+        - name: fields
+          description: Поля в выходном объекте
+          in: query
+          type: array
+          items:
+            type: string
+          collectionFormat: csv
+          required: false
+      tags:
+        - Instruments
+      responses:
+        200:
+          description: Коллекция инструментов
+          schema:
+            $ref: '#/definitions/instruments'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}:
+    get:
+      description: |
+        Описание инструмента по идентификатору
+      operationId: md-instrument
+      parameters:
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Instruments
+      responses:
+        200:
+          description: Описание инструмента
+          schema:
+            $ref: '#/definitions/instrument'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}/prices:
+    get:
+      description: |
+        Цены по инструментам
+      operationId: md-instrument-prices
+      parameters:
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+        - name: types
+          in: query
+          description: Типы цен на выходе
+          required: false
+          type: array
+          collectionFormat: csv
+          items:
+            type: string
+            enum:
+              - bid
+              - ask
+              - last
+              - close
+              - prev_close
+              - open
+              - high
+              - low
+              - VWAP
+              - mp2
+              - mp3
+              - ylow
+              - yhigh
+              - auction
+        - name: trade_ts
+          in: query
+          type: string
+          format: 'date-time'
+          description: Дата совершения торгов
+          required: false
+      tags:
+        - Prices
+      responses:
+        200:
+          description: Спиок цен по инструменту
+          schema:
+            $ref: '#/definitions/instrument_prices'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/prices:
+    get:
+      description:
+        Цены по инструментам
+      operationId: md-instruments-prices
+      parameters:
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+        - name: instruments_ids
+          in: query
+          type: array
+          collectionFormat: csv
+          items:
+            type: string
+          description: ИД инструментов ({secCode}_{classCode})
+          required: true
+        - name: types
+          in: query
+          description: Типы цен на выходе
+          required: false
+          type: array
+          collectionFormat: csv
+          items:
+            type: string
+            enum:
+              - bid
+              - ask
+              - last
+              - close
+              - open
+              - high
+              - low
+              - VWAP
+              - mp2
+              - mp3
+              - auction
+        - name: trade_ts
+          in: query
+          type: string
+          format: 'date-time'
+          description: Дата совершения торгов
+          required: false
+      tags:
+        - Prices
+      responses:
+        200:
+          description: Спиок цен по инструментам
+          schema:
+            $ref: '#/definitions/instruments_prices'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструменты не найдены
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}/pricehistory:
+    get:
+      description: |
+        История цен
+      operationId: md-instrument-prices-history
+      parameters:
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: from
+          in: query
+          description: Левая граница
+          required: true
+          type: string
+          format: 'date-time'
+        - name: to
+          in: query
+          type: string
+          format: 'date-time'
+          description: Правая граница
+          required: true
+        - name: interval
+          in: query
+          type: string
+          description: Интервал (шаг)
+          enum:
+            - 1min
+            - 5min
+            - 15min
+            - 30min
+            - hour
+            - day
+            - week
+            - month
+            - 3month
+            - 6month
+            - year
+          required: true
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Prices
+      responses:
+        200:
+          description: История цены по инструменту
+          schema:
+            $ref: '#/definitions/instrument_price_history'
+        404:
+          description: Иструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}/orderbook:
+    get:
+      description: |
+        Лестница заявок по инструменту
+      operationId: md-instrument-order-book
+      parameters:
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: depth
+          in: query
+          type: integer
+          format: int64
+          description: Глубина
+          required: false
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Orders
+      responses:
+        200:
+          description: Лестница заявок по инструмента
+          schema:
+            $ref: '#/definitions/instrument_order_book'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}/candles:
+    get:
+      description: |
+        Свечной график
+      operationId: md-instrument-candles
+      parameters:
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: from
+          in: query
+          type: string
+          format: 'date-time'
+          description: Левая граница (обязательно, если не указывать limit)
+          required: false
+        - name: to
+          in: query
+          type: string
+          format: 'date-time'
+          description: Правая граница (обязательно, если не указывать limit)
+          required: false
+        - name: interval
+          in: query
+          type: string
+          description: Интервал (шаг)
+          enum:
+            - 1min
+            - 2min
+            - 3min
+            - 5min
+            - 10min
+            - 15min
+            - 30min
+            - hour
+            - 2hour
+            - 4hour
+            - day
+            - week
+            - month
+          required: true
+        - name: limit
+          in: query
+          type: integer
+          format: int64
+          description: Количество свечей
+          required: false
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Prices
+      responses:
+        200:
+          description: Свечной график
+          schema:
+            $ref: '#/definitions/instrument_candles'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Инструмент не найден
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /instruments/{instrument_id}/trades:
+    get:
+      description: |
+        Запрос обезличенных сделок по инструменту
+      operationId: md-instrument-trades
+      parameters:
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+        - name: instrument_id
+          in: path
+          type: string
+          description: ИД инструмента ({secCode}_{classCode})
+          required: true
+        - name: from
+          in: query
+          type: string
+          format: 'date-time'
+          description: Левая граница запроса
+          required: true
+        - name: to
+          in: query
+          type: string
+          format: 'date-time'
+          description: Правая граница запроса
+          required: true
+      tags:
+        - Trades
+      responses:
+        200:
+          description: обезличенные сделки
+          schema:
+            $ref: '#/definitions/impersonal_trades'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        429:
+          description: Слишком много запросов в интервал времени
+          schema:
+            $ref: '#/definitions/error'
+  /instruments-isins/{isin}/last-trades:
+    get:
+      description: |
+        Последние сделки бумаги по isin
+      operationId: md-instruments-isins-last-trades
+      parameters:
+        - name: isin
+          in: path
+          type: string
+          description: ISIN иструмента
+          required: true
+        - name: trade_ts
+          in: query
+          type: string
+          format: 'date-time'
+          description: Дата торгов
+          required: false
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Trades
+      responses:
+        200:
+          description: Последние сделки по всем биржам, во всех режимах торгов
+          schema:
+            $ref: '#/definitions/last_trades'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Не найдено ни одного инструмента по переданному isin
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /contacts/{siebel_id}/subscriptions:
+    get:
+      description: |
+        Получить все подписки клиента
+      operationId: md-contacts-subscriptions-retrive
+      parameters:
+        - name: siebel_id
+          in: path
+          type: string
+          required: true
+          description: Идентификатор контакта в Siebel
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Subscriptions
+      responses:
+        200:
+          description: Подписки клиента
+          schema:
+            $ref: '#/definitions/price_alert_subscription'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+    post:
+      description: |
+        Создать подписку price-alert
+      operationId: md-contacts-subscription-create
+      parameters:
+        - name: siebel_id
+          in: path
+          type: string
+          required: true
+          description: Идентификатор контакта в Siebel
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+        - name: body
+          in: body
+          description: Параметры подписки
+          required: true
+          schema:
+            $ref: '#/definitions/create_price_alert_subscription'
+      tags:
+        - Subscriptions
+      responses:
+        200:
+          description: Подписка успешно создана
+          schema:
+            $ref: '#/definitions/price_alert_subscription'
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        409:
+          description: Кофликт ограничения на создания подписки
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+    delete:
+      description: |
+        Удалить подписки price-alert по заданному инструменту
+      operationId: md-contacts-subscription-cancel-batch
+      parameters:
+        - name: siebel_id
+          in: path
+          type: string
+          required: true
+          description: Идентификатор контакта в Siebel
+        - name: instrument_id
+          in: query
+          type: string
+          required: true
+          description: Идентификатор инструмента
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Subscriptions
+      responses:
+        200:
+          description: Подписки успешно удалены
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Подписки у клиента не найдены
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+  /contacts/{siebel_id}/subscriptions/{subscription_id}:
+    delete:
+      description: |
+        Удалить подписку price-alert
+      operationId: md-contacts-subscription-cancel
+      parameters:
+        - name: siebel_id
+          in: path
+          type: string
+          required: true
+          description: Идентификатор контакта в Siebel
+        - name: subscription_id
+          in: path
+          type: string
+          required: true
+          description: Идентификатор подписки
+        - name: request_id
+          in: query
+          type: string
+          description: Уникальный идентификатор запроса
+          required: true
+        - name: system_code
+          in: query
+          type: string
+          description: Код вызывающей системы
+          required: true
+      tags:
+        - Subscriptions
+      responses:
+        200:
+          description: Подписка успешно удалена
+        400:
+          description: Ошибка в запросе
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Подписка у клиента не найдена
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Непредвиденная ошибка
+          schema:
+            $ref: '#/definitions/error'
+definitions:
+  instruments:
+    type: array
+    items:
+      $ref: '#/definitions/instrument'
+  instrument:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента
+      exchange:
+        type: string
+        description: Биржа, на которой торгуется инструмент
+        enum:
+          - rts
+          - moex
+          - lse
+      exchange_id:
+        type: string
+        description: Внутренний идентификатор инструмента на бирже
+      isin:
+        type: string
+        description: (Internation Securities Identification Number) инструмента
+      board:
+        type: string
+        description: Режим торгов инструмента
+      ticker:
+        type: string
+        description: Тикер инструмента
+      bcs_exchange_code:
+        type: string
+        description: ИД инструмента в БКС (выпилить после отказа от БКС)
+      cfi_code:
+        type: string
+        description: Тип ценной бумаги по стандарту ISO 10962 (Classification of Financial Instruments)
+      instrument_trading_status:
+        type: string
+        description: |
+          Торговый статус инструмента
+          not_available_for_trading - нет торгов
+          opening_period - период открытия
+          opening_auction - аукцион открытия
+          trading_closed - торги закрыты
+          closing_period - период закрытия
+          break_in_trading - перерыв в торгах
+          normal_trading - нормальный период торгов
+          closing_auction - аукцион закрытия
+          dark_pool_auction - аукцион крупных пакетов
+          discrete_auction - дискретный аукцион
+          trading_at_closing_auction_price - период торгов по цене аукциона закрытия
+          session_open - сессия открыта
+          session_close - сессия закрыта
+          session_assigned - сессия назначена
+        enum:
+          - not_available_for_trading
+          - opening_period
+          - opening_auction
+          - trading_closed
+          - closing_period
+          - break_in_trading
+          - normal_trading
+          - closing_auction
+          - dark_pool_auction
+          - discrete_auction
+          - trading_at_closing_auction_price
+          - session_open
+          - session_close
+          - session_assigned
+      description:
+        type: string
+        description: Описание инструмента
+      currency:
+        type: string
+        description: Валюта, в которой выражен номинал ценной бумаги
+      settlement_currency:
+        type: string
+        description: Валюта, в которой производится расчет по инструменту
+      price_type:
+        type: string
+        description: |
+          Тип цены
+            relative - цены в процентах от номинала
+            absolute - цены в абсолютных величинах
+        enum:
+          - relative
+          - absolute
+      min_price_increment:
+        type: number
+        format: double
+        description: Минимальный шаг изменения цены инструмента
+      face_value:
+        type: number
+        format: double
+        description: Номинальная стоимость одной ценной бумаги в валюте инструмента
+      market_code:
+        type: string
+        description: |
+          Код рынка, на котором торгуется финансовый инструмент
+          FNDT    - Основной рынок Т+
+          FOND    - Основной рынок Т0
+          GCDP    - РЕПО с ЦК КСУ
+          REPT    - РЕПО с ЦК
+          RPS     - Переговорные сделки
+          RPST    - РПС с ЦК
+          TECH    - Технологические режимы
+          CURR    - Валюта
+          TRADSYS - Все режимы торгов на RTS
+          DEPZ    - Депозиты с ЦК
+        enum:
+          - FNDT
+          - FOND
+          - GCDP
+          - REPT
+          - RPS
+          - RPST
+          - TECH
+          - CURR
+          - TRADSYS
+          - DEPZ
+      maturity_date:
+        type: string
+        format: 'date-time'
+        description: Дата погашения облигации
+      lot:
+        type: number
+        format: double
+        description: Количество бумаг в лоте
+      listing_level:
+        type: string
+        description: Котировальный список
+      dividend_net:
+        type: number
+        format: double
+        description: Величина дивидендов
+      placed_issue_size:
+        type: integer
+        format: int64
+        description: Объем в обращении
+      issue_size:
+        type: integer
+        format: int64
+        description: Объем выпуска
+      accrued_interest:
+        type: number
+        format: double
+        description: Объём НКД
+      state_reg_number:
+        type: string
+        description: Номер государственной регистрации
+      coupon_payment_date:
+        type: string
+        format: 'date-time'
+        description: Дата выплаты купона
+      security_type:
+        type: string
+        description: |
+          Тип бумаги
+          CORP    - Корпоративная облигация
+          WAR     - Инструмент «заявки-списки»
+          GCD     - Клиринговый сертификат участия
+          COFP    - Ипотечные сертификаты участия
+          XCN     - Корзина бумаг
+          STRUCT  - Дополнительный идентификатор списка
+          BN      - Ценные бумаги, выпущенные финансовой организацией
+          CBN     - Облигация Центрального банка
+          GOVR    - Государственная облигация
+          FIN     - Облигация финансовой организации
+          MF      - Пай инвестиционных фондов
+          MUNI    - Муниципальная облигация
+          RDR     - Российская депозитарная расписка
+          ETF     - Бумага иностранных инвестиционных фондов
+          FOR     - Валютный контракт
+          CS      - Акция обыкновенная
+          PS      - Акция привилегированная
+          EUSOV   - Еврооблигация
+          GDR     - Глобальная депозитарная расписка
+          ADR     - Американская депозитарная расписка
+          IPIF    - Пай интервального ПИФа
+        enum:
+          - CORP
+          - WAR
+          - GCD
+          - COFP
+          - XCN
+          - STRUCT
+          - BN
+          - CBN
+          - GOVR
+          - FIN
+          - MF
+          - MUNI
+          - RDR
+          - ETF
+          - FOR
+          - CS
+          - PS
+          - EUSOV
+          - GDR
+          - ADR
+          - IPIF
+      current_coupon_period:
+        type: integer
+        format: int64
+        description: Текущий купонный период
+      buy_back_date:
+        type: string
+        format: 'date-time'
+        description: Дата досрочного выкупа облигации
+      coupon_value:
+        type: number
+        format: double
+        description: Размер купона облигации
+      settle_code:
+        type: number
+        format: double
+        description: Код расчетов
+      settle_date:
+        type: string
+        format: 'date-time'
+        description: Дата расчетов
+      market_segment:
+        type: string
+        description: Сегмент рынка
+      base_asset_code:
+        type: string
+        description: Код базового актива
+      min_price_increment_amount:
+        type: number
+        format: double
+        description: Стоимость шага цены
+      contract_multiplier:
+        type: number
+        format: double
+        description: Количество базового актива в инструменте
+      maturity_ts:
+        type: string
+        format: 'date-time'
+        description: Дата и время исполнения инструмента
+      first_trading_day:
+        type: string
+        format: 'date-time'
+        description: Дата окончания обращения инструмента
+      last_trading_day:
+        type: string
+        format: 'date-time'
+        description: Дата ввода инструмента в обращение
+
+    required:
+      - instrument_id
+      - exchange
+      - exchange_id
+      - ticker
+      - bcs_exchange_code
+      - cfi_code
+      - instrument_trading_status
+      - description
+      - currency
+      - settlement_currency
+      - min_price_increment
+      - face_value
+      - market_code
+      - lot
+  instruments_prices:
+    type: array
+    items:
+      $ref: '#/definitions/instrument_prices'
+  instrument_prices:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента
+      instrument_trading_status:
+        type: string
+        description: |
+          Торговый статус инструмента
+          not_available_for_trading - нет торгов
+          opening_period - период открытия
+          opening_auction - аукцион открытия
+          trading_closed - торги закрыты
+          closing_period - период закрытия
+          break_in_trading - перерыв в торгах
+          normal_trading - нормальный период торгов
+          closing_auction - аукцион закрытия
+          dark_pool_auction - аукцион крупных пакетов
+          discrete_auction - дискретный аукцион
+          trading_at_closing_auction_price - период торгов по цене аукциона закрытия
+        enum:
+          - not_available_for_trading
+          - opening_period
+          - opening_auction
+          - trading_closed
+          - closing_period
+          - break_in_trading
+          - normal_trading
+          - closing_auction
+          - dark_pool_auction
+          - discrete_auction
+          - trading_at_closing_auction_price
+      prices:
+        type: array
+        items:
+          $ref: '#/definitions/price'
+  price:
+    type: object
+    properties:
+      ts:
+        type: string
+        format: 'date-time'
+        description: Время изменения цены
+      price_type:
+        type: string
+        description: Тип цены
+        enum:
+          - bid
+          - ask
+          - last
+          - close
+          - open
+          - high
+          - low
+          - VWAP
+          - mp2
+          - mp3
+          - auction
+      price_value:
+        type: number
+        format: double
+        description: Значение цены
+  instrument_price_history:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента
+      interval:
+        type: string
+        enum:
+          - 1min
+          - 5min
+          - 15min
+          - 30min
+          - hour
+          - day
+          - week
+          - month
+          - 3month
+          - 6month
+          - year
+        description: Интервал (шаг)
+      prices:
+        type: array
+        items:
+          type: object
+          properties:
+            complete:
+              type: boolean
+              description: Признак завершенности интервала
+            time:
+              type: string
+              format: 'date-time'
+              description: Время
+            price:
+              type: number
+              format: double
+              description: Значение цены
+      l:
+        type: number
+        format: double
+        description: Значение минимальной цены
+      h:
+        type: number
+        format: double
+        description: Значение максимальной цены
+  instrument_order_book:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента
+      instrument_trading_status:
+        type: string
+        description: |
+          Торговый статус инструмента
+          not_available_for_trading - нет торгов
+          opening_period - период открытия
+          opening_auction - аукцион открытия
+          trading_closed - торги закрыты
+          closing_period - период закрытия
+          break_in_trading - перерыв в торгах
+          normal_trading - нормальный период торгов
+          closing_auction - аукцион закрытия
+          dark_pool_auction - аукцион крупных пакетов
+          discrete_auction - дискретный аукцион
+          trading_at_closing_auction_price - период торгов по цене аукциона закрытия
+        enum:
+          - not_available_for_trading
+          - opening_period
+          - opening_auction
+          - trading_closed
+          - closing_period
+          - break_in_trading
+          - normal_trading
+          - closing_auction
+          - dark_pool_auction
+          - discrete_auction
+          - trading_at_closing_auction_price
+      last_price:
+        type: number
+        format: double
+        description: Цена последней сделки
+      close_price:
+        type: number
+        format: double
+        description: Цена закрытия
+      limit_up:
+        type: number
+        format: double
+        description: Верхняя граница цены заявок
+      limit_down:
+        type: number
+        format: double
+        description: Нижняя граница цены заявок
+      min_price_increment:
+        type: number
+        format: double
+        description: Минимальный шаг изменения цены инструмента
+      settlement_currency:
+        type: string
+        description: Валюта, в которой производится расчет по инструменту
+      low_limit:
+        type: number
+        description: Нижний лимит
+
+      high_limit:
+        type: number
+        description: Верхний лими
+
+      initial_margin_on_buy:
+        type: number
+        description: Гарантийное обеспечение покупателя
+
+      initial_margin_on_sell:
+        type: number
+        description: Гарантийное обеспечение продавца
+      min_price_increment_amount:
+        type: number
+        format: double
+        description: Стоимость шага цены
+
+      bids:
+        type: array
+        maxItems: 64
+        items:
+          type: object
+          properties:
+            price:
+              type: number
+              format: double
+              description: Цена
+            quantity:
+              type: number
+              format: double
+              description: Объем
+      asks:
+        type: array
+        maxItems: 64
+        items:
+          type: object
+          properties:
+            price:
+              type: number
+              format: double
+              description: Цена
+            quantity:
+              type: number
+              format: double
+              description: Объем
+    required:
+      - instrument_id
+      - instrument_trading_status
+      - min_price_increment
+      - settlement_currency
+      - bids
+      - asks
+  instrument_candles:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента
+      interval:
+        type: string
+        enum:
+          - 5min
+          - 10min
+          - 30min
+          - hour
+          - day
+          - week
+          - month
+        description: Интервал (шаг)
+      candles:
+        type: array
+        items:
+          $ref: '#/definitions/candle'
+  candle:
+    type: object
+    properties:
+      complete:
+        type: boolean
+        description: Признак завершенности
+      o:
+        type: number
+        format: double
+        description: цена открытия
+      c:
+        type: number
+        format: double
+        description: цена закрытия
+      h:
+        type: number
+        format: double
+        description: цена макс
+      l:
+        type: number
+        format: double
+        description: цена мин
+      time:
+        type: string
+        format: 'date-time'
+        description: Время
+      volume:
+        type: integer
+        format: int64
+        description: Объем
+  last_trades:
+    type: array
+    items:
+      $ref: '#/definitions/trade'
+  trade:
+    type: object
+    properties:
+      exchange:
+        type: string
+        description: Биржа
+      symbol:
+        type: string
+        description: Символьное обозначение
+      board_id:
+        type: string
+        description: Режим торгов
+      trade_ts:
+        type: string
+        format: 'date-time'
+        description: Время совершения сделки
+      quantity:
+        type: number
+        format: double
+        description: Объем сделки
+      price:
+        type: number
+        format: double
+        description: Цена сделки
+      order_direction:
+        type: string
+        enum:
+          - BUY
+          - SELL
+        description: Направление заявки, породившей сделку
+  price_alert_subscription:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Идентификатор подписки
+      instrument_id:
+        type: string
+        description: ИД инструмента ({secCode}_{classCode})
+      price_alert:
+        type: number
+        format: double
+        description: Ценовой уровень
+      status:
+        type: string
+        enum:
+          - active
+          - canceled
+          - completed
+        description: Статус алерта
+      sec_name:
+        type: string
+        description: Наименование бумаги
+      ticker:
+        type: string
+        description: Тикер бумаги
+      sec_type:
+        type: string
+        description: Тип бумаги
+      created_at:
+        type: string
+        format: date-time
+        description: Дата создания
+      completed_at:
+        type: string
+        format: date-time
+        description: Дата исполнения подписки
+      canceled_at:
+        type: string
+        format: date-time
+        description: Дата отмены подписки
+    required:
+      - id
+      - instrument_id
+      - price_alert
+      - status
+      - created_at
+      - sec_name
+      - sec_type
+  create_price_alert_subscription:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента ({secCode}_{classCode})
+      sec_name:
+        type: string
+        description: Наименование бумаги
+      sec_type:
+        type: string
+        description: Тип бумаги
+      price_alert:
+        type: number
+        format: double
+        description: Ценовой уровень
+    required:
+      - instrument_id
+      - price_alert
+      - sec_name
+      - sec_type
+  error:
+    type: object
+    properties:
+      error:
+        type: string
+        description: Сообщение об ошибке
+  impersonal_trades:
+    type: object
+    properties:
+      instrument_id:
+        type: string
+        description: ИД инструмента ({secCode}_{classCode})
+      trades_count:
+        type: number
+        format: int
+        description: количество сделок в результирующей выборке
+      trades:
+        type: array
+        items:
+          $ref: '#/definitions/impersonal_trade'
+  impersonal_trade:
+    type: object
+    properties:
+      trade_ts:
+        type: string
+        format: 'date-time'
+      processed_dttm:
+        type: string
+        format: 'date-time'
+      quantity:
+        type: number
+        format: double
+      price:
+        type: number
+        format: double
+      direction:
+        type: string
+        enum:
+          - BUY
+          - SELL

@@ -1,0 +1,203 @@
+openapi: 3.0.3
+
+info:
+  title: Tinkoff Investments Tracking cache API
+  description: Tracking cache API
+  contact:
+    name: Andrey Belyaev
+    email: an.v.belyaev@tinkoff.ru
+  version: 1.0.0
+
+
+servers:
+  - url:  http://tracking-consumer-spy.dev2.k8s.tcsbank.ru/tracking/consumer-spy/cache/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
+
+
+tags:
+  - name: cache
+    description: Кэш
+
+paths:
+
+  /cache/{cacheName}/entity:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+
+    get:
+      tags:
+        - cache
+      summary: getAllEntities
+      description: Возвращает содержимое кэша
+      security:
+        - apiKey: []
+      operationId: getAllEntities
+      parameters:
+        - in: path
+          name: cacheName
+          description: Название кэша
+          schema:
+            type: string
+          required: true
+          example: exchangePositionCache
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Entity'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+components:
+
+  securitySchemes:
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+  headers:
+
+    XTraceId:
+      description: Идентификатор ответа
+      schema:
+        type: string
+        minLength: 1
+      required: true
+
+    XServerTime:
+      description: Метка времени формирования ответа
+      schema:
+        type: string
+        format: date-time
+      required: true
+
+  parameters:
+
+    ApplicationName:
+      description: Название вызывающего приложения
+      name: x-app-name
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: investing
+
+    ApplicationVersion:
+      description: Версия вызывающего приложения
+      name: x-app-version
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: 5.0.0
+
+    Platform:
+      description: 'Платформа: "ios", "android", другое'
+      name: x-platform
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: android
+
+    DeviceId:
+      description: Идентификатор устройства
+      name: x-device-id
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+
+    TraceId:
+      description: Идентификатор ответа на запрос
+      name: x-trace-id
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+
+  responses:
+
+    Error:
+      description: Error
+      headers:
+        x-trace-id:
+          $ref: '#/components/headers/XTraceId'
+        x-server-time:
+          $ref: '#/components/headers/XServerTime'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    Entity:
+      type: object
+      description: Пара ключ-значение
+      required:
+        - key
+        - value
+      properties:
+        key:
+          description: Ключ
+          type: object
+          example: {"ticker":"CPB","tradingClearingAccount":"L01+00000SPB"}
+        value:
+          description: Значение
+          type: object
+          example: {"type":"share","riskProfile":"AGGRESSIVE","currency":"usd","updatedAt":1605175339.283597000}
+
+    ErrorResponse:
+      description: Ответ с ошибкой
+      type: object
+      required:
+        - errorId
+        - errorCode
+        - errorMessage
+      properties:
+        errorId:
+          description: Уникальный идентификатор ошибки
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: 02d55cabb05b44f0
+        errorCode:
+          description: Служебный код ошибки
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: 0123-45-Z67
+        errorMessage:
+          description: Служебное описание ошибки
+          type: string
+          minLength: 1
+          example: Сервис временно недоступен

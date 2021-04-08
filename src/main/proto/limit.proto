@@ -1,0 +1,92 @@
+syntax = "proto3";
+package limit;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+message Event {
+  bytes id = 1;
+  google.protobuf.Timestamp created_at = 2;
+
+  repeated MoneyLimit money_limit = 3;
+  repeated DepoLimit depo_limit = 4;
+  repeated FutureLimit future_limit = 5;
+
+  Action action = 6;
+  google.protobuf.Int32Value version = 7;
+  string error_code = 8;
+
+  enum Action {
+    UNKNOWN = 0;
+    MARGIN_FEE = 1; // Взимание комиссии за непокрытую позицию
+    SERVICE_FEE = 2; // Удержание сервисной комиссии
+    BROKER_FEE = 3; // Удержание фактической комиссии за сделку
+    ADJUST = 4; // Завод денежных средств
+    WITHDRAW = 5; // Вывод денежных средств
+    CANCEL_WITHDRAW = 6; // Отмена вывода
+    ADJUST_CURRENCY = 7; // Увеличение денежной позиции методом client/adjust_currency
+    ADJUST_SECURITY = 8; // Увеличение ценно-бумажной позиции методом client/adjust_security
+    MONEY_BUY_TRADE = 9; // Совершение сделки по покупке валюты
+    MONEY_SELL_TRADE = 10; // Совершение сделки по продаже валюты
+    SECURITY_SELL_TRADE = 11; // Совершение сделки по продаже ценной бумаги
+    SECURITY_BUY_TRADE = 12; // Совершение сделки по покупке ценной бумаги
+    REPO_RPS_TRADE = 13; // Совершение сделки РЕПО РПС
+    REPO_CK_TRADE_FIRST = 14; // Совершение сделки РЕПО с ЦК (1 шаг)
+    REPO_CK_TRADE_SECOND = 15; // Совершение сделки РЕПО с ЦК (2 шаг)
+    REPO_NO_CK_TRADE = 16; // Совершение сделки РЕПО без ЦК
+    TAX_DEBT = 17; // Удержание задолженности по налогу с клиента
+    COUPON = 18; // Выплата купонов
+    DIVIDEND = 19; // Выплата дивидендов
+    COUPON_TAX = 20; // Купонный налог
+    DIVIDEND_TAX = 21; // Налог на дивиденды
+    PARTIAL_REPAYMENT = 22; // Частичное погашение
+    REPAYMENT = 23; // Полное погашение
+    TAX_CORRECTION = 24; // Корректировка налога
+    TAX_ACI_CORRECTION = 25; // Корректировка налога на НКД
+    TAX_LUCRE_CORRECTION = 26; // Корректировка налога на материальную выгоду
+    TAX_YEAR_CORRECTION = 27; // Корректировка налога по итогам года
+    ADMIN_UPDATE = 28; // Изменение позиций через админку
+    ADMIN_MULTI_UPDATE = 29; // Изменение нескольких позиций через админку
+    MORNING_UPDATE = 30; // Событие со слепком позиций после выгрузки утренних лимитов
+    OTC_CONFIRM = 31; // Подтверждение исполнения внебиржевой заявки
+    CURRENCY_SWAP_SELL = 32; // Валютный своп (продажа валюты)
+    CURRENCY_SWAP_BUY = 33; // Валютный своп (покупка валюты)
+  }
+}
+
+message FutureLimit {
+  // ..
+}
+
+message DepoLimit {
+  int32 load_date = 1;
+  string client_code = 2;
+  string sec_code = 3;
+  string account_id = 4;
+  string firm_id = 5;
+  double open_balance = 6;
+  double open_limit = 7;
+  double locked = 8;
+  Decimal open_balance_value = 9;
+  Decimal open_limit_value = 10;
+  Decimal locked_value = 11;
+}
+
+message MoneyLimit {
+  int32 load_date = 1;
+  string client_code = 2;
+  string currency = 3;
+  string firm_id = 4;
+  double open_balance = 5;
+  double open_limit = 6;
+  double locked = 7;
+  Decimal open_balance_value = 8;
+  Decimal open_limit_value = 9;
+  Decimal locked_value = 10;
+  string account_id = 11;
+}
+
+message Decimal {
+  int64 unscaled = 1;
+  int32 scale = 2;
+}

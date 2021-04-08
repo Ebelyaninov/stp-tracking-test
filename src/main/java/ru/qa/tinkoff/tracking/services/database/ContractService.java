@@ -1,0 +1,109 @@
+package ru.qa.tinkoff.tracking.services.database;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.repositories.ContractRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+//************************методы для работы с таблицей contract БД postgres@db-tracking.trading.local
+
+
+@Slf4j
+@Service
+public class ContractService {
+
+    final ContractRepository contractRepository;
+    final ObjectMapper objectMapper;
+
+
+    public ContractService(ContractRepository contractRepository,
+                           ObjectMapper objectMapper) {
+        this.contractRepository = contractRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    @Step("Поиск контракта по id")
+    @SneakyThrows
+    public Contract getContract(String contractId) {
+        Optional<Contract> contract = contractRepository.findById(contractId);
+        log.info("Successfully find contract {}", contractId);
+        Allure.addAttachment("Найденный контракт", "application/json", objectMapper.writeValueAsString(contractId));
+        return contract.orElseThrow(() -> new RuntimeException("Не найден контракт"));
+    }
+
+    @Step("Поиск контракта по id")
+    @SneakyThrows
+    public Optional<Contract> findContract(String contractId) {
+        Optional<Contract> contract = contractRepository.findById(contractId);
+        log.info("Successfully find contract {}", contractId);
+        Allure.addAttachment("Найденный контракт", "application/json", objectMapper.writeValueAsString(contractId));
+        return contract;
+    }
+
+
+    @Step("Удаление контракта")
+    @SneakyThrows
+    public void deleteContract(Contract contract) {
+        Allure.addAttachment("Удаленный контракт", "application/json", objectMapper.writeValueAsString(contract));
+        contractRepository.delete(contract);
+        log.info("Successfully deleted strategy {}", contract.toString());
+    }
+
+    @SneakyThrows
+    @Step("Сохранение контракта")
+    public Contract saveContract(Contract contract)  {
+        Contract saved = contractRepository.save(contract);
+        log.info("Successfully saved contract {}", saved);
+        Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(saved));
+        return saved;
+    }
+
+
+    @Step("Изменение роли, статуса и Id стратегии контракта")
+    public Contract updateBlockedContract(String id, boolean blocked) throws JsonProcessingException {
+        Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
+//        contract.setRole(role);
+//        contract.setState(state);
+//        contract.setStrategyId(strategyId);
+        contract.setBlocked(blocked);
+        contractRepository.save(contract);
+        log.info("Successfully update contract {}", contract);
+        Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(contract));
+        return contract;
+    }
+
+
+    @Step("Изменение роли контракта")
+    public Contract updateRoleContract(String id, ContractRole role) throws JsonProcessingException {
+        Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
+        contract.setRole(role);
+        contractRepository.save(contract);
+        log.info("Successfully update contract {}", contract);
+        Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(contract));
+        return contract;
+    }
+
+    @Step("Поиск контакта")
+    @SneakyThrows
+    public Optional<Contract> findOneContract() {
+        Optional<Contract> contract = Optional.ofNullable(contractRepository.selectOneContract());
+        log.info("Successfully find exchangePosition {}", contract);
+        Allure.addAttachment("Найденный контакт", "application/json", objectMapper.writeValueAsString(contract));
+        return contract;
+    }
+
+
+
+
+
+}

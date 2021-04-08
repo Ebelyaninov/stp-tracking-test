@@ -1,0 +1,560 @@
+openapi: 3.0.3
+# TODO: править пути для rate-limit'ов
+
+info:
+  title: Tinkoff Investments Tracking public API
+  description: Tracking public API
+  contact:
+    name: Vyacheslav Klapatnyuk
+    email: v.klapatnyuk@tinkoff.ru
+  version: 1.0.0
+
+servers:
+  - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
+
+tags:
+  - name: contract
+    description: Договор клиента
+  - name: strategy
+    description: Торговая стратегия
+  - name: subscription
+    description: Подписка на стратегию
+  - name: signal
+    description: Торговый сигнал
+
+paths:
+
+  /contract:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+
+    get:
+      tags:
+        - contract
+      summary: getUntrackedContracts
+      description: Возвращает договора авторизованного клиента, доступные для подключения к автоследованию
+      operationId: getUntrackedContracts
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUntrackedContractsResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+
+    post:
+      tags:
+        - strategy
+      summary: createStrategy
+      description: Создаёт торговую стратегию от имени авторизованного клиента к договору {contractId}
+      operationId: createStrategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStrategyRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateStrategyResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+
+    patch:
+      tags:
+        - strategy
+      summary: updateStrategy
+      description: Обновляет торговую стратегию {strategyId}
+      operationId: updateStrategy
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStrategyRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /subscription/strategy/{strategyId}:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+
+    post:
+      tags:
+        - subscription
+      summary: createSubscription
+      description: Создаёт подписку договора {contractId} на торговую стратегию {strategyId}
+      operationId: createSubscription
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+        - name: contractId
+          description: Номер договора
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ContractId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+    delete:
+      tags:
+        - subscription
+      summary: deleteSubscription
+      description: Удаляет подписку договора {contractId} на торговую стратегию {strategyId}
+      operationId: deleteSubscription
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+        - name: contractId
+          description: Номер договора
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ContractId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /signal:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+
+    post:
+      tags:
+        - signal
+      summary: createSignal
+      description: Создаёт торговый сигнал от лица авторизованного клиента
+      operationId: createSignal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSignalRequest'
+      responses:
+        202:
+          description: Accepted
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+components:
+
+  headers:
+
+    XTraceId:
+      description: Идентификатор ответа
+      schema:
+        type: string
+        minLength: 1
+      required: true
+
+    XServerTime:
+      description: Метка времени формирования ответа
+      schema:
+        type: string
+        format: date-time
+      required: true
+
+  parameters:
+
+    ApplicationName:
+      description: Название вызывающего приложения
+      name: x-app-name
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: investing
+
+    ApplicationVersion:
+      description: Версия вызывающего приложения
+      name: x-app-version
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: 5.0.0
+
+    Platform:
+      description: 'Платформа: "ios", "android", другое'
+      name: x-platform
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: android
+
+    DeviceId:
+      description: Идентификатор устройства
+      name: x-device-id
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+
+    SiebelId:
+      description: Siebel id авторизованного пользователя
+      name: x-tcs-siebel-id
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 12
+
+    StrategyId:
+      description: Идентификатор стратегии
+      name: strategyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    TraceId:
+      description: Идентификатор ответа на запрос
+      name: x-trace-id
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+
+  responses:
+
+    Error:
+      description: Error
+      headers:
+        x-trace-id:
+          $ref: '#/components/headers/XTraceId'
+        x-server-time:
+          $ref: '#/components/headers/XServerTime'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    GetUntrackedContractsResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UntrackedContract'
+
+    UntrackedContract:
+      description: Договор, доступный для подключения к автоследованию
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: '#/components/schemas/ContractId'
+
+    ContractId:
+      description: Номер договора
+      type: string
+      minLength: 1
+      maxLength: 10
+      example: 2000000000
+
+    CreateStrategyRequest:
+      type: object
+      required:
+        - contractId
+        - title
+        - baseCurrency
+        - riskProfile
+        - baseMoneyPositionQuantity
+      properties:
+        contractId:
+          $ref: '#/components/schemas/ContractId'
+        title:
+          description: Название стратегии
+          type: string
+          minLength: 1
+          example: Ракета
+        baseCurrency:
+          $ref: '#/components/schemas/StrategyBaseCurrency'
+        riskProfile:
+          $ref: '#/components/schemas/StrategyRiskProfile'
+        description:
+          description: Описание стратегии
+          type: string
+          minLength: 1
+          example: Пушка
+        baseMoneyPositionQuantity:
+          description: Объем позиции в базовой валюте
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+
+    StrategyBaseCurrency:
+      description: Валюта
+      type: string
+      enum: [rub, usd]
+
+    NullableStrategyBaseCurrency:
+      description: Валюта
+      type: string
+      enum: [rub, usd]
+      # TODO: наследовать?
+      nullable: true
+
+    StrategyRiskProfile:
+      description: Риск-профиль стратегии
+      type: string
+      enum: [conservative, moderate, aggressive]
+
+    NullableStrategyRiskProfile:
+      description: Риск-профиль стратегии
+      type: string
+      enum: [conservative, moderate, aggressive]
+      # TODO: наследовать?
+      nullable: true
+
+    CreateStrategyResponse:
+      type: object
+      required:
+        - strategy
+      properties:
+        strategy:
+          $ref: '#/components/schemas/CreatedStrategy'
+
+    CreatedStrategy:
+      description: Созданная торговая стратегия
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор стратегии
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    UpdateStrategyRequest:
+      type: object
+      properties:
+        title:
+          description: Название стратегии
+          type: string
+          minLength: 1
+          nullable: true
+          example: Ракета
+        baseCurrency:
+          $ref: '#/components/schemas/NullableStrategyBaseCurrency'
+        riskProfile:
+          $ref: '#/components/schemas/NullableStrategyRiskProfile'
+        description:
+          description: Описание стратегии
+          type: string
+          minLength: 1
+          nullable: true
+          example: Пушка
+
+    CreateSignalRequest:
+      type: object
+      required:
+        - contractId
+        - strategyId
+        - version
+        - ticker
+        - tradingClearingAccount
+        - action
+        - quantity
+        - price
+      properties:
+        contractId:
+          $ref: '#/components/schemas/ContractId'
+        strategyId:
+          description: Идентификатор торговой стратегии
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        version:
+          description: Версия виртуального портфеля, в рамках которой формируется сигнал
+          type: integer
+          format: int32
+          minimum: 0
+        ticker:
+          description: Тикер
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: TCS
+        tradingClearingAccount:
+          description: Торгово-клиринговый счёт
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: L01+00002F00
+        action:
+          description: Действие, на которое направлен торговый сигнал (покупка/продажа)
+          type: string
+          enum: [buy, sell]
+        quantity:
+          description: Количество единиц актива
+          type: integer
+          format: int32
+          minimum: 0
+          exclusiveMinimum: true
+        price:
+          description: Цена за единицу актива (в абсолютной величине)
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+
+    ErrorResponse:
+      description: Ответ с ошибкой
+      type: object
+      required:
+        - errorId
+        - errorCode
+        - errorMessage
+      properties:
+        errorId:
+          description: Уникальный идентификатор ошибки
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: 02d55cabb05b44f0
+        errorCode:
+          description: Служебный код ошибки
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: 0350-01-Z99
+        errorMessage:
+          description: Служебное описание ошибки
+          type: string
+          minLength: 1
+          example: Сервис временно недоступен

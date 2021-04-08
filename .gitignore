@@ -1,0 +1,15 @@
+.idea/
+*.iml
+**/.DS_Store
+# Ignore Gradle project-specific cache directory
+**/allure-results/
+**/.allure/
+.gradle
+log/
+**/log/
+**/out/
+# Ignore Gradle build output directory
+build/
+**/build/
+*-dev.yml
+ajcore*.txt

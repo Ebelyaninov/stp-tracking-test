@@ -1,0 +1,30 @@
+package ru.qa.tinkoff.tracking.repositories;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
+
+    @Query(nativeQuery = true, value = "select * from tracking.strategy where contract_id =:contractId")
+    Optional<Strategy> findStrategyByContractId(@Param(value = "contractId") String contractId);
+
+    @Query(nativeQuery = true, value = "select * from tracking.strategy where contract_id =:contractId")
+    List<Strategy> findListStrategyByContractId(@Param(value = "contractId") String contractId);
+
+    @Query("select s from Strategy s where s.description is not null and s.status = :status")
+    List<Strategy> findStrategyByStatus(@Param("status") StrategyStatus status);
+
+    // находим 1 запись по стратегии
+    @Query(nativeQuery = true, value = "select * from tracking.strategy limit 1")
+    Optional<Strategy> selectOneStrategy();
+
+}

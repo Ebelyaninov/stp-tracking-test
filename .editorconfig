@@ -1,0 +1,13 @@
+[*]
+    max_line_length = 100
+    end_of_line = lf
+    charset = utf-8
+    trim_trailing_whitespace = true
+    indent_style = space
+    indent_size = 4
+[*.bat]
+    end_of_line = crlf
+[*.yml]
+    indent_size = 2
+[*.yaml]
+    indent_size = 2

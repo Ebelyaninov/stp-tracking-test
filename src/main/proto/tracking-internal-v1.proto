@@ -1,0 +1,74 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "ru.tinkoff.trading.tracking.internal";
+package trading_tracking;
+
+import "google/protobuf/timestamp.proto";
+
+//  title: Tinkoff Investments Tracking internal gRPC API
+//  description: Tracking internal gRPC API
+//  version: 1.0.0
+
+service OrderService {
+    // Валидирует корректность заявки в автоследовании (пре-трейд контроль)
+    rpc ValidateOrder (ValidateOrderRequest) returns (Empty);
+}
+
+message ValidateOrderRequest {
+
+    OrderType orderType = 1;
+
+    TimeInForce timeInForce = 2;
+
+    // Номер договора
+    // minLength: 1
+    // maxLength: 10
+    // example: 2000000000
+    string contractId = 3;
+
+    // Тикер
+    // minLength: 1
+    // maxLength: 12
+    // example: TCS
+    string ticker = 4;
+
+    // Код класса инструмента
+    // minLength: 1
+    // maxLength: 10
+    // example: SPBXM
+    string classCode = 5;
+
+    Side side = 6;
+
+    // Количество лотов
+    // minimum: 0
+    // exclusiveMinimum: true
+    int32 lots = 7;
+
+    // Цена заявки
+    // minimum: 0
+    // exclusiveMinimum: true
+    double price = 8;
+
+    // Тип заявки
+    enum OrderType {
+        Limit = 0;
+        Market = 1;
+    }
+
+    // Алгоритм исполнения
+    enum TimeInForce {
+        Day = 0;
+        FillAndKill = 1;
+        FillOrKill = 2;
+    }
+
+    // Направление заявки (покупка/продажа)
+    enum Side {
+        Buy = 0;
+        Sell = 1;
+    }
+}
+
+message Empty {
+}

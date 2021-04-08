@@ -1,2 +1,4 @@
 merge_request:
-  method: fast-forward
+  method: merge
+push_rules:
+  branch_name: ^(feature|fix|hotfix|bugfix)\/([a-z0-9]+)(-[a-z0-9]+)+

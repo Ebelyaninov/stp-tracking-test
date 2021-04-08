@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+package ru.tinkoff.trading.social.event;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+message Event {
+
+    bytes id = 1;
+    Action action = 3;
+    google.protobuf.Timestamp created_at = 4;
+
+    oneof domain {
+        Profile profile = 5;
+        Post post = 6;
+        PostLike post_like = 7;
+        Operation operation = 8;
+        PostComment post_comment = 9;
+    }
+
+    enum Action {
+        CREATED = 0;
+        UPDATED = 1;
+        DELETED = 2;
+        ACCESS_CHANGED = 3;
+    }
+}
+
+message Profile {
+
+    bytes id = 1;
+    string siebel_id = 2;
+    // mutable
+    string nickname = 3;
+    // mutable
+    bytes image = 4;
+}
+
+message Post {
+
+    bytes id = 1;
+    google.protobuf.Timestamp created_at = 2;
+    Profile owner_profile = 3;
+    int32 likes_count = 4;
+    // mutable
+    Access access = 5;
+    // mutable
+    string body = 6;
+    // mutable
+    repeated Instrument instrument = 7;
+    int32 comments_count = 8;
+    // mutable
+    repeated Profile profile = 9;
+    // mutable
+    repeated Image image = 10;
+    // mutable
+    repeated Hashtag hashtag = 11;
+}
+
+enum Access {
+    LISTED = 0;
+    ALL = 1;
+    NONE = 2;
+}
+
+message PostLike {
+
+    Post post = 1;
+    Profile owner_profile = 5;
+}
+
+message Instrument {
+
+    Type type = 1;
+    string ticker = 2;
+    string class_code = 3;
+    string image = 4;
+    Currency currency = 5;
+    double price = 6;
+    double absolute_price = 7;
+
+    enum Type {
+        BOND = 0;
+        CURRENCY = 1;
+        ETF = 2;
+        SHARE = 3;
+        SP = 4;
+        FUTURES = 5;
+    }
+}
+
+enum Currency {
+    RUB = 0;
+    USD = 1;
+    EUR = 2;
+    CAD = 3;
+    CHF = 4;
+    GBP = 5;
+    HKD = 6;
+    NOK = 7;
+    SEK = 8;
+    TRY = 9;
+    TRL = 10;
+    ILS = 11;
+    CNY = 12;
+    JPY = 13;
+}
+
+message Operation {
+
+    bytes id = 1;
+    Profile owner_profile = 2;
+    google.protobuf.Timestamp trade_date_time = 3;
+    Instrument instrument = 4;
+    Action action = 5;
+    // mutable
+    float average_price = 6;
+    // mutable
+    google.protobuf.FloatValue relative_yield = 7;
+
+    enum Action {
+        BUY = 0;
+        SELL = 1;
+    }
+}
+
+message PostComment {
+
+    Post post = 1;
+    Profile owner_profile = 2;
+}
+
+message Image {
+
+    // идентификатор изображения
+    bytes id = 1;
+    // ширина полотна изображения (в точках)
+    int32 width = 2;
+    // высота полотна изображения (в точках)
+    int32 height = 3;
+}
+
+message Hashtag {
+    // идентификатор хештега
+    bytes id = 1;
+    // отображаемый хештег
+    string title = 2;
+}
