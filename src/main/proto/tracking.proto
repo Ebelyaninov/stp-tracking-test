@@ -271,10 +271,65 @@ message Signal {
     Decimal price = 2;
 }
 
+// Команда для расчета аналитических показателей
+message AnalyticsCommand {
+
+  // Метка времени события, инициировавшего создание команды
+    google.protobuf.Timestamp created_at = 1;
+
+  // Аналитическая операция для выполнения над стратегией
+  Operation operation = 2;
+
+  // Расчет, выполняемый над стратегией
+  Calculation calculation = 3;
+
+  // Идентификатор стратегии
+  bytes strategy_id = 4;
+
+  // Метка времени среза, на которую необходимо выполнить расчет
+  google.protobuf.Timestamp cut = 5;
+
+  // Аналитическая операция для выполнения над стратегией
+  enum Operation {
+    // Рассчитать аналитический показатель
+    CALCULATE = 0;
+    // Пересчитать аналитический показатель
+    RECALCULATE = 1;
+  }
+
+  // Расчет, выполняемый над стратегией
+  enum Calculation {
+    // Стоимость master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_VALUE = 0;
+
+    // Доли master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_RATE = 1;
+
+    // Стоимость всех slave-портфелей, подписанных на стратегию
+    STRATEGY_SLAVE_PORTFOLIOS_VALUE = 2;
+
+    // Количество сигналов, созданных в рамках стратегии
+    SIGNALS_COUNT = 3;
+
+    // Частота созданий сигналов в рамках стратегии
+    SIGNAL_FREQUENCY = 4;
+
+    // Максимальная просадка master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_MAX_DRAWDOWN = 5;
+
+    // Среднее время удержания позиции в master-портфеле владельца стратегии
+    MASTER_PORTFOLIO_POSITION_RETENTION = 6;
+
+    // Топ-позиций master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_TOP_POSITIONS = 7;
+  }
+}
+
 // Контейнер для безопасной передачи вещественного числа, обозначающего "деньги"
 message Decimal {
 
   int64 unscaled = 1;
 
   int32 scale = 2;
+
 }

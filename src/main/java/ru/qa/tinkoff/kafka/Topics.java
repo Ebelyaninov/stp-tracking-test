@@ -18,6 +18,7 @@ public enum Topics {
     TRACKING_SPB_RETRYER_COMMAND("tracking.spb.retryer.command"),
     TRACKING_MOEX_RETRYER_COMMAND("tracking.moex.retryer.command"),
     TRACKING_MOEXPLUS_RETRYER_COMMAND("tracking.moex-plus.retryer.command"),
-    TRACKING_TEST_MD_PRICES_INT_STREAM("tracking.test.md.prices.int.stream");
+    TRACKING_TEST_MD_PRICES_INT_STREAM("tracking.test.md.prices.int.stream"),
+    TRACKING_ANALYTICS_COMMAND("tracking.analytics.command");
     private final String name;
 }
