@@ -18,6 +18,7 @@ public class SlavePortfolioRowMapper implements RowMapper<SlavePortfolio> {
             .strategyId(row.getUUID("strategy_id"))
             .version(row.getInt("version"))
             .comparedToMasterVersion(row.getInt("compared_to_master_version"))
+            .changedAt(row.get("changed_at", java.util.Date.class))
             .positions(row.getList("positions", SlavePortfolio.Position.class))
             .baseMoneyPosition(row.get("base_money_position", SlavePortfolio.BaseMoneyPosition.class))
             .build();

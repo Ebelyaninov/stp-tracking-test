@@ -15,11 +15,11 @@ import java.util.UUID;
 public class SlavePortfolio {
     private String contractId;
     private UUID strategyId;
-//    private String currency;
     private Integer version;
     private Integer comparedToMasterVersion;
     private List<Position> positions;
     private BaseMoneyPosition baseMoneyPosition;
+    private Date changedAt;
 
     @UDT(keyspace = "invest_tracking", name = "slave_portfolio_position")
     @NoArgsConstructor
