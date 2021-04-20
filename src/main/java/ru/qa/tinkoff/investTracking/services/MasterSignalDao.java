@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
@@ -10,6 +11,11 @@ import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterSignalRowMapper;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -31,12 +37,30 @@ public class MasterSignalDao {
         return cqlTemplate.queryForObject(query, masterSignalRowMapper, strategyId, version);
     }
 
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public Integer countCreatedAtMasterSignal(UUID strategyId, Date createdAt) {
+        var query = "select count(*) from invest_tracking.created_at_master_signal " +
+            "where strategy_id = ? and created_at <= ?";
+        return cqlTemplate.queryForObject(query, Long.class, strategyId, createdAt).intValue();
+    }
+
+    public List<LocalDate> getUniqMasterSignalDaysByPeriod(UUID strategyId, Date start, Date end) {
+        var query = "select toDate(created_at) as day " +
+            "from created_at_master_signal where strategy_id = ? and created_at >= ? and created_at <= ?";
+        return cqlTemplate.queryForList(query, LocalDate.class, strategyId, start, end);
+    }
+
+
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public void  insertIntoMasterSignal(MasterSignal masterSignal) {
         String query = "insert into invest_tracking.master_signal (strategy_id, version, ticker," +
             " trading_clearing_account, action, quantity, price, created_at, state) " +
             "values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        LocalDateTime ldt = LocalDateTime.ofInstant(masterSignal.getCreatedAt().toInstant(), ZoneId.systemDefault());
+        Timestamp timestamp = Timestamp.valueOf(ldt);
         cqlTemplate.execute(query,
             masterSignal.getStrategyId(),
             masterSignal.getVersion(),
@@ -45,7 +69,7 @@ public class MasterSignalDao {
             masterSignal.getAction(),
             masterSignal.getQuantity(),
             masterSignal.getPrice(),
-            masterSignal.getCreatedAt(),
+            timestamp,
             masterSignal.getState()
         );
     }
@@ -63,6 +87,13 @@ public class MasterSignalDao {
             .from("master_signal")
             .where(QueryBuilder.eq("strategy_id", strategy))
             .and(QueryBuilder.eq("version", version));
+        cqlTemplate.execute(delete);
+    }
+
+    public void deleteMasterSignalByStratedy(UUID strategy ) {
+        Delete.Where delete = QueryBuilder.delete()
+            .from("master_signal")
+            .where(QueryBuilder.eq("strategy_id", strategy));
         cqlTemplate.execute(delete);
     }
 }
