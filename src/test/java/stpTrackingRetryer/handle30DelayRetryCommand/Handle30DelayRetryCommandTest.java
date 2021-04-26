@@ -5,49 +5,34 @@ import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
-import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
-import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
-import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
-import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -58,12 +43,15 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
 import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
 import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
+import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
@@ -73,7 +61,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_30_DELAY_RETRYER_COMMAND;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 
 @Slf4j
@@ -84,17 +71,18 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class, InvestTrackingAutoConfiguration.class, KafkaProtobufFactoryAutoConfiguration.class
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    KafkaProtobufFactoryAutoConfiguration.class
 })
 public class Handle30DelayRetryCommandTest {
-    KafkaHelper kafkaHelper = new KafkaHelper();
-
     @Resource(name = "customReceiverFactory")
     KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-
     @Resource(name = "bytesReceiverFactory")
     KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
+    @Resource(name = "customSenderFactory")
+    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
 
     @Autowired
     BillingService billingService;
@@ -118,20 +106,9 @@ public class Handle30DelayRetryCommandTest {
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
-
-    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
-    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
-    MasterPortfolio masterPortfolio;
-    SlavePortfolio slavePortfolio;
-    SlaveOrder slaveOrder;
     Client clientMaster;
     Contract contractMaster;
     Strategy strategy;
@@ -191,6 +168,10 @@ public class Handle30DelayRetryCommandTest {
                 slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
+            try {
+                createEventInTrackingEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -215,8 +196,6 @@ public class Handle30DelayRetryCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//      создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-        createEventInTrackingEvent(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master,
@@ -268,7 +247,6 @@ public class Handle30DelayRetryCommandTest {
         //проверяем параметры команды по синхронизации
         assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
-
         Duration d = Duration.between(time0, time1);
         long sec = d.toSeconds();
         if (sec >= 30) {
@@ -312,7 +290,6 @@ public class Handle30DelayRetryCommandTest {
 
     Tracking.PortfolioCommand createCommandRetrySynchronize(String contractIdSlave, OffsetDateTime time) {
         //отправляем команду на синхронизацию
-//        OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
             .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
@@ -326,37 +303,30 @@ public class Handle30DelayRetryCommandTest {
 
 
     //метод отправляет команду с operation = 'SYNCHRONIZE'.
-    void createCommandTrackingDelayCommand(String contractIdSlave, OffsetDateTime time) throws InterruptedException {
+    void createCommandTrackingDelayCommand(String contractIdSlave, OffsetDateTime time) {
         //создаем команду
         Tracking.PortfolioCommand command = createCommandRetrySynchronize(contractIdSlave, time);
-        Handle30DelayRetryCommandTest.log.info("Команда в tracking.30.delay.retryer.command:  {}", command);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        log.info("Команда в tracking.30.delay.retryer.command:  {}", command);
+        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>("tracking.30.delay.retryer.command",
-            contractIdSlave, eventBytes);
-        producerRecord.headers().add("destination.topic.name", "tracking.slave.command".getBytes());
-        producerRecord.headers().add("delay.seconds", "30".getBytes());
-        template.send(producerRecord);
-        template.flush();
+        //создаем список заголовков
+        List<Header> headers = new ArrayList<>();
+        headers.add(new RecordHeader("destination.topic.name", "tracking.slave.command".getBytes()));
+        headers.add(new RecordHeader("delay.seconds", "30".getBytes()));
+        //отправляем команду в топик kafka tracking.30.delay.retryer.command
+        kafkaSender.send("tracking.30.delay.retryer.command", contractIdSlave, eventBytes, headers);
     }
 
 
     //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
-    void createEventInTrackingEvent(String contractIdSlave) throws InterruptedException {
+    void createEventInTrackingEvent(String contractIdSlave) {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
-        Handle30DelayRetryCommandTest.log.info("Команда в tracking.event:  {}", event);
+        log.info("Команда в tracking.event:  {}", event);
         //кодируем событие по protobuff схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        String key = contractIdSlave;
-        //отправляем событие в топик kafka tracking.event
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        template.setDefaultTopic("tracking.event");
-        template.sendDefault(key, eventBytes);
-        template.flush();
-        Thread.sleep(10000);
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
     }
 
 

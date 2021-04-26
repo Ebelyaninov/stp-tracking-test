@@ -6,11 +6,11 @@ import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
-import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,33 +22,22 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
-import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
-import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
-import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -59,6 +48,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
 import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
 import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
+import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
@@ -69,16 +59,12 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
-import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_30_DELAY_RETRYER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SPB_RETRYER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_MOEXPLUS_RETRYER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_MOEX_RETRYER_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("RouteRetryCommand - Маршрутизация отложенных команд для повторной отправки")
@@ -88,18 +74,21 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MOEX_RETRYER_COMMAND;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class, InvestTrackingAutoConfiguration.class, KafkaProtobufFactoryAutoConfiguration.class
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    KafkaProtobufFactoryAutoConfiguration.class
 })
 public class RouteRetryCommandTest {
-    KafkaHelper kafkaHelper = new KafkaHelper();
-
-
     @Resource(name = "customReceiverFactory")
     KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
 
     @Resource(name = "bytesReceiverFactory")
     KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
+
+    @Resource(name = "customSenderFactory")
+    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
 
     @Autowired
     BillingService billingService;
@@ -186,6 +175,11 @@ public class RouteRetryCommandTest {
                 slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
+            try {
+                createEventInTrackingEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
+
         });
     }
 
@@ -210,11 +204,9 @@ public class RouteRetryCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//      создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-        createEventInTrackingEvent(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -300,11 +292,9 @@ public class RouteRetryCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-        createEventInTrackingEvent(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -387,7 +377,6 @@ public class RouteRetryCommandTest {
 
     Tracking.PortfolioCommand createCommandRetrySynchronize(String contractIdSlave, OffsetDateTime time) {
         //отправляем команду на синхронизацию
-//        OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
             .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
@@ -405,17 +394,15 @@ public class RouteRetryCommandTest {
         //создаем команду
         Tracking.PortfolioCommand command = createCommandRetrySynchronize(contractIdSlave, time);
         log.info("Команда в tracking.delay.command:  {}", command);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
+        //создаем список заголовков
+        List<Header> headers = new ArrayList<>();
+        headers.add(new RecordHeader("destination.topic.name", "tracking.slave.command".getBytes()));
+        headers.add(new RecordHeader("delay.seconds", "30".getBytes()));
         //отправляем команду в топик kafka tracking.delay.command
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>("tracking.delay.command",
-            contractIdSlave, eventBytes);
-        //добавляем заголовки для команды
-        producerRecord.headers().add("destination.topic.name", "tracking.slave.command".getBytes());
-        producerRecord.headers().add("delay.seconds", "30".getBytes());
-        template.send(producerRecord);
-        template.flush();
+        kafkaSender.send("tracking.delay.command", contractIdSlave, eventBytes, headers);
+
     }
 
 
@@ -426,36 +413,29 @@ public class RouteRetryCommandTest {
         log.info("Команда в tracking.delay.command:  {}", command);
         //кодируем событие по protobuff схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
+        //создаем список заголовков
+        List<Header> headers = new ArrayList<>();
+        headers.add(new RecordHeader("destination.topic.name", "tracking.slave.command".getBytes()));
+        headers.add(new RecordHeader("exchange.name", exchange.getBytes()));
         //отправляем команду в топик kafka tracking.delay.command
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>("tracking.delay.command", contractIdSlave, eventBytes);
-        producerRecord.headers().add("destination.topic.name", "tracking.slave.command".getBytes());
-        producerRecord.headers().add("exchange.name", exchange.getBytes());
-        template.send(producerRecord);
-        template.flush();
-        Thread.sleep(5000);
+        kafkaSender.send("tracking.delay.command", contractIdSlave, eventBytes, headers);
     }
 
 
     //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
-    void createEventInTrackingEvent(String contractIdSlave) throws InterruptedException {
+    void createEventInTrackingEvent(String contractIdSlave) {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
         //кодируем событие по protobuff схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        String key = contractIdSlave;
-        //отправляем событие в топик kafka tracking.event
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        template.setDefaultTopic("tracking.event");
-        template.sendDefault(key, eventBytes);
-        template.flush();
-        Thread.sleep(10000);
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
     }
 
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    void createClientWintContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
