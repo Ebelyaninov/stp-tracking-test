@@ -207,23 +207,12 @@ public class HandleActualizeCommandTest {
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
+        //получаем текущую дату
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 3, "6551.10");
+        // создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+            3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
         //создаем подписку на стратегию для lave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //формируем команду на актуализацию для slave
@@ -293,23 +282,12 @@ public class HandleActualizeCommandTest {
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
+        //получаем текущую дату
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 3, "6551.10");
+        //создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+            3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
         //создаем подписку на стратегию для slave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //формируем команду на актуализацию для slave
@@ -392,23 +370,12 @@ public class HandleActualizeCommandTest {
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
+        //получаем текущую дату
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 3, "6551.10");
+        //создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+            3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
         //создаем подписку на стратегию для lave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //формируем команду на актуализацию для slave
@@ -511,8 +478,14 @@ public class HandleActualizeCommandTest {
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
-        createMasterPortfolio(positionListMaster, 4, "6551.10");
-        //создаем подписку на стратегию для lave
+        //с базовой валютой
+        MasterPortfolio.BaseMoneyPosition baseMoneyPositionMaster = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal("6551.10"))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, 4, baseMoneyPositionMaster, positionListMaster, date);
+        //создаем подписку на стратегию для slave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
@@ -529,9 +502,14 @@ public class HandleActualizeCommandTest {
             .changedAt(date)
             .build());
         String baseMoneySl = "6551.10";
-
-        createSlavePortfolioWithChangedAt(3, 4, null, baseMoneySl, positionListSl);
-
+       //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPositionSl = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(baseMoneySl))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3, 4,
+            baseMoneyPositionSl, positionListSl, date);
         //формируем команду на актуализацию для slave
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
             .setTicker(ticker)
@@ -580,13 +558,12 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("731504")
-    @DisplayName("C731504.HandleActualizeCommand.Получение подтверждения")
+    @DisplayName("C731504.HandleActualizeCommand.Получение подтверждения в полном объеме")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C731504() {
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
-        BigDecimal lot = new BigDecimal("1");
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         //получаем данные по клиенту master в api сервиса счетов
@@ -603,44 +580,22 @@ public class HandleActualizeCommandTest {
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
+        //получаем текущую дату
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 3, "6551.10");
+        // создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+        3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
         //создаем подписку на стратегию для slave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         // создаем портфель slave с позицией в кассандре
-        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        positionListSl.add(SlavePortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("0"))
-            .price(new BigDecimal("107.79"))
-            .price_ts(date)
-            .rate(new BigDecimal("0"))
-            .rateDiff(new BigDecimal("0.0751"))
-            .quantityDiff(new BigDecimal("5"))
-            .changedAt(date)
-            .build());
-        String baseMoneySl = "7000.0";
-
-        createSlavePortfolioWithChangedAt(2, 3, null, baseMoneySl, positionListSl);
-
-        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
-            0, classCode, UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+        BigDecimal slavePosQuantityBefore = new BigDecimal("0");
+        int version = 2;
+        createSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, 3, "7000.0",
+        ticker, tradingClearingAccount, slavePosQuantityBefore, "107.79", "0","0.076", "5",date);
+        BigDecimal positionQuantity = new BigDecimal("5");
+        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 2, 1,
+            0, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
             null, ticker, tradingClearingAccount);
         //формируем команду на актуализацию для slave
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
@@ -681,9 +636,107 @@ public class HandleActualizeCommandTest {
         checkSlavePortfolioParameters(3, 3, "5855.6");
         checkPositionParameters(0, ticker, tradingClearingAccount, "5", price, slavePositionRate, rateDiff,
             quantityDiff);
+        //расчитываем значение filledQuantity
+        BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
+        BigDecimal updatedFilledQuanitity  = new BigDecimal("0").add(filledQuantity);
+        //проверяем значения после update в slaveOrder
         slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
-        assertThat("Направление заявки Action не равно", slaveOrder.getState().toString(), is("1"));
+        assertThat("State не равно", slaveOrder.getState().toString(), is("1"));
+        assertThat("filledQuantity не равно", slaveOrder.getFilledQuantity(), is(updatedFilledQuanitity));
+        assertThat("version не равно", slaveOrder.getVersion(), is(version));
+        assertThat("attempts_count не равно", slaveOrder.getAttemptsCount().toString(), is("1"));
     }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("856826")
+    @DisplayName("C856826.HandleActualizeCommand.Подтверждение по отклоненной заявке, полный объем заявки еще не подтвержден")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C856826() {
+        String title = "тест стратегия autotest update base currency";
+        String description = "description test стратегия autotest update adjust base currency";
+        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+        createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+            3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
+        //создаем подписку на стратегию для slave
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        // создаем портфель slave с позицией в кассандре
+        BigDecimal slavePosQuantityBefore = new BigDecimal("0");
+        createSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2, 3, "7000.0",
+            ticker, tradingClearingAccount, slavePosQuantityBefore, "107.79", "0","0.076", "5",date);
+        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 2, 1,
+            0, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            null, ticker, tradingClearingAccount);
+        //формируем команду на актуализацию для slave
+        BigDecimal positionQuantityCommand = new BigDecimal("2");
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setQuantity(Tracking.Decimal.newBuilder()
+                .setUnscaled(2).build())
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
+            3, position, time);
+        log.info("Команда в tracking.slave.command:  {}", command);
+        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.slave.command
+        kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //получаем портфель slave
+        checkComparedToMasterVersion(3);
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
+            is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        //получаем значение price из кеша exchangePositionPriceCache
+        BigDecimal price = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "last"));
+        BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
+        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
+        BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal baseMoneySlave = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        BigDecimal slaveQuantity = slavePortfolio.getPositions().get(0).getQuantity();
+        BigDecimal slavePosQuantity = slaveQuantity.multiply(price);
+        BigDecimal slavePortfolioValue = slavePosQuantity.add(baseMoneySlave);
+        BigDecimal slavePositionRate = slavePosQuantity.divide(slavePortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal rateDiff = masterPositionRate.subtract(slavePositionRate);
+        BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 0, BigDecimal.ROUND_HALF_UP);
+        checkSlavePortfolioParameters(3, 3, "5855.6");
+        checkPositionParameters(0, ticker, tradingClearingAccount, "2", price, slavePositionRate, rateDiff,
+            quantityDiff);
+        //расчитываем значение filledQuantity
+        BigDecimal filledQuantity = (positionQuantityCommand.subtract(slavePosQuantityBefore)).abs();
+        BigDecimal updatedFilledQuanitity  = new BigDecimal("0").add(filledQuantity);
+        //проверяем значения после update в slaveOrder
+        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        assertThat("State не равно", slaveOrder.getState(), is(nullValue()));
+        assertThat("filledQuantity не равно", slaveOrder.getFilledQuantity(), is(updatedFilledQuanitity));
+    }
+
 
 
     @SneakyThrows
@@ -740,8 +793,14 @@ public class HandleActualizeCommandTest {
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
-        createMasterPortfolio(positionListMaster, 4, "6551.10");
-        //создаем подписку на стратегию для lave
+        //с базовой валютой
+        MasterPortfolio.BaseMoneyPosition baseMoneyPositionMaster = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal("6551.10"))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, 4, baseMoneyPositionMaster, positionListMaster, date);
+        //создаем подписку на стратегию для slave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
@@ -752,7 +811,14 @@ public class HandleActualizeCommandTest {
             .changedAt(date)
             .build());
         String baseMoneySl = "6551.10";
-        createSlavePortfolioWithChangedAt(3, 4, null, baseMoneySl, positionListSl);
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPositionSl = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(baseMoneySl))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3, 4,
+            baseMoneyPositionSl, positionListSl, date);
         //формируем команду на актуализацию для slave
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
             .setTicker(ticker2)
@@ -827,42 +893,20 @@ public class HandleActualizeCommandTest {
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
+        //получаем текущую дату
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 3, "6551.10");
+        // создаем портфель для master в cassandra
+        createMasterPortfolio(Tracking.Portfolio.Action.SECURITY_BUY_TRADE, contractIdMaster, strategyId, date,
+            3, "6551.10", ticker, tradingClearingAccount,  new BigDecimal("5"), 2);
         //создаем подписку на стратегию для slave
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         // создаем портфель slave с позицией в кассандре
-        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        positionListSl.add(SlavePortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("0"))
-            .price(new BigDecimal("107.79"))
-            .price_ts(date)
-            .rate(new BigDecimal("0"))
-            .rateDiff(new BigDecimal("0.0751"))
-            .quantityDiff(new BigDecimal("5"))
-            .changedAt(date)
-            .build());
-        String baseMoneySl = "7000.0";
-        createSlavePortfolioWithChangedAt(2, 3, null, baseMoneySl, positionListSl);
-        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
-            0, classCode, UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+        BigDecimal slavePosQuantityBefore = new BigDecimal("0");
+        createSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2, 3, "7000.0",
+            ticker, tradingClearingAccount, slavePosQuantityBefore, "107.79", "0","0.076", "5",date);
+        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 2, 1,
+            0, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //формируем команду на актуализацию для slave
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
@@ -928,7 +972,6 @@ public class HandleActualizeCommandTest {
     }
 
     Tracking.PortfolioCommand createCommandActualizeOnlyBaseMoney(int scale, int unscaled, String contractIdSlave, int version, OffsetDateTime time) {
-//        OffsetDateTime time = OffsetDateTime.now();
         ru.tinkoff.trading.tracking.Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
             .setScale(scale)
             .setUnscaled(unscaled)
@@ -1058,34 +1101,61 @@ public class HandleActualizeCommandTest {
         contractSlave = contractService.getContract(contractIdSlave);
     }
 
-
-    void createMasterPortfolio(List<MasterPortfolio.Position> positionList, int version, String money) {
-        //создаем портфель master в cassandra
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
+    // создаем портфель ведущего с позицией в кассандре
+    void createMasterPortfolio(Tracking.Portfolio.Action action, String contractIdMaster, UUID  strategyId, Date date, int version, String money,
+                               String ticker, String tradingClearingAccount, BigDecimal quantity, int lastChangeDetectedVersion) {
+        //добавляем action
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(action).build())
+            .build();
+        //создаем список позиций
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(quantity)
+            .changedAt(date)
+            .lastChangeDetectedVersion(lastChangeDetectedVersion)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
         //с базовой валютой
         MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
             .quantity(new BigDecimal(money))
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionListMaster, date);
     }
 
 
-    //создаем портфель master в cassandra
-    void createSlavePortfolioWithChangedAt(int version, int comparedToMasterVersion, String currency, String money,
-                                           List<SlavePortfolio.Position> positionList) {
+    //создаем портфель slave в cassandra
+    void createSlavePortfolioWithChangedAt(String contractIdSlave, UUID strategyId,
+        int version, int comparedToMasterVersion, String money, String ticker,
+                                           String tradingClearingAccount, BigDecimal slavePosQuantityBefore,
+                                           String price, String rate, String rateDiff,
+                                           String quantityDiff, Date date) {
+        // добавляем позицию
+        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
+        positionListSl.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(slavePosQuantityBefore)
+            .price(new BigDecimal(price))
+            .price_ts(date)
+            .rate(new BigDecimal(rate))
+            .rateDiff(new BigDecimal(rateDiff))
+            .quantityDiff(new BigDecimal(quantityDiff))
+            .changedAt(date)
+            .build());
         //с базовой валютой
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
         SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
             .quantity(new BigDecimal(money))
             .changedAt(date)
             .build();
         //insert запись в cassandra
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList, date);
+            baseMoneyPosition, positionListSl, date);
     }
 
 
@@ -1169,6 +1239,7 @@ public class HandleActualizeCommandTest {
         assertThat("price бумаги не равен", slaveOrder.getTicker(), is(ticker));
         assertThat("classCode бумаги не равен", slaveOrder.getClassCode(), is(classCode));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
     }
 
 

@@ -21,4 +21,5 @@ public class SlaveOrder {
     private final Byte state;
     private final String ticker;
     private final String tradingClearingAccount;
+    private final BigDecimal filledQuantity;
 }

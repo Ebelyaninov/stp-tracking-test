@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioRowMapper;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,6 +68,19 @@ public class MasterPortfolioDao {
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
+            .value("positions",positionList);
+        cqlTemplate.execute(insertQueryBuider);
+    }
+
+    public void insertIntoMasterPortfolioWithChangedAt(String contractId, UUID strategyId, int version,
+                                          MasterPortfolio.BaseMoneyPosition baseMoneyPosition,
+                                          List<MasterPortfolio.Position> positionList, Date time) {
+        Insert insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("base_money_position", baseMoneyPosition)
+            .value("changed_at", time)
             .value("positions",positionList);
         cqlTemplate.execute(insertQueryBuider);
     }

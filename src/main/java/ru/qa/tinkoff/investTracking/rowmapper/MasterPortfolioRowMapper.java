@@ -19,6 +19,7 @@ public class MasterPortfolioRowMapper implements RowMapper<MasterPortfolio> {
             .version(row.getInt("version"))
             .positions(row.getList("positions", MasterPortfolio.Position.class))
             .baseMoneyPosition(row.get("base_money_position", MasterPortfolio.BaseMoneyPosition.class))
+            .changedAt(row.get("changed_at", java.util.Date.class))
             .build();
     }
 }

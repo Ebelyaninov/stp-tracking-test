@@ -79,7 +79,6 @@ dependencies {
 
     // Postgres
     implementation("org.postgresql:postgresql:42.2.14")
-
     // Dependencies for OpenApi codegen
     implementation("io.swagger:swagger-annotations:1.6.1")
     implementation("org.openapitools:jackson-databind-nullable:0.2.1")
@@ -92,6 +91,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:2.6.4")
     implementation("ru.tinkoff.invest.sdet:boostedkafka:0.0.7")
 
+//    implementation("ru.tinkoff.invest.sdet:boostedkafka:1.0.0-RC3")
     // protobuf
     implementation("io.grpc:grpc-all:1.31.1")
     implementation("com.google.protobuf:protobuf-java:3.13.0")

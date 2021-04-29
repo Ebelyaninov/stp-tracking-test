@@ -18,6 +18,9 @@ public class MasterPortfolio {
     private final Integer version;
     private final List<Position> positions;
     private final BaseMoneyPosition baseMoneyPosition;
+    private Date changedAt;
+
+
 
     @UDT(name = "master_portfolio_position")
     @NoArgsConstructor

@@ -136,14 +136,16 @@ public class CreateSlaveOrderTest {
     Contract contractSlave;
     Subscription subscription;
     String contractIdMaster;
-    String contractIdSlave = "2015430701";
+    String contractIdSlave = "2000050605";
     int version;
     String ticker = "AAPL";
     String tradingClearingAccount = "L01+00000SPB";
     String classCode = "SPBXM";
     BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
-    String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
+
+
+    String SIEBEL_ID_SLAVE = "5-F25SJ7BD";
     UUID strategyId;
 
     @AfterEach
@@ -222,8 +224,6 @@ public class CreateSlaveOrderTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-//        createEventInTrackingEvent(contractIdSlave);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -282,6 +282,7 @@ public class CreateSlaveOrderTest {
         BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
+        Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
@@ -310,8 +311,6 @@ public class CreateSlaveOrderTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-//        createEventInTrackingEvent(contractIdSlave);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -370,6 +369,7 @@ public class CreateSlaveOrderTest {
         BigDecimal priceOrder = priceBid.subtract(price.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
+        Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
@@ -475,7 +475,7 @@ public class CreateSlaveOrderTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
     //создаем портфель master в cassandra
@@ -489,8 +489,9 @@ public class CreateSlaveOrderTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
+
     }
 
 
@@ -612,6 +613,8 @@ public class CreateSlaveOrderTest {
         assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder.getQuantity(), is(lots.multiply(lot)));
         assertThat("ticker бумаги не равен", slaveOrder.getTicker(), is(ticker));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
+
     }
 
 
