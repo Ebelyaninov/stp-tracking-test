@@ -505,7 +505,7 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266605() throws JSONException {
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getfindNotBrokerAccountBySiebleId(siebelIdNotBroker);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
         UUID investIdNotBroker = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         String title = "тест стратегия CreateStrategy010";
@@ -550,9 +550,9 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266606() throws JSONException {
         //находим клиента со статусом договора !=opened
-        profile = profileService.getProfileBySiebleId(siebelIdNotOpen);
+        profile = profileService.getProfileBySiebelId(siebelIdNotOpen);
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getfindNotOpenAccountBySiebleId(siebelIdNotOpen);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindNotOpenAccountBySiebelId(siebelIdNotOpen);
         UUID investIdNotOpen = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         String title = "тест стратегия CreateStrategy011";
@@ -601,7 +601,7 @@ public class CreateStrategyErrorTest {
         //находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
         List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
         client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null);
-        //вызываем метод  GetUntrackedContracts с siebleId от первого клиента и номер договора от второго клиента
+        //вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
         //форируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
@@ -711,17 +711,15 @@ public class CreateStrategyErrorTest {
     }
 
 
-    /////////***методы для работы тестов**************************************************************************
-
-
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    public String createClient(String SIEBLE_ID, ClientStatusType сlientStatusType) {
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBLE_ID);
+    //*** Методы для работы тестов ***
+    //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    public String createClient(String SIEBEL_ID, ClientStatusType clientIdStatusType) {
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
-        client = clientService.createClient(investId, сlientStatusType, new SocialProfile()
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        client = clientService.createClient(investId, clientIdStatusType, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString()));
@@ -729,10 +727,10 @@ public class CreateStrategyErrorTest {
     }
 
 
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    public void createClientNotBrokerOrOpened(UUID investId, String SIEBLE_ID, ClientStatusType сlientStatusType) {
+    //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    public void createClientNotBrokerOrOpened(UUID investId, String SIEBEL_ID, ClientStatusType clientIdStatusType) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
-        client = clientService.createClient(investId, сlientStatusType, null);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        client = clientService.createClient(investId, clientIdStatusType, null);
     }
 }

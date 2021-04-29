@@ -133,11 +133,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID  investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -204,11 +204,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -271,11 +271,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -339,11 +339,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -409,11 +409,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -471,11 +471,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -533,11 +533,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -596,11 +596,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -649,12 +649,12 @@ public class DeleteSubscriptionErrorTest {
 
     //***методы для работы тестов**************************************************************************
     //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    void createClientWintContractAndStrategy(String SIEBEL_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         //создаем запись о клиенте в tracking.client
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())

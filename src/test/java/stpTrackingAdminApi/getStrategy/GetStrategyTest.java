@@ -109,7 +109,7 @@ public class GetStrategyTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -153,7 +153,7 @@ public class GetStrategyTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -195,7 +195,7 @@ public class GetStrategyTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -232,7 +232,7 @@ public class GetStrategyTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -268,7 +268,7 @@ public class GetStrategyTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -306,7 +306,7 @@ public class GetStrategyTest {
         UUID strategyId = UUID.randomUUID();
         UUID strategyIdTest = UUID.randomUUID();
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())

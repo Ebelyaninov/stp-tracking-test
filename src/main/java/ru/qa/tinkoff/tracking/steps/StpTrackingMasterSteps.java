@@ -15,6 +15,8 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
+
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -28,18 +30,17 @@ public class StpTrackingMasterSteps {
     private final TrackingService trackingService;
     private final ClientService clientService;
 
-
-    //создаем в БД tracking данные по ведущему: client, contract, strategy
-    @Step("Создать договор и стратегию в бд автоследования для ведущего {client}")
+    //Создаем в БД tracking данные по ведущему (Master-клиент): client, contract, strategy
+    @Step("Создать договор и стратегию в бд автоследования для ведущего клиента {client}")
     @SneakyThrows
     public void createClientWithContractAndStrategy(Client clientMaster, Contract contractMaster, Strategy strategy, UUID investId,
-                                             String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        //создаем запись о клиенте в tracking.client
+                                                    String contractId, ContractRole contractRole, ContractState contractState,
+                                                    UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                                    StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus, int slaveCount,
+                                                    LocalDateTime date) {
+        //Создаем запись о клиенте в tracking.client
 //        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
-        // создаем запись о договоре клиента в tracking.contract
+        //Создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
@@ -48,7 +49,7 @@ public class StpTrackingMasterSteps {
             .setStrategyId(null)
             .setBlocked(false);
         contractMaster = contractService.saveContract(contractMaster);
-        //создаем запись о стратегии клиента
+        //Создаем запись о стратегии клиента в tracking.strategy
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -63,11 +64,11 @@ public class StpTrackingMasterSteps {
     }
 
 
-    // создаем команду в топик кафка tracking.master.command
+    //Создаем команду в топик кафка tracking.master.command
     public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommand(String contractId, OffsetDateTime time, int version,
-                                                                            long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
-                                                                            Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                            Tracking.Decimal quantityS, String ticker, String tradingClearingAccount) {
+                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
+                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount) {
         Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
             .setUnscaled(unscaled)
             .setScale(scale)
@@ -108,5 +109,4 @@ public class StpTrackingMasterSteps {
             .build();
         return command;
     }
-
 }

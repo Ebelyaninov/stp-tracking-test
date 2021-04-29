@@ -25,12 +25,14 @@ public class StpTrackingAdminSteps {
     private final TrackingService trackingService;
     private final ClientService clientService;
 
-    //метод создает клиента, договор и стратегию в БД автоследования
+    //Метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
-    public void createContractAndStrategy(Client client, Contract contract, Strategy strategy, String contractId, ContractRole contractRole,
-                                          ContractState contractState, UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                          StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+    public void createContractAndStrategy(Client client, Contract contract, Strategy strategy, String contractId,
+                                          ContractRole contractRole, ContractState contractState, UUID strategyId,
+                                          String title, String description, StrategyCurrency strategyCurrency,
+                                          StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus,
+                                          int slaveCount, LocalDateTime date, Integer score) {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
@@ -51,18 +53,17 @@ public class StpTrackingAdminSteps {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
-
+            .setScore(score);
         strategy = trackingService.saveStrategy(strategy);
     }
 
 
-
-    //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWithContractAndStrategy(Client client, Contract contract, Strategy strategy,UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    public void createClientWithContractAndStrategy(Client client, Contract contract, Strategy strategy, UUID investId,
+                                                    SocialProfile socialProfile, String contractId, ContractRole contractRole,
+                                                    ContractState contractState, UUID strategyId, String title, String description,
+                                                    StrategyCurrency strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
 
         client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
         contract = new Contract()
@@ -85,8 +86,7 @@ public class StpTrackingAdminSteps {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
-
+            .setScore(score);
         strategy = trackingService.saveStrategy(strategy);
     }
 }

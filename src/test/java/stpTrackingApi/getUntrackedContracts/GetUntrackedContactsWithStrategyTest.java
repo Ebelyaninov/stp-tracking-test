@@ -90,13 +90,13 @@ public class GetUntrackedContactsWithStrategyTest {
     @Description("Метод возвращает список доступных договоров для подключения стратегии. Валидируем договоры клиента на доступность подключения к автоследованию")
     void C173619() {
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //получаем список Брокерских договоров, по SIEBLE_ID
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         //создаем по полученному InvestId запись в tracking.client
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
@@ -143,13 +143,13 @@ public class GetUntrackedContactsWithStrategyTest {
     @Description("Метод возвращает список доступных договоров для подключения стратегии.")
     void C638985() {
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //добавляем 1 договор в автоследование:3 записи: client, contract, strategy
@@ -192,13 +192,13 @@ public class GetUntrackedContactsWithStrategyTest {
     @Description("Метод возвращает список доступных договоров для подключения стратегии.")
     void C638983() {
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //добавляем 1 договор в автоследование:3 записи: client, contract, strategy

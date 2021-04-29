@@ -200,11 +200,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
         createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -298,11 +298,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerBond, classCodeBond, "107.2", "108.2", "105.2");
         createDataToMarketData(tickerShare, classCodeShare, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -396,11 +396,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
         createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -526,11 +526,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerBond2, classCodeBond2, "107.2", "108.2", "105.2");
 
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -656,11 +656,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerBond, classCodeBond, "107.2", "108.2", "105.2");
         createDataToMarketData(tickerShare, classCodeShare, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -754,11 +754,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerBond1, classCodeBond1, "88.3425", "92.9398", "87.3427");
         createDataToMarketData(tickerBond2, classCodeBond2, "107.2", "108.2", "105.2");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -885,11 +885,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
         createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
 //        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
 //        createEventInTrackingEvent(contractIdSlave);
@@ -1016,11 +1016,11 @@ public class SynchronizePositionResolverTest {
         createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
         createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active

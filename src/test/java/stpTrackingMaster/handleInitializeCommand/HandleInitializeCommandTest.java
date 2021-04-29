@@ -130,7 +130,7 @@ public class HandleInitializeCommandTest {
     void C640032() {
         strategyId = UUID.randomUUID();
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
@@ -173,7 +173,7 @@ public class HandleInitializeCommandTest {
     void C639963() {
         strategyId = UUID.randomUUID();
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная

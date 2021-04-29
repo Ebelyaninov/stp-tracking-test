@@ -16,9 +16,7 @@ import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 import java.util.UUID;
 
-
-//************************методы для работы с таблицей client БД postgres@db-tracking.trading.local
-
+//*********** Методы для работы с таблицей client БД postgres@db-tracking.trading.local ***********
 
 @Slf4j
 @Service
@@ -32,12 +30,10 @@ public class ClientService {
         this.objectMapper = objectMapper;
     }
 
-
     public Client getClient(String id) {
         return clientRepository.findById(UUID.fromString(id))
             .orElseThrow(EntityNotFoundException::new);
     }
-
 
     @Step("Поиск клиента по id")
     @SneakyThrows
@@ -47,7 +43,6 @@ public class ClientService {
         Allure.addAttachment("Найденный клиент", "application/json", objectMapper.writeValueAsString(clientId));
         return client.orElseThrow(() -> new RuntimeException("Не найден контракт"));
     }
-
 
     @Step("Поиск контракта по id и nickName из SocialProfile")
     @SneakyThrows
@@ -96,7 +91,6 @@ public class ClientService {
         return client;
     }
 
-
     @Step("Сохранение измененного клиента")
     @SneakyThrows
     public Client saveClient(Client client) {
@@ -115,6 +109,4 @@ public class ClientService {
         Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(client));
         return client;
     }
-
-
 }

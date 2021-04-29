@@ -161,11 +161,11 @@ public class HandleLimitEventSpySlaveTest {
         String title = "тест стратегия autotest update adjust security";
         String description = "description test стратегия autotest update adjust security";
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);
@@ -300,11 +300,11 @@ public class HandleLimitEventSpySlaveTest {
         String title = "тест стратегия autotest update adjust currency";
         String description = "description test стратегия autotest update adjust currency";
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);
@@ -431,11 +431,11 @@ public class HandleLimitEventSpySlaveTest {
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);
@@ -539,11 +539,11 @@ public class HandleLimitEventSpySlaveTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);
@@ -661,11 +661,11 @@ public class HandleLimitEventSpySlaveTest {
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);
@@ -758,11 +758,11 @@ public class HandleLimitEventSpySlaveTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
         //получаем данные по клиенту master в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_MASTER);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_MASTER);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         String contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //получаем данные по клиенту slave в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID_SLAVE);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         clientIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
         List<ClientCode> findClientCodeByContractIdSlave = billingService.getFindClientCodeByBrokerAccountId(contractIdSlave);

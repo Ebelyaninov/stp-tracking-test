@@ -18,31 +18,27 @@ public interface BrokerAccountRepository extends JpaRepository<BrokerAccount, St
         Данный метод реализован с целью упрощения вызовов сущностей, в полях которых
         присутствуют Postgres enum типы
     */
+
     @Query(nativeQuery = true, value = "select id, invest_id, type, status from account.broker_account " +
         "where type = 'broker' and status = 'opened' and random() < 0.01 limit 1")
     BrokerAccount findFirstValid();
 
-    // получаем список валидных брокерских договоров по значению siebleId
+    //получаем список валидных брокерских договоров по значению siebelId
     @Query(value = "SELECT ba FROM BrokerAccount ba WHERE ba.type ='broker' and ba.status = 'opened'" +
-        " and ba.investAccount.siebelId=:siebleId")
-    List<BrokerAccount> findAllBrokerAccountBySiebleId(@Param(value = "siebleId") String siebleId);
+        " and ba.investAccount.siebelId=:siebelId")
+    List<BrokerAccount> findAllBrokerAccountBySiebelId(@Param(value = "siebelId") String siebelId);
 
 
-
-
-
-
-    // получаем список валидных не брокерских договоров по значению siebleId
+    //получаем список валидных не брокерских договоров по значению siebelId
     @Query(value = "SELECT ba FROM BrokerAccount ba WHERE ba.type <>'broker' and ba.status = 'opened'" +
-        " and ba.investAccount.siebelId=:siebleId")
-    List<BrokerAccount> findNotBrokerAccountBySiebleId(@Param(value = "siebleId") String siebleId);
+        " and ba.investAccount.siebelId=:siebelId")
+    List<BrokerAccount> findNotBrokerAccountBySiebelId(@Param(value = "siebelId") String siebelId);
 
 
-    // получаем список закрытых брокерских договоров по значению siebleId
+    //получаем список закрытых брокерских договоров по значению siebelId
     @Query(value = "SELECT ba FROM BrokerAccount ba WHERE ba.type ='broker' and ba.status <> 'opened'" +
-        " and ba.investAccount.siebelId=:siebleId")
-    List<BrokerAccount> findNotOpenAccountBySiebleId(@Param(value = "siebleId") String siebleId);
-
+        " and ba.investAccount.siebelId=:siebelId")
+    List<BrokerAccount> findNotOpenAccountBySiebelId(@Param(value = "siebelId") String siebelId);
 
 
     //находим договор, у которого статус !='opened'
@@ -54,8 +50,6 @@ public interface BrokerAccountRepository extends JpaRepository<BrokerAccount, St
     @Query(nativeQuery = true, value = "select id, invest_id, type, status from account.broker_account " +
         "where  type != 'broker' and status = 'opened' and random() < 0.01 limit 1")
     BrokerAccount findNoBrokerData();
-
-
 
 
     //находим  2 валидных договора

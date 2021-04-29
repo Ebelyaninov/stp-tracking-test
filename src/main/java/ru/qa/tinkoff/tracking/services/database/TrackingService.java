@@ -1,4 +1,5 @@
 package ru.qa.tinkoff.tracking.services.database;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
@@ -55,7 +56,6 @@ public class TrackingService {
             .orElseThrow(EntityNotFoundException::new);
     }
 
-
     @Step("Удаление клиента")
     @SneakyThrows
     public void deleteClient(Client client) {
@@ -80,8 +80,6 @@ public class TrackingService {
         log.info("Successfully deleted strategy {}", contract.toString());
     }
 
-
-
     @Step("Создание клиента для автоследования")
     @SneakyThrows
     public Client createClient(UUID investId, ClientStatusType clientStatusType) {
@@ -92,7 +90,6 @@ public class TrackingService {
         Allure.addAttachment("Клиент", "application/json", objectMapper.writeValueAsString(client));
         return client;
     }
-
 
     @Step("Сохранение измененного клиента")
     @SneakyThrows
@@ -105,14 +102,13 @@ public class TrackingService {
 
     @SneakyThrows
     @Step("Сохранение стратегии")
-    public Strategy saveStrategy(Strategy strategy)  {
+    public Strategy saveStrategy(Strategy strategy) {
         Strategy saved = strategyRepository.saveAndFlush(strategy);
 //            save(strategy);
         log.info("Successfully saved strategy {}", saved);
         Allure.addAttachment("Стратегия", "application/json", objectMapper.writeValueAsString(saved));
         return saved;
     }
-
 
     @Step("Сохранение контракта")
     public Contract saveContract(Contract contract) throws JsonProcessingException {
@@ -122,17 +118,14 @@ public class TrackingService {
         return saved;
     }
 
-
     @SneakyThrows
     @Step("Сохранение подписки")
-    public Subscription saveSubsctiption(Subscription subscription)  {
+    public Subscription saveSubscription(Subscription subscription) {
         Subscription saved = subscriptionRepository.save(subscription);
-        log.info("Successfully saved subcription {}", saved);
+        log.info("Successfully saved subscription {}", saved);
         Allure.addAttachment("Подписка", "application/json", objectMapper.writeValueAsString(saved));
         return saved;
     }
-
-
 
     @Step("Изменение роли, статуса и Id стратегии контракта")
     public Contract updateRoleStateStrategyContract(String id, ContractRole role, ContractState state, UUID strategyId) throws JsonProcessingException {
@@ -146,7 +139,6 @@ public class TrackingService {
         return contract;
     }
 
-
     @Step("Изменение роли контракта")
     public Contract updateRoleContract(String id, ContractRole role) throws JsonProcessingException {
         Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
@@ -156,9 +148,4 @@ public class TrackingService {
         Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(contract));
         return contract;
     }
-
-
-
-
-
 }

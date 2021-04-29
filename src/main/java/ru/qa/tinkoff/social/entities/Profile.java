@@ -8,7 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.UUID;
 
 @Data
@@ -37,7 +36,6 @@ public class Profile {
     @Column(name = "has_contract")
     Boolean hasContract;
 
-
     @Column(name = "deleted")
     Boolean deleted;
 
@@ -53,7 +51,6 @@ public class Profile {
 
     @Column(name = "service_tags")
     String serviceTags;
-
 
     @Column(name = "interested_tags")
     String interestedTags;
@@ -96,7 +93,5 @@ public class Profile {
 
     @Column(name = "muted_profiles_count")
     int mutedProfilesCount;
-
-     */
-
+ */
 }

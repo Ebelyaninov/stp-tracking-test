@@ -80,7 +80,7 @@ public class GetUntrackedContactsUndefinedTest {
     void C244867() {
        String SIEBLE_ID = "5-4PT2NXOL";
         //получаем список Брокерских договоров
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBLE_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBLE_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         //получаем идентификатор догорова
         String contractId = findValidAccountWithSiebleId.get(0).getId();

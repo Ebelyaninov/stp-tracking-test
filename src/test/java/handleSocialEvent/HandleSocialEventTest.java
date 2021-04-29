@@ -99,7 +99,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);//
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -150,7 +150,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         String nickName = profile.getNickname();
         //формируем событие для топика kafka social.event
@@ -201,7 +201,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         String nickName = profile.getNickname();
         //формируем событие для топика kafka social.event
@@ -250,7 +250,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         //формируем событие для топика kafka social.event
         OffsetDateTime now = OffsetDateTime.now();
@@ -298,7 +298,7 @@ public class HandleSocialEventTest {
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);
 //        UUID investId = UUID.fromString("f5b3a54b-0ea3-44f4-af13-50e33d92646b");
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -350,7 +350,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -401,7 +401,7 @@ public class HandleSocialEventTest {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
         UUID investId = createClient(SIEBLE_ID, ClientStatusType.none);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -451,7 +451,7 @@ public class HandleSocialEventTest {
 //        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         UUID investId = UUID.fromString("f5b3a54b-0ea3-44f4-af13-50e33d92646b");
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         client = clientService.createClient(investId, сlientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())

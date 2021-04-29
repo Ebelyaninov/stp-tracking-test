@@ -182,7 +182,7 @@ public class HandleActualizeCommandErrorTest {
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -214,7 +214,7 @@ public class HandleActualizeCommandErrorTest {
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -254,7 +254,7 @@ public class HandleActualizeCommandErrorTest {
         int versionPortfolio = 3;
         int versionCommand = 2;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -305,7 +305,7 @@ public class HandleActualizeCommandErrorTest {
         int versionPortfolio = 3;
         int versionCommand = 5;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -355,11 +355,11 @@ public class HandleActualizeCommandErrorTest {
         String key = null;
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -413,11 +413,11 @@ public class HandleActualizeCommandErrorTest {
         String key = null;
         version = 3;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -503,12 +503,12 @@ public class HandleActualizeCommandErrorTest {
         String key = null;
         version = 3;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
 
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
+        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
         String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
