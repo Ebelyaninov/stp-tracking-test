@@ -6,15 +6,7 @@ info:
   contact:
     name: Kudryashov Dmitriy
     email: d.kudryashov1@tinkoff.ru
-  version: 1.1.0
-
-servers:
-  - url:  http://invest-qa.tinkoff.ru/account/public/v1/
-    description: тестовый стенд
-  - url: http://trading.tinkoff.local
-    description: боевой стенд
-
-
+  version: 1.5.0
 tags:
   - name: broker-account
     description: Брокерский договор
@@ -24,11 +16,15 @@ tags:
     description: Siebel
   - name: client-code
     description: Клиентский код
-
+  - name: application
+    description: Инвестиционные заявки
+servers:
+  - url:  http://invest-qa.tinkoff.ru/account/public/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
 paths:
-
-  /broker-account/{brokerAccountId}:
-
+  "/broker-account/{brokerAccountId}":
     get:
       tags:
         - broker-account
@@ -36,31 +32,27 @@ paths:
       description: Возвращает детализацию брокеского счета {brokerAccountId}
       operationId: getBrokerAccount
       parameters:
-        - $ref: '#/components/parameters/BrokerAccountId'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/BrokerAccountId"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BrokerAccountResponse'
+                "$ref": "#/components/schemas/FullBrokerAccountResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-
-  /broker-account/invest/{investId}:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/broker-account/invest/{investId}":
     get:
       tags:
         - broker-account
@@ -68,32 +60,58 @@ paths:
       description: Возвращает счета пользователя по {investId}
       operationId: getBrokerAccounts
       parameters:
-        - $ref: '#/components/parameters/InvestId'
-        - $ref: '#/components/parameters/BrokerType'
-        - $ref: '#/components/parameters/BrokerStatus'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/InvestId"
+        - "$ref": "#/components/parameters/BrokerType"
+        - "$ref": "#/components/parameters/BrokerStatus"
+        - "$ref": "#/components/parameters/IsBlocked"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetBrokerAccountsResponse'
+                "$ref": "#/components/schemas/GetBrokerAccountsResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-  /broker-account/siebel/{siebelId}:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/broker-account/invest/{investId}/available/type":
+    get:
+      tags:
+        - broker-account
+      summary: getAvailableType
+      description: Возвращает, какой тип счета может открыть клиенту {investId}
+      operationId: getAvailableType
+      parameters:
+        - "$ref": "#/components/parameters/InvestId"
+        - "$ref": "#/components/parameters/XAppName"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/GetAvailableTypeResponse"
+          headers:
+            x-trace-id:
+              "$ref": "#/components/headers/XTraceId"
+            x-server-time:
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/broker-account/siebel/{siebelId}":
     get:
       tags:
         - broker-account
@@ -101,32 +119,30 @@ paths:
       description: Возвращает {brokerType} счета пользователя по {siebelId}
       operationId: getBrokerAccountsBySiebel
       parameters:
-        - $ref: '#/components/parameters/SiebelId'
-        - $ref: '#/components/parameters/BrokerType'
-        - $ref: '#/components/parameters/BrokerStatus'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/SiebelId"
+        - "$ref": "#/components/parameters/BrokerType"
+        - "$ref": "#/components/parameters/BrokerStatus"
+        - "$ref": "#/components/parameters/IsBlocked"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetBrokerAccountsResponse'
+                "$ref": "#/components/schemas/GetBrokerAccountsResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-  /invest/{investId}/client/info:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/invest/{investId}/client/info":
     get:
       tags:
         - invest
@@ -136,32 +152,29 @@ paths:
       security:
         - ApiKeyAuth: []
       parameters:
-        - $ref: '#/components/parameters/InvestId'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/InvestId"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetClientInformationResponse'
+                "$ref": "#/components/schemas/GetClientInformationResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        401:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-  /invest/siebel/{siebelId}:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '401':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/invest/siebel/{siebelId}":
     get:
       tags:
         - invest
@@ -169,30 +182,55 @@ paths:
       description: Возвращает инвестиционный идентификатор по {siebelId}
       operationId: getInvestId
       parameters:
-        - $ref: '#/components/parameters/SiebelId'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/SiebelId"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetInvestIdResponse'
+                "$ref": "#/components/schemas/GetInvestIdResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-  /siebel/{investId}/actual:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/invest/{investId}/sign":
+    get:
+      tags:
+        - invest
+      summary: getSigns
+      description: Возвращает список признаков клиента по {investId}
+      operationId: getSigns
+      parameters:
+        - "$ref": "#/components/parameters/InvestId"
+        - "$ref": "#/components/parameters/XAppName"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/GetSignsResponse"
+          headers:
+            x-trace-id:
+              "$ref": "#/components/headers/XTraceId"
+            x-server-time:
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/siebel/{investId}/actual":
     get:
       tags:
         - siebel
@@ -200,30 +238,27 @@ paths:
       description: Возращает актуальный sibelId по {investId}
       operationId: getActualSiebel
       parameters:
-        - $ref: '#/components/parameters/InvestId'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/InvestId"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetActualSiebelResponse'
+                "$ref": "#/components/schemas/GetActualSiebelResponse"
           headers:
             x-trace-id:
-              $ref: '#/components/headers/XTraceId'
+              "$ref": "#/components/headers/XTraceId"
             x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
-  /client-code/{clientCode}:
-
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/client-code/{clientCode}":
     get:
       tags:
         - client-code
@@ -231,50 +266,70 @@ paths:
       description: Возвращает детализацию по клиентскому счёту {clientCode}
       operationId: getClientCodeDetail
       parameters:
-        - $ref: '#/components/parameters/ClientCode'
-        - $ref: '#/components/parameters/XAppName'
-        - $ref: '#/components/parameters/XAppVersion'
+        - "$ref": "#/components/parameters/ClientCode"
+        - "$ref": "#/components/parameters/XAppName"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BrokerAccountResponse'
-        400:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
-
+                "$ref": "#/components/schemas/BrokerAccountResponse"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
+  "/application/derivatives/{brokerAccountId}/processed":
+    get:
+      tags:
+        - application
+      summary: getDerivativesApplicationProcessed
+      description: Возвращает признак наличия заявки в работе на регистрацию срочной
+        секции по договору {brokerAccountId}
+      operationId: getDerivativesApplicationProcessed
+      parameters:
+        - "$ref": "#/components/parameters/BrokerAccountId"
+        - "$ref": "#/components/parameters/XAppName"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/GetDerivativesApplicationResponse"
+          headers:
+            x-trace-id:
+              "$ref": "#/components/headers/XTraceId"
+            x-server-time:
+              "$ref": "#/components/headers/XServerTime"
+        '400':
+          "$ref": "#/components/responses/Error"
+        '422':
+          "$ref": "#/components/responses/Error"
+        '500':
+          "$ref": "#/components/responses/Error"
 components:
-
   securitySchemes:
-
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-KEY
-
   headers:
-
     XTraceId:
       description: Идентификатор ответа
       schema:
         type: string
         minLength: 1
       required: true
-
     XServerTime:
       description: Метка времени формирования ответа
       schema:
         type: string
         format: date-time
       required: true
-
   parameters:
-
     XAppName:
       in: header
       name: x-app-name
@@ -282,15 +337,6 @@ components:
       required: false
       schema:
         type: string
-
-    XAppVersion:
-      in: header
-      name: x-app-version
-      description: Версия приложения
-      required: false
-      schema:
-        type: string
-
     InvestId:
       description: Инвестиционный идентификатор
       name: investId
@@ -300,7 +346,6 @@ components:
         type: string
         format: uuid
       example: 5fb43721-2157-493f-be11-1f295cd24656
-
     SiebelId:
       description: Уникальный идентификатор siebel
       name: siebelId
@@ -309,7 +354,6 @@ components:
       schema:
         type: string
       example: 5-14HDAHOW7
-
     BrokerAccountId:
       description: Номер брокерский договора
       name: brokerAccountId
@@ -318,7 +362,6 @@ components:
       schema:
         type: string
       example: 2011907447
-
     ClientCode:
       description: Номер клиентского кода
       name: clientCode
@@ -327,7 +370,6 @@ components:
       schema:
         type: string
       example: 770000993692
-
     BrokerType:
       description: Тип брокерского счёта
       name: brokerType
@@ -335,8 +377,10 @@ components:
       required: false
       schema:
         type: string
-        enum: [broker, iis, invest-box]
-
+        enum:
+          - broker
+          - iis
+          - invest-box
     BrokerStatus:
       description: Статус брокерского счёта
       name: brokerStatus
@@ -344,24 +388,30 @@ components:
       required: false
       schema:
         type: string
-        enum: [new, opened, closed]
-
+        enum:
+          - new
+          - opened
+          - closed
+    IsBlocked:
+      description: Признак блокировки счёта
+      name: isBlocked
+      in: query
+      required: false
+      schema:
+        type: boolean
   responses:
-
     Error:
       description: Error
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            "$ref": "#/components/schemas/ErrorResponse"
       headers:
         x-trace-id:
-          $ref: '#/components/headers/XTraceId'
+          "$ref": "#/components/headers/XTraceId"
         x-server-time:
-          $ref: '#/components/headers/XServerTime'
-
+          "$ref": "#/components/headers/XServerTime"
   schemas:
-
     GetBrokerAccountsResponse:
       type: object
       required:
@@ -377,8 +427,96 @@ components:
           description: Список счетов клиента
           type: array
           items:
-            $ref: '#/components/schemas/BrokerAccount'
-
+            "$ref": "#/components/schemas/FullBrokerAccount"
+    FullBrokerAccountResponse:
+      type: object
+      required:
+        - investId
+        - brokerAccount
+      properties:
+        investId:
+          description: Инвестиционный идентификатор
+          type: string
+          format: uuid
+          example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
+        brokerAccount:
+          "$ref": "#/components/schemas/FullBrokerAccount"
+    FullBrokerAccount:
+      description: Брокерский счёт
+      type: object
+      required:
+        - id
+        - type
+        - status
+        - name
+        - openedDate
+        - clientCodes
+        - blocked
+        - hidden
+        - customTags
+        - position
+        - autoOpen
+      properties:
+        id:
+          description: Номер договора
+          type: string
+          minLength: 1
+          maxLength: 40
+        type:
+          "$ref": "#/components/schemas/BrokerAccountType"
+        status:
+          "$ref": "#/components/schemas/BrokerAccountStatus"
+        name:
+          description: Название счёта
+          type: string
+          minLength: 1
+          maxLength: 30
+          example: ИИС
+        openedDate:
+          description: Дата открытия договора
+          type: string
+          format: date
+        closedDate:
+          description: Дата закрытия договора
+          type: string
+          format: date
+          nullable: true
+        blocked:
+          description: Признак блокировки счёта
+          type: boolean
+        hidden:
+          description: Признак скрытия счёта
+          type: boolean
+        customTags:
+          description: Список клиентских кодов
+          type: array
+          items:
+            description: Пользовательский признак
+            type: string
+            enum:
+              - main-buy
+              - main-broker
+        position:
+          description: Позиция брокерского счёта
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 30
+          example: 5
+        autoOpen:
+          description: Признак автоматического открытия счёта
+          type: boolean
+        integrationId:
+          description: Интеграционный идентификатор заявки
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: 20210225133151156PTL784022
+        clientCodes:
+          description: Список клиентских кодов
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClientCode"
     GetActualSiebelResponse:
       type: object
       required:
@@ -389,7 +527,6 @@ components:
           type: string
           minLength: 1
           maxLength: 40
-
     GetClientInformationResponse:
       type: object
       required:
@@ -401,7 +538,9 @@ components:
         sex:
           description: Пол
           format: string
-          enum: [male, female]
+          enum:
+            - male
+            - female
         resident:
           description: Признак резидентства
           type: boolean
@@ -422,21 +561,25 @@ components:
           type: string
           format: date
         document:
-          $ref: '#/components/schemas/Document'
+          "$ref": "#/components/schemas/Document"
         adresses:
           description: Список адресов
           type: array
           items:
-            $ref: '#/components/schemas/Address'
+            "$ref": "#/components/schemas/Address"
         cellphone:
           description: Мобильный номер
           type: string
           nullable: true
-        emailAddress: # todo: add regexp
+        emailAddress:
           description: Адрес электронной почты
           type: string
           nullable: true
-
+        inn:
+          description: Инн клиента
+          type: string
+          maxLength: 12
+          nullable: true
     Document:
       description: Документ
       type: object
@@ -460,7 +603,6 @@ components:
         birthPlace:
           description: Место рождения
           type: string
-
     Address:
       description: Адрес
       type: object
@@ -522,7 +664,6 @@ components:
           description: Номер квартиры
           type: string
           nullable: true
-
     GetInvestIdResponse:
       type: object
       required:
@@ -533,7 +674,40 @@ components:
           type: string
           format: uuid
           example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
-
+    GetAvailableTypeResponse:
+      type: object
+      required:
+        - brokerAvailable
+        - iisAvailable
+        - investBoxAvailable
+      properties:
+        brokerAvailable:
+          description: Признак доступности брокерского договора
+          type: boolean
+        iisAvailable:
+          description: Признак доступности иис
+          type: boolean
+        investBoxAvailable:
+          description: Признак доступности инвесткопилки
+          type: boolean
+    GetSignsResponse:
+      type: object
+      properties:
+        subscription:
+          description: Активная подписка клиента
+          type: string
+          enum:
+            - premium
+            - pro
+            - private
+    GetDerivativesApplicationResponse:
+      type: object
+      required:
+        - isProcessed
+      properties:
+        isProcessed:
+          description: Признак наличия заявок в работе
+          type: boolean
     BrokerAccountResponse:
       type: object
       required:
@@ -546,8 +720,7 @@ components:
           format: uuid
           example: 803f29aa-cca4-4fe7-8254-e0005106cdc3
         brokerAccount:
-          $ref: '#/components/schemas/BrokerAccount'
-
+          "$ref": "#/components/schemas/BrokerAccount"
     BrokerAccount:
       description: Брокерский счёт
       type: object
@@ -564,9 +737,9 @@ components:
           minLength: 1
           maxLength: 40
         type:
-          $ref: '#/components/schemas/BrokerAccountType'
+          "$ref": "#/components/schemas/BrokerAccountType"
         status:
-          $ref: '#/components/schemas/BrokerAccountStatus'
+          "$ref": "#/components/schemas/BrokerAccountStatus"
         openedDate:
           description: Дата открытия договора
           type: string
@@ -580,18 +753,21 @@ components:
           description: Список клиентских кодов
           type: array
           items:
-            $ref: '#/components/schemas/ClientCode'
-
+            "$ref": "#/components/schemas/ClientCode"
     BrokerAccountType:
       description: Тип договора
       type: string
-      enum: [broker, iis, invest-box]
-
+      enum:
+        - broker
+        - iis
+        - invest-box
     BrokerAccountStatus:
       description: Статус договора
       type: string
-      enum: [new, opened, closed]
-
+      enum:
+        - new
+        - opened
+        - closed
     ClientCode:
       description: Клиентский код
       type: object
@@ -608,13 +784,14 @@ components:
         exchangeCode:
           description: Код биржи
           type: string
-          enum: [moex, spb]
+          enum:
+            - moex
+            - spb
         exchangeSection:
           description: Секция биржи
           type: string
           minLength: 1
           maxLength: 20
-
     ErrorResponse:
       description: Данные об ошибке
       type: object
@@ -642,4 +819,5 @@ components:
         errorDetails:
           description: Дополнительная информация об ошибке
           type: object
-          example: {"key": "value"}
+          example:
+            key: value

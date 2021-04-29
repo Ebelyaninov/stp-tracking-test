@@ -60,7 +60,7 @@ public class GetUntrackedContactsSuccessTest {
     void C173546() {
         String SIEBEL_ID = "5-4MMYRD1X";
         //получаем список Брокерских договоров
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         List<String> contractIdsDB = new ArrayList<>();
         //проверяем, что нет записи в tracking.contract  по найденным контрактам и или если его статус untracked
         for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {
@@ -99,7 +99,7 @@ public class GetUntrackedContactsSuccessTest {
     void C173602() {
         String SIEBEL_ID = "5-164JGM7QI";
         //получаем список открытых Брокерских договоров по SIEBLE_ID, записываем  сортируем их
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         List<String> contractIdsDB = new ArrayList<>();
         for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {
             //проверяем, что контракт не найден в tracking.contract или или если его статус untracked
@@ -138,7 +138,7 @@ public class GetUntrackedContactsSuccessTest {
     void C173590() {
         String SIEBEL_ID = "5-YE3B7BWM";
         //получаем список открытых Брокерских договоров, записываем  сортируем их
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         List<String> contractIdsDB = new ArrayList<>();
         for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {
             //проверяем, что контракт не найден в tracking.contract или если  его статус untracked

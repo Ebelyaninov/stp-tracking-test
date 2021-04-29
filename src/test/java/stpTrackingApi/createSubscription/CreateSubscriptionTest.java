@@ -419,7 +419,7 @@ public class CreateSubscriptionTest {
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())
@@ -453,7 +453,7 @@ public class CreateSubscriptionTest {
     //метод создает клиента
     void createClient(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
@@ -466,7 +466,7 @@ public class CreateSubscriptionTest {
                                   String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebleId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())

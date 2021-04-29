@@ -105,13 +105,13 @@ public class UpdateStrategySuccessTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
@@ -161,13 +161,13 @@ public class UpdateStrategySuccessTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов";
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
@@ -216,13 +216,13 @@ public class UpdateStrategySuccessTest {
         String title = "  Тест стратегия автотестов 01    ";
         String description = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная

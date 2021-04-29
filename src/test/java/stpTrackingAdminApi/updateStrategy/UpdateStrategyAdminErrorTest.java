@@ -18,9 +18,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
@@ -44,26 +44,33 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.parameter;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 
 @Epic("updateStrategy - Обновление стратегии администратором")
 @Feature("TAP-7225")
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-@DisplayName("stp-tracking-admin")
+@Subfeature("Альтернативные сценарии")
+@Service("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class})
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class
+})
 public class UpdateStrategyAdminErrorTest {
-    StrategyApi strategyApi =  ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
     Client client;
     Contract contract;
     Strategy strategy;
@@ -77,7 +84,7 @@ public class UpdateStrategyAdminErrorTest {
     @Autowired
     StrategyService strategyService;
     @Autowired
-    ContractService сontractService;
+    ContractService contractService;
     @Autowired
     ClientService clientService;
 
@@ -86,13 +93,16 @@ public class UpdateStrategyAdminErrorTest {
         step("Удаляем клиента автоследования", () -> {
             try {
                 trackingService.deleteStrategy(strategy);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
-                сontractService.deleteContract(contract);
-            } catch (Exception e) {}
+                contractService.deleteContract(contract);
+            } catch (Exception e) {
+            }
             try {
                 clientService.deleteClient(client);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -100,7 +110,6 @@ public class UpdateStrategyAdminErrorTest {
         return Stream.of(
             Arguments.of(null, "tracking_admin"),
             Arguments.of("trading-invest", null)
-
         );
     }
 
@@ -108,23 +117,24 @@ public class UpdateStrategyAdminErrorTest {
     @MethodSource("provideStringsForHeadersUpdateStrategy")
     @AllureId("482567")
     @DisplayName("C482567.UpdateStrategy.Валидация запроса: обязательные параметры (x-app-name, x-tcs-login")
-    @Subfeature("Альтернативные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482567(String name, String login) {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 001";
-        String descriptionUpdate = "new test стратегия autotest 001";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 101 - Заголовок";
+        String description = "Стратегия Autotest 101 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 101 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 101 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .strategyIdPath(strategyId.toString())
@@ -138,12 +148,13 @@ public class UpdateStrategyAdminErrorTest {
         }
         updateStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", updateStrategy.execute(ResponseBodyData::asString).substring(57, 98), is("errorMessage\":\"Сервис временно недоступен"));
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
+        assertThat("оценка стратегии не равно", strategy.getScore(), is(score));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -151,23 +162,23 @@ public class UpdateStrategyAdminErrorTest {
 
     @Test
     @AllureId("482599")
-    @DisplayName("C482599.UpdateStrategy.Валидация запроса: strategyId не в формате UUID")
-    @Subfeature("Успешные сценарии")
+    @DisplayName("C482599.UpdateStrategy. Валидация запроса: strategyId не в формате UUID")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482599() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 006";
-        String descriptionUpdate = "new test стратегия autotest 006";
+        String title = "Стратегия Autotest 102 - Заголовок";
+        String description = "Стратегия Autotest 102 - Описание";
+        String titleUpdate = "Стратегия Autotest 102 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 102 - Обновленное Описание";
         UUID strategyId = UUID.randomUUID();
-        createClientWithContractStrategy(null, ContractState.untracked, strategyId, title, description,
+        createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null);
-        //формируем body для метода updateStrategy
+            StrategyStatus.draft, 0, null, null);
+
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -178,10 +189,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -195,23 +206,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482609")
     @DisplayName("C482609.UpdateStrategy.Валидация запроса: x-tcs-login > 20 символов")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482609() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 007";
-        String descriptionUpdate = "new test стратегия autotest 007";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 103 - Заголовок";
+        String description = "Стратегия Autotest 103 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 103 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 103 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -222,10 +233,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -239,23 +250,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482619")
     @DisplayName("C482619.UpdateStrategy.Валидация запроса: параметр title < 1 символа")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482619() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
+        String title = "Стратегия Autotest 104 - Заголовок";
+        String description = "Стратегия Autotest 104 - Описание";
+        Integer score = 1;
         String titleUpdate = "";
-        String descriptionUpdate = "new test стратегия autotest 008";
-        //создаем клиента в tracking: client, contract, strategy
+        String descriptionUpdate = "Стратегия Autotest 104 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -266,10 +277,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -283,23 +294,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482621")
     @DisplayName("C482621.UpdateStrategy.Валидация запроса: параметр title > 50 символов")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482621() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
-        String descriptionUpdate = "new test стратегия autotest 009";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 105 - Заголовок";
+        String description = "Стратегия Autotest 105 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        String descriptionUpdate = "Стратегия Autotest 105 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.moderate,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -310,10 +321,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(500))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -327,23 +338,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482635")
     @DisplayName("C482635.UpdateStrategy.Валидация запроса: параметр description < 1 символа")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482635() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        String title = "Стратегия Autotest 106 - Заголовок";
+        String description = "Стратегия Autotest 106 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         String descriptionUpdate = "";
-        //создаем клиента в tracking: client, contract, strategy
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -354,10 +365,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -371,29 +382,28 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482649")
     @DisplayName("C482649.UpdateStrategy.Валидация запроса: параметр description > 500 символов")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482649() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 010";
+        String title = "Стратегия Autotest 107 - Заголовок";
+        String description = "Стратегия Autotest 107 - Описание";
+        String titleUpdate = "Стратегия Autotest 107 - Обновленый Заголовок";
         String descriptionUpdate = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план," +
             " охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо" +
             " деятельности человека. Задачей стратегии является эффективное использование наличных ресурсов для" +
             " достижения основной цели (стратегия как способ действий становится особо необходимой в ситуации, когда" +
             " для прямого достижения основной цели недостаточно наличных ресурсов).Понятие произошло от понятия военная" +
-            " стратегия — наука о ведении войны, одна из областей военного искусства, высшее его проявление, которое " +
-            "охватывает вопросы теории и практики подготовки к войне, её планирование и ведение, исследует закономерности войны.";
-        //создаем клиента в tracking: client, contract, strategy
+            " стратегия — наука о ведении войны, одна из областей военного искусства, высшее его проявление, которое" +
+            " охватывает вопросы теории и практики подготовки к войне, её планирование и ведение, исследует закономерности войны.";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
-        createClientWithContractStrategy(null, ContractState.untracked, strategyId, title, description,
+        createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null);
-        //формируем body для метода updateStrategy
+            StrategyStatus.draft, 0, null, null);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -404,10 +414,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(500))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -421,23 +431,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482680")
     @DisplayName("C482680.UpdateStrategy.Авторизация: не передан apiKey")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482680() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 011";
-        String descriptionUpdate = "new test стратегия autotest 011";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 108 - Заголовок";
+        String description = "Стратегия Autotest 108 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 108 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 108 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -447,7 +457,7 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(401));
         updateStrategy.execute(ResponseBodyData::asString);
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -461,23 +471,23 @@ public class UpdateStrategyAdminErrorTest {
     @Test
     @AllureId("482690")
     @DisplayName("C482690.UpdateStrategy.Авторизация: передано неверное значение apiKey")
-    @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482690() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 011";
-        String descriptionUpdate = "new test стратегия autotest 011";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 109 - Заголовок";
+        String description = "Стратегия Autotest 109 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 109 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 109 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "trackinaxcg"))
             .xAppNameHeader("invest")
@@ -488,7 +498,7 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -501,20 +511,20 @@ public class UpdateStrategyAdminErrorTest {
 
     @Test
     @AllureId("482702")
-    @DisplayName("C482702.UpdateStrategy.Не переданы атрибуты: title, description")
-    @Subfeature("Успешные сценарии")
+    @DisplayName("C482702.UpdateStrategy. Не переданы атрибуты: title, description, score")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482702() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 110 - Заголовок";
+        String description = "Стратегия Autotest 110 - Описание";
+        Integer score = 1;
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
-        createClientWithContractStrategy(null, ContractState.untracked, strategyId, title, description,
+        createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null);
-        //формируем body для метода updateStrategy
+            StrategyStatus.draft, 0, null, score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -525,10 +535,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -541,24 +551,24 @@ public class UpdateStrategyAdminErrorTest {
 
     @Test
     @AllureId("482703")
-    @DisplayName("C482703.UpdateStrategy.Параметр title = null")
-    @Subfeature("Успешные сценарии")
+    @DisplayName("C482703.UpdateStrategy. Параметр title = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482703() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
+        String title = "Стратегия Autotest 111 - Заголовок";
+        String description = "Стратегия Autotest 111 - Описание";
+        Integer score = 1;
         String titleUpdate = null;
-        String descriptionUpdate = "new test стратегия autotest 011";
-        //создаем клиента в tracking: client, contract, strategy
+        String descriptionUpdate = "Стратегия Autotest 111 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -569,10 +579,10 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
@@ -585,24 +595,25 @@ public class UpdateStrategyAdminErrorTest {
 
     @Test
     @AllureId("482704")
-    @DisplayName("C482704.UpdateStrategy.Параметр strategyId не существующие значение")
-    @Subfeature("Успешные сценарии")
+    @DisplayName("C482704.UpdateStrategy. Параметр strategyId не существующее значение")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482704() {
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
-        String titleUpdate = "тест стратегия autotest 012";
-        String descriptionUpdate = "new test стратегия autotest 012";
-        //создаем клиента в tracking: client, contract, strategy
+        String title = "Стратегия Autotest 112 - Заголовок";
+        String description = "Стратегия Autotest 112 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 112 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 112 - Обновленное Описание";
+        //Создаем клиента в БД tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        //формируем body для метода updateStrategy
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+
+        //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
-        //вызываем метод updateStrategy
+        //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -613,91 +624,138 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response);
-        //проверяем, что в response есть заголовки x-trace-id и x-server-time
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
     }
 
 
-/////////***методы для работы тестов**************************************************************************
-
-
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWithContractAndStrategy(ContractRole contractRole, ContractState contractState, UUID strategyId, String title, String description,
-                                             StrategyCurrency strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        String SIEBEL_ID = "5-SG3XVXLB";
-////        //находим данные клиента в сервисе счетов: договор БС, investId
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
-//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-//        String contractId = findValidAccountWithSiebleId.get(0).getId();
-
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
-        contract = new Contract()
-            .setId(contractId)
-            .setClientId(client.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contract = сontractService.saveContract(contract);
-        strategy = new Strategy()
-            .setId(strategyId)
-            .setContract(contract)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-
-        strategy = trackingService.saveStrategy(strategy);
+    private static Stream<Integer> scoresForUpdateStrategy() {
+        return Stream.of(-1, 0, 6);
     }
 
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWithContractStrategy(ContractRole contractRole, ContractState contractState, UUID strategyId, String title, String description,
-                                          StrategyCurrency strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                          StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        String SIEBEL_ID = "5-SG3XVXLB";
-//        //находим данные клиента в сервисе счетов: договор БС, investId
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
-//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-//        String contractId = findValidAccountWithSiebleId.get(0).getId();
+    @ParameterizedTest
+    @MethodSource("scoresForUpdateStrategy")
+    @AllureId("839748")
+    @DisplayName("C839748.UpdateStrategy. Валидация запроса: значение score вне интервала [1:5]")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C839748(Integer scoresForUpdateStrategy) {
+        parameter("score", scoresForUpdateStrategy);
+        String title = "Стратегия Autotest 113 - Заголовок";
+        String description = "Стратегия Autotest 113 - Описание";
+        Integer score = 3;
+        String titleUpdate = "Стратегия Autotest 113 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 113 - Обновленное Описание";
+        //Создаем клиента в tracking: client, contract, strategy
+        UUID strategyId = UUID.randomUUID();
+        createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
+            StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setTitle(titleUpdate);
+        updateStrategyRequest.setDescription(descriptionUpdate);
+        updateStrategyRequest.setScore(scoresForUpdateStrategy);
+        //Вызываем метод updateStrategy
+        Response expectedResponse = strategyApi.updateStrategy()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response);
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
+        //Находим в БД автоследования стратегию и Проверяем ее поля
+        strategy = strategyService.getStrategy(strategyId);
+        assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
+        assertThat("оценка стратегии не равно", strategy.getScore(), is(score));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
+        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
+    }
 
-        //получаем данные по клиенту  в api сервиса счетов
+
+    @Test
+    @AllureId("839768")
+    @DisplayName("C839768.UpdateStrategy. Проверка ограничений для активированной стратегии, score != null")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C839768() {
+        String title = "Стратегия Autotest 114 - Заголовок";
+        String description = "Стратегия Autotest 114 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 114 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 114 - Обновленное Описание";
+        Integer scoreUpdate = null;
+        //Создаем клиента в tracking: client, contract, strategy
+        UUID strategyId = UUID.randomUUID();
+        createClientWithContractAndStrategy(null, ContractState.untracked, strategyId, title, description,
+            StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score);
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setTitle(titleUpdate);
+        updateStrategyRequest.setDescription(descriptionUpdate);
+        updateStrategyRequest.setScore(scoreUpdate);
+        //Вызываем метод updateStrategy
+        Response expectedResponse = strategyApi.updateStrategy()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(500))
+            .execute(response -> response);
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
+        //Находим в БД автоследования стратегию и Проверяем ее поля
+        strategy = strategyService.getStrategy(strategyId);
+        assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
+        assertThat("оценка стратегии не равно", strategy.getScore(), is(score));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
+        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
+    }
+
+
+    //*** Методы для работы тестов ***
+    //Метод создает клиента, договор и стратегию в БД автоследования: tracking.client / tracking.contract / tracking.strategy
+    void createClientWithContractAndStrategy(ContractRole contractRole, ContractState contractState, UUID strategyId,
+                                             String title, String description, StrategyCurrency strategyCurrency,
+                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
+        String SIEBEL_ID = "5-SG3XVXLB";
+        //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
+            .isBlockedQuery(false)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
 
-
-        Profile profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
+
         client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+
+        //Создаем запись в таблице tracking.contract
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
@@ -705,7 +763,9 @@ public class UpdateStrategyAdminErrorTest {
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
-        contract = сontractService.saveContract(contract);
+        contract = contractService.saveContract(contract);
+
+        //Создаем запись в таблице tracking.strategy
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -716,7 +776,7 @@ public class UpdateStrategyAdminErrorTest {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(score);
         strategy = trackingService.saveStrategy(strategy);
     }
 }

@@ -1,3 +1,4 @@
+swagger: '2.0'
 
 info:
   title: Market Data Service API
@@ -155,6 +156,7 @@ paths:
               - ylow
               - yhigh
               - auction
+              - cpom
         - name: trade_ts
           in: query
           type: string
@@ -224,6 +226,7 @@ paths:
               - mp2
               - mp3
               - auction
+              - cpom
         - name: trade_ts
           in: query
           type: string
@@ -948,6 +951,9 @@ definitions:
         type: string
         format: 'date-time'
         description: Дата ввода инструмента в обращение
+      evening_session:
+        type: boolean
+        description: Доступность вечерней сессии
 
     required:
       - instrument_id
@@ -1027,6 +1033,7 @@ definitions:
           - mp2
           - mp3
           - auction
+          - cpom
       price_value:
         type: number
         format: double

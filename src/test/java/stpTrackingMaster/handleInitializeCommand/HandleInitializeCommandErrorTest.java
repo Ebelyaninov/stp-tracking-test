@@ -124,7 +124,7 @@ public class HandleInitializeCommandErrorTest {
     void C640030() {
         strategyId = UUID.randomUUID();
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
@@ -161,7 +161,7 @@ public class HandleInitializeCommandErrorTest {
     void C640028() {
         strategyId = UUID.randomUUID();
         //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //формируем событие для топика kafka tracking.master.command
         long unscaled = 4800000;

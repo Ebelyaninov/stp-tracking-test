@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.0.1
+  version: 1.1.1
 
 servers:
  # - url: http://trading-test.tcsbank.ru/tracking/admin/v1/
@@ -458,6 +458,12 @@ components:
           minLength: 1
           nullable: true
           example: Пушка
+        score:
+          description: Оценка стратегии
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
 
     GetStrategyResponse:
       type: object

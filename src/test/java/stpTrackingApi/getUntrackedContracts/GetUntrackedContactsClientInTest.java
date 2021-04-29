@@ -75,7 +75,7 @@ public class GetUntrackedContactsClientInTest {
     void C229500() {
        String SIEBEL_ID = "5-1C5XRGAM7";
         //получаем список Брокерских договоров
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         //создаем клиета в БД автоследования в tracking.client
         client = clientService.createClient(investId, ClientStatusType.registered, null);

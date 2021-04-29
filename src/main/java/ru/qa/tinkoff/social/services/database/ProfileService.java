@@ -19,15 +19,14 @@ public class ProfileService {
     final ObjectMapper objectMapper;
 
     public ProfileService(ProfileRepository profileRepository,
-                         ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper) {
         this.profileRepository = profileRepository;
         this.objectMapper = objectMapper;
     }
 
-
-    @Step("Поиск профайла по siebleId")
+    @Step("Поиск профайла по siebelId")
     @SneakyThrows
-    public Profile getProfileBySiebleId(String siebelId) {
+    public Profile getProfileBySiebelId(String siebelId) {
         Optional<Profile> profile = profileRepository.findProfileBySiebelId(siebelId);
         log.info("Successfully find profile {}", siebelId);
         Allure.addAttachment("Найденный профайл клиента", "application/json", objectMapper.writeValueAsString(siebelId));
@@ -51,9 +50,6 @@ public class ProfileService {
         Allure.addAttachment("Найденный профайл клиента", "application/json", objectMapper.writeValueAsString(profile));
         return profile.orElseThrow(() -> new RuntimeException("Не найден профайл клиента"));
     }
-
-
-
 
     @SneakyThrows
     @Step("Получение валидного аккаунта")

@@ -92,7 +92,7 @@ public class CreateStrategyErrorValidDataTest {
         String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         String description = "new test стратегия autotest CreateStrategy007";
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -159,7 +159,7 @@ public class CreateStrategyErrorValidDataTest {
             "Понятие произошло от понятия военная стратегия — наука о ведении войны, одна из областей военного искусства," +
             " высшее его проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование" +
             " и ведение, исследует закономерности войны.";
-        profile = profileService.getProfileBySiebleId(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())

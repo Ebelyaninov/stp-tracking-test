@@ -153,7 +153,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 3;
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем стратегию на ведущего
@@ -246,7 +246,7 @@ public class CreateSignalSuccessTest {
         int version = 1;
         double quantityPosMasterPortfolio = 12.0;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
@@ -343,7 +343,7 @@ public class CreateSignalSuccessTest {
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем в БД tracking статегию на ведущего
@@ -454,7 +454,7 @@ public class CreateSignalSuccessTest {
         template.sendDefault(key, event);
         template.flush();
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();

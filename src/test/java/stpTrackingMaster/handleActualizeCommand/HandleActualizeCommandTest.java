@@ -172,12 +172,12 @@ public class HandleActualizeCommandTest {
         String key = null;
         version = 3;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -276,7 +276,7 @@ public class HandleActualizeCommandTest {
         String key = null;
         version = 3;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -366,12 +366,12 @@ public class HandleActualizeCommandTest {
         BigDecimal baseMoney = new BigDecimal("4985.0");
 
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -485,12 +485,12 @@ public class HandleActualizeCommandTest {
         BigDecimal baseMoney = new BigDecimal("4985.0");
 
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -613,12 +613,12 @@ public class HandleActualizeCommandTest {
         BigDecimal baseMoney = new BigDecimal("4985.0");
 
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -743,12 +743,12 @@ public class HandleActualizeCommandTest {
         String key = null;
         version = 3;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -854,7 +854,7 @@ public class HandleActualizeCommandTest {
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -944,12 +944,12 @@ public class HandleActualizeCommandTest {
         String key = null;
         version = 2;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebleId(siebelIdMaster);
+        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
         UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
         contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
         //находим данные по ведомому в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebleId(siebelIdSlave);
-        String contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        List<BrokerAccount> findValidAccountWithSiebelIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
+        String contractIdSlave = findValidAccountWithSiebelIdSlave.get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
