@@ -69,6 +69,27 @@ public class SlaveOrderDao {
         cqlTemplate.execute(insertQueryBuider);
     }
 
+
+    public void insertIntoSlaveOrderWithFilledQuantity(String contractId, UUID strategyId, int version, int attemptsCount,
+                                     int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, BigDecimal price,
+                                     BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+        Insert insertQueryBuider = QueryBuilder.insertInto("slave_order")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("attempts_count", attemptsCount)
+            .value("action", action)
+            .value("class_code", classCode)
+            .value("filled_quantity", filledQuantity)
+            .value("idempotency_key", idempotencyKey)
+            .value("price", price)
+            .value("quantity", quantity)
+            .value("state", state)
+            .value("ticker", ticker)
+            .value("trading_clearing_account",tradingClearingAccount);
+        cqlTemplate.execute(insertQueryBuider);
+    }
+
     public void deleteSlaveOrder(String contract, UUID strategy) {
         Delete.Where delete = QueryBuilder.delete()
             .from("slave_order")

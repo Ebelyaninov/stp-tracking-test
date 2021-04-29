@@ -38,6 +38,7 @@ import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.MD.api.OrdersApi;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -71,8 +72,7 @@ import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_30_DELAY_RETRYER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("CreateSlaveOrder - Выставление заявки")
@@ -136,10 +136,10 @@ public class CreateSlaveOrderErrorTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
-    //    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
-//    MasterPortfolio masterPortfolio;
-//    SlavePortfolio slavePortfolio;
+    OrdersApi ordersApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).orders();
+        CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
     SlaveOrder slaveOrder;
     Client clientMaster;
     Contract contractMaster;
@@ -147,15 +147,11 @@ public class CreateSlaveOrderErrorTest {
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-
-
     String contractIdMaster;
-    String contractIdSlave = "2015430701";
+    String contractIdSlave;
+    Contract contract;
     int version;
-    //    BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
-    String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
-
     UUID strategyId;
 
     @AfterEach
@@ -212,13 +208,16 @@ public class CreateSlaveOrderErrorTest {
         });
     }
 
+
     @SneakyThrows
     @Test
     @AllureId("712128")
-    @DisplayName("C712128.CreateSlaveOrder.Выставление заявки. ExecutionReportStatus ='Rejected'")
-    @Subfeature("Успешные сценарии")
+    @DisplayName("C712128.CreateSlaveOrder.Выставление заявки.ExecutionReportStatus ='Rejected'")
+    @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C712128() {
+        contractIdSlave = "2015430701";
+        String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
         String ticker = "ABBV";
         String tradingClearingAccount = "L01+00000SPB";
         String classCode = "SPBXM";
@@ -236,42 +235,81 @@ public class CreateSlaveOrderErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        // создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-//        createEventInTrackingEvent(contractIdSlave);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("5"))
-            .changedAt(date)
-            .lastChangeDetectedVersion(2)
-            .lastChangeAction((byte) positionAction.getAction().getActionValue())
-            .build());
-        createMasterPortfolio(positionListMaster, 4, "6551.10");
+        // создаем портфель ведущего с позицией в кассандре
+        createMasterPortfolio (date,ticker,tradingClearingAccount, "5", 4,
+            4, "6551.10", contractIdMaster, strategyId);
         //создаем подписку на стратегию
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-        // создаем портфель slave с позицией в кассандре
-        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        positionListSl.add(SlavePortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal("2"))
-            .changedAt(date)
-            .build());
-        String baseMoneySl = "7000.0";
-        createSlavePortfolio(contractIdSlave, 2, 3, null, baseMoneySl, positionListSl);
-        Tracking.PortfolioCommand command = null;
+        createSlavePortfolio (date, ticker,tradingClearingAccount,"2",2, 3,
+            "7000.0", contractIdSlave, strategyId);
+       //вычитываем из топика кафка tracking.delay.command все offset
+        resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        //отправляем команду на синхронизацию
+        createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+        //проверяем параметры SlaveOrder
+        assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
+        //смотрим, сообщение, которое поймали в топике kafka
+        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
+            .until(
+                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
+            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        //проверяем message топика kafka
+        assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("849688")
+    @DisplayName("C849688.CreateSlaveOrder.Выставление заявки.Отмена заявки и повторного выставления, executionReportStatus = 'Cancelled' И lotsExecuted = 0")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C849688() {
+        contractIdSlave = "2015430701";
+        String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
+        String ticker = "ABBV";
+        String tradingClearingAccount = "L01+00000SPB";
+        String classCode = "SPBXM";
+        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "101.82", "100.82");
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", "101.18", "100.18");
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", "101.81", "100.81");
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        createMasterPortfolio (date,ticker,tradingClearingAccount, "5", 4,
+            4, "6551.10", contractIdMaster, strategyId);
+        //создаем подписку на стратегию
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        createSlavePortfolio (date, ticker,tradingClearingAccount,"2",2, 3,
+            "7000.0", contractIdSlave, strategyId);
         //вычитываем из топика кафка tracking.delay.command все offset
         resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
@@ -291,6 +329,134 @@ public class CreateSlaveOrderErrorTest {
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
     }
+
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("730132")
+    @DisplayName("C730132.CreateSlaveOrder.Выставление заявки.Выставление заявки.Ошибка из списка настройки fatal-error-codes")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C730132() {
+        String SIEBEL_ID_SLAVE = "5-ERK5D9UY";
+        contractIdSlave = "2000072948";
+        String ticker = "RETA";
+        String tradingClearingAccount = "L01+00000SPB";
+        String classCode = "SPBXM";
+        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "90", "90");
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", "91", "90");
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", "87", "87");
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        createMasterPortfolio (date,ticker,tradingClearingAccount, "5", 4,
+            4, "6551.10", contractIdMaster, strategyId);
+        //создаем подписку на стратегию
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        createSlavePortfolio (date, ticker,tradingClearingAccount,"2",2, 3,
+            "7000.0", contractIdSlave, strategyId);
+        //вычитываем из топика кафка tracking.delay.command все offset
+        resetOffsetToLate(TRACKING_EVENT);
+        //отправляем команду на синхронизацию
+        createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+        //смотрим, сообщение, которое поймали в топике kafka tracking.event
+        Map<String, byte[]> messageDelay = await().atMost(Duration.ofSeconds(20))
+            .until(
+                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
+            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+
+        Tracking.Event event = Tracking.Event.parseFrom(messageDelay.values().stream().findAny().get());
+        log.info("Событие  в tracking.event:  {}", event);
+        //проверяем, данные в сообщении и таб. contract
+        checkEventParam (event);
+        checkContractParam (contractIdSlave);
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("85130")
+    @DisplayName("C85130.CreateSlaveOrder.Выставление заявки.Ошибка из списка настройки reject-error-codes")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C85130() {
+        String SIEBEL_ID_SLAVE = "5-18C9NQC0R";
+        contractIdSlave = "2006508531";
+        String ticker = "ABBV";
+        String tradingClearingAccount = "L01+00000SPB";
+        String classCode = "SPBXM";
+        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+        createDataToMarketData(ticker, classCode, "90", "90", "87");
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        createMasterPortfolio (date,ticker,tradingClearingAccount, "5", 4,
+            4, "6551.10", contractIdMaster, strategyId);
+        //создаем подписку на стратегию
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        createSlavePortfolio (date, ticker,tradingClearingAccount,"2",2, 3,
+            "7000.0", contractIdSlave, strategyId);
+        //вычитываем из топика кафка tracking.delay.command все offset
+        resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        //отправляем команду на синхронизацию
+        createCommandSynTrackingSlaveCommand(contractIdSlave);
+//        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+        //проверяем параметры SlaveOrder
+//        assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
+        //смотрим, сообщение, которое поймали в топике kafka
+        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
+            .until(
+                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
+            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        //проверяем message топика kafka
+        assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+    }
+
+
+
 
 
 /////////***методы для работы тестов**************************************************************************
@@ -384,41 +550,29 @@ public class CreateSlaveOrderErrorTest {
         return price;
     }
 
+
+    String getPriceFromMarketDataOrderBook(String instrumentId, String priceForTest) {
+
+        Response res = ordersApi.mdInstrumentOrderBook()
+            .instrumentIdPath(instrumentId)
+            .requestIdQuery("111")
+            .systemCodeQuery("111")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String price = res.getBody().jsonPath().getString("asks.price[0]");
+
+        if (price == null) {
+            price = priceForTest;
+        }
+        return price;
+    }
+
     // отправляем событие в tracking.test.md.prices.int.stream
     public void createEventTrackingTestMdPricesInStream(String instrumentId, String type, String oldPrice, String newPrice) {
         String event = PriceUpdatedEvent.getKafkaTemplate(LocalDateTime.now(ZoneOffset.UTC), instrumentId, type, oldPrice, newPrice);
         String key = PriceUpdatedKey.getKafkaTemplate(instrumentId);
         //отправляем событие в топик kafka tracking.test.md.prices.int.stream
         stringSenderService.send(Topics.TRACKING_TEST_MD_PRICES_INT_STREAM, key, event);
-    }
-
-
-    void createMasterPortfolio(List<MasterPortfolio.Position> positionList, int version, String money) {
-        //создаем портфель master в cassandra
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        //с базовой валютой
-        MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
-            .quantity(new BigDecimal(money))
-            .changedAt(date)
-            .build();
-        //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
-    }
-
-    //создаем портфель master в cassandra
-    void createSlavePortfolio(String contractIdSlave, int version, int comparedToMasterVersion, String currency, String money,
-                              List<SlavePortfolio.Position> positionList) {
-        //с базовой валютой
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
-            .quantity(new BigDecimal(money))
-            .changedAt(date)
-            .build();
-        //insert запись в cassandra
-        slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList);
     }
 
 
@@ -479,5 +633,120 @@ public class CreateSlaveOrderErrorTest {
             .build();
         return event;
     }
+
+
+    public String getPriceFromExchangePositionPriceCache(String ticker, String type) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache по певой ноде
+        Response resCacheNodeZero = cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("magic-number", "0"))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+
+        ArrayList<Map<String, Map<String, Object>>> lastPriceMapListPodsZero = resCacheNodeZero.getBody().jsonPath().get();
+        for (Map<String, Map<String, Object>> e : lastPriceMapListPodsZero) {
+            Map<String, Object> keyMap = e.get("key");
+            Map<String, Object> valueMap = e.get("value");
+            if ((ticker.equals(keyMap.get("ticker"))) & (type.equals(keyMap.get("priceType")))) {
+                price = valueMap.get("price").toString();
+                break;
+            }
+        }
+        if ("".equals(price)) {
+            Response resCacheNodeOne = cacheApi.getAllEntities()
+                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader("magic-number", "1"))
+                .cacheNamePath("exchangePositionPriceCache")
+                .xAppNameHeader("tracking")
+                .xAppVersionHeader("4.5.6")
+                .xPlatformHeader("ios")
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response);
+
+            ArrayList<Map<String, Map<String, Object>>> lastPriceMapList = resCacheNodeOne.getBody().jsonPath().get();
+            for (Map<String, Map<String, Object>> e : lastPriceMapList) {
+                Map<String, Object> keyMap = e.get("key");
+                Map<String, Object> valueMap = e.get("value");
+                if ((ticker.equals(keyMap.get("ticker"))) & (type.equals(keyMap.get("priceType")))) {
+                    price = valueMap.get("price").toString();
+                    break;
+                }
+            }
+
+        }
+
+        return price;
+    }
+
+
+
+    // создаем портфель ведущего с позицией в кассандре
+    void createMasterPortfolio (Date date, String ticker, String tradingClearingAccount, String  quantity,
+                                int lastChangeDetectedVersion, int version, String money,
+                                String contractIdMaster, UUID strategyId) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantity))
+            .changedAt(date)
+            .lastChangeDetectedVersion(lastChangeDetectedVersion)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        //с базовой валютой
+        MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId,
+            version, baseMoneyPosition, positionListMaster, date);
+    }
+
+
+    // создаем портфель slave с позицией в кассандре
+    void createSlavePortfolio ( Date date, String ticker, String tradingClearingAccount, String  quantity,
+                                int version, int comparedToMasterVersion, String baseMoneySl,
+                                String contractIdSlave, UUID strategyId) {
+        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
+        positionListSl.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantity))
+            .changedAt(date)
+            .build());
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(baseMoneySl))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionListSl, date);
+
+    }
+
+    //проверяем, парамерты message события в топике tracking.event
+    void checkEventParam (Tracking.Event event) {
+        assertThat("ID события не равен", event.getAction().toString(), is("UPDATED"));
+        assertThat("ID договора не равен", event.getContract().getState().toString(), is("TRACKED"));
+        assertThat("ID стратегии не равен", (event.getContract().getBlocked()), is(true));
+    }
+    //проверяем запись по контракту в табл. contract
+    void checkContractParam (String contractIdSlave)  {
+        contract = contractService.getContract(contractIdSlave);
+        assertThat("статус клиента не равно", (contract.getState()).toString(), is("tracked"));
+        assertThat("статус клиента не равно", (contract.getBlocked()), is(true));
+    }
+
 
 }

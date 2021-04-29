@@ -25,6 +25,7 @@ public class SlaveOrderRowMapper implements RowMapper<SlaveOrder> {
             .state(row.get("state", Byte.class))
             .ticker(row.getString("ticker"))
             .tradingClearingAccount(row.getString("trading_clearing_account"))
+            .filledQuantity(row.getDecimal("filled_quantity"))
             .build();
     }
 
