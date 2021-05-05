@@ -206,8 +206,6 @@ public class HandleRetrySynchronizationCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//       создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-//        createEventInTrackingEvent(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -274,7 +272,7 @@ public class HandleRetrySynchronizationCommandTest {
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "bid"));
-        BigDecimal priceOrder = priceAsk.subtract(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.subtract(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
 
@@ -385,7 +383,7 @@ public class HandleRetrySynchronizationCommandTest {
             lotsNew = lots;
         }
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
@@ -585,7 +583,7 @@ public class HandleRetrySynchronizationCommandTest {
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
@@ -659,7 +657,7 @@ public class HandleRetrySynchronizationCommandTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
     //создаем портфель master в cassandra
@@ -673,8 +671,8 @@ public class HandleRetrySynchronizationCommandTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
     }
 
 
