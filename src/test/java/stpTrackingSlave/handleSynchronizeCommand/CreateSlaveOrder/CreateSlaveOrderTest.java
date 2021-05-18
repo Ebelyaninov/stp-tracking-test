@@ -17,6 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,16 +63,19 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 
 @Slf4j
@@ -279,7 +285,7 @@ public class CreateSlaveOrderTest {
         BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         Thread.sleep(5000);
@@ -377,8 +383,111 @@ public class CreateSlaveOrderTest {
     }
 
 
-/////////***методы для работы тестов**************************************************************************
 
+
+    private static Stream<Arguments> providePosition() {
+        return Stream.of(
+//            Arguments.of("KMX", "L01+00000SPB", "SPBXM", "104.3", "104.3", "99.71",  new BigDecimal("1"), new BigDecimal("0.01"),
+//                new BigDecimal("6"), StrategyCurrency.usd)
+            Arguments.of("VTBperp", "L01+00000SPB", "SPBBND", "108.2", "107.8", "108.8",  new BigDecimal("1"), new BigDecimal("0.01"),
+                new BigDecimal("6"), StrategyCurrency.usd)
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("providePosition")
+    @AllureId("878566")
+    @DisplayName("C878566.CreateSlaveOrder.Выставление заявки.Action = 'Sell'.Продажа позиции, которая не участвует в автоследовании")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C878566(String tickerPos, String tradingClearingAccountPos, String classCodePos, String last,
+                 String ask, String bid, BigDecimal lot,  BigDecimal minPriceIncrement, BigDecimal quantity, StrategyCurrency strategyCurrency) {
+        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+//        createDataToMarketData(tickerPos, classCodePos, "107.97", "108.17", "108.06");
+        createDataToMarketData(tickerPos, classCodePos, last, ask, bid);
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal("3"))
+            .changedAt(date)
+            .lastChangeDetectedVersion(2)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        createMasterPortfolio(positionListMaster, 2, "6551.10");
+        //создаем подписку на стратегию
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        // создаем портфель slave с позицией в кассандре
+        List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
+        positionListSl.add(SlavePortfolio.Position.builder()
+            .ticker(tickerPos)
+            .tradingClearingAccount(tradingClearingAccountPos)
+            .quantity(quantity)
+            .changedAt(date)
+            .build());
+        String baseMoneySl = "7000.0";
+        createSlavePortfolio(contractIdSlave, 1, 1, null, baseMoneySl, positionListSl);
+        //отправляем команду на синхронизацию
+        createCommandSynTrackingSlaveCommand(contractIdSlave);
+        //получаем портфель slave
+        await().atMost(FIVE_SECONDS).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //выполняем расчеты
+        BigDecimal quantityDiff = BigDecimal.ZERO;
+        for (int i = 0; i < slavePortfolio.getPositions().size(); i++) {
+            if (tickerPos.equals(slavePortfolio.getPositions().get(i).getTicker())) {
+                quantityDiff = slavePortfolio.getPositions().get(i).getQuantityDiff();
+                break;
+            }
+        }
+        // рассчитываем значение lots
+        BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        BigDecimal priceBid = new BigDecimal(getPriceFromExchangePositionPriceCache(tickerPos, "bid"));
+        BigDecimal priceOrder = priceBid.subtract(priceBid.multiply(new BigDecimal("0.002")))
+            .divide(minPriceIncrement, 0, BigDecimal.ROUND_HALF_UP)
+            .multiply(minPriceIncrement);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+        //проверяем параметры SlaveOrder
+        checkParamSlaveOrder(1, "1", "1", classCodePos, priceOrder, lots, tickerPos, tradingClearingAccountPos);
+    }
+
+
+
+
+
+
+
+
+
+    /////////***методы для работы тестов**************************************************************************
     //вызываем метод CreateSubscription для slave
     void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
         subscriptionApi.createSubscription()
@@ -616,6 +725,10 @@ public class CreateSlaveOrderTest {
         assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
 
     }
+
+
+
+
 
 
 }

@@ -211,6 +211,63 @@ public class CreateSlaveOrderErrorTest {
 
     @SneakyThrows
     @Test
+    @AllureId("701280")
+    @DisplayName("C701280.CreateSlaveOrder.Выставление заявки.Биржа не работает")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C701280() {
+        String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
+        contractIdSlave = "2047111824";
+        String ticker = "BANEP";
+        String tradingClearingAccount = "L01+00000F00";
+        String classCode = "TQBR";
+        createDataToMarketData(ticker, classCode, "1356.5", "1356.5", "1356.5");
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        createMasterPortfolio (date,ticker,tradingClearingAccount, "2", 4,
+            4, "26551.10", contractIdMaster, strategyId);
+        //создаем подписку на стратегию
+        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        createSlavePortfolio (date, ticker,tradingClearingAccount,"7",2, 3,
+            "27000.0", contractIdSlave, strategyId);
+        //вычитываем из топика кафка tracking.delay.command все offset
+        resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        //отправляем команду на синхронизацию
+        createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        //смотрим, сообщение, которое поймали в топике kafka tracking.delay.command
+        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
+            .until(
+                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
+            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+
+        //проверяем message топика kafka
+        assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+
+    }
+
+
+    @SneakyThrows
+    @Test
     @AllureId("712128")
     @DisplayName("C712128.CreateSlaveOrder.Выставление заявки.ExecutionReportStatus ='Rejected'")
     @Subfeature("Альтернативные сценарии")
@@ -340,8 +397,8 @@ public class CreateSlaveOrderErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C730132() {
-        String SIEBEL_ID_SLAVE = "5-ERK5D9UY";
-        contractIdSlave = "2000072948";
+        String SIEBEL_ID_SLAVE = "5-N5UZCQZJ";
+        contractIdSlave = "2055557934";
         String ticker = "RETA";
         String tradingClearingAccount = "L01+00000SPB";
         String classCode = "SPBXM";

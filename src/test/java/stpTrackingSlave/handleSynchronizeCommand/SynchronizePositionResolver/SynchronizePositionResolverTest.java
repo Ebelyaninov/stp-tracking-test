@@ -997,7 +997,8 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("697225")
-    @DisplayName("697225.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций, у которых slave_portfolio_position.quantity_diff > 0,первая позиция списка, для покупки которой хватает денег")
+    @DisplayName("697225.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций," +
+        " у которых slave_portfolio_position.quantity_diff > 0,первая позиция списка, для покупки которой хватает денег")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697225() {
@@ -1056,7 +1057,7 @@ public class SynchronizePositionResolverTest {
         createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        String baseMoneySlave = "89.3";
+        String baseMoneySlave = "121.3";
         createSlavePortfolioWithOutPosition(1, 1, null, baseMoneySlave, positionListSl);
         //отправляем команду на синхронизацию
         createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -1220,7 +1221,7 @@ public class SynchronizePositionResolverTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
     //создаем портфель master в cassandra
@@ -1234,8 +1235,8 @@ public class SynchronizePositionResolverTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
     }
 
 

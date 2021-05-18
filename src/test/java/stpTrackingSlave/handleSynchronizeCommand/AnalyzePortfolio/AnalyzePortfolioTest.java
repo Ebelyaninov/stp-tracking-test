@@ -138,7 +138,7 @@ public class AnalyzePortfolioTest {
     String classCode = "SPBXM";
     String contractIdSlave;
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-T0Q1FNE0";
+    String SIEBEL_ID_MASTER = "5-KHGHC74O";
     String SIEBEL_ID_SLAVE = "4-1O6RYOAP";
 
 
@@ -191,7 +191,6 @@ public class AnalyzePortfolioTest {
             }
         });
     }
-
 
     @SneakyThrows
     @Test
@@ -254,6 +253,7 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "last"));
         //получаем портфель slave
+        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -308,7 +308,7 @@ public class AnalyzePortfolioTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
@@ -398,7 +398,7 @@ public class AnalyzePortfolioTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
@@ -646,6 +646,11 @@ public class AnalyzePortfolioTest {
 
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
+        //создаем запись о стратегии клиента
+        Map <String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
+
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -657,6 +662,7 @@ public class AnalyzePortfolioTest {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1);
+//            .setFeeRate(feeRateProperties);
 
         strategy = trackingService.saveStrategy(strategy);
     }
@@ -703,7 +709,7 @@ public class AnalyzePortfolioTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPosition, positionList);
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
 
@@ -869,6 +875,15 @@ public class AnalyzePortfolioTest {
         String key = PriceUpdatedKey.getKafkaTemplate(instrumentId);
         //отправляем событие в топик kafka tracking.test.md.prices.int.stream
         stringSenderService.send(Topics.TRACKING_TEST_MD_PRICES_INT_STREAM, key, event);
+    }
+
+    void checkComparedToMasterVersion(int version) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+            if (slavePortfolio.getComparedToMasterVersion() != version) {
+                Thread.sleep(5000);
+            }
+        }
     }
 
 }

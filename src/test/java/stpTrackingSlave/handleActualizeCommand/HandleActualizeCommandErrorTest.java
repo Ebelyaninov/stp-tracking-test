@@ -628,7 +628,9 @@ public class HandleActualizeCommandErrorTest {
     @SneakyThrows
     @Test
     @AllureId("857730")
-    @DisplayName("C857730.HandleActualizeCommand. Подтверждение выставленной ранее заявки, slave_order.state = null И slave_order.ticker != position.ticker из команды И slave_order.trading_clearing_account != position.trading_clearing_account из команды")
+    @DisplayName("C857730.HandleActualizeCommand. Подтверждение выставленной ранее заявки, " +
+        "slave_order.state = null И slave_order.ticker != position.ticker из команды И " +
+        "slave_order.trading_clearing_account != position.trading_clearing_account из команды")
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C857730() {
@@ -1011,8 +1013,8 @@ public class HandleActualizeCommandErrorTest {
             .changedAt(date)
             .build();
         //insert запись в cassandra
-        slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
-            baseMoneyPosition, positionList);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
     }
 
 

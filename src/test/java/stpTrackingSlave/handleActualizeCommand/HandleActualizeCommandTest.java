@@ -247,7 +247,7 @@ public class HandleActualizeCommandTest {
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
@@ -335,7 +335,7 @@ public class HandleActualizeCommandTest {
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
@@ -859,7 +859,7 @@ public class HandleActualizeCommandTest {
         BigDecimal price = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "last"));
         BigDecimal lots = QuantityDiffticker1.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(getPriceFromExchangePositionPriceCache(ticker, "ask"));
-        BigDecimal priceOrder = priceAsk.add(price.multiply(new BigDecimal("0.002")))
+        BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
@@ -1067,6 +1067,10 @@ public class HandleActualizeCommandTest {
 
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
+        //создаем запись о стратегии клиента
+        Map <String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -1078,6 +1082,7 @@ public class HandleActualizeCommandTest {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1);
+//            .setFeeRate(feeRateProperties);
 
 
         strategy = trackingService.saveStrategy(strategy);
