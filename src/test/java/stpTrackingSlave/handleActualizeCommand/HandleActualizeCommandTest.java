@@ -220,7 +220,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
         //получаем портфель мастера
@@ -303,7 +303,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 7000, contractIdSlave,
             2, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -390,7 +390,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 3, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -523,7 +523,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
             4, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -610,7 +610,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
             3, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -702,7 +702,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
             3, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -832,7 +832,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
             4, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -920,7 +920,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 3, position, time);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -1042,7 +1042,7 @@ public class HandleActualizeCommandTest {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
 //        String key = contractIdSlave;
         kafkaSender.send("tracking.event", contractIdSlave, eventBytes);

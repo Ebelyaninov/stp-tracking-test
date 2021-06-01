@@ -653,7 +653,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем команду
         Tracking.PortfolioCommand command = createCommandSynchronize(contractIdSlave);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
@@ -665,7 +665,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.event
         kafkaSender.send("tracking.event", contractIdSlave, eventBytes);

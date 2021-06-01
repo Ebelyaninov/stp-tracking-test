@@ -26,7 +26,7 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -194,7 +194,7 @@ public class ActivateStrategySuccessTest {
         checkEventParam(event, "CREATED", strategyId, title);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, StrategyBaseCurrency.RUB, description, "active",
+        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
     }
 
@@ -249,7 +249,7 @@ public class ActivateStrategySuccessTest {
 
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, StrategyBaseCurrency.RUB, description, "draft",
+        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "draft",
             StrategyRiskProfile.CONSERVATIVE, score);
     }
 
@@ -319,7 +319,7 @@ public class ActivateStrategySuccessTest {
 
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, StrategyBaseCurrency.RUB, description, "active",
+        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
         strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -332,7 +332,7 @@ public class ActivateStrategySuccessTest {
             .execute(response -> response.asString());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, StrategyBaseCurrency.RUB, description, "active",
+        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
     }
 
@@ -360,7 +360,7 @@ public class ActivateStrategySuccessTest {
     }
 
     //Проверяем параметры стратегии
-    void checkStrategyParam(UUID strategyId, String contractId, String title, StrategyBaseCurrency baseCurrency,
+    void checkStrategyParam(UUID strategyId, String contractId, String title, Currency baseCurrency,
                             String description, String status, StrategyRiskProfile riskProfile, Integer score) {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));

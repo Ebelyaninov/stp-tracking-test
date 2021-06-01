@@ -25,7 +25,7 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -140,7 +140,7 @@ public class UpdateStrategySuccessTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -195,7 +195,7 @@ public class UpdateStrategySuccessTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -251,7 +251,7 @@ public class UpdateStrategySuccessTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов 01"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));

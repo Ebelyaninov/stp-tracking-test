@@ -90,7 +90,7 @@ public class CalculateSignalsCountTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                masterSignalDao.deleteMasterSignalByStratedy(strategyId);
+                masterSignalDao.deleteMasterSignalByStrategy(strategyId);
             } catch (Exception e) {
             }
             try {
@@ -117,7 +117,7 @@ public class CalculateSignalsCountTest {
         Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.RECALCULATE, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
@@ -152,7 +152,7 @@ public class CalculateSignalsCountTest {
         Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
@@ -189,7 +189,7 @@ public class CalculateSignalsCountTest {
         Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
@@ -243,7 +243,7 @@ public class CalculateSignalsCountTest {
         Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
@@ -272,7 +272,7 @@ public class CalculateSignalsCountTest {
         Tracking.AnalyticsCommand reCalculateCommand = createCommandAnalyticsSingnalsCount(createTimeNew, cutTime,
             Tracking.AnalyticsCommand.Operation.RECALCULATE, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", reCalculateCommand);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = reCalculateCommand.toByteArray();
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
         Thread.sleep(5000);

@@ -191,7 +191,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, 4, 12, 0,
             49900, 1, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
@@ -229,7 +229,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, 4, 12, 0,
             49900, 1, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
@@ -274,7 +274,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, versionCommand, 12,
             0, 49900, 1, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
@@ -324,7 +324,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, versionCommand, 12,
             0, 49900, 1, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
@@ -380,7 +380,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommandValid(contractIdMaster, now, version,
             10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send("tracking.master.command", key, eventBytes);
@@ -459,7 +459,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String keyMaster = contractIdMaster;
         //отправляем команду в топик kafka tracking.master.command
@@ -552,7 +552,7 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, priceS, quantityS);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String keyMaster = contractIdMaster;
         //отправляем команду в топик kafka tracking.master.command
