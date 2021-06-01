@@ -90,7 +90,7 @@ public class MasterSignalDao {
         cqlTemplate.execute(delete);
     }
 
-    public void deleteMasterSignalByStratedy(UUID strategy ) {
+    public void deleteMasterSignalByStrategy(UUID strategy ) {
         Delete.Where delete = QueryBuilder.delete()
             .from("master_signal")
             .where(QueryBuilder.eq("strategy_id", strategy));

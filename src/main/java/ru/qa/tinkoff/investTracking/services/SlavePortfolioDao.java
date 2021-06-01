@@ -61,21 +61,21 @@ public class SlavePortfolioDao {
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,
                                          List<SlavePortfolio.Position> positionList) {
-        Insert insertQueryBuider = QueryBuilder.insertInto("slave_portfolio")
+        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("compared_to_master_version", comparedToMasterVersion)
             .value("base_money_position", baseMoneyPosition)
             .value("positions",positionList);
-        cqlTemplate.execute(insertQueryBuider);
+        cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoSlavePortfolioWithChangedAt(String contractId, UUID strategyId, int version,
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,
                                          List<SlavePortfolio.Position> positionList, Date time) {
-        Insert insertQueryBuider = QueryBuilder.insertInto("slave_portfolio")
+        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
@@ -83,7 +83,7 @@ public class SlavePortfolioDao {
             .value("base_money_position", baseMoneyPosition)
             .value("changed_at", time)
             .value("positions",positionList);
-        cqlTemplate.execute(insertQueryBuider);
+        cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void deleteSlavePortfolio(String contract, UUID strategy) {

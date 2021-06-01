@@ -202,7 +202,7 @@ public class HandleActualizeCommandErrorTest {
 //        //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
         //получаем портфель slave
@@ -237,7 +237,7 @@ public class HandleActualizeCommandErrorTest {
 //        //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdMaster, 2);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         kafkaSender.send("tracking.slave.command", contractIdMaster, eventBytes);
         //получаем портфель slave
@@ -295,7 +295,7 @@ public class HandleActualizeCommandErrorTest {
         //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
         //получаем портфель slave
@@ -335,7 +335,7 @@ public class HandleActualizeCommandErrorTest {
         //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2);
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
         //получаем портфель slave
@@ -454,7 +454,7 @@ public class HandleActualizeCommandErrorTest {
                 .build())
             .build();
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
         resetOffsetToLate(TRACKING_EVENT);
@@ -606,7 +606,7 @@ public class HandleActualizeCommandErrorTest {
                 .build())
             .build();
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
         resetOffsetToLate(TRACKING_EVENT);
@@ -728,7 +728,7 @@ public class HandleActualizeCommandErrorTest {
                 .build())
             .build();
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
         resetOffsetToLate(TRACKING_EVENT);
@@ -850,7 +850,7 @@ public class HandleActualizeCommandErrorTest {
                 .build())
             .build();
         log.info("Команда в tracking.slave.command:  {}", command);
-        //кодируем событие по protobuff схеме  tracking.proto и переводим в byteArray
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
         resetOffsetToLate(TRACKING_EVENT);
@@ -917,7 +917,7 @@ public class HandleActualizeCommandErrorTest {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
@@ -928,7 +928,7 @@ public class HandleActualizeCommandErrorTest {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlaveBlock(contractIdSlave, blocked);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send("tracking.event", contractIdSlave, eventBytes);

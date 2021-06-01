@@ -1,11 +1,7 @@
 package stpTrackingApi.createStrategy;
 
-
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +22,8 @@ import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
+import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -46,14 +44,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("createStrategy - Создание стратегии")
 @Feature("TAP-6805")
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class})
+    SocialDataBaseAutoConfiguration.class
+})
 public class CreateStrategyErrorValidDataTest {
     @Autowired
     BillingService billingService;
@@ -91,36 +91,34 @@ public class CreateStrategyErrorValidDataTest {
     void C435867() {
         String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         String description = "new test стратегия autotest CreateStrategy007";
-        //находим клиента в social и берем данные по профайлу
+
+        //Находим клиента в social и берем данные по профайлу
+        /*
         profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
-//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-//        String contractId = findValidAccountWithSiebleId.get(0).getId();
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем клиента в табл. client
-        createClient(investId, ClientStatusType.registered, socialProfile);
-        //формируем тело запроса
-        BigDecimal basemoney = new BigDecimal("4000.0");
-        ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
+         */
+
+        //Находим investId клиента через API сервиса счетов
+        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
+        UUID investId = brokerAccount.getInvestId();
+        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
+
+        //Создаем клиента в табл. client
+        createClient(investId, ClientStatusType.registered, null);
+        //Формируем тело запроса
+        BigDecimal baseMoney = new BigDecimal("4000.0");
+        CreateStrategyRequest request = new CreateStrategyRequest();
         request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency.RUB);
+        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
         request.setDescription(description);
         request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
         request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(basemoney);
-        // вызываем метод CreateStrategy
+        request.setBaseMoneyPositionQuantity(baseMoney);
+        request.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -130,10 +128,10 @@ public class CreateStrategyErrorValidDataTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(500))
             .execute(response -> response);
-        //проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
+        //Проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования созданный контракт и проверяем его поля
+        //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = сontractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));
         assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
@@ -151,44 +149,43 @@ public class CreateStrategyErrorValidDataTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C435886() {
         String title = "тест стратегия06";
-        String description = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план," +
-            " охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо " +
+        String description = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план, " +
+            "охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо " +
             "деятельности человека. Задачей стратегии является эффективное использование наличных ресурсов " +
-            "для достижения основной цели (стратегия как способ действий становится особо необходимой в" +
-            " ситуации, когда для прямого достижения основной цели недостаточно наличных ресурсов). " +
-            "Понятие произошло от понятия военная стратегия — наука о ведении войны, одна из областей военного искусства," +
-            " высшее его проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование" +
-            " и ведение, исследует закономерности войны.";
+            "для достижения основной цели (стратегия как способ действий становится особо необходимой в " +
+            "ситуации, когда для прямого достижения основной цели недостаточно наличных ресурсов). " +
+            "Понятие произошло от понятия военная стратегия — наука о ведении войны, одна из областей военного искусства, " +
+            "высшее его проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование " +
+            "и ведение, исследует закономерности войны.";
+
+        //Находим клиента в social и берем данные по профайлу
+        /*
         profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
             .setImage(profile.getImage().toString());
-//        //находим investId клиента в БД сервиса счетов
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBEL_ID);
-//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-//        String contractId = findValidAccountWithSiebleId.get(0).getId();
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+         */
 
-        //создаем клиента в табл. client
-        createClient(investId, ClientStatusType.registered, socialProfile);
-        //формируем тело запроса
-        BigDecimal basemoney = new BigDecimal("6000.0");
-        ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
+        //Находим investId клиента через API сервиса счетов
+        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
+        UUID investId = brokerAccount.getInvestId();
+        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
+
+        //Создаем клиента в табл. client
+        createClient(investId, ClientStatusType.registered, null);
+
+        //Формируем тело запроса
+        BigDecimal baseMoney = new BigDecimal("6000.0");
+        CreateStrategyRequest request = new CreateStrategyRequest();
         request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency.RUB);
+        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
         request.setDescription(description);
         request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
         request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(basemoney);
-        // вызываем метод CreateStrategy
+        request.setBaseMoneyPositionQuantity(baseMoney);
+        request.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -198,10 +195,11 @@ public class CreateStrategyErrorValidDataTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(500))
             .execute(response -> response);
-        //проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
+        //Проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //находим в БД автоследования созданный контракт и проверяем его поля
+
+        //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = сontractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));
         assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
@@ -212,11 +210,22 @@ public class CreateStrategyErrorValidDataTest {
     }
 
 
-    /////////***методы для работы тестов**************************************************************************
+    // *** Методы для работы тестов ***
+    //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
+    void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
+        client = clientService.createClient(investId, clientStatusType, socialProfile);
+    }
 
-
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    void createClient(UUID investId, ClientStatusType сlientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(investId, сlientStatusType, socialProfile);
+    //Метод для получения инфо о клиенте через API - сервиса счетов
+    @Step("Получение инфо об аккаунте клиента через API сервиса счетов")
+    GetBrokerAccountsResponse getBrokerAccountByAccountPublicApi(String siebelId) {
+        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelId)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .isBlockedQuery("false")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resBrokerAccount;
     }
 }

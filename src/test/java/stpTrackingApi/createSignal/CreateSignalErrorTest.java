@@ -691,7 +691,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем тело запроса метода CreateSignal
@@ -736,7 +736,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -785,7 +785,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -835,7 +835,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -887,7 +887,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -939,7 +939,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -999,7 +999,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1049,7 +1049,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1099,7 +1099,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1149,7 +1149,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1202,7 +1202,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1253,7 +1253,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1313,7 +1313,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1373,7 +1373,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1444,7 +1444,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, strategyRiskProfile, StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
@@ -1477,17 +1477,17 @@ public class CreateSignalErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
-    /////////***методы для работы тестов**************************************************************************
+    //*** Методы для работы тестов ***
 
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    UUID createClientWithStrategy(UUID investId, ClientStatusType сlientStatusType, String money,
-                                  ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency baseCurrency,
+    //метод находит подходящий siebel в сервисе счетов и создаем запись по нему в табл. tracking.client
+    UUID createClientWithStrategy(UUID investId, ClientStatusType clientStatusType, String money,
+                                  ru.qa.tinkoff.swagger.tracking.model.Currency currency,
                                   ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile riskProfile) {
-        client = clientService.createClient(investId, сlientStatusType, null);
+        client = clientService.createClient(investId, clientStatusType, null);
         //формируем тело запроса метода createStrategy
         ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
         request.setContractId(contractId);
-        request.setBaseCurrency(baseCurrency);
+        request.setBaseCurrency(currency);
         request.setDescription("test strategy by autotest");
         request.setRiskProfile(riskProfile);
         request.setTitle("test strategy createSignal");
@@ -1508,7 +1508,7 @@ public class CreateSignalErrorTest {
     }
 
 
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
                              Boolean trackingAllowed, Integer dailyQuantityLimit) {
         //проверяем запись в tracking.exchange_position
@@ -1543,7 +1543,7 @@ public class CreateSignalErrorTest {
     }
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(UUID investId, String contractId, ContractRole contractRole,
+    void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole,
                                              ContractState contractState, UUID strategyId, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) throws JsonProcessingException {

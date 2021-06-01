@@ -1,6 +1,5 @@
 package stpTrackingApi.createStrategy;
 
-
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -30,10 +29,12 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -52,27 +53,30 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.parameter;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("createStrategy - Создание стратегии")
 @Feature("TAP-6805")
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class})
+    SocialDataBaseAutoConfiguration.class
+})
+
 public class CreateStrategyErrorTest {
     @Autowired
     BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
-    ContractService сontractService;
+    ContractService contractService;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -80,10 +84,14 @@ public class CreateStrategyErrorTest {
 
     Client client;
     Profile profile;
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();;
+    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     String SIEBEL_ID = "1-5RLRHAS";
     String siebelIdNotOpen = "5-YE3B7BWM";
     String siebelIdNotBroker = "5-1BKTNCQL4";
+
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
 
     @AfterEach
     void deleteClient() {
@@ -103,24 +111,26 @@ public class CreateStrategyErrorTest {
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateStrategy")
     @AllureId("442935")
-    @DisplayName("C442935.CreateStrategy.Валидация запроса: обязательные входные параметры в headers: X-APP-NAME, X-APP-VERSION, X-APP-PLATFORM")
+    @DisplayName("C442935.CreateStrategy. Валидация запроса: обязательные входные параметры в headers: X-APP-NAME, X-APP-VERSION, X-APP-PLATFORM")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C442935(String name, String version, String platform) {
-        String title = "тест стратегия CreateStrategy001";
-        String description = "new test стратегия autotest001";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 001";
+        String description = "New test стратегия Autotest 001";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setContractId(contractId);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .body(createStrategyRequest)
@@ -136,8 +146,8 @@ public class CreateStrategyErrorTest {
         }
         createStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", createStrategy.execute(ResponseBodyData::asString).substring(57, 98), is("errorMessage\":\"Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -146,25 +156,26 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("266603")
-    @DisplayName("C266603.CreateStrategy.Валидация запроса: siebelId не передан в заголовке с key = 'X-TCS-SIEBEL-ID'")
+    @DisplayName("C266603.CreateStrategy. Валидация запроса: siebelId не передан в заголовке с key = 'X-TCS-SIEBEL-ID'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266603() {
-        String title = "тест стратегия CreateStrategy002";
-        String description = "new test стратегия autotest002";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 002";
+        String description = "New test стратегия Autotest 002";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setContractId(contractId);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy =  strategyApi.createStrategy()
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios 8.1")
@@ -172,8 +183,8 @@ public class CreateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401));
         createStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", createStrategy.execute(ResponseBodyData::asString).substring(57, 89), is("errorMessage\":\"Недостаточно прав"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -182,25 +193,26 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("438058")
-    @DisplayName("C438058.CreateStrategy.Валидация запроса: siebelId = '' в заголовке с key = 'X-TCS-SIEBEL-ID'")
+    @DisplayName("C438058.CreateStrategy. Валидация запроса: siebelId = '' в заголовке с key = 'X-TCS-SIEBEL-ID'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C438058() {
-        String title = "тест стратегия CreateStrategy003";
-        String description = "new test стратегия autotest003";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 003";
+        String description = "New test стратегия Autotest 003";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setContractId(contractId);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy =  strategyApi.createStrategy()
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader("")
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -209,7 +221,7 @@ public class CreateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400));
         createStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", createStrategy.execute(ResponseBodyData::asString).substring(57, 98), is("errorMessage\":\"Сервис временно недоступен"));
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -218,33 +230,36 @@ public class CreateStrategyErrorTest {
 
     private static Stream<Arguments> provideStringsForBodyCreateStrategy() {
         return Stream.of(
-            Arguments.of(null, StrategyRiskProfile.CONSERVATIVE, "test"),
-            Arguments.of(StrategyBaseCurrency.RUB, null, "test"),
-            Arguments.of(StrategyBaseCurrency.RUB, StrategyRiskProfile.CONSERVATIVE, null)
+            Arguments.of(null, StrategyRiskProfile.CONSERVATIVE, "Autotest", "days"),
+            Arguments.of(Currency.RUB, null, "Autotest", "days"),
+            Arguments.of(Currency.RUB, StrategyRiskProfile.CONSERVATIVE, null, "days"),
+            Arguments.of(Currency.RUB, StrategyRiskProfile.CONSERVATIVE, "Autotest", null)
         );
     }
 
     @ParameterizedTest
     @MethodSource("provideStringsForBodyCreateStrategy")
     @AllureId("443467")
-    @DisplayName("C443467.CreateStrategy.Валидация запроса: обязательные входные параметры в body: contractId, baseCurrency, riskProfile, title")
+    @DisplayName("C443467.CreateStrategy. Валидация запроса: обязательные входные параметры в body: " +
+        "baseCurrency, riskProfile, title, positionRetentionId")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
-    void C443467(StrategyBaseCurrency baseCurrency, StrategyRiskProfile strategyRiskProfile, String title) {
-        String description = "new test стратегия autotest004";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+    void C443467(Currency baseCurrency, StrategyRiskProfile strategyRiskProfile, String title, String positionRetentionId) {
+        String description = "New test стратегия Autotest 004";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
-        BigDecimal basemoney = new BigDecimal("8000.0");
+        //Формируем body для запроса
+        BigDecimal baseMoney = new BigDecimal("8000");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
-        createStrategyRequest.setBaseCurrency(baseCurrency);
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setBaseCurrency(baseCurrency);
         createStrategyRequest.setRiskProfile(strategyRiskProfile);
+        createStrategyRequest.setBaseMoneyPositionQuantity(baseMoney);
         createStrategyRequest.setTitle(title);
-        createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy =  strategyApi.createStrategy()
+        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setPositionRetentionId(positionRetentionId);
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -253,8 +268,8 @@ public class CreateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400));
         createStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", createStrategy.execute(ResponseBodyData::asString).substring(57, 98), is("errorMessage\":\"Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -262,24 +277,25 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("499682")
-    @DisplayName("C499682.CreateStrategy.Валидация запроса: обязательный параметр в body: contractId")
+    @DisplayName("C499682.CreateStrategy. Валидация запроса: обязательный параметр в body: contractId")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C499682() {
-        String title = "тест стратегия CreateStrategy005";
-        String description = "new test стратегия autotest005";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 005";
+        String description = "New test стратегия Autotest 005";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy =  strategyApi.createStrategy()
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -288,8 +304,8 @@ public class CreateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400));
         createStrategy.execute(ResponseBodyData::asString);
         assertThat("номера стратегии не равно", createStrategy.execute(ResponseBodyData::asString).substring(57, 98), is("errorMessage\":\"Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -298,7 +314,7 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("441591")
-    @DisplayName("C441591.CreateStrategy.Валидация запроса: title < 1 символа")
+    @DisplayName("C441591.CreateStrategy. Валидация запроса: title < 1 символа")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441591() {
@@ -306,19 +322,20 @@ public class CreateStrategyErrorTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
         String title = "";
-        String description = "new test стратегия autotest CreateStrategy006";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String description = "New test стратегия Autotest 006";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
@@ -330,9 +347,9 @@ public class CreateStrategyErrorTest {
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
 //        assertThat("x-server-time не равно", expectedResponse.getHeaders().getValue("x-server-time").substring(0, 16), is(dateNow));
-        //находим в БД автоследования созданный контракт и проверяем его поля
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Находим в БД автоследования созданный контракт и Проверяем его поля
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -341,24 +358,25 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("441407")
-    @DisplayName("C441407.CreateStrategy.Валидация запроса description < 1 символa")
+    @DisplayName("C441407.CreateStrategy. Валидация запроса description < 1 символа")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441407() {
-        String title = "тест стратегия CreateStrategy007";
+        String title = "Тест стратегия CreateStrategy Autotest 007";
         String description = "";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
@@ -369,8 +387,8 @@ public class CreateStrategyErrorTest {
             .execute(response -> response);
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -379,24 +397,25 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("455499")
-    @DisplayName("C455499.CreateStrategy.Валидация запроса: SiebleId передан более 12 символов")
+    @DisplayName("C455499.CreateStrategy. Валидация запроса: длина SiebelId превышает 12 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C455499() {
-        String title = "тест стратегия CreateStrategy008";
-        String description = "new test стратегия autotest CreateStrategy008";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 008";
+        String description = "New test стратегия Autotest 008";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xTcsSiebelIdHeader("1-BJ81HL9DDYH")
             .xAppNameHeader("invest")
@@ -407,8 +426,8 @@ public class CreateStrategyErrorTest {
             .execute(response -> response);
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -417,24 +436,25 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("271533")
-    @DisplayName("C271533.CreateStrategy.clientId = NULL в ClientIdCache(несуществующие значение)")
+    @DisplayName("C271533.CreateStrategy. clientId = NULL в ClientIdCache(несуществующее значение)")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C271533() throws JSONException {
-        String title = "тест стратегия CreateStrategy009";
-        String description = "new test стратегия autotest CreateStrategy009";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 009";
+        String description = "New test стратегия Autotest 009";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader("2-BJ81HL9")
             .xAppNameHeader("invest")
@@ -448,8 +468,8 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Invest account not found не равно", errorCode, is("0350-02-B04"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -459,24 +479,25 @@ public class CreateStrategyErrorTest {
     @ParameterizedTest
     @EnumSource(value = ClientStatusType.class, names = {"none", "confirmed"})
     @AllureId("266604")
-    @DisplayName("C266604.CreateStrategy.Клиент не зарегистрирован как ведущий, client.master_status != 'registered'")
+    @DisplayName("C266604.CreateStrategy. Клиент не зарегистрирован как ведущий, client.master_status != 'registered'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266604(ClientStatusType clientStatusType) throws JSONException {
-        String title = "тест стратегия CreateStrategy010";
-        String description = "new test стратегия autotest CreateStrategy010";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 010";
+        String description = "New test стратегия Autotest 010";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, clientStatusType);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
@@ -490,8 +511,8 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("0350-02-B02"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -500,28 +521,29 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("266605")
-    @DisplayName("C266605.CreateStrategy.Тип договора клиента != 'broker'")
+    @DisplayName("C266605.CreateStrategy. Тип договора клиента != 'broker'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266605() throws JSONException {
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
-        UUID investIdNotBroker = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
-        String title = "тест стратегия CreateStrategy010";
-        String description = "new test стратегия autotest CreateStrategy010";
-        //создаем по нему запись в tracking.client
+        //Находим investId клиента в БД сервиса счетов
+        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
+        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
+        String contractId = findValidAccountWithSiebelId.get(0).getId();
+        String title = "Тест стратегия CreateStrategy Autotest 011";
+        String description = "New test стратегия Autotest 011";
+        //Создаем по нему запись в tracking.client
         createClientNotBrokerOrOpened(investIdNotBroker, siebelIdNotBroker, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(siebelIdNotBroker)
             .xAppNameHeader("invest")
@@ -535,8 +557,8 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("0350-02-V02"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -545,30 +567,31 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("266606")
-    @DisplayName("C266606.CreateStrategy.Статус договора клиента != 'opened'")
+    @DisplayName("C266606.CreateStrategy. Статус договора клиента != 'opened'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266606() throws JSONException {
-        //находим клиента со статусом договора !=opened
-        profile = profileService.getProfileBySiebelId(siebelIdNotOpen);
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindNotOpenAccountBySiebelId(siebelIdNotOpen);
-        UUID investIdNotOpen = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
-        String title = "тест стратегия CreateStrategy011";
-        String description = "new test стратегия autotest CreateStrategy011";
-        //создаем по нему запись в tracking.client
+        //Находим клиента со статусом договора !=opened
+        //profile = profileService.getProfileBySiebelId(siebelIdNotOpen);
+        //Находим investId клиента в БД сервиса счетов
+        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotOpenAccountBySiebelId(siebelIdNotOpen);
+        UUID investIdNotOpen = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
+        String contractId = findValidAccountWithSiebelId.get(0).getId();
+        String title = "Тест стратегия CreateStrategy Autotest 012";
+        String description = "New test стратегия Autotest 012";
+        //Создаем по нему запись в tracking.client
         createClientNotBrokerOrOpened(investIdNotOpen, siebelIdNotOpen, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(siebelIdNotOpen)
             .xAppNameHeader("invest")
@@ -582,8 +605,8 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("0350-02-V03"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -592,26 +615,28 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("266607")
-    @DisplayName("C266607.CreateStrategy.Договор не соответствует клиенту")
+    @DisplayName("C266607.CreateStrategy. Договор не соответствует клиенту")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266607() throws JSONException {
-        String title = "тест стратегия CreateStrategy12";
-        String description = "new test стратегия12";
-        //находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
+        String title = "Тест стратегия CreateStrategy Autotest 013";
+        String description = "New test стратегия Autotest 013";
+        //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
         List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
         client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null);
-        //вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
-        //форируем body для запроса
+
+        //Вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(brokerAccounts.get(1).getId());
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(brokerAccounts.get(0).getInvestAccount().getSiebelId())
             .xAppNameHeader("invest")
@@ -625,10 +650,10 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("0350-02-V01"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOptFirst = сontractService.findContract(brokerAccounts.get(0).getId());
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractOptFirst = contractService.findContract(brokerAccounts.get(0).getId());
         assertThat("запись по договору не равно", contractOptFirst.isPresent(), is(false));
-        Optional<Contract> contractOptSecond = сontractService.findContract(brokerAccounts.get(1).getId());
+        Optional<Contract> contractOptSecond = contractService.findContract(brokerAccounts.get(1).getId());
         assertThat("запись по договору не равно", contractOptSecond.isPresent(), is(false));
         Optional<Strategy> strategyOptFirst = strategyService.findStrategyByContractId(brokerAccounts.get(0).getId());
         assertThat("запись по стратегии не равно", strategyOptFirst.isPresent(), is(false));
@@ -639,25 +664,26 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("441659")
-    @DisplayName("C441659.CreateStrategy.Некорректно передан параметр contractId в теле запроса")
+    @DisplayName("C441659.CreateStrategy. Некорректно передан параметр contractId в теле запроса")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441659() {
-        String title = "тест стратегия CreateStrategy13";
-        String description = "new test стратегия autotest CreateStrategy13";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 014";
+        String description = "New test стратегия Autotest 014";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         String contractIdNew = contractId + "123";
-        //форируем body для запроса
+        //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractIdNew);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
@@ -666,10 +692,10 @@ public class CreateStrategyErrorTest {
             .body(createStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400));
         createStrategy.execute(ResponseBodyData::asString);
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractNewOpt = сontractService.findContract(contractIdNew);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractNewOpt = contractService.findContract(contractIdNew);
         assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -677,22 +703,23 @@ public class CreateStrategyErrorTest {
 
     @Test
     @AllureId("638559")
-    @DisplayName("C638559.CreateStrategy.Валидация запроса: не передан параметр baseMoneyPositionQuantity\n")
+    @DisplayName("C638559.CreateStrategy. Валидация запроса: не передан параметр baseMoneyPositionQuantity")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C638559() {
-        String title = "тест стратегия CreateStrategy15";
-        String description = "new test стратегия autotest CreateStrategy15";
-        //находим подходящего клиента в сервисе счетов и БД social, создаем по нему запись в tracking.client
+        String title = "Тест стратегия CreateStrategy Autotest 015";
+        String description = "New test стратегия Autotest 015";
+        //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //форируем body для запроса
+        //Формируем body для запроса
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setContractId(contractId);
-        createStrategyRequest.setBaseCurrency(StrategyBaseCurrency.RUB);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
         createStrategyRequest.setDescription(description);
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
-        //вызываем метод CreateStrategy
+        createStrategyRequest.setPositionRetentionId("days");
+        //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
@@ -701,10 +728,93 @@ public class CreateStrategyErrorTest {
             .body(createStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400));
         createStrategy.execute(ResponseBodyData::asString);
-        //проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractNewOpt = сontractService.findContract(contractId);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractNewOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
-        Optional<Contract> contractOpt = сontractService.findContract(contractId);
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
+        assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
+        Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
+        assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
+    }
+
+
+    @Test
+    @AllureId("C931443")
+    @DisplayName("C931443.CreateStrategy. Создание стратегии с недопустимым значением positionRetentionId = 'years'")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод создания стратегии на договоре ведущего")
+    void C931443() {
+        String title = "Тест стратегия CreateStrategy Autotest 016";
+        String description = "New test стратегия Autotest 016";
+        String positionRetentionId = "years";
+
+        //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
+        String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
+
+        //Формируем body для запроса
+        BigDecimal basemoney = new BigDecimal("8000.0");
+        CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
+        createStrategyRequest.setContractId(contractId);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
+        createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
+        createStrategyRequest.setTitle(title);
+        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
+        createStrategyRequest.setPositionRetentionId(positionRetentionId);
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios 8.1")
+            .body(createStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(422));
+        createStrategy.execute(ResponseBodyData::asString);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractNewOpt = contractService.findContract(contractId);
+        assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
+        assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
+        Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
+        assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
+    }
+
+
+    @Test
+    @AllureId("C931444")
+    @DisplayName("C931444.CreateStrategy. Валидация запроса: не передан параметр positionRetentionId")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод создания стратегии на договоре ведущего")
+    void C931444() {
+        String title = "Тест стратегия CreateStrategy Autotest 016";
+        String description = "New test стратегия Autotest 016";
+
+        //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
+        String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
+
+        //Формируем body для запроса
+        BigDecimal basemoney = new BigDecimal("1000.0");
+        CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
+        createStrategyRequest.setContractId(contractId);
+        createStrategyRequest.setBaseCurrency(Currency.RUB);
+        createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
+        createStrategyRequest.setTitle(title);
+        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
+        createStrategyRequest.setPositionRetentionId(null);
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios 8.1")
+            .body(createStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(400));
+        createStrategy.execute(ResponseBodyData::asString);
+        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+        Optional<Contract> contractNewOpt = contractService.findContract(contractId);
+        assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
@@ -712,25 +822,35 @@ public class CreateStrategyErrorTest {
 
 
     //*** Методы для работы тестов ***
-    //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    //Метод находит подходящий siebelId в сервисе счетов и Создает запись по нему в таблице tracking.client
     public String createClient(String SIEBEL_ID, ClientStatusType clientIdStatusType) {
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        client = clientService.createClient(investId, clientIdStatusType, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
+        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .isBlockedQuery("false")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resBrokerAccount.getInvestId();
+        String contractId = resBrokerAccount.getBrokerAccounts().get(0).getId();
+
+        client = clientService.createClient(investId, clientIdStatusType, null);
+
+        //Находим данные по клиенту в БД social
+//        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+//        new SocialProfile()
+//            .setId(profile.getId().toString())
+//            .setNickname(profile.getNickname())
+//            .setImage(profile.getImage().toString());
         return contractId;
     }
 
 
-    //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    //Метод находит подходящий siebelId в сервисе счетов и Создает запись по нему в таблице tracking.client
     public void createClientNotBrokerOrOpened(UUID investId, String SIEBEL_ID, ClientStatusType clientIdStatusType) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        //Находим данные по клиенту в БД social
+        //profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        //createClient(investId, ClientStatusType.registered, null);
         client = clientService.createClient(investId, clientIdStatusType, null);
     }
 }

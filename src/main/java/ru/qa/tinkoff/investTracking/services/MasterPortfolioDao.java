@@ -34,7 +34,6 @@ public class MasterPortfolioDao {
             "order by version desc " +
             "limit 1";
         return cqlTemplate.queryForObject(query, masterPortfolioRowMapper, contractId, strategyId);
-
     }
 
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
@@ -54,35 +53,32 @@ public class MasterPortfolioDao {
             return Optional.empty();
         }
         return Optional.of(result.get(0));
-
     }
-
-
 
 
     public void insertIntoMasterPortfolio(String contractId, UUID strategyId, int version,
                                           MasterPortfolio.BaseMoneyPosition baseMoneyPosition,
                                           List<MasterPortfolio.Position> positionList) {
-        Insert insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
+        Insert insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
             .value("positions",positionList);
-        cqlTemplate.execute(insertQueryBuider);
+        cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoMasterPortfolioWithChangedAt(String contractId, UUID strategyId, int version,
                                           MasterPortfolio.BaseMoneyPosition baseMoneyPosition,
                                           List<MasterPortfolio.Position> positionList, Date time) {
-        Insert insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
+        Insert insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
             .value("changed_at", time)
             .value("positions",positionList);
-        cqlTemplate.execute(insertQueryBuider);
+        cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void deleteMasterPortfolio(String contract, UUID strategy) {
@@ -92,5 +88,4 @@ public class MasterPortfolioDao {
             .and(QueryBuilder.eq("strategy_id", strategy));
         cqlTemplate.execute(delete);
     }
-
 }

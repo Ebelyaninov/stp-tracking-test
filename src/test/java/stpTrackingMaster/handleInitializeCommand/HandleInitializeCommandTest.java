@@ -144,7 +144,7 @@ public class HandleInitializeCommandTest {
         //создаем команду для топика tracking.master.command
         Tracking.PortfolioCommand command = createCommandToTrackingMasterCommand(now, unscaled, scale);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractId;
         //отправляем событие в топик kafka social.event
@@ -196,7 +196,7 @@ public class HandleInitializeCommandTest {
         //создаем команду для топика tracking.master.command
         Tracking.PortfolioCommand command = createCommandToTrackingMasterCommand(now, unscaled, scale);
         log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String key = contractId;
         //отправляем событие в топик kafka social.event

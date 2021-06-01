@@ -186,7 +186,7 @@ public class PrepareLimitEventTest {
         //  создаем команду для топика tracking.event, чтобы очистился кеш contractCache
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         String keyNew = contractIdSlave;
         //отправляем событие в топик kafka tracking.event
@@ -361,7 +361,7 @@ public class PrepareLimitEventTest {
         //  создаем команду для топика tracking.event, чтобы очистился кеш contractCache
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         String keyNew = contractIdSlave;
         //отправляем событие в топик kafka tracking.event
@@ -526,7 +526,7 @@ public class PrepareLimitEventTest {
         //  создаем команду для топика tracking.event, чтобы очистился кеш contractCache
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         String keyNew = contractIdSlave;
         //отправляем событие в топик kafka tracking.event
@@ -675,7 +675,7 @@ public class PrepareLimitEventTest {
         //  создаем команду для топика tracking.event, чтобы очистился кеш contractCache
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         String keyNew = contractIdSlave;
         //отправляем событие в топик kafka tracking.event
@@ -829,7 +829,7 @@ public class PrepareLimitEventTest {
         BigDecimal baseMoney = new BigDecimal("15000.0");
         ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
         request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency.RUB);
+        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
         request.setDescription(description);
         request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
         request.setTitle(title);

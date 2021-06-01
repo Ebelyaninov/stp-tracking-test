@@ -12,6 +12,7 @@ import ru.qa.tinkoff.billing.entities.InvestAccount;
 import ru.qa.tinkoff.billing.repositories.BrokerAccountRepository;
 import ru.qa.tinkoff.billing.repositories.ClientCodeRepository;
 import ru.qa.tinkoff.billing.repositories.InvestAccountRepository;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -65,7 +66,7 @@ public class BillingService {
 
 
     @SneakyThrows
-    @Step("Получение SiebelId  аккаунта c несколькими инвест счетами")
+    @Step("Получение SiebelId аккаунта c несколькими инвест счетами")
     public String getMultiOpenedInvestIdInvestId() {
         String siebelId = entityManager.createQuery(
             " SELECT ba.investAccount.siebelId from BrokerAccount ba " +
@@ -79,8 +80,9 @@ public class BillingService {
         return siebelId;
     }
 
+
     @SneakyThrows
-    @Step("Получение SiebelId  аккаунта c несколькими инвест счетами")
+    @Step("Получение SiebelId аккаунта c несколькими инвест счетами")
     public String getBrokerOpenedInvestIdInvestId() {
         String siebelId = entityManager.createQuery(
             " SELECT ba.investAccount.siebelId from BrokerAccount ba " +
@@ -95,7 +97,6 @@ public class BillingService {
     }
 
 
-
     @SneakyThrows
     @Step("Получение информации по открытым брокерским счетам аккаунта по siebelId")
     public List<BrokerAccount> getFindValidAccountWithSiebelId(String siebelId) {
@@ -103,6 +104,7 @@ public class BillingService {
         Allure.addAttachment("Данные по аккаунту клиента по siebelId = " + siebelId, "application/json", objectMapper.writeValueAsString(result));
         return result;
     }
+
 
     @SneakyThrows
     @Step("Получение информации по открытым не брокерским счетам аккаунта по siebelId")
@@ -112,14 +114,14 @@ public class BillingService {
         return result;
     }
 
+
     @SneakyThrows
-    @Step("Получение информации по  не открытым  брокерским счетам аккаунта по siebelId")
+    @Step("Получение информации по не открытым брокерским счетам аккаунта по siebelId")
     public List<BrokerAccount> getFindNotOpenAccountBySiebelId(String siebelId) {
         List<BrokerAccount> result = repository.findNotOpenAccountBySiebelId(siebelId);
         Allure.addAttachment("Данные по аккаунту клиента по siebelId = " + siebelId, "application/json", objectMapper.writeValueAsString(result));
         return result;
     }
-
 
 
     @SneakyThrows
@@ -129,6 +131,7 @@ public class BillingService {
         Allure.addAttachment("Аккаунт клиента со статусом != 'opened'", "application/json", objectMapper.writeValueAsString(result));
         return result;
     }
+
 
     @SneakyThrows
     @Step("Получение валидного аккаунта с типом != 'broker'")
@@ -140,20 +143,20 @@ public class BillingService {
 
 
     @SneakyThrows
-    @Step("Получение информации по  аккаунту по siebelId")
+    @Step("Получение информации по аккаунту по siebelId")
     public List<BrokerAccount> getFindTwoValidContract() {
         List<BrokerAccount> result = repository.findTwoValidContract();
         Allure.addAttachment("Аккаунты валидных клиентов", "application/json", objectMapper.writeValueAsString(result));
         return result;
     }
 
+
     @SneakyThrows
-    @Step("Получение информации по  clientId по номеру контракта")
+    @Step("Получение информации по clientId по номеру контракта")
     public List<ClientCode> getFindClientCodeByBrokerAccountId(String brokerAccountId) {
         List<ClientCode> result = repositoryCc.findClientCodeByBrokerAccountId(brokerAccountId);
         Allure.addAttachment("Номер clientCode клиента по brokerAccountId", "application/json", objectMapper.writeValueAsString(result));
         return result;
-
     }
 
 }

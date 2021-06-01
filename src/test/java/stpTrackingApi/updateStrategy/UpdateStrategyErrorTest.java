@@ -27,7 +27,8 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
+import ru.qa.tinkoff.swagger.tracking.model.NullableCurrency;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -153,7 +154,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -204,7 +205,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -255,7 +256,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -306,7 +307,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -357,7 +358,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -422,7 +423,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -473,7 +474,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -533,7 +534,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -586,7 +587,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -638,7 +639,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -689,7 +690,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
@@ -723,7 +724,7 @@ public class UpdateStrategyErrorTest {
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD);
+        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableCurrency.USD);
         request.setDescription(description);
         // вызываем метод updateStrategy()
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
@@ -741,7 +742,7 @@ public class UpdateStrategyErrorTest {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));

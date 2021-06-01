@@ -120,7 +120,7 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(image))
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -171,7 +171,7 @@ public class HandleSocialEventTest {
                 .build())
             .build();
 
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -220,7 +220,7 @@ public class HandleSocialEventTest {
                 .setNickname(nickName+"12345")
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -267,7 +267,7 @@ public class HandleSocialEventTest {
                 .setSiebelId(SIEBLE_ID)
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -320,7 +320,7 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(UUID.fromString("d48bc981-f3f0-4074-a73b-068cc14357d9")))
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -371,7 +371,7 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(UUID.fromString("d48bc981-f3f0-4074-a73b-068cc14357d9")))
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
@@ -422,7 +422,7 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(image))
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
+        //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event

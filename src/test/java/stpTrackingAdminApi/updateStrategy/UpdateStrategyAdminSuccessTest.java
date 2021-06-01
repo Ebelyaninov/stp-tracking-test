@@ -27,7 +27,7 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -203,7 +203,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(titleUpdate));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(descriptionUpdate));
         assertThat("оценка стратегии не равно", strategy.getScore(), is(scoreUpdate));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -270,7 +270,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равны", (strategy.getTitle()), is(titleUpdate));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(descriptionUpdate));
         assertThat("оценка стратегии не равно", strategy.getScore(), is(scoreUpdate));
-        assertThat("валюта стратегии не равны", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.USD.toString()));
+        assertThat("валюта стратегии не равны", (strategy.getBaseCurrency()).toString(), is(Currency.USD.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.AGGRESSIVE.toString()));
     }
@@ -331,7 +331,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(descriptionUpdate));
         assertThat("оценка стратегии не равно", strategy.getScore(), is(nullValue()));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.USD.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.USD.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.AGGRESSIVE.toString()));
     }
@@ -391,7 +391,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(titleUpdate));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("оценка стратегии не равна", (strategy.getScore()), is(nullValue()));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -450,7 +450,7 @@ public class UpdateStrategyAdminSuccessTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.RUB.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("название стратегии не равно", strategy.getTitle(), is(title));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("оценка стратегии не равна", (strategy.getScore()), is(scoreUpdate));
@@ -520,7 +520,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(titleUpdate));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(nullValue()));
         assertThat("оценка стратегии не равна", (strategy.getScore()), is(scoreUpdate));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.USD.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.USD.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.AGGRESSIVE.toString()));
     }
@@ -588,7 +588,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(titleUpdate));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(descriptionUpdate));
         assertThat("оценка стратегии не равна", (strategy.getScore()), is(nullValue()));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.USD.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.USD.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.AGGRESSIVE.toString()));
     }
@@ -653,7 +653,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(nullValue()));
         assertThat("оценка стратегии не равна", (strategy.getScore()), is(nullValue()));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(StrategyBaseCurrency.USD.toString()));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.USD.toString()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.AGGRESSIVE.toString()));
     }

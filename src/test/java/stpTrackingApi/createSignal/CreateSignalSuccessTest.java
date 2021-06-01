@@ -40,7 +40,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
@@ -158,7 +158,7 @@ public class CreateSignalSuccessTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем стратегию на ведущего
         strategyId = createClientWithStrategy(SIEBEL_ID, investId, ClientStatusType.registered, Double.toString(money),
-            StrategyBaseCurrency.USD, StrategyRiskProfile.AGGRESSIVE);
+            Currency.USD, StrategyRiskProfile.AGGRESSIVE);
         contract = contractService.getContract(contractId);
         strategy = strategyService.getStrategy(strategyId);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
@@ -251,7 +251,7 @@ public class CreateSignalSuccessTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -348,7 +348,7 @@ public class CreateSignalSuccessTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем в БД tracking статегию на ведущего
         strategyId = UUID.randomUUID();
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -459,7 +459,7 @@ public class CreateSignalSuccessTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWintContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
             strategyId, StrategyCurrency.usd, strategyRiskProfile, StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
@@ -489,11 +489,11 @@ public class CreateSignalSuccessTest {
     }
 
 
-    /////////***методы для работы тестов**************************************************************************
+    //*** Методы для работы тестов ***
 
-    //метод находит подходящий siebеlId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    //Метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
     UUID createClientWithStrategy(String SIEBEL_ID, UUID investId, ClientStatusType сlientStatusType, String money,
-                                  ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency baseCurrency,
+                                  ru.qa.tinkoff.swagger.tracking.model.Currency baseCurrency,
                                   ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile riskProfile) {
         client = clientService.createClient(investId, сlientStatusType, null);
         //формируем тело запроса метода createStrategy
@@ -520,7 +520,7 @@ public class CreateSignalSuccessTest {
     }
 
 
-    //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
+    //Метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
                              Boolean trackingAllowed, Integer dailyQuantityLimit) {
         //проверяем запись в tracking.exchange_position
@@ -554,8 +554,8 @@ public class CreateSignalSuccessTest {
         }
     }
 
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(UUID investId, String contractId, ContractRole contractRole,
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole,
                                              ContractState contractState, UUID strategyId, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) throws JsonProcessingException {

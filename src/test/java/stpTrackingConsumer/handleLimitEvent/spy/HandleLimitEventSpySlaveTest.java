@@ -943,7 +943,7 @@ public class HandleLimitEventSpySlaveTest {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
-        //кодируем событие по protobuff схеме и переводим в byteArray
+        //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         String key = contractIdSlave;
         //отправляем событие в топик kafka tracking.event
