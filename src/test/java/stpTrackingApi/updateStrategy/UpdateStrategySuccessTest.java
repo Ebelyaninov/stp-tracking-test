@@ -74,7 +74,7 @@ public class UpdateStrategySuccessTest {
     Contract contract;
     Strategy strategy;
     Profile profile;
-    String SIEBEL_ID = "5-10KF9CLVT";
+    String SIEBEL_ID = "5-2LV5YOS9";
 
     @AfterEach
     void deleteClient() {
@@ -105,17 +105,17 @@ public class UpdateStrategySuccessTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+//        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+//        SocialProfile socialProfile = new SocialProfile()
+//            .setId(profile.getId().toString())
+//            .setNickname(profile.getNickname())
+//            .setImage(profile.getImage().toString());
         //находим investId клиента в БД сервиса счетов
         List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebleId.get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();

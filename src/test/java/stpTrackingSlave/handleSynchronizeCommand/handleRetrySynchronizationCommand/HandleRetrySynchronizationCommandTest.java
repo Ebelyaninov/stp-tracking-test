@@ -16,12 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -30,9 +27,11 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
+import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
+import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
@@ -42,9 +41,6 @@ import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
-import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -53,7 +49,7 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
-
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -76,10 +72,14 @@ import static org.hamcrest.Matchers.notNullValue;
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class, InvestTrackingAutoConfiguration.class
+    KafkaAutoConfiguration.class,
+    InvestTrackingAutoConfiguration.class
 })
 public class HandleRetrySynchronizationCommandTest {
-    KafkaHelper kafkaHelper = new KafkaHelper();
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    StringSenderService kafkaStringSender;
     @Autowired
     BillingService billingService;
     @Autowired
@@ -102,8 +102,8 @@ public class HandleRetrySynchronizationCommandTest {
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
-    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
+//    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
@@ -252,7 +252,7 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-
+        Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем значение price из кеша exchangePositionPriceCache
@@ -275,7 +275,6 @@ public class HandleRetrySynchronizationCommandTest {
         BigDecimal priceOrder = priceAsk.subtract(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
-
         slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
         checkOrderParameters(2, "1", "2", lot, lots, priceOrder,  ticker,  tradingClearingAccount,
              classCode);
@@ -694,11 +693,10 @@ public class HandleRetrySynchronizationCommandTest {
     public void createEventTrackingTestMdPricesInStream (String instrumentId, String type, String oldPrice, String newPrice) {
         String event = PriceUpdatedEvent.getKafkaTemplate(LocalDateTime.now(ZoneOffset.UTC), instrumentId, type, oldPrice, newPrice);
         String key = PriceUpdatedKey.getKafkaTemplate(instrumentId);
-        //отправляем событие в топик kafka social.event
-        KafkaTemplate<String, String> template = kafkaHelper.createStringToStringTemplate();
-        template.setDefaultTopic("tracking.test.md.prices.int.stream");
-        template.sendDefault(key, event);
-        template.flush();
+        log.info("Событие в tracking.test.md.prices.int.stream:  {}", event);
+        //отправляем событие в топик kafka tracking.test.md.prices.int.stream
+        kafkaStringSender.send(Topics.TRACKING_TEST_MD_PRICES_INT_STREAM, key, event);
+
     }
 
     String  getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
@@ -724,27 +722,23 @@ public class HandleRetrySynchronizationCommandTest {
         String last =  getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
         String ask =  getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
         String bid =  getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
-
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", lastPrice, last);
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", askPrice, ask);
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", bidPrice, bid);
     }
 
     //метод отправляет команду с operation = 'SYNCHRONIZE'.
-    void createCommandRetrySynTrackingSlaveCommand(String contractIdSlave) throws InterruptedException {
+    void createCommandRetrySynTrackingSlaveCommand(String contractIdSlave)  {
         //создаем команду
         Tracking.PortfolioCommand command = createRetrySynchronizationCommand(contractIdSlave);
         log.info("Команда в tracking.slave.command:  {}", command);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
-        String keyMaster = contractIdSlave;
-        //отправляем команду в топик kafka tracking.master.command
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        template.setDefaultTopic("tracking.slave.command");
-        template.sendDefault(keyMaster, eventBytes);
-        template.flush();
-        Thread.sleep(10000);
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
+
+
 
     Tracking.PortfolioCommand createRetrySynchronizationCommand(String contractIdSlave) {
         //отправляем команду на синхронизацию
@@ -761,19 +755,19 @@ public class HandleRetrySynchronizationCommandTest {
     }
 
     //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
-    void createEventInTrackingEvent(String contractIdSlave) throws InterruptedException {
+    void createEventInTrackingEvent(String contractIdSlave)  {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
         log.info("Команда в tracking.event:  {}", event);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        String key = contractIdSlave;
-        //отправляем событие в топик kafka tracking.event
-        KafkaTemplate<String, byte[]> template = kafkaHelper.createStringToByteTemplate();
-        template.setDefaultTopic("tracking.event");
-        template.sendDefault(key, eventBytes);
-        template.flush();
-        Thread.sleep(10000);
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
+
+
+
+
+
     }
     Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
         OffsetDateTime now = OffsetDateTime.now();

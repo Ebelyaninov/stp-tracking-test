@@ -19,7 +19,6 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -35,7 +34,6 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -64,7 +62,6 @@ public class ActivateStrategyErrorTest {
     Client client;
     Contract contract;
     static final String SIEBEL_ID = "5-F25SJ7BD";
-
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -106,14 +103,6 @@ public class ActivateStrategyErrorTest {
         String description = "New Test Strategy 101 Autotest - Описание";
         Integer score = 1;
         UUID strategyId = UUID.randomUUID();
-        LocalDateTime dateCreateTr = null;
-        Tracking.Event event = null;
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -125,7 +114,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем ActiveStrategy
@@ -169,14 +158,6 @@ public class ActivateStrategyErrorTest {
         String description = "New Test Strategy 102 Autotest - Описание";
         Integer score = 1;
         UUID strategyId = UUID.randomUUID();
-        LocalDateTime dateCreateTr = null;
-        Tracking.Event event = null;
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -188,7 +169,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy с некоррентным значением api-key
@@ -211,14 +192,6 @@ public class ActivateStrategyErrorTest {
         String description = "New Test Strategy 103 Autotest - Описание";
         Integer score = 1;
         UUID strategyId = UUID.randomUUID();
-        LocalDateTime dateCreateTr = null;
-        Tracking.Event event = null;
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -229,9 +202,8 @@ public class ActivateStrategyErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy без api-key
@@ -272,14 +244,6 @@ public class ActivateStrategyErrorTest {
         String description = "New Test Strategy 104 Autotest - Описание";
         Integer score = null;
         UUID strategyId = UUID.randomUUID();
-        LocalDateTime dateCreateTr = null;
-        Tracking.Event event = null;
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -290,9 +254,8 @@ public class ActivateStrategyErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft, при этом score передаем как null
-        createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy без api-key

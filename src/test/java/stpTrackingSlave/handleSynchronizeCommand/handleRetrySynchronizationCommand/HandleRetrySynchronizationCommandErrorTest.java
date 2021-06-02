@@ -2,10 +2,7 @@ package stpTrackingSlave.handleSynchronizeCommand.handleRetrySynchronizationComm
 
 import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
@@ -19,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -32,24 +28,24 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
-import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
-import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionRequest;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -59,6 +55,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -79,11 +76,25 @@ import static org.hamcrest.Matchers.notNullValue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class, InvestTrackingAutoConfiguration.class
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class,
+    InvestTrackingAutoConfiguration.class
 })
 public class HandleRetrySynchronizationCommandErrorTest {
-    KafkaHelper kafkaHelper = new KafkaHelper();
+
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    StringSenderService kafkaStringSender;
+
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
+
+   KafkaHelper kafkaHelper = new KafkaHelper();
+
+
+
     @Autowired
     BillingService billingService;
     @Autowired
@@ -107,10 +118,8 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Autowired
     SubscriptionService subscriptionService;
 
-//    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
-//    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     SlavePortfolio slavePortfolio;
@@ -250,7 +259,12 @@ public class HandleRetrySynchronizationCommandErrorTest {
         //смотрим, что заявка не выставлялась
         Optional<SlaveOrder> order = slaveOrderDao.findSlaveOrder(contractIdMaster, strategyId);
         assertThat("запись по портфелю не равно", order.isPresent(), is(false));
+
+
         // ловим событие о блокировке slave в топике tracking.event
+
+
+
         Tracking.Event event = null;
         try (KafkaMessageConsumer<String, byte[]> messageConsumer =
                  new KafkaMessageConsumer<>(kafkaHelper, "tracking.event",
@@ -819,11 +833,13 @@ public class HandleRetrySynchronizationCommandErrorTest {
 
 
 
+    @Step("Переместить offset до текущей позиции")
+    public void resetOffsetToLate(Topics topic) {
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
+        await().atMost(Duration.ofSeconds(30))
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
 
-
-
-
-
-
+    }
 
 }

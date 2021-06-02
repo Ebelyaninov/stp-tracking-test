@@ -29,7 +29,7 @@ import ru.qa.tinkoff.investTracking.services.SignalFrequencyDao;
 import ru.qa.tinkoff.investTracking.services.SignalsCountDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -48,6 +48,7 @@ import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
 
 @Slf4j
 @Epic("calculateSignalFrequency Пересчет частоты создания сигналов")
@@ -57,8 +58,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class,
-    ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 public class СalculateSignalFrequencyTest {
     @Autowired
@@ -117,7 +117,7 @@ public class СalculateSignalFrequencyTest {
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         Date start = Date.from(cutTime.minusDays(30).toInstant());
         Date end = Date.from(cutTime.toInstant());
@@ -155,7 +155,7 @@ public class СalculateSignalFrequencyTest {
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
@@ -193,7 +193,7 @@ public class СalculateSignalFrequencyTest {
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
@@ -207,7 +207,7 @@ public class СalculateSignalFrequencyTest {
         assertThat("частота создания сигналов по стратегии не равно", signalFrequency.getCount(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //отправляем событие в топик kafka tracking.analytics.command повторно
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
@@ -249,7 +249,7 @@ public class СalculateSignalFrequencyTest {
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
@@ -277,7 +277,7 @@ public class СalculateSignalFrequencyTest {
         log.info("Команда в tracking.analytics.command:  {}", reCalculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = reCalculateCommand.toByteArray();
-        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
         Thread.sleep(5000);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));

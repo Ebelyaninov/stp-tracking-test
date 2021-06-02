@@ -16,19 +16,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
@@ -45,8 +42,8 @@ import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
 
-//import ru.tinkoff.inv.platform.core.kafka.configs.KafkaConfiguration;
 
 @Epic("handleSocialEvent - Обработка событий об изменении социального профиля в Пульсе")
 @Feature("TAP-7386")
@@ -55,24 +52,21 @@ import static org.hamcrest.Matchers.notNullValue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class, KafkaAutoConfiguration.class
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class
 })
 public class HandleSocialEventTest {
 
-    KafkaHelper kafkaHelper = new KafkaHelper();
     UtilsTest utilsTest = new UtilsTest();
-
-    ClientApi clientApi;
     Client client;
     Profile profile;
-
+    @Autowired
+    ByteToByteSenderService kafkaSender;
     @Autowired
     BillingService billingService;
-    BrokerAccount validBrokerAccount;
     @Autowired
     ProfileService profileService;
-
-
     @Autowired
     ClientService clientService;
 
@@ -116,7 +110,7 @@ public class HandleSocialEventTest {
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
                 .setSiebelId(SIEBLE_ID)
-                .setNickname(nickName+"12345")
+                .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(image))
                 .build())
             .build();
@@ -124,17 +118,14 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
-        getClientByNickName(investId, nickName+"12345");
+        getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла клиента не равно", client.getSocialProfile().getId(), is(profile.getId().toString()));
-        assertThat("nickname клиента не равно", client.getSocialProfile().getNickname(), is(nickName+"12345"));
+        assertThat("nickname клиента не равно", client.getSocialProfile().getNickname(), is(nickName + "12345"));
         assertThat("image клиента не равно", client.getSocialProfile().getImage(), is(image.toString()));
     }
 
@@ -170,15 +161,14 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(UUID.fromString("d48bc981-f3f0-0000-0000-068cc14357d9")))
                 .build())
             .build();
+        //кодируем событие по protobuff схеме social и переводим в byteArray
 
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        //отправляем событие в топик kafka social.event
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что image изменился
         getClientByImage(investId, "d48bc981-f3f0-0000-0000-068cc14357d9");
         client = clientService.getClient(investId);
@@ -217,24 +207,21 @@ public class HandleSocialEventTest {
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
                 .setSiebelId(SIEBLE_ID)
-                .setNickname(nickName+"12345")
+                .setNickname(nickName + "12345")
                 .build())
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
-        getClientByNickName(investId, nickName+"12345");
+        getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("registered"));
         assertThat("идентификатор профайла клиента не равно", client.getSocialProfile().getId(), is(profile.getId().toString()));
-        assertThat("nickname клиента не равно", client.getSocialProfile().getNickname(), is(nickName+"12345"));
+        assertThat("nickname клиента не равно", client.getSocialProfile().getNickname(), is(nickName + "12345"));
         assertThat("image клиента не равно", client.getSocialProfile().getImage(), is(is(IsNull.nullValue())));
     }
 
@@ -271,10 +258,7 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, "");
         client = clientService.getClient(investId);
@@ -316,7 +300,7 @@ public class HandleSocialEventTest {
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(profileId))
                 .setSiebelId(SIEBLE_ID)
-                .setNickname(nickName+"12345")
+                .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(UUID.fromString("d48bc981-f3f0-4074-a73b-068cc14357d9")))
                 .build())
             .build();
@@ -324,12 +308,10 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        //отправляем событие в топик kafka social.event
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName  не изменился
-        getClientByNickName(investId, nickName+"12345");
+        getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
@@ -367,7 +349,7 @@ public class HandleSocialEventTest {
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
                 .setSiebelId(SIEBLE_ID)
-                .setNickname(nickName+"12345")
+                .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(UUID.fromString("d48bc981-f3f0-4074-a73b-068cc14357d9")))
                 .build())
             .build();
@@ -375,12 +357,9 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
-        getClientByNickName(investId, nickName+"12345");
+        getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
@@ -418,7 +397,7 @@ public class HandleSocialEventTest {
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
                 .setSiebelId(SIEBLE_ID)
-                .setNickname(nickName+"12345")
+                .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(image))
                 .build())
             .build();
@@ -426,12 +405,10 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
         //отправляем событие в топик kafka social.event
-        KafkaTemplate<byte[], byte[]> template = kafkaHelper.createByteToByteTemplate();
-        template.setDefaultTopic("social.event");
-        template.sendDefault(keyBytes, eventBytes);
-        template.flush();
+        //отправляем событие в топик kafka social.event
+        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
-        getClientByNickName(investId, nickName+"12345");
+        getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("none"));
@@ -441,14 +418,10 @@ public class HandleSocialEventTest {
     }
 
 
-
-
 //методы для работы тестов*****************************************************************************
 
     //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
     public UUID createClient(String SIEBLE_ID, ClientStatusType сlientStatusType) {
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebleId(SIEBLE_ID);
-//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         UUID investId = UUID.fromString("f5b3a54b-0ea3-44f4-af13-50e33d92646b");
         //находим данные по клиенту в БД social
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);

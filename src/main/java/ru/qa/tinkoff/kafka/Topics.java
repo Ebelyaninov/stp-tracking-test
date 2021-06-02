@@ -19,6 +19,9 @@ public enum Topics {
     TRACKING_MOEX_RETRYER_COMMAND("tracking.moex.retryer.command"),
     TRACKING_MOEXPLUS_RETRYER_COMMAND("tracking.moex-plus.retryer.command"),
     TRACKING_TEST_MD_PRICES_INT_STREAM("tracking.test.md.prices.int.stream"),
-    TRACKING_ANALYTICS_COMMAND("tracking.analytics.command");
+    TRACKING_ANALYTICS_COMMAND("tracking.analytics.command"),
+    SOCIAL_EVENT("social.event"),
+    TRACKING_SPB_MORNING_RETRYER_COMMAND("tracking.spb-morning.retryer.command"),
+    TRACKING_FX_RETRYER_COMMAND("tracking.fx.retryer.command"),;
     private final String name;
 }

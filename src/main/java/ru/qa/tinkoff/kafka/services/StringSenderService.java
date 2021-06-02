@@ -1,13 +1,12 @@
 package ru.qa.tinkoff.kafka.services;
 
 import io.qameta.allure.Step;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.kafka.common.header.Headers;
+import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.kafka.Topics;
-
-import java.util.Properties;
+import ru.tinkoff.invest.sdet.kafka.prototype.sender.BoostedSender;
 
 import static ru.qa.tinkoff.utils.AllureUtils.addTextAttachment;
 
@@ -16,24 +15,24 @@ import static ru.qa.tinkoff.utils.AllureUtils.addTextAttachment;
  * Класс для реализации отправки в Kafka топик сообщений
  */
 @Slf4j
-public class StringSenderService implements DisposableBean {
-    private final KafkaProducer<String, String> kafkaProducer;
+@Service
+@RequiredArgsConstructor
+public class StringSenderService {
 
-    public StringSenderService(final Properties properties) {
-        this.kafkaProducer = new KafkaProducer<>(properties);
-    }
+    private final BoostedSender<String, String> boostedSender;
 
     @Step("Отправить сообщения в топик {topic.name}")
     public void send(Topics topic, String key, String value) {
         log.info("sending message to topic: {}:\n{}", topic.getName(), value);
-        kafkaProducer.send(new ProducerRecord<>(topic.getName(), key, value));
-        kafkaProducer.flush();
+        boostedSender.send(topic.getName(), key, value);
         addTextAttachment("Сообщение", value);
     }
 
-    @Override
-    public void destroy() throws Exception {
-        log.info("closing connection");
-        kafkaProducer.close();
+    @Step("Отправить сообщения в топик {topic.name}")
+    public void send(Topics topic, String key, String value, Headers headers) {
+        log.info("sending message to topic: {}:\n{}", topic.getName(), value);
+        boostedSender.send(topic.getName(), key, value, headers);
+        addTextAttachment("Сообщение", value);
     }
+
 }

@@ -21,7 +21,7 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
+
 import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;

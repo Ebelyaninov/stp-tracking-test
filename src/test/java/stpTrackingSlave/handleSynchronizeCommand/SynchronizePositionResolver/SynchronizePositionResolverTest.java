@@ -1,7 +1,6 @@
 package stpTrackingSlave.handleSynchronizeCommand.SynchronizePositionResolver;
 
 
-
 import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
@@ -32,9 +31,11 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
@@ -47,16 +48,16 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -76,14 +77,12 @@ import static org.hamcrest.Matchers.notNullValue;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class,
-    ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 
 public class SynchronizePositionResolverTest {
-
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
+    @Autowired
+    StringToByteSenderService kafkaSender;
     @Autowired
     StringSenderService stringSenderService;
     @Autowired
@@ -109,10 +108,10 @@ public class SynchronizePositionResolverTest {
     @Autowired
     SubscriptionService subscriptionService;
 
-
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.
         invoker.ApiClient.Config.apiConfig()).prices();
+
     SlavePortfolio slavePortfolio;
     SlaveOrder slaveOrder;
     Client clientMaster;
@@ -304,8 +303,6 @@ public class SynchronizePositionResolverTest {
         //получаем данные по клиенту slave в БД сервиса счетов
         List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID_SLAVE);
         contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
-//        создаем команду для топика tracking.event, чтобы очистился кеш contractCache
-//        createEventInTrackingEvent(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -1144,7 +1141,7 @@ public class SynchronizePositionResolverTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -1156,7 +1153,7 @@ public class SynchronizePositionResolverTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
+        kafkaSender.send(Topics.TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
 

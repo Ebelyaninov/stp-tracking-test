@@ -1,6 +1,5 @@
 package stpTrackingRetryer.handle30DelayRetryCommand;
 
-import com.google.protobuf.BytesValue;
 import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
@@ -8,8 +7,9 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +27,9 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -40,28 +43,24 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static java.rmi.server.LogStream.log;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("handle30DelayRetryCommand - Отправка отложенной команды по истечении 30 секунд")
@@ -74,16 +73,14 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class
+    KafkaAutoConfiguration.class
+
 })
 public class Handle30DelayRetryCommandTest {
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
-
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     BillingService billingService;
     @Autowired
@@ -237,13 +234,14 @@ public class Handle30DelayRetryCommandTest {
         //отправляем команду на синхронизацию
         OffsetDateTime time0 = OffsetDateTime.now();
         createCommandTrackingDelayCommand(contractIdSlave, time0);
-        //смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> messageDelay = await().atMost(Duration.ofSeconds(31))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Thread.sleep(30000);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         OffsetDateTime time1 = OffsetDateTime.now();
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messageDelay.values().stream().findAny().get());
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем параметры команды по синхронизации
         assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
@@ -261,11 +259,11 @@ public class Handle30DelayRetryCommandTest {
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        Handle30DelayRetryCommandTest.log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
-        Handle30DelayRetryCommandTest.log.info("Все сообщения из {} топика вычитаны", topic.getName());
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
+
     }
 
 
@@ -310,11 +308,13 @@ public class Handle30DelayRetryCommandTest {
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //создаем список заголовков
-        List<Header> headers = new ArrayList<>();
-        headers.add(new RecordHeader("destination.topic.name", "tracking.slave.command".getBytes()));
-        headers.add(new RecordHeader("delay.seconds", "30".getBytes()));
+        Headers headers = new RecordHeaders();
+        headers.add("destination.topic.name", "tracking.slave.command".getBytes());
+        headers.add("delay.seconds", "30".getBytes());
         //отправляем команду в топик kafka tracking.30.delay.retryer.command
-        kafkaSender.send("tracking.30.delay.retryer.command", contractIdSlave, eventBytes, headers);
+        kafkaSender.send(TRACKING_30_DELAY_RETRYER_COMMAND, contractIdSlave, eventBytes, headers);
+        //kafkaSender.send("tracking.30.delay.retryer.command", contractIdSlave, eventBytes, headers);
+
     }
 
 
@@ -326,7 +326,7 @@ public class Handle30DelayRetryCommandTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -409,6 +409,4 @@ public class Handle30DelayRetryCommandTest {
         slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
             baseMoneyPosition, positionList);
     }
-
-
 }

@@ -9,16 +9,14 @@ import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
@@ -31,11 +29,12 @@ import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.OrdersApi;
@@ -45,7 +44,6 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -54,24 +52,21 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.tracking.steps.StpTrackingSlaveSteps;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
 import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
@@ -85,23 +80,18 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class,
-    ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 public class CreateSlaveOrderErrorTest {
 
-
     @Autowired
     StringSenderService stringSenderService;
-
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
-
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    ByteArrayReceiverService receiverBytes;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
 
     @Autowired
     BillingService billingService;
@@ -253,12 +243,11 @@ public class CreateSlaveOrderErrorTest {
         createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
         //смотрим, сообщение, которое поймали в топике kafka tracking.delay.command
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
-
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
@@ -309,17 +298,17 @@ public class CreateSlaveOrderErrorTest {
         resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
         createCommandSynTrackingSlaveCommand(contractIdSlave);
-        Thread.sleep(5000);
+       Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
         //смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
@@ -376,12 +365,11 @@ public class CreateSlaveOrderErrorTest {
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
-        //смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND);
+        if (messages.isEmpty()) {
+            throw new RuntimeException("Нет сообщений todo");
+        }
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
@@ -439,12 +427,12 @@ public class CreateSlaveOrderErrorTest {
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        Map<String, byte[]> messageDelay = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
 
-        Tracking.Event event = Tracking.Event.parseFrom(messageDelay.values().stream().findAny().get());
         log.info("Событие  в tracking.event:  {}", event);
         //проверяем, данные в сообщении и таб. contract
         checkEventParam (event);
@@ -455,11 +443,11 @@ public class CreateSlaveOrderErrorTest {
 
     @SneakyThrows
     @Test
-    @AllureId("85130")
-    @DisplayName("C85130.CreateSlaveOrder.Выставление заявки.Ошибка из списка настройки reject-error-codes")
+    @AllureId("851304")
+    @DisplayName("C851304.CreateSlaveOrder.Выставление заявки.Ошибка из списка настройки reject-error-codes")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
-    void C85130() {
+    void C851304() {
         String SIEBEL_ID_SLAVE = "5-18C9NQC0R";
         contractIdSlave = "2006508531";
         String ticker = "ABBV";
@@ -500,13 +488,11 @@ public class CreateSlaveOrderErrorTest {
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
-//        assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
-        //смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
@@ -520,10 +506,9 @@ public class CreateSlaveOrderErrorTest {
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 
@@ -656,7 +641,7 @@ public class CreateSlaveOrderErrorTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
 
@@ -668,7 +653,7 @@ public class CreateSlaveOrderErrorTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.event
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -804,6 +789,5 @@ public class CreateSlaveOrderErrorTest {
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("tracked"));
         assertThat("статус клиента не равно", (contract.getBlocked()), is(true));
     }
-
 
 }
