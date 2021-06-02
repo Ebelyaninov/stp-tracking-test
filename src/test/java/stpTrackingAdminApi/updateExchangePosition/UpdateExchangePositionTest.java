@@ -1,13 +1,11 @@
 package stpTrackingAdminApi.updateExchangePosition;
 
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
+import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.services.ByteToByteReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -33,29 +31,38 @@ import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ExchangePositionExchange;
 import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.tinkoff.trading.tracking.Tracking;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-
+import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
+@Slf4j
 @Epic("UpdateExchangePosition - Редактирования биржевой позиции")
 @Feature("TAP-7224")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class, SocialDataBaseAutoConfiguration.class})
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class
+})
 public class UpdateExchangePositionTest {
     ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
-    private KafkaHelper kafkaHelper = new KafkaHelper();
+
 
     @Autowired
     ExchangePositionService exchangePositionService;
-
+    @Autowired
+    ByteToByteReceiverService kafkaReceiver;
     @AfterEach
     void deleteClient() {
         step("Удаляем инструмент автоследования", () -> {
@@ -88,55 +95,51 @@ public class UpdateExchangePositionTest {
         String otcClassCodeNew = "CETS123";
         //создаем запись в tracking.exchange_position
         createExchangePosition(ticker, tradingClearingAccount, ExchangePositionExchange.SPB, otcTicker, otcClassCode);
-        //включаем kafkaConsumer и слушаем топик tracking.exchange-position
-        try (KafkaMessageConsumer<byte[], byte[]> messageConsumer =
-                 new KafkaMessageConsumer<>(kafkaHelper, "tracking.exchange-position",
-                     ByteArrayDeserializer.class, ByteArrayDeserializer.class)) {
-            messageConsumer.startUp();
-            //формируем тело запроса
-            UpdateExchangePositionRequest updateExchangePosition = createBodyRequestAllParam(ticker, tradingClearingAccount,
-                otcTickerNew, otcClassCodeNew, limit, period, dailyQuantityLimit, ExchangePosition.ExchangeEnum.SPB);
-            //вызываем метод updateExchangePosition
-            ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
-                .xAppNameHeader("invest")
-                .xDeviceIdHeader("test")
-                .xTcsLoginHeader("tracking_admin")
-                .body(updateExchangePosition)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
-            //смотрим, сообщение, которое поймали в топике kafka
-            KafkaMessageConsumer.Record<byte[], byte[]> record = messageConsumer.await()
-                .orElseThrow(() -> new RuntimeException("Сообщение не получено"));
-
-            //проверяем, что пришло в ответ от метода updateExchangePosition
-            assertThat("ID инструмента не равен", expecResponse.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(tradingClearingAccount));
-            assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
-            assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
-            assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit().intValue(), is(dailyQuantityLimit));
-            assertThat("Идентификатор периода не равен", expecResponse.getOrderQuantityLimits().get(0).getPeriodId(), is(period));
-            assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
-            assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(otcTickerNew));
-            assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(otcClassCodeNew));
-
-            //парсим сообщение
-            Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.parseFrom(record.key);
-            Tracking.ExchangePosition exchangePosition = Tracking.ExchangePosition.parseFrom(record.value);
-            //проверяем ключ сообщения топика kafka
-            assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
-            //проверяем message топика kafka
-            assertThat("ID инструмента не равен", exchangePosition.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", exchangePosition.getTradingClearingAccount(), is(tradingClearingAccount));
-            assertThat("Код биржи не равен", exchangePosition.getExchange().toString(), is(exchange));
-            assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePosition.getTrackingAllowed(), is(true));
-            assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit().getValue(), is(dailyQuantityLimit));
-            assertThat("Идентификатор периода не равен", exchangePosition.getOrderQuantityLimit(0).getPeriodId(), is(period));
-            assertThat("Лимит количества единиц актива по заявке не равен", exchangePosition.getOrderQuantityLimit(0).getLimit(), is(limit));
-            assertThat("Внебиржевой тикер инструмента не равен", exchangePosition.getOtcTicker().getValue(), is(otcTickerNew));
-            assertThat("Внебиржевой код класса инструмента не равен", exchangePosition.getOtcClassCode().getValue(), is(otcClassCodeNew));
-        }
+        //вычитываем все события из tracking.exchange-position
+        resetOffsetToLate(EXCHANGE_POSITION);
+        //формируем тело запроса
+        UpdateExchangePositionRequest updateExchangePosition = createBodyRequestAllParam(ticker, tradingClearingAccount,
+            otcTickerNew, otcClassCodeNew, limit, period, dailyQuantityLimit, ExchangePosition.ExchangeEnum.SPB);
+        //вызываем метод updateExchangePosition
+        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExchangePosition)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<byte[], byte[]>> messages = kafkaReceiver.receiveBatch(EXCHANGE_POSITION, Duration.ofSeconds(31));
+        Pair<byte[], byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        //парсим сообщение
+        Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.parseFrom(message.getKey());
+        Tracking.ExchangePosition exchangePositionKafka = Tracking.ExchangePosition.parseFrom(message.getValue());
+        //проверяем, что пришло в ответ от метода updateExchangePosition
+        assertThat("ID инструмента не равен", expecResponse.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
+        assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
+        assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit().intValue(), is(dailyQuantityLimit));
+        assertThat("Идентификатор периода не равен", expecResponse.getOrderQuantityLimits().get(0).getPeriodId(), is(period));
+        assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
+        assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(otcTickerNew));
+        assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(otcClassCodeNew));
+        //проверяем ключ сообщения топика kafka
+        assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
+        //проверяем message топика kafka
+        assertThat("ID инструмента не равен", exchangePositionKafka.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", exchangePositionKafka.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Код биржи не равен", exchangePositionKafka.getExchange().toString(), is(exchange));
+        assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePositionKafka.getTrackingAllowed(), is(true));
+        assertThat("Лимит количества единиц по сессии не равен", exchangePositionKafka.getDailyQuantityLimit().getValue(), is(dailyQuantityLimit));
+        assertThat("Идентификатор периода не равен", exchangePositionKafka.getOrderQuantityLimit(0).getPeriodId(), is(period));
+        assertThat("Лимит количества единиц актива по заявке не равен", exchangePositionKafka.getOrderQuantityLimit(0).getLimit(), is(limit));
+        assertThat("Внебиржевой тикер инструмента не равен", exchangePositionKafka.getOtcTicker().getValue(), is(otcTickerNew));
+        assertThat("Внебиржевой код класса инструмента не равен", exchangePositionKafka.getOtcClassCode().getValue(), is(otcClassCodeNew));
         //проверяем запись в tracking.exchange_position
         exchangePosition = exchangePositionService.getExchangePositionByTicker(ticker, tradingClearingAccount);
         assertThat("Код биржи не равен", exchangePosition.getExchangePositionExchange().toString(), is(exchange));
@@ -164,54 +167,52 @@ public class UpdateExchangePositionTest {
         String period = "additional_liquidity";
         //создаем запись в tracking.exchange_position
         createExchangePosition(ticker, tradingClearingAccount, ExchangePositionExchange.SPB, otcTicker, otcClassCode);
-        //включаем kafkaConsumer и слушаем топик tracking.exchange-position
-        try (KafkaMessageConsumer<byte[], byte[]> messageConsumer =
-                 new KafkaMessageConsumer<>(kafkaHelper, "tracking.exchange-position",
-                     ByteArrayDeserializer.class, ByteArrayDeserializer.class)) {
-            messageConsumer.startUp();
-            //формируем тело запроса
-            UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
-                limit, period, ExchangePosition.ExchangeEnum.SPB, true);
-            ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("android")
-                .xDeviceIdHeader("test")
-                .xTcsLoginHeader("tracking_admin")
-                .body(updateExchangePosition)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
-            //смотрим, сообщение, которое поймали в топике kafka
-            KafkaMessageConsumer.Record<byte[], byte[]> record = messageConsumer.await()
-                .orElseThrow(() -> new RuntimeException("Сообщение не получено"));
-            //проверяем, что пришло в ответ от метода updateExchangePosition
-            assertThat("ID инструмента не равен", expecResponse.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(tradingClearingAccount));
-            assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
-            assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
-            assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit(), is(IsNull.nullValue()));
-            assertThat("Идентификатор периода не равен", expecResponse.getOrderQuantityLimits().get(0).getPeriodId(), is(period));
-            assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
-            assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(IsNull.nullValue()));
-            assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(IsNull.nullValue()));
-            //парсим сообщение
-            Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.parseFrom(record.key);
-            Tracking.ExchangePosition exchangePosition = Tracking.ExchangePosition.parseFrom(record.value);
-            //проверяем ключ сообщения топика kafka
-            assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
-            //проверяем message топика kafka
-            assertThat("ID инструмента не равен", exchangePosition.getTicker(), is(ticker));
-            assertThat("Торгово-клиринговый счет не равен", exchangePosition.getTradingClearingAccount(), is(tradingClearingAccount));
-            assertThat("Код биржи не равен", exchangePosition.getExchange().toString(), is(exchange));
-            assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePosition.getTrackingAllowed(), is(true));
-            assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit().getValue(), is(0));
-            assertThat("Идентификатор периода не равен", exchangePosition.getOrderQuantityLimit(0).getPeriodId(), is(period));
-            assertThat("Лимит количества единиц актива по заявке не равен", exchangePosition.getOrderQuantityLimit(0).getLimit(), is(limit));
-            assertThat("Внебиржевой тикер инструмента не равен", exchangePosition.getOtcTicker().getValue(), is(""));
-            assertThat("Внебиржевой код класса инструмента не равен", exchangePosition.getOtcClassCode().getValue(), is(""));
-        }
+        //вычитываем все события из tracking.exchange-position
+        resetOffsetToLate(EXCHANGE_POSITION);
+        //формируем тело запроса
+        UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+            limit, period, ExchangePosition.ExchangeEnum.SPB, true);
+        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExchangePosition)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<byte[], byte[]>> messages = kafkaReceiver.receiveBatch(EXCHANGE_POSITION, Duration.ofSeconds(31));
+        Pair<byte[], byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        //парсим сообщение
+        Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.parseFrom(message.getKey());
+        Tracking.ExchangePosition exchangePositionKafka = Tracking.ExchangePosition.parseFrom(message.getValue());
+        //проверяем, что пришло в ответ от метода updateExchangePosition
+        assertThat("ID инструмента не равен", expecResponse.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
+        assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
+        assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit(), is(IsNull.nullValue()));
+        assertThat("Идентификатор периода не равен", expecResponse.getOrderQuantityLimits().get(0).getPeriodId(), is(period));
+        assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
+        assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(IsNull.nullValue()));
+        assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(IsNull.nullValue()));
+       //проверяем ключ сообщения топика kafka
+        assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
+        //проверяем message топика kafka
+        assertThat("ID инструмента не равен", exchangePositionKafka.getTicker(), is(ticker));
+        assertThat("Торгово-клиринговый счет не равен", exchangePositionKafka.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Код биржи не равен", exchangePositionKafka.getExchange().toString(), is(exchange));
+        assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePositionKafka.getTrackingAllowed(), is(true));
+        assertThat("Лимит количества единиц по сессии не равен", exchangePositionKafka.getDailyQuantityLimit().getValue(), is(0));
+        assertThat("Идентификатор периода не равен", exchangePositionKafka.getOrderQuantityLimit(0).getPeriodId(), is(period));
+        assertThat("Лимит количества единиц актива по заявке не равен", exchangePositionKafka.getOrderQuantityLimit(0).getLimit(), is(limit));
+        assertThat("Внебиржевой тикер инструмента не равен", exchangePositionKafka.getOtcTicker().getValue(), is(""));
+        assertThat("Внебиржевой код класса инструмента не равен", exchangePositionKafka.getOtcClassCode().getValue(), is(""));
         //проверяем запись в tracking.exchange_position
         exchangePosition = exchangePositionService.getExchangePositionByTicker(ticker, tradingClearingAccount);
         assertThat("Код биржи не равен", exchangePosition.getExchangePositionExchange().toString(), is(exchange));
@@ -860,5 +861,14 @@ public class UpdateExchangePositionTest {
         updateExchangePosition.setTrackingAllowed(true);
         updateExchangePosition.setTradingClearingAccount(tradingClearingAccount);
         return updateExchangePosition;
+    }
+
+
+    @Step("Переместить offset до текущей позиции")
+    public void resetOffsetToLate(Topics topic) {
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
+        await().atMost(Duration.ofSeconds(30))
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 }

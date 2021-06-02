@@ -21,7 +21,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -39,7 +38,9 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
@@ -57,8 +58,9 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.tracking.steps.StpTrackingSlaveSteps;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+//import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
+//import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
@@ -89,13 +91,13 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class,
-    ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 public class CreateSlaveOrderTest {
 
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
+
+    @Autowired
+    StringToByteSenderService kafkaSender;
     @Autowired
     StringSenderService stringSenderService;
     @Autowired
@@ -627,7 +629,7 @@ public class CreateSlaveOrderTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
 
@@ -687,7 +689,7 @@ public class CreateSlaveOrderTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.event
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -725,10 +727,6 @@ public class CreateSlaveOrderTest {
         assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
 
     }
-
-
-
-
 
 
 }

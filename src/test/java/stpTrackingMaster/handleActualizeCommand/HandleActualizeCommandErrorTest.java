@@ -8,6 +8,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +31,8 @@ import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -45,12 +48,9 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
+
 import ru.tinkoff.trading.tracking.Tracking;
-import stpTrackingRetryer.handle30DelayRetryCommand.Handle30DelayRetryCommandTest;
+
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -66,9 +66,9 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_30_DELAY_RETRYER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 @Slf4j
 @Epic("handleActualizeCommand - Обработка команд на актуализацию виртуального портфеля")
 @Feature("TAP-8055")
@@ -79,18 +79,26 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class})
+    KafkaAutoConfiguration.class})
+
+
 public class HandleActualizeCommandErrorTest {
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
+
+
     KafkaHelper kafkaHelper = new KafkaHelper();
-
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
-
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
+//
+//    @Resource(name = "customSenderFactory")
+//    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
+//
+//    @Resource(name = "bytesReceiverFactory")
+//    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
+//
+//    @Resource(name = "customReceiverFactory")
+//    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
 
     @Autowired
     BillingService billingService;
@@ -195,7 +203,7 @@ public class HandleActualizeCommandErrorTest {
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
-        kafkaSender.send("tracking.master.command", key, eventBytes);
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
         Optional<MasterPortfolio> portfolio = masterPortfolioDao.findLatestMasterPortfolio(contractIdMaster, strategyIdMaster);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
     }
@@ -233,7 +241,7 @@ public class HandleActualizeCommandErrorTest {
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
-        kafkaSender.send("tracking.master.command", key, eventBytes);
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
         Optional<MasterPortfolio> portfolio = masterPortfolioDao.findLatestMasterPortfolio(contractIdMaster, strategyIdMaster);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
     }
@@ -278,7 +286,7 @@ public class HandleActualizeCommandErrorTest {
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
-        kafkaSender.send("tracking.master.command", key, eventBytes);
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyIdMaster);
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(3));
         assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
@@ -328,7 +336,7 @@ public class HandleActualizeCommandErrorTest {
         byte[] eventBytes = command.toByteArray();
         String key = contractIdMaster;
         //отправляем событие в топик kafka social.event
-        kafkaSender.send("tracking.master.command", key, eventBytes);
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyIdMaster);
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(versionPortfolio));
         assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
@@ -383,11 +391,18 @@ public class HandleActualizeCommandErrorTest {
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем команду в топик kafka tracking.master.command
-        kafkaSender.send("tracking.master.command", key, eventBytes);
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
         //смотрим, сообщение, топике kafka его быть не должно
-        Optional<Map<String, byte[]>> optional = await().atMost(Duration.ofSeconds(20))
+//        Optional<Map<String, byte[]>> optional = await().atMost(Duration.ofSeconds(20))
+//            .until(
+//                () -> kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND.getName()),
+//                is(empty())
+//            ).stream().findFirst();
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        Optional<Pair<String, byte[]>> optional = await().atMost(Duration.ofSeconds(20))
             .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND.getName()),
+                () -> kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND),
                 is(empty())
             ).stream().findFirst();
     }
@@ -897,10 +912,16 @@ public class HandleActualizeCommandErrorTest {
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+//        log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+//        await().atMost(Duration.ofSeconds(30))
+//            .until(() -> receiverBytes.receiveBatch(topic.getName(),
+//                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+//        log.info("Все сообщения из {} топика вычитаны", topic.getName());
+
+
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 

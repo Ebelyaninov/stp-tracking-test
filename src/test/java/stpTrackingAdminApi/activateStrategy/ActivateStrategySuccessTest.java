@@ -8,18 +8,20 @@ import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -43,12 +45,8 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.tracking.steps.StpTrackingAdminSteps;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.annotation.Resource;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -77,8 +75,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 public class ActivateStrategySuccessTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
@@ -89,13 +86,8 @@ public class ActivateStrategySuccessTest {
     Contract contract;
     Strategy strategy;
     String SIEBEL_ID = "5-55RUONV5";
-
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     BillingService billingService;
     @Autowired
@@ -139,13 +131,6 @@ public class ActivateStrategySuccessTest {
         String description = "Тест стратегия Autotest 001 - Описание";
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
-
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -156,17 +141,13 @@ public class ActivateStrategySuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
-
+        client = clientService.createClient(investId, ClientStatusType.registered, null);
         steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
-
         //Вычитываем из топика кафка tracking.event все offset
         resetOffsetToLate(TRACKING_EVENT);
-
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -182,14 +163,11 @@ public class ActivateStrategySuccessTest {
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
 
         //Смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
-            )
-            .stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-
-        Tracking.Event event = Tracking.Event.parseFrom(message.values().stream().findAny().get());
-
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
         checkEventParam(event, "CREATED", strategyId, title);
         //Находим в БД автоследования стратегию и проверяем ее поля
@@ -208,14 +186,12 @@ public class ActivateStrategySuccessTest {
         String description = null;
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
-
-        //Находим клиента в БД Social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-
+//        //Находим клиента в БД Social
+//        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+//        SocialProfile socialProfile = new SocialProfile()
+//            .setId(profile.getId().toString())
+//            .setNickname(profile.getNickname())
+//            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -226,13 +202,11 @@ public class ActivateStrategySuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, null);
         steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
-
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -246,7 +220,6 @@ public class ActivateStrategySuccessTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
-
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "draft",
@@ -263,15 +236,12 @@ public class ActivateStrategySuccessTest {
         String description = "Тест стратегия Autotest 003 - Описание";
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
-        LocalDateTime dateCreateTr = null;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-
-        //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+//        //Находим клиента в БД social
+//        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+//        SocialProfile socialProfile = new SocialProfile()
+//            .setId(profile.getId().toString())
+//            .setNickname(profile.getNickname())
+//            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -283,14 +253,12 @@ public class ActivateStrategySuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, null);
         steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
-
         //Вычитываем из топика кафка tracking.event все offset
         resetOffsetToLate(TRACKING_EVENT);
-
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -304,19 +272,14 @@ public class ActivateStrategySuccessTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
-
         //Смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
-            )
-            .stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-
-        Tracking.Event event = Tracking.Event.parseFrom(message.values().stream().findAny().get());
-
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
         checkEventParam(event, "CREATED", strategyId, title);
-
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -342,8 +305,7 @@ public class ActivateStrategySuccessTest {
     public void resetOffsetToLate(Topics topic) {
         log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 

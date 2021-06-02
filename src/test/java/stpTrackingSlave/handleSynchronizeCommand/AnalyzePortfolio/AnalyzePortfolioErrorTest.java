@@ -10,6 +10,7 @@ import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,9 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
@@ -44,13 +47,8 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.tinkoff.trading.tracking.Tracking;
-
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -62,10 +60,10 @@ import java.util.*;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 
 @Slf4j
 @Epic("handleSynchronizeCommand -Анализ портфеля и фиксация результата")
@@ -78,17 +76,15 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class,
-    ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
-public class AnalyzePortfolioErrorTest {
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
 
+public class AnalyzePortfolioErrorTest {
+
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StringSenderService stringSenderService;
     @Autowired
@@ -247,7 +243,6 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         String baseMoneySl = "6576.23";
         createSlavePortfolio(contractIdSlave, 1, 1, null, baseMoneySl, positionListSl, date);
-        //отправляем команду на синхронизацию
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
@@ -1049,22 +1044,6 @@ public class AnalyzePortfolioErrorTest {
         createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-//        // создаем портфель ведущего с позицией в кассандре
-//        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-//            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-//                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-//            .build();
-////        createMasterPortfolio("SMG", "L01+00000SPB", "2.0", 2, 2,
-////            positionAction, "2259.17");
-//        //создаем запись о ведомом в client
-//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-//        //создаем портфель для ведомого
-//        String baseMoneySlave = "3657.23";
-//        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-//        Date date = Date.from(utc.toInstant());
-//        createSlavePortfolioWithOutPosition(1, 1, baseMoneySlave, date);
-
-
         // создаем портфель ведущего с позицией в кассандре
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -1098,20 +1077,17 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         String baseMoneySl = "6576.23";
         createSlavePortfolio(contractIdSlave, 1, 1, null, baseMoneySl, positionListSl, date);
-
-
         //вычитываем все события из tracking.event
         resetOffsetToLate(TRACKING_EVENT);
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        Map<String, byte[]> messageDelay = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-
-        Tracking.Event event = Tracking.Event.parseFrom(messageDelay.values().stream().findAny().get());
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         log.info("Событие  в tracking.event:  {}", event);
         //проверяем, данные в сообщении
         assertThat("action события не равен", event.getAction().toString(), is("UPDATED"));
@@ -1172,7 +1148,7 @@ public class AnalyzePortfolioErrorTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -1184,7 +1160,7 @@ public class AnalyzePortfolioErrorTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.slave.command", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
 
@@ -1272,10 +1248,9 @@ public class AnalyzePortfolioErrorTest {
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 

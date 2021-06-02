@@ -6,6 +6,7 @@ import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,9 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioPositionRetentionDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -44,10 +48,11 @@ import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
+//import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
+//import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
+//import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
 import ru.tinkoff.trading.tracking.Tracking;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -70,6 +75,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -82,17 +89,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class
+    KafkaAutoConfiguration.class
+
 })
 
 public class CreateStrategySuccessTest {
-
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     StrategyApi strategyApi;
     @Autowired
     BillingService billingService;
@@ -167,7 +170,6 @@ public class CreateStrategySuccessTest {
         String title = "Тест стратегия Autotest 001 " + dateNow;
         String description = "New test стратегия Autotest 001 " + dateNow;
         String positionRetentionId = "days";
-
         //Находим клиента в social и берем данные по профайлу
         //В этом и последующих тестах временно отключаем логику обращение в сторонний сервис, т.к. это приводит к замедлению выолнения тестов
         /*
@@ -635,7 +637,7 @@ public class CreateStrategySuccessTest {
         BigDecimal baseMoney = new BigDecimal("12000.0");
 
         //Вычитываем из топика kafka: tracking.master.command все offset
-        resetOffsetToLate(Topics.TRACKING_MASTER_COMMAND);
+        resetOffsetToLate(TRACKING_MASTER_COMMAND);
 
         //Формируем тело запроса
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -651,18 +653,15 @@ public class CreateStrategySuccessTest {
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
         strategyId = UUID.fromString(expectedResponse.getStrategy().getId().toString());
-
-        //Смотрим, сообщение, пойманное в топике kafka
-        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(Topics.TRACKING_MASTER_COMMAND.getName()), is(not(empty()))
-            )
-            .stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-
-        portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.values().stream().findAny().get());
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         key = portfolioCommand.getContractId();
-        log.info("Команда в tracking.master.command: {}", portfolioCommand);
 
+        log.info("Команда в tracking.master.command: {}", portfolioCommand);
         //Проверяем команду на первичную инициализацию портфеля мастера
         long unscaled = 120000;
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractId));
@@ -789,10 +788,9 @@ public class CreateStrategySuccessTest {
 
     @Step("Перемещаем offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        log.info("Получен запрос на считывание всех сообщений из Kafka топика {} ", topic.getName());
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
-        log.info("Все сообщения из {} топика прочитаны", topic.getName());
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 }

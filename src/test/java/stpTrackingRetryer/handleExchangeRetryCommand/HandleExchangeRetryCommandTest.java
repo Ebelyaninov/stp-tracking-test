@@ -8,13 +8,19 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -27,6 +33,8 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -40,10 +48,8 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
-import ru.tinkoff.invest.sdet.kafka.protobuf.sender.KafkaProtobufCustomSender;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+
 import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
@@ -53,6 +59,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -60,7 +67,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("HandleExchangeRetryCommand - Отправка отложенных команд во время работы торговых площадок")
@@ -73,18 +80,15 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    KafkaProtobufFactoryAutoConfiguration.class
+    KafkaAutoConfiguration.class
 })
 
 
 public class HandleExchangeRetryCommandTest {
-
-    @Resource(name = "customReceiverFactory")
-    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-    @Resource(name = "bytesReceiverFactory")
-    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-    @Resource(name = "customSenderFactory")
-    KafkaProtobufCustomSender<String, byte[]> kafkaSender;
+    @Autowired
+    StringToByteSenderService kafkaSender;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     BillingService billingService;
     @Autowired
@@ -178,13 +182,25 @@ public class HandleExchangeRetryCommandTest {
     }
 
 
+    private static Stream<Arguments> provideStringsForAllExchange() {
+        return Stream.of(
+            Arguments.of("SPB", "ABBV", "L01+00000SPB", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
+            Arguments.of("MOEX_PLUS", "FXRB", "L01+00002F00", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
+            Arguments.of("MOEX", "YNDX", "L01+00000F00", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
+            Arguments.of("SPB_MORNING", "INTC", "L01+00000SPB", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
+            Arguments.of("FX", "USD000UTSTOM", "MB0253214128", TRACKING_FX_RETRYER_COMMAND, "74.2575")
+        );
+    }
+
+
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStringsForAllExchange")
     @AllureId("798585")
-    @DisplayName("C798585.HandleSpbRetryCommand.Отправка отложенной команды")
+    @DisplayName("C798585.HandleExchangeRetryCommand.Отправка отложенной команды")
     @Subfeature("Успешные сценарии")
-    @Description("Операция для отправки отложенной команды в топик назначения в период работы торговой площадки SPB.")
-    void C798585() {
+    @Description("Операция для отправки отложенной команды в топик назначения в период работы торговой площадки.")
+    void C798585(String exchange, String ticker, String tradingClearingAccount, Topics topic, String price ) {
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -232,19 +248,19 @@ public class HandleExchangeRetryCommandTest {
         String baseMoneySlave = "7259.17";
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
-            classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
+            classCode, java.util.UUID.randomUUID(), new BigDecimal(price), new BigDecimal("3"),
             (byte) 0, ticker, tradingClearingAccount);
         //вычитываем из топика кафка tracking.slave.command все offset
         resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на повтор в топик биржи
         OffsetDateTime time = OffsetDateTime.now();
-        createCommandTrackingExRetryerCommand(contractIdSlave, time, "SPB", "tracking.spb.retryer.command");
-        //смотрим, сообщение, которое поймали в топике kafka
-        Map<String, byte[]> messageDelay = await().atMost(Duration.ofSeconds(20))
-            .until(
-                () -> kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND.getName()), is(not(empty()))
-            ).stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messageDelay.values().stream().findAny().get());
+        createCommandTrackingExRetryerCommand(contractIdSlave, time, exchange, topic);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем параметры команды по синхронизации
         assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
@@ -255,10 +271,9 @@ public class HandleExchangeRetryCommandTest {
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
-        log.info("Полечен запрос на вычитавание всех сообщений из Kafka топика {} ", topic.getName());
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
-            .until(() -> receiverBytes.receiveBatch(topic.getName(),
-                Duration.ofSeconds(3), BytesValue.class), List::isEmpty);
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 
@@ -297,17 +312,16 @@ public class HandleExchangeRetryCommandTest {
 
 
     //метод отправляет команду с operation = 'SYNCHRONIZE'.
-    void createCommandTrackingExRetryerCommand(String contractIdSlave, OffsetDateTime time, String exchange, String topic) {
+    void createCommandTrackingExRetryerCommand(String contractIdSlave, OffsetDateTime time, String exchange, Topics topic) {
         //создаем команду
         Tracking.PortfolioCommand command = createCommandRetrySynchronize(contractIdSlave, time);
         log.info("Команда в топик  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //создаем список заголовков
-        List<Header> headers = new ArrayList<>();
-        headers.add(new RecordHeader("destination.topic.name", "tracking.slave.command".getBytes()));
-        headers.add(new RecordHeader("exchange.name", exchange.getBytes()));
-        //отправляем команду в топик kafka tracking.delay.command
+        Headers headers = new RecordHeaders();
+        headers.add("destination.topic.name", "tracking.slave.command".getBytes());
+        //отправляем команду в топик kafka
         kafkaSender.send(topic, contractIdSlave, eventBytes, headers);
     }
 
@@ -320,7 +334,7 @@ public class HandleExchangeRetryCommandTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send("tracking.event", contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
     }
 
 

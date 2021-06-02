@@ -16,22 +16,20 @@ import static ru.qa.tinkoff.utils.AllureUtils.addTextAttachment;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ByteToByteSenderService {
-
-    private final BoostedSender<byte[], byte[]> boostedSender;
+public class StringToByteSenderService {
+    private final BoostedSender<String, byte[]> boostedSender;
 
     @Step("Отправить сообщения в топик {topic.name}")
-    public void send(Topics topic, byte[] key, byte[] value) {
+    public void send(Topics topic, String key, byte[] value) {
         log.info("sending message to topic: {}:\n{}", topic.getName(), value);
         boostedSender.send(topic.getName(), key, value);
         addTextAttachment("Сообщение", value);
     }
 
     @Step("Отправить сообщения в топик {topic.name}")
-    public void send(Topics topic, byte[] key, byte[] value, Headers headers) {
+    public void send(Topics topic, String key, byte[] value, Headers headers) {
         log.info("sending message to topic: {}:\n{}", topic.getName(), value);
         boostedSender.send(topic.getName(), key, value, headers);
         addTextAttachment("Сообщение", value);
     }
-
 }

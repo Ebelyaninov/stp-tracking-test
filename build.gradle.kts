@@ -89,9 +89,9 @@ dependencies {
 
     //kafka
     implementation("org.springframework.kafka:spring-kafka:2.6.4")
-    implementation("ru.tinkoff.invest.sdet:boostedkafka:0.0.7")
+    //implementation("ru.tinkoff.invest.sdet:boostedkafka:0.0.7")
+    implementation("ru.tinkoff.invest.sdet:boostedkafka:1.0.0-RC3")
 
-//    implementation("ru.tinkoff.invest.sdet:boostedkafka:1.0.0-RC3")
     // protobuf
     implementation("io.grpc:grpc-all:1.31.1")
     implementation("com.google.protobuf:protobuf-java:3.13.0")

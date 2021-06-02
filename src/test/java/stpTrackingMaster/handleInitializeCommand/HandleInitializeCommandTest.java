@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -27,6 +27,8 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
+import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
+
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
@@ -40,6 +42,7 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -69,9 +72,16 @@ import static org.junit.Assert.assertEquals;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+//    KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
 public class HandleInitializeCommandTest {
+
+
+    @Autowired
+    ByteToByteSenderService kafkaSender;
+
+
     KafkaHelper kafkaHelper = new KafkaHelper();
 
     @Autowired
