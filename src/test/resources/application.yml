@@ -49,7 +49,8 @@ app:
     cassandra:
       tracking:
         #contactpoints: m1-qa-common-transit-cas-1.ost.tinkoff
-        contactpoints: ds-qa-common-transit-cas-1.ost.tinkoff,ds-qa-common-transit-cas-2.ost.tinkoff,ds-qa-common-transit-cas-3.ost.tinkoff,ds-qa-common-transit-cas-4.ost.tinkoff,ds-qa-common-transit-cas-5.ost.tinkoff
+        #contactpoints: ds-qa-common-transit-cas-1.ost.tinkoff,ds-qa-common-transit-cas-2.ost.tinkoff,ds-qa-common-transit-cas-3.ost.tinkoff,ds-qa-common-transit-cas-4.ost.tinkoff,ds-qa-common-transit-cas-5.ost.tinkoff
+        contactpoints: m1-qa-invest-cassandra-1.m1.invest.cloud
         cluster-name: m1
         port: 9042
         keyspace-name: invest_tracking

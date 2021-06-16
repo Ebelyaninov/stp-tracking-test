@@ -116,7 +116,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
@@ -165,7 +165,7 @@ public class HandleSocialEventTest {
 
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
@@ -212,7 +212,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
@@ -256,7 +256,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
@@ -306,7 +306,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
@@ -355,7 +355,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
@@ -403,8 +403,7 @@ public class HandleSocialEventTest {
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
-        byte[] keyBytes = utilsTest.hexStringToByteArray(key.toString().replaceAll("-", ""));
-        //отправляем событие в топик kafka social.event
+        byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился

@@ -9,7 +9,9 @@ import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
+import ru.qa.tinkoff.investTracking.entities.PositionId;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterSignalRowMapper;
+import ru.qa.tinkoff.investTracking.rowmapper.PositionIdRowMapper;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,7 +26,7 @@ public class MasterSignalDao {
 
     private final CqlTemplate cqlTemplate;
     private final MasterSignalRowMapper masterSignalRowMapper;
-
+    private final PositionIdRowMapper positionIdRowMapper;
 
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
@@ -44,6 +46,13 @@ public class MasterSignalDao {
         var query = "select count(*) from invest_tracking.created_at_master_signal " +
             "where strategy_id = ? and created_at <= ?";
         return cqlTemplate.queryForObject(query, Long.class, strategyId, createdAt).intValue();
+    }
+
+
+    public List<PositionId> getMasterSignalPositionIdsByPeriod(UUID strategy, Date start, Date end) {
+        var query = "select ticker, trading_clearing_account from created_at_master_signal where strategy_id = ? " +
+            "and created_at >= ? and created_at <= ?";
+        return cqlTemplate.query(query, positionIdRowMapper, strategy, start, end);
     }
 
     public List<LocalDate> getUniqMasterSignalDaysByPeriod(UUID strategyId, Date start, Date end) {

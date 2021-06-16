@@ -949,6 +949,18 @@ public class HandleActualizeCommandTest {
     }
 
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("742634")
+    @DisplayName("C742634.HandleActualizeCommand.Ожидаем подтверждение дальше, position.action NOT IN ('SECURITY_BUY_TRADE', 'SECURITY_SELL_TRADE')")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C742634_111111111111() {
+        createEventInTrackingEvent("2006507434");
+    }
+
+
     // методы для работы тестов*************************************************************************
     // создаем команду в топик кафка tracking.master.command
     Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {

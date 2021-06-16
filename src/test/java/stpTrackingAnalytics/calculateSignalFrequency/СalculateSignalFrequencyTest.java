@@ -181,7 +181,7 @@ public class СalculateSignalFrequencyTest {
         strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
-        createTestDateToMasterSignal(strategyId);
+        createTestDateToMasterSignalRepeat(strategyId);
         Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -201,23 +201,36 @@ public class СalculateSignalFrequencyTest {
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
+
         Date start = Date.from(cutTime.minusDays(30).toInstant());
         Date end = Date.from(cutTime.toInstant());
         int count = countUniqueMasterSignalDays(strategyId, start, end);
         assertThat("частота создания сигналов по стратегии не равно", signalFrequency.getCount(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
+
+        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
+            "3.98", "7", 12);
+        createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
+            "107.81",  "1", 12);
+        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
+            "107.81",  "1", 12);
+
+
         //отправляем событие в топик kafka tracking.analytics.command повторно
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Thread.sleep(5000);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
+        signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId);
+        assertThat("частота создания сигналов по стратегии не равно", signalFrequency.getCount(), is(count));
     }
 
 
     @SneakyThrows
     @Test
     @AllureId("835781")
-    @DisplayName("C835781.CalculateSignalFrequency.Найдена запись в таб. signal_frequency по ключу: strategy_id , cut, если operation = 'CALCULATE'")
+    @DisplayName("C835781.CalculateSignalFrequency.Найдена запись в таб. signal_frequency по ключу: strategy_id , cut," +
+        " если operation = 'RECALCULATE'")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C835781() {
@@ -361,6 +374,32 @@ public class СalculateSignalFrequencyTest {
             "107.81",  "1", 12);
         createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
             "107.81",  "1", 12);
+        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "L01+00000SPB",
+            "90.18",  "3", 11);
+        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "L01+00000F00",
+            "190.18",  "1", 12);
+        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "L01+00000F00",
+            "190.18",  "1", 12);
+        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "L01+00000SPB",
+            "3.17", "4", 12);
+        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "L01+00000SPB",
+            "3.09", "4", 12);
+    }
+
+
+
+
+    void createTestDateToMasterSignalRepeat(UUID strategyId) {
+        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "L01+00000SPB",
+            "4.07", "4", 12);
+        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "L01+00000SPB",
+            "90.18",  "6", 11);
+//        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
+//            "3.98", "7", 12);
+//        createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
+//            "107.81",  "1", 12);
+//        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
+//            "107.81",  "1", 12);
         createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "L01+00000SPB",
             "90.18",  "3", 11);
         createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "L01+00000F00",
