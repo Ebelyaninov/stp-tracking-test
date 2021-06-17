@@ -1,0 +1,56 @@
+root:
+  put:
+    summary: Добавление информации о доступности ФИ к торгам
+    tags:
+      - Trading Schedule
+    requestBody:
+      $ref: 'common/trading_schedule/components.yaml#/components/requestBodies/TradingSchedulesPut'
+    responses:
+      '200':
+        description: Расписание успешно изменено
+      '400':
+        $ref: 'common/errors.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: 'common/errors.yaml#/components/responses/NotFound'
+      '500':
+        $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  get:
+    summary: Получение информации о торговых площадках
+    tags:
+      - Trading Schedule
+    parameters:
+      - name: exchange_flag
+        in: query
+        schema:
+          type: boolean
+        description: Признак биржи
+    responses:
+      '200':
+        $ref: 'common/trading_schedule/components.yaml#/components/responses/TradingSchedulesGet'
+      '404':
+        $ref: 'common/errors.yaml#/components/responses/NotFound'
+      '500':
+        $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+exchange:
+  get:
+    summary: Получение информации о торговых днях (на период не более 365 дней)
+    tags:
+      - Trading Schedule
+    parameters:
+      - name: exchange
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Биржа (или календарь)
+      - $ref: 'common/trading_schedule/components.yaml#/components/parameters/start_date'
+      - $ref: 'common/trading_schedule/components.yaml#/components/parameters/end_date'
+    responses:
+      '200':
+        $ref: 'common/trading_schedule/components.yaml#/components/responses/TradingSchedulesExchangeGet'
+      '400':
+        $ref: 'common/errors.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: 'common/errors.yaml#/components/responses/NotFound'
+      '500':
+        $ref: 'common/errors.yaml#/components/responses/InternalServerError'

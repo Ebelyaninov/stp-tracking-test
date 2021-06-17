@@ -1,0 +1,26 @@
+put:
+  tags:
+    - Index
+  summary: Создать индекс
+  parameters:
+    - name: index
+      in: query
+      description: Название индекса
+      required: true
+      schema:
+        #        required: true
+        type: string
+    - name: companies
+      in: query
+      description: Список компаний, разделенных запятой
+      required: false
+      schema:
+        type: string
+
+  responses:
+    '200':
+      descrition: 'OK'
+    '400':
+      $ref: 'common/errors.yaml#/components/responses/BadRequest'
+    '500':
+      $ref: 'common/errors.yaml#/components/responses/InternalServerError'

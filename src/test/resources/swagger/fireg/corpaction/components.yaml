@@ -1,0 +1,134 @@
+components:
+  responses:
+    CorpActionListGet:
+      description: Информации по корпоративным событиям
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/corp_action_list'
+    CorpActionGet:
+      description: Информации по корпоративному событию
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/corp_action'
+    CorpActionStatusSetWithTokenGet:
+      description: Смена статуса по корпоративному событию (токен)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/corp_action'
+  schemas:
+    corp_action_list:
+      description: Информация по корпоративным событиям (по возрастанию  action_id)
+      type: object
+      properties:
+        limit:
+          description: Количество выводимых строк
+          type: integer
+          format: int64
+        marker:
+          description: Маркер курсора
+          type: integer
+          format: int64
+        instruments:
+          description: Информация по корпоративным событиям
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/corp_action'
+    corp_action:
+      type: object
+      properties:
+        overview:
+          allOf:
+            - $ref: '#/components/schemas/corp_action_overview'
+        dividend:
+          allOf:
+            - $ref: '#/components/schemas/corp_actions_dividend'
+    corp_actions_dividend:
+      type: object
+      required:
+        - action_id
+      properties:
+        action_id:
+          type: number
+        cp_record_dt:
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        cp_pay_dt:
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        cp_gross_amt:
+          type: number
+        cp_dvd_crncy:
+          type: string
+    corp_action_overview:
+      description: Корпоративное событие
+      type: object
+      required:
+        - action_id
+        - type
+        - status
+        - status_date
+        - created_at
+        - updated_at
+      properties:
+        action_id:
+          description: ID корпоративного события в Bloomberg
+          type: number
+        type:
+          description: Тип
+          type: string
+        status:
+          description: Статус
+          type: string
+        status_date:
+          description: Дата последнего изменения статуса
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        figi:
+          description: Код FIGI
+          type: string
+          example: BBG000BH0106
+        instrument_id:
+          type: number
+        bb_global_company:
+          description: BBGlobal код компании
+          type: string
+        company_name:
+          description: Наименование компании
+          type: string
+        effective_date:
+          description: Дата события
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        announce_date:
+          description: Дата анонса
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        created_at:
+          description: Дата добавления записи
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        deleted_at:
+          description: Дата и время удаления записи
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        updated_at:
+          description: Дата и время обновления записи
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'
+        email_sent_date:
+          description: Дата и время отправки письма
+          type: string
+          example: "2019-06-11T12:24:33.499802Z"
+          format: 'date-time'

@@ -1,0 +1,39 @@
+components:
+  schemas:
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Сообщение об ошибке
+  responses:
+    BadRequest:
+      description: Ошибка в запросе
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    Conflict:
+      description: Ресурс с таким идентификатором уже существует
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    InternalServerError:
+      description: Ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'

@@ -1,0 +1,120 @@
+get:
+  summary: Получение обращаемости по инструменту
+  tags:
+    - Instruments
+  parameters:
+    - name: instrument_id
+      in: path
+      schema:
+        type: string
+        format: string
+      required: true
+      description: Идентификатор финансового инструмента - int (либо figi, ticker, isin - string)
+    - name: id_kind
+      in: query
+      schema:
+        type: string
+        enum:
+          - id
+          - figi
+          - ticker
+          - isin
+      required: true
+      description: Тип идентификатора
+    - name: class_code
+      in: query
+      schema:
+        type: string
+      description: Код класса в QUIK
+    - name: start_date
+      in: query
+      description: Начиная с даты YYYY-MM-DD
+      schema:
+        type: string
+        format: date
+    - name: end_date
+      in: query
+      description: Заканчивая датой YYYY-MM-DD
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: Обращаемость на указанный период
+      content:
+        application/json:
+          schema:
+            description: Информация по инструментам
+            type: array
+            items:
+              type: object
+              description: Обращаемость по инструменту
+              properties:
+                id:
+                  type: integer
+                  description: Идентификатор записи в БД
+                instrument_id:
+                  type: integer
+                  description: Идентификатор инструмента
+                marketability_date:
+                  type: string
+                  format: date
+                  description: Дата на которую действительна текущая обращаемость
+                marketability_value:
+                  type: string
+                  description: >
+                    Текущая обращаемость:
+                      * `0` необращаемые инструменты
+                      * `1` для российских акции и облигации
+                      * `2` для акций на зарубежных площадках
+                      * `3` для еврооблигаций
+                  enum: [ "0", "1", "2", "3" ]
+                updated_at:
+                  type: string
+                  format: date
+
+    '400':
+      $ref: './../errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: './../errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: './../errors.yaml#/components/responses/InternalServerError'
+put:
+  summary: Создание задачи на сбор обращаемости
+  tags:
+    - Instruments
+  parameters:
+    - name: instrument_id
+      in: path
+      description: FIGI инструмента
+      schema:
+        type: string
+        required: true
+    - name: start_date
+      in: query
+      description: Начало периода YYYY-MM-DD
+      schema:
+        type: string
+        format: date
+    - name: end_date
+      in: query
+      description: Конец периода YYYY-MM-DD
+      schema:
+        type: string
+        format: date
+    - name: mailto
+      in: query
+      description: Куда отправить результат
+      schema:
+        type: string
+        format: email
+      required: true
+  responses:
+    '200':
+      description: Задача добавлена
+    '400':
+      $ref: './../errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: './../errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: './../errors.yaml#/components/responses/InternalServerError'

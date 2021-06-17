@@ -36,6 +36,8 @@ public class MasterPortfolioDao {
         return cqlTemplate.queryForObject(query, masterPortfolioRowMapper, contractId, strategyId);
     }
 
+
+
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public Optional<MasterPortfolio> findLatestMasterPortfolio(String contractId, UUID strategyId) {
@@ -79,6 +81,19 @@ public class MasterPortfolioDao {
             .value("changed_at", time)
             .value("positions",positionList);
         cqlTemplate.execute(insertQueryBuilder);
+    }
+
+    public void insertIntoMasterPortfolioWithChangedAt(String contractId, UUID strategyId, int version,
+                                          MasterPortfolio.BaseMoneyPosition baseMoneyPosition, Date changedAt,
+                                          List<MasterPortfolio.Position> positionList) {
+        Insert insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("base_money_position", baseMoneyPosition)
+            .value("changed_at",changedAt)
+            .value("positions",positionList);
+        cqlTemplate.execute(insertQueryBuider);
     }
 
     public void deleteMasterPortfolio(String contract, UUID strategy) {

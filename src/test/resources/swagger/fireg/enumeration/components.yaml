@@ -1,0 +1,28 @@
+components:
+  responses:
+    EnumerationGet:
+      description: Перечисляемые типы
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/enumeration'
+  schemas:
+    enumeration:
+      description: Перечисляемые типы
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор перечисления
+        sys_name:
+          type: string
+          description: Системное именование
+        code:
+          type: string
+          description: Код
+        name:
+          type: string
+          description: Описание

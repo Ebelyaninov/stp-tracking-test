@@ -1,0 +1,69 @@
+get:
+  tags:
+    - Reports
+  summary: Отчеты для Jasper
+  parameters:
+    - name: date
+      in: query
+      description: Дата, на которую необходимо вернуть данные
+      required: true
+      schema:
+        #        required: true
+        type: string
+        format: date
+        example: '2019-11-02'
+    - name: isins
+      in: query
+      description: Список ISIN, разделенных запятой
+      required: true
+      schema:
+        type: string
+
+  responses:
+    '200':
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              assets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    instrument_id:
+                      type: number
+                    figi:
+                      type: string
+                    isin:
+                      type: string
+                    ticker:
+                      type: string
+                    class_code:
+                      type: string
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    name:
+                      type: string
+                    maturity_date:
+                      type: string
+                      format: date
+                    #                      required: false
+                    aci_date:
+                      type: string
+                      format: date
+                    #                      required: false
+                    aci_value:
+                      type: string
+                      #                      required: false
+                      format: float
+                    nominal:
+                      type: number
+                      format: float
+    #                      required: false
+    '400':
+      $ref: 'common/errors.yaml#/components/responses/BadRequest'
+    '500':
+      $ref: 'common/errors.yaml#/components/responses/InternalServerError'

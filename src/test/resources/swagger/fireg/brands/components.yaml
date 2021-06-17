@@ -1,0 +1,174 @@
+components:
+  requestBodies:
+    BrandsPut:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/brand'
+  responses:
+    BrandsGet:
+      description: Список брендов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/brand_get_response'
+    BrandsPut:
+      description: Информация о бренде успешно сохранена
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/brand_response'
+  schemas:
+    brand:
+      description: Бренд
+      type: object
+      properties:
+        brand_name:
+          type: string
+          minLength: 1
+          description: Наименование бренда
+        brand_info:
+          type: string
+          description: Информация о бренде
+        country:
+          type: string
+          description: Страна
+        description:
+          type: string
+          description: Описание
+        logo_name:
+          type: string
+          minLength: 1
+          description: Название лого
+        logo_base_color:
+          type: string
+          minLength: 1
+          description: Цвет бренда
+        sector:
+          $ref: '../swagger.yaml#/components/schemas/sector'
+        companies:
+          type: integer
+          description: Количество компаний
+        website:
+          type: string
+          description: Веб сайт
+        ext:
+          type: array
+          items:
+            $ref: '#/components/schemas/brand_ext'
+        basket:
+          type: array
+          description: Корзина брендов
+          items:
+            type: string
+            minLength: 1
+            description: Наименование бренда
+      required:
+        - brand_name
+        - logo_name
+        - logo_base_color
+    brand_ext:
+      description: Расширение бренда
+      type: object
+      properties:
+        param_group:
+          type: string
+          enum:
+            - table_description
+            - external_links
+          description: Добавочная группа
+        param_name:
+          type: string
+          description: Название параметра
+        param_value:
+          type: string
+          description: Значение параметра
+      required:
+        - param_group
+        - param_name
+        - param_value
+    brand_get_response:
+      description: Бренды
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Количество
+        offset:
+          type: integer
+          description: Смещение
+        total:
+          type: integer
+          description: Всего
+        brands:
+          type: array
+          items:
+            $ref: '#/components/schemas/brand_response'
+      required:
+        - limit
+        - offset
+        - total
+        - brands
+    brand_response:
+      allOf:
+        - $ref: '#/components/schemas/brand'
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Идентификатор записи
+            ext:
+              type: array
+              items:
+                $ref: '#/components/schemas/brand_ext_response'
+            basket:
+              type: array
+              items:
+                $ref: '#/components/schemas/brand_basket'
+          required:
+            - id
+            - brand_name
+            - logo_name
+            - logo_base_color
+    brand_ext_response:
+      allOf:
+        - $ref: '#/components/schemas/brand_ext'
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Идентификатор записи
+            brand_id:
+              type: integer
+              format: int64
+              description: Идентификатор бренда
+          required:
+            - id
+            - param_group
+            - param_name
+            - param_value
+    brand_basket:
+      description: Корзина брендов
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор записи
+        brand_id:
+          type: integer
+          format: int64
+          description: Идентификатор бренда
+        logo_name:
+          type: string
+          description: Название лого
+        brand_name:
+          type: string
+          description: Наименование
+      required:
+        - id
+        - logo_name
+        - brand_name

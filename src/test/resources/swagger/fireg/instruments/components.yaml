@@ -1,0 +1,863 @@
+components:
+  requestBodies:
+    InstrumentsPost:
+      description: Параметры инструмента
+      #      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument'
+    InstrumentsPut:
+      description: Параметры инструмента
+      #      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument'
+    InstrumentsItemStatusSystemPost:
+      description: Причина неуспешной проверки
+      content:
+        application/json:
+          schema:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_status_system_reason'
+    InstrumentsFigiSpreadsPut:
+      description: Значение спредов финансового инструмента
+      #      required: true
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../common/instruments/components.yaml#/components/schemas/instrument_spreads'
+    InstrumentsFigiFlagsPost:
+      description: Флаги ФИ
+      #      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument_flags'
+    InstrumentsRuDataAciPut:
+      description: Режим загрузки истории НКД
+      #      required: true
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../common/instruments/components.yaml#/components/schemas/instrument_accrued_interest_put'
+  responses:
+    InstrumentsPost:
+      description: Инструмент добавлен в систему
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument'
+    InstrumentsPut:
+      description: Инструмент обновлен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument'
+    InstrumentsListGet:
+      description: Информация по инструментам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instruments_list_response'
+    InstrumentsItemGet:
+      description: Информация по инструменту
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument_get_response'
+    InstrumentsItemTradingSchedulesGet:
+      description: Информация о доступности ФИ к торгам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/trading_schedule_state'
+    InstrumentsItemStatusSystemPost:
+      description: Информация о статусе проверки инструмента в системе
+      content:
+        application/json:
+          schema:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_status_system'
+    InstrumentsItemStatusSystemTokenGet:
+      description: Информация о статусе проверки инструмента в системе
+      content:
+        application/json:
+          schema:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_status_system'
+    InstrumentsFigiSystemStatusGet:
+      description: Информация по статусу инструмента в системах
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../common/instruments/components.yaml#/components/schemas/instrument_status_system'
+    InstrumentsEventsListGet:
+      description: Информация о событиях по ФИ за период
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument_events'
+    InstrumentsFigiSpreadsPut:
+      description: Спреды финансового инструмента изменены
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../common/instruments/components.yaml#/components/schemas/instrument_spreads'
+    InstrumentsFigiFlagsPost:
+      description: Флаги ФИ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/instrument_flags'
+    InstrumentEventTaskPost:
+      description: Задание на обновление календаря событий по облигации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/bond_time_table_task'
+    InstrumentsAccruedInterestGet:
+      description: НКД по облигации на период
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/bond_aci'
+    InstrumentsTradingStocksGet:
+      content:
+        application/json:
+          schema:
+            example: >-
+              {"result": {
+                "type": "json",
+                "value": {
+                  "RU000A0JXMH7": {
+                    "type": "bonds",
+                    "ticker": "MTSSRM",
+                    "name": "МТС выпуск 2",
+                    "brandName": "MTS",
+                    "showName": "МТС выпуск 2",
+                    "noTrade": "false",
+                    "showNotAuth": "false",
+                    "showAuth": "false",
+                    "isOTC": "true",
+                    "currency": "RUB",
+                    "noTradeDesc": "",
+                    "bbcode": "AM970098     Corp",
+                    "OTCexchange": "moex",
+                    "exchange": "moex",
+                    "classcode": "EQOB",
+                    "minAmount": "0",
+                    "minQuantity": "0",
+                    "bcsClassCode": "EQOB",
+                    "popular": "",
+                    "spread": "0",
+                    "priceSpread": "0",
+                    "linkedInstrument": "",
+                    "blackOut": "false",
+                    "sector": "",
+                    "taxFree": "0",
+                    "onlyForTinkoff": "false",
+                    "faceValue": "0",
+                    "company": "МТС"
+                  }
+                }
+              }
+  schemas:
+    instrument:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор финансового инструмента
+        ticker:
+          type: string
+          description: Тикер
+        class_code:
+          type: string
+          description: Код класса в QUIK
+        bb_code:
+          type: string
+          description: Идентификатор бумаги в ATON
+        bcs_exchange_code:
+          type: string
+          description: Идентификатор в БКС
+        bcs_class_code:
+          type: string
+          description: Код класса в БКС
+        gos_reg_code:
+          type: string
+          description: Номер гос. регистрации
+        isin:
+          type: string
+          description: Код isin
+        cfi:
+          type: string
+          description: Код cfi
+        figi:
+          type: string
+          description: Код figi
+        source:
+          type: string
+          description: Источник загружаемых данных
+          enum:
+            - bloomberg
+            - interface
+        request_id:
+          type: string
+          description: Внешний идентификатор записи
+        wm_flag:
+          type: boolean
+          description: Признак инструмента для Wealth Management
+          default: false
+        type:
+          $ref: "../common/instruments/properties.yaml#/properties/type"
+        update_user:
+          type: string
+          description: Пользователь, который последним изменил ФИ
+        created_at:
+          type: string
+          format: 'date-time'
+          description: Дата и время создания инструмента
+        updated_at:
+          type: string
+          format: 'date-time'
+          description: Дата и время последнего редактирования инструмента
+        deleted_at:
+          type: string
+          format: 'date-time'
+          description: Дата и время удаления инструмента
+        reason_for_cancel:
+          type: string
+          description: Причина удаления инструмента
+        status:
+          type: string
+          description: |
+            Статус финансового инструмента
+            wait_enrichment_figi - обогащение FIGI
+            init_system_status - определение первоначального статуса в системах
+            wait_system_approve - проверка ФИ в системах
+            cancel - отмена загрузки ФИ
+            ready - инструмент готов к торгам
+            systems_approve_conflict - конфликт при проверке статуса ФИ
+            deleted - ФИ удален
+          enum:
+            - wait_enrichment_figi
+            - init_system_status
+            - wait_system_approve
+            - cancel
+            - ready
+            - systems_approve_conflict
+            - deleted
+        name:
+          type: string
+          description: Полное наименование инструмента
+        name_brief:
+          type: string
+          description: Короткое наименование инструмента
+        exchange:
+          type: string
+          description: 'Биржа, на которой торгуется инструмент'
+        settlement_currency:
+          $ref: '../common/instruments/components.yaml#/components/schemas/currency'
+          description: >-
+            Валюта, в которой производится расчет по инструменту. Для
+            instrument_type = currency это валюта котировки.
+        lot:
+          type: integer
+          description: Количество бумаг в лоте
+        min_amount:
+          type: number
+          format: float
+          description: Минимальная сумма покупки бумаги в каталоге (для Wealth Management)
+        min_quantity:
+          type: integer
+          description: >-
+            Минимальное количество покупки бумаг через каталог (для Wealth
+            Management)
+        country_of_risk:
+          type: string
+          description: 2-х буквенный (альфа-2) код страны (см. справочник стран)
+        otc_flag:
+          type: boolean
+          description: Признак внебиржевой бумаги
+        price_spread:
+          type: number
+          format: float
+          description: Значение спреда для бумаг (для Mass Market)
+        brand_name:
+          type: string
+          description: Наименование бренда компании
+        only_tinkoff_flag:
+          type: boolean
+          description: >-
+            Признак возможности покупки инструмента только на брокерский счет
+            Тинькофф
+          default: false
+        show_auth_flag:
+          type: boolean
+          description: Признак отображения бумаги авторизованным клиентам
+          default: false
+        show_not_auth_flag:
+          type: boolean
+          description: Признак отображения бумаги неавторизованным клиентам
+          default: false
+        black_out_flag:
+          type: boolean
+          description: Признак запрета торгов ФИ для сотрудников (акции tcs и облигации tcs)
+        no_trade_flag:
+          type: boolean
+          description: Признак запрета на покупку ФИ, чтобы клиент при грядущем корп действии не докупался
+        no_trade_desc:
+          type: string
+          description: Причина запрета на покупку ФИ
+        company:
+          type: string
+          description: Компания
+        description:
+          type: string
+          description: Описание инструмента
+        active_flag:
+          type: boolean
+          description: Признак действующей бумаги
+          default: false
+        open_api_flag:
+          description: Признак отображения инструмента для OpenApi
+          type: boolean
+        open_api_trade_flag:
+          description: Признак возможности торговли инструмента через OpenApi
+          type: boolean
+        fixed_commission:
+          description: Фиксированная комиссия брокеру за сделку (в процентах)
+          type: float
+        flags:
+          description: Флаги ФИ
+          type: array
+          items:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_flag'
+        status_systems:
+          description: Статусы ФИ в других системах
+          type: array
+          items:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_status_system'
+        min_price_increment:
+          $ref: "../common/instruments/properties.yaml#/properties/min_price_increment"
+        spreads:
+          description: Спреды по инструменту
+          type: array
+          items:
+            $ref: '../common/instruments/components.yaml#/components/schemas/instrument_spreads'
+        bond:
+          description: Основные атрибуты по облигации
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Идентификатор облигации
+            issue:
+              type: string
+              description: Полное наименование эмитента
+            issue_size:
+              type: number
+              format: float
+              description: Объем эмиссии облигации (стоимость)
+            nominal:
+              type: number
+              description: Номинал облигации
+            nominal_currency:
+              $ref: '../common/instruments/components.yaml#/components/schemas/currency'
+              description: Валюта номинала
+            issue_kind:
+              type: string
+              description: |
+                Код формы выпуска облигации
+                documentary - документарная
+                non_documentary - бездокументарная
+              enum:
+                - documentary
+                - non_documentary
+            interest_kind:
+              type: string
+              description: |
+                Код формы дохода облигации
+                interest - процентная
+                non_interest - беспроцентная
+              enum:
+                - interest
+                - non_interest
+            sector:
+              $ref: "../common/instruments/properties.yaml#/properties/sector"
+            coupon_quantity_per_year:
+              type: integer
+              description: Количество выплат в год
+            amortization_flag:
+              type: boolean
+              description: Признак облигации с амортизацией долга
+              default: false
+            floating_coupon_flag:
+              type: boolean
+              description: Признак облигации с плавающим купоном
+              default: false
+            indexed_nominal_flag:
+              type: boolean
+              description: Признак облигации с индексируемым номиналом
+              default: false
+            subordinated_flag:
+              type: boolean
+              description: Признак субординированной облигации
+              default: false
+            collateral_flag:
+              type: boolean
+              description: Признак обеспеченной облигации
+              default: false
+            tax_free_flag:
+              type: boolean
+              description: >-
+                Признак показывает, что купоны облигации не облагаются налогом
+                (для Mass Market)
+            min_size:
+              type: number
+              format: float
+              description: 'Полный лот (стоимостной, в валюте номинала)'
+            maturity_date:
+              type: string
+              format: 'date-time'
+              description: Дата погашения облигации
+            coupons:
+              description: Купоны по облигации
+              type: array
+              items:
+                $ref: '../common/instruments/components.yaml#/components/schemas/bond_coupon'
+            offers:
+              description: Выкупы по облигации
+              type: array
+              items:
+                $ref: '../common/instruments/components.yaml#/components/schemas/bond_offer'
+            perpetual_flag:
+              description: Признак бессрочной облигации
+              type: boolean
+            issuer_id:
+              description: Идентификатор эмитента
+              type: integer
+              format: int64
+            current_nominal:
+              description: Текущий номинал
+              type: number
+            #              required: false
+            aci_value:
+              description: Текущее значение НКД
+              type: number
+              format: float
+          #              required: false
+          required:
+            - issue
+            - nominal
+            - nominal_currency
+            - issue_kind
+            - interest_kind
+        share:
+          $ref: '../common/instruments/components.yaml#/components/schemas/share'
+        etf:
+          $ref: '../common/instruments/components.yaml#/components/schemas/etf'
+        futures:
+          description: Основные атрибуты по Futures
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Идентификатор Futures
+            exchange_symbol:
+              type: string
+              description: Биржевой код
+            currency:
+              type: string
+              description: Валюта, в которой был выпущен контракт
+              enum:
+                - rub
+                - usd
+                - eur
+                - cad
+                - chf
+                - gbp
+                - hkd
+                - nok
+                - sek
+                - try
+                - trl
+                - ils
+                - cny
+                - jpy
+            quoted_currency:
+              $ref: '../common/instruments/components.yaml#/components/schemas/quoted_currency'
+            first_trade_date:
+              type: string
+              format: 'date-time'
+              description: Дата погашения
+            last_trade_date:
+              type: string
+              format: 'date-time'
+              description: Дата исполнения
+            futures_type:
+              type: string
+              description: Тип фьючерса
+              enum:
+                - physical_delivery
+                - cash_settlement
+            asset_type:
+              type: string
+              description: Тип базового актива
+              enum:
+                - commodity
+                - currency
+                - security
+                - index
+            basic_asset:
+              type: string
+              description: >-
+                Вид базового актива в зависимости от типа базового актива.
+                Если товар, то заглушка.
+                Если валюта, то наименование валюты.
+                Если ЦБ, то код FIGI.
+                Если индекс, то наименование индекса.
+            basic_asset_size:
+              type: number
+              format: float
+              description: Количество базового актива в контракте
+            sector:
+              $ref: "../common/instruments/properties.yaml#/properties/sector"
+          required:
+            - exchange_symbol
+            - currency
+            - quoted_currency
+            - first_trade_date
+            - last_trade_date
+            - futures_type
+            - asset_type
+            - basic_asset
+            - basic_asset_size
+        sp:
+          $ref: '../common/instruments/components.yaml#/components/schemas/sp'
+        currency:
+          description: Основные атрибуты по валюте
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Идентификатор валюты
+            base_currency:
+              $ref: '../common/instruments/components.yaml#/components/schemas/currency'
+              description: Валюта (база котировки)
+            currency_pair:
+              type: string
+              description: 'Валютная пара (база котировки/валюта котировки), н-р, USD/RUB'
+          required:
+            - base_currency
+        ticker_from_config:
+          type: string
+          description: Тикер из конфига
+        isin_from_config:
+          type: string
+          description: ISIN из конфига (заполняется для валюты)
+        type_from_config:
+          type: string
+          description: Тип инструмента из конфига
+        allow_cancel_flag:
+          type: boolean
+          description: Признак разрешения/запрета отменять поручения клиентам через приложение
+          default: true
+        hightech_sector_flag:
+          type: boolean
+          description: Признак бумаги высокотехнологичного (инновационного) сектора экономики
+          default: false
+        mic:
+          type: string
+          description: Market Identifier Code
+        risk_level:
+          description: Уровень риска
+          type: integer
+          format: int64
+        subtype:
+          type: string
+          description: Подтип ФИ
+          enum:
+            - gold
+            - long_term_bond
+            - short_term_bond
+        issued_flag:
+          type: boolean
+          description: Признак первичного размещения
+        index:
+          type: string
+          description: Индексы, в которые входит инструмент (через запятую)
+        asset_id:
+          type: integer
+          description: Идентификатор актива
+        region:
+          type: string
+          description: Регион
+        trade_clearing_account:
+          type: string
+          description: Торгово-клиринговый счет. По умолчанию пустая строка
+        tinkoff_security_flag:
+          type: boolean
+          description: Признак инструмента тинькофф группы
+          #          required: false
+          default: false
+      required:
+        - source
+        - request_id
+        - instrument_type
+        - name
+        - name_brief
+        - settlement_currency
+        - lot
+        - otc_flag
+        - ticker
+        - class_code
+        - type
+    #        $ref: "../common/instruments/properties.yaml#/required_on_schema"
+    instrument_get_response:
+      allOf:
+        - $ref: '#/components/schemas/instrument'
+        - type: object
+          properties:
+            brand_logo_name:
+              type: string
+              description: Название лого бренда
+            brand_logo_base_color:
+              type: string
+              description: Цвет бренда
+    instruments_list_response:
+      description: Информация по инструментам (по возрастанию id)
+      type: object
+      properties:
+        limit:
+          description: Количество выводимых строк
+          type: integer
+          format: int64
+        marker:
+          description: Маркер курсора
+          type: integer
+          format: int64
+        instruments:
+          description: Информация по инструментам
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/instrument'
+              - type: object
+                properties:
+                  exchange_logo_name:
+                    type: string
+                    description: Название лого биржи
+                  exchange_show:
+                    type: string
+                    description: Наименование биржи (для отображения)
+                  country_logo_name:
+                    type: string
+                    description: Название лого страны риска
+                  country_of_risk_brief:
+                    type: string
+                    description: Краткое наименование страны риска
+                  brand_logo_name:
+                    type: string
+                    description: Название лого бренда
+                  brand_logo_base_color:
+                    type: string
+                    description: Цвет бренда
+    instrument_events:
+      type: array
+      items:
+        $ref: '#/components/schemas/instrument_event'
+    instrument_event:
+      description: Событие по ФИ
+      type: object
+      properties:
+        instrument_id:
+          type: integer
+          format: int64
+          description: Идентификатор инструмента
+        isin:
+          type: string
+          description: Код isin
+        figi:
+          type: string
+          description: Код figi
+        event_number:
+          type: number
+          format: float
+          description: Номер события в RuData
+        event_type:
+          type: string
+          description: Тип события
+        event_date:
+          type: string
+          format: 'date-time'
+          description: Дата события
+        event_total_vol:
+          type: number
+          format: float
+          description: Полное количество бумаг, задействованных в событии
+        fix_date:
+          type: string
+          format: 'date-time'
+          description: Дата фиксации владельцев для участия в событии
+        rate_date:
+          type: string
+          format: 'date-time'
+          description: Дата определения даты либо факта события
+        default_date:
+          type: string
+          format: 'date-time'
+          description: Дата дефолта
+        real_pay_date:
+          type: string
+          format: 'date-time'
+          description: Дата реального исполнения обязательства
+        pay_date:
+          type: string
+          format: 'date-time'
+          description: Дата выплаты
+        pay_one_bond:
+          type: number
+          format: float
+          description: Выплата на одну облигацию
+        money_flow_val:
+          type: number
+          format: float
+          description: Выплаты на все бумаги, задействованные в событии
+        execution:
+          type: string
+          description: Признак исполнения
+        operation_type:
+          type: string
+          description: Тип операции
+        value:
+          type: number
+          format: float
+          description: Стоимость операции (ставка купона, доля номинала, цена выкупа или коэффициент конвертации)
+        note:
+          type: string
+          description: Примечание
+        convert_to_fin_tool_id:
+          type: string
+          description: ID выпуска бумаг, в который произведена конвертация
+        coupon_start_date:
+          type: string
+          format: 'date-time'
+          description: Начало купонного периода
+        coupon_end_date:
+          type: string
+          format: 'date-time'
+          description: Окончание купонного периода
+        coupon_period:
+          type: number
+          format: float
+          description: Купонный период
+        coupon_interest_rate:
+          type: number
+          format: float
+          description: Ставка купона, процентов годовых
+    #      require:
+    #        - instrument_id
+    #        - isin
+    #        - figi
+    #        - event_number
+    #        - event_type
+    #        - event_date
+    bond_aci:
+      description: Атрибуты по НКД
+      type: object
+      properties:
+        date:
+          type: string
+          format: 'date-time'
+          description: Дата расчета НКД
+        value:
+          type: number
+          format: float
+          description: Значение НКД на дату
+        value_percent:
+          type: number
+          format: float
+          description: НКД в процентах от номинала
+        nominal:
+          type: number
+          description: Текущий номинал
+        source:
+          type: string
+          description: Источник (md, bloomberg либо rudata)
+      required:
+        - date
+        - value
+        - value_percent
+        - source
+    instrument_flags:
+      description: Флаги ФИ
+      type: object
+      properties:
+        otc_flag:
+          type: boolean
+          description: Признак внебиржевой бумаги
+        show_auth_flag:
+          type: boolean
+          description: Признак отображения бумаги авторизованным клиентам
+        show_not_auth_flag:
+          type: boolean
+          description: Признак отображения бумаги неавторизованным клиентам
+        wm_flag:
+          type: boolean
+          description: Инструмент для wealth management
+        only_tinkoff_flag:
+          type: boolean
+          description: Признак возможности покупки инструмента только на брокерский счет Тинькофф
+        active_flag:
+          type: boolean
+          description: Признак действующей бумаги
+        black_out_flag:
+          type: boolean
+          description: Признак запрета торгов ФИ для сотрудников (акции tcs и облигации tcs)
+        no_trade_flag:
+          type: boolean
+          description: Признак запрета на покупку ФИ, чтобы клиент при грядущем корп действии не докупался
+    bond_time_table_task:
+      description: Задание на обновление календаря событий по облигации
+      type: object
+      properties:
+        instrument_id:
+          type: integer
+          format: int64
+          description: Идентификатор финансового инструмента
+        isin:
+          type: string
+          description: Код isin
+        event_date:
+          type: string
+          format: 'date-time'
+          description: Дата начала периода
+        status:
+          type: string
+          description: Статус задания
+    trading_schedule_state:
+      description: Информации по расписанию торгов
+      type: object
+      properties:
+        delta:
+          type: string
+          description: Осталось времени до открытия торгов
+          example: "1h15s"
+        trading_flag:
+          type: boolean
+          description: Признак доступности ФИ к торгам на основании расписания торгов
+          default: false

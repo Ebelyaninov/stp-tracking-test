@@ -1,0 +1,48 @@
+components:
+  responses:
+    CountriesGet:
+      description: Список стран
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/country_description'
+  schemas:
+    country_description:
+      description: Страна
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор страны
+        code:
+          type: integer
+          description: Код страны (см. справочник стран)
+        alfa_two:
+          type: string
+          description: Код 2-х буквенный (альфа-2)
+        alfa_three:
+          type: string
+          description: Код 3-х буквенный (альфа-3)
+        name:
+          type: string
+          description: Полное наименование страны
+        name_brief:
+          type: string
+          description: Краткое наименование страны
+        logo_name:
+          type: string
+          description: Название лого
+        region:
+          description: Регион
+          type: string
+      #          required: false
+      required:
+        - id
+        - code
+        - alfa_two
+        - alfa_three
+        - name
+        - name_brief

@@ -1,0 +1,21 @@
+get:
+  summary: Получение эмитента по его идентификатору
+  tags:
+    - Issuers
+  parameters:
+    - name: issuer_id
+      in: path
+      schema:
+        type: integer
+        format: int64
+      required: true
+      description: Идентификатор эмитента
+  responses:
+    '200':
+      $ref: 'common/issuers/components.yaml#/components/responses/IssuersItemGet'
+    '400':
+      $ref: 'common/errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: 'common/errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: 'common/errors.yaml#/components/responses/InternalServerError'
