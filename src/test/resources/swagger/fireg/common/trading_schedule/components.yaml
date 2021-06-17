@@ -1,0 +1,447 @@
+components:
+  parameters:
+    start_date:
+      name: start_date
+      in: query
+      required: true
+      schema:
+        type: string
+        format: 'date'
+      description: Начало периода YYYY-MM-DD
+    end_date:
+      name: end_date
+      in: query
+      required: true
+      schema:
+        type: string
+        format: 'date'
+      description: Конец периода YYYY-MM-DD
+  requestBodies:
+    TradingSchedulesPut:
+      required: true
+      description: Информация о доступности ФИ к торгам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/trading_schedule'
+  responses:
+    TradingSchedulesExchangeGet:
+      description: Информация о торговых днях
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/trading_schedule_exchange'
+    TradingSchedulesGet:
+      description: Информация о торговых площадках
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/exchange'
+  schemas:
+    exchange:
+      description: Информация о торговых площадках
+      type: object
+      properties:
+        exchange:
+          type: string
+          description: Наименование биржи
+        exchange_flag:
+          type: boolean
+          description: Признак биржи
+        exchange_show:
+          type: string
+          description: Наименование биржи (для отображения)
+        logo_name:
+          type: string
+          description: Название лого
+        zone_name:
+          type: string
+          description: Часовой пояс
+          example: "Europe/Moscow"
+        start_time:
+          type: string
+          format: 'time'
+          description: Местное время начала торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        end_time:
+          type: string
+          format: 'time'
+          description: Местное время окончания торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        premarket_start_time:
+          type: string
+          format: 'time'
+          description: Время начала торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        premarket_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_start_time:
+          type: string
+          format: 'time'
+          description: Время начала подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия, формат HH:MM:SS
+          example: "15:04:05"
+        closing_auction_end_time:
+          type: string
+          format: 'time'
+          description: Время завершения аукциона закрытия, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        evening_opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        main_trading_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала основных торгов на бирже
+        main_trading_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания основных торгов на бирже
+        additional_liquidity_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов с дополнительной ликвидностью
+        additional_liquidity_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов с дополнительной ликвидностью
+        primary_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов Америки (нативной биржи). Поле используется для exchange = SPB
+        primary_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов Америки (нативной биржи). Поле используется для exchange = SPB
+
+
+    trading_schedule:
+      description: Информации по расписанию торгов
+      type: object
+      properties:
+        exception:
+          type: boolean
+          description: Флаг - использовать исключения
+        exchange:
+          type: string
+          description: Наименование биржи
+        exchange_flag:
+          type: boolean
+          description: Признак биржи (при exception = false - обязательный)
+        exchange_show:
+          type: string
+          description: Наименование биржи (для отображения)
+        logo_name:
+          type: string
+          description: Название лого
+        zone_name:
+          type: string
+          description: Часовой пояс
+          example: "Europe/Moscow"
+        date:
+          type: string
+          format: 'date'
+          description: Дата (при exception = true - обязательный), формат RFC3339 date short
+          example: "2006-01-02"
+        start_time:
+          type: string
+          format: 'time'
+          description: Местное время начала торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        end_time:
+          type: string
+          format: 'time'
+          description: Местное время окончания торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        premarket_start_time:
+          type: string
+          format: 'time'
+          description: Время начала торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        premarket_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_start_time:
+          type: string
+          format: 'time'
+          description: Время начала подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        holiday_flag:
+          type: boolean
+          description: Признак праздничного дня
+          default: false
+        description:
+          type: string
+          description: Описание
+        opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия, формат HH:MM:SS
+          example: "15:04:05"
+        closing_auction_end_time:
+          type: string
+          format: 'time'
+          description: Время завершения аукциона закрытия, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        evening_opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        main_trading_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала основных торгов на бирже
+        main_trading_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания основных торгов на бирже
+        additional_liquidity_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов с дополнительной ликвидностью
+        additional_liquidity_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов с дополнительной ликвидностью
+        primary_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов Америки (нативной биржи). Поле используется для exchange = SPB
+        primary_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов Америки (нативной биржи). Поле используется для exchange = SPB
+
+      required:
+        - zone_name
+        - exception
+        - exchange
+    trading_schedule_exchange:
+      description: Информации по торговым дням
+      type: object
+      properties:
+        zone_name:
+          type: string
+          description: Часовой пояс
+          example: "Europe/Moscow"
+        exchange:
+          type: string
+          description: Наименование биржи/календаря
+          example: 'not_settled_calendar'
+        list:
+          description: Информация по торговым дням
+          type: array
+          items:
+            $ref: '#/components/schemas/trading_schedule__date'
+    trading_schedule__date:
+      type: object
+      properties:
+        date:
+          type: string
+          format: 'date'
+          description: Дата (при exception = true - обязательный), формат RFC3339 date short
+          example: "2006-01-02"
+        trading_flag:
+          type: boolean
+          description: Признак торгового дня
+        start_time:
+          type: string
+          format: 'time'
+          description: Местное время начала торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        end_time:
+          type: string
+          format: 'time'
+          description: Местное время окончания торгов (при exception = false - обязательный), формат HH:MM:SS
+          example: "15:04:05"
+        premarket_start_time:
+          type: string
+          format: 'time'
+          description: Время начала торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        premarket_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания торгов премаркета, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_start_time:
+          type: string
+          format: 'time'
+          description: Время начала подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        market_order_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания подачи заявки, формат HH:MM:SS
+          example: "15:04:05"
+        opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия, формат HH:MM:SS
+          example: "15:04:05"
+        closing_auction_end_time:
+          type: string
+          format: 'time'
+          description: Время завершения аукциона закрытия, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        prom_clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания промежуточного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        clearing_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного клиринга, формат HH:MM:SS
+          example: "15:04:05"
+        evening_opening_auction_start_time:
+          type: string
+          format: 'time'
+          description: Время начала аукциона открытия вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_start_time:
+          type: string
+          format: 'time'
+          description: Время начала основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        evening_end_time:
+          type: string
+          format: 'time'
+          description: Время окончания основного торгового периода вечерней сессии, формат HH:MM:SS
+          example: "15:04:05"
+        main_trading_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала основных торгов на бирже
+        main_trading_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания основных торгов на бирже
+        additional_liquidity_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов с дополнительной ликвидностью
+        additional_liquidity_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов с дополнительной ликвидностью
+        primary_start_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время начала торгов Америки (нативной биржи). Поле используется для exchange = SPB
+        primary_end_time:
+          type: string
+          format: "time"
+          example: "15:04:05"
+          description: Время окончания торгов Америки (нативной биржи). Поле используется для exchange = SPB

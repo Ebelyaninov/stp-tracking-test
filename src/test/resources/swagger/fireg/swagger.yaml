@@ -1,0 +1,964 @@
+openapi: 3.0.2
+info:
+  title: Securities Registry Service API
+  description: API для работы с реестром финансовых инструментов
+  version: 0.1.0
+servers:
+  - url: http://trading-test.tinkoff.ru/v1/fireg
+paths:
+  /instruments:
+    get:
+      summary: Получение списка инструментов
+      tags:
+        - Instruments
+      parameters:
+        - name: index
+          in: query
+          schema:
+            type: string
+          required: false
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/marker'
+        - name: company
+          in: query
+          schema:
+            type: string
+      #            required: false
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsListGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    post:
+      summary: Добавление инструмента в систему
+      tags:
+        - Instruments
+      requestBody:
+        $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsPost'
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsPost'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: 'common/errors.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    put:
+      summary: Обновление инструмента в системе
+      tags:
+        - Instruments
+      requestBody:
+        $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsPut'
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsPut'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}':
+    get:
+      summary: Поиск инструмента в системе
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+            format: string
+          required: true
+          description: Идентификатор финансового инструмента - int64 (либо figi, ticker, isin - string)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - id
+              - figi
+              - ticker
+              - isin
+          required: true
+          description: Тип идентификатора
+        - name: class_code
+          in: query
+          schema:
+            type: string
+          description: Код класса в QUIK
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsItemGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    delete:
+      summary: Удаление инструмента из системы
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - id
+              - figi
+          required: true
+          description: Тип идентификатора
+        - name: update_user
+          in: query
+          schema:
+            type: string
+          description: Пользователь, который последним изменил ФИ
+        - name: reason_for_cancel
+          in: query
+          schema:
+            type: string
+          description: Причина удаления инструмента
+      responses:
+        '200':
+          description: Инструмент успешно удален
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/trading-schedules':
+    get:
+      summary: Получение информации о доступности ФИ к торгам
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+            format: string
+          required: true
+          description: Идентификатор финансового инструмента (либо код FIGI, ISIN или BBCode - string)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - figi
+              - isin
+              - bb_code
+          required: true
+          description: Тип идентификатора
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsItemTradingSchedulesGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '409':
+          description: По идентификатору найдено более одной бумаги с разными биржами
+          content:
+            application/json:
+              schema:
+                $ref: 'common/errors.yaml#/components/schemas/error'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/status-system':
+    post:
+      summary: Обновление статуса проверки инструмента в системе
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Идентификатор финансового инструмента
+        - name: system
+          in: query
+          schema:
+            type: string
+            enum:
+              - quik
+              - ixxi
+              - depositary
+              - nalog
+              - middle_office
+              - trading_api
+              - wm_api
+              - aton_psm
+              - bloomberg
+              - config
+          required: true
+          description: |
+            Наименование системы
+            quik - QUIK
+            ixxi - IXXI
+            depositary - депозитарий
+            nalog - налоговый модуль
+            middle_office - Middle Office
+            trading_api - Trading API
+            wm_api - WM API
+            aton_psm - ATON PSM
+            bloomberg - Bloomberg
+            config - конфиг параметров бумаг
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - approved
+              - wait_approve
+              - not_approved
+          required: true
+          description: |
+            Наименование статуса
+            approved - одобрено
+            wait_approve - ожидание
+            not_approved - не одобрено
+      requestBody:
+        $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsItemStatusSystemPost'
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsItemStatusSystemPost'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/status-system/token':
+    get:
+      summary: Обновление статуса проверки инструмента в системе по одноразовому токену
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Идентификатор финансового инструмента
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
+          description: Токен для однократной активации статуса инструмента в системе
+        - name: system
+          in: query
+          schema:
+            type: string
+            enum:
+              - quik
+              - ixxi
+              - depositary
+              - nalog
+              - middle_office
+              - trading_api
+              - wm_api
+              - aton_psm
+              - bloomberg
+              - config
+          required: true
+          description: |
+            Наименование системы
+            quik - QUIK
+            ixxi - IXXI
+            depositary - депозитарий
+            nalog - налоговый модуль
+            middle_office - Middle Office
+            trading_api - Trading API
+            wm_api - WM API
+            aton_psm - ATON PSM
+            bloomberg - Bloomberg
+            config - конфиг параметров бумаг
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - approved
+              - wait_approve
+              - not_approve
+          required: true
+          description: |
+            Наименование статуса
+            approved - одобрено
+            wait_approve - ожидание
+            not_approved - не одобрено
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsItemStatusSystemTokenGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/discounts':
+    get:
+      summary: Получение информации по рискам
+      tags:
+        - Discounts
+      parameters:
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum:
+              - bloomberg
+              - quik
+              - middle_office
+          required: true
+          description: Источник данных
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          $ref: 'common/discounts/components.yaml#/components/responses/DiscountsAllGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/discounts':
+    get:
+      summary: Получение ставок риска по финансовому инструменту
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента (в зависимости от id_kind передается либо код figi либо ticker)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - figi
+              - ticker
+          required: true
+          description: Тип идентификатора
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum:
+              - bloomberg
+              - quik
+              - middle_office
+          required: true
+          description: Источник данных
+        - name: class_code
+          in: query
+          schema:
+            type: string
+          description: Код класса в QUIK
+      responses:
+        '200':
+          $ref: 'common/discounts/components.yaml#/components/responses/DiscountsGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    put:
+      summary: Обновление информации по рискам
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента (в зависимости от id_kind передается либо код figi либо ticker)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - figi
+              - ticker
+          required: true
+          description: Тип идентификатора
+        - name: class_code
+          in: query
+          schema:
+            type: string
+          description: Код класса в QUIK
+      requestBody:
+        $ref: 'common/discounts/components.yaml#/components/requestBodies/DiscountsPut'
+      responses:
+        '200':
+          $ref: 'common/discounts/components.yaml#/components/responses/DiscountsUpdatedGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/accrued-interests':
+    get:
+      summary: Получение информации об НКД облигации
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента (в зависимости от id_kind передается либо код figi, isin, ticker либо id)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - id
+              - figi
+              - isin
+              - ticker
+          required: true
+          description: Тип идентификатора
+        - name: class_code
+          in: query
+          schema:
+            type: string
+          description: Код класса в QUIK
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Начало периода YYYY-MM-DD
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Конец периода YYYY-MM-DD
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsAccruedInterestGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    put:
+      summary: Добавление задания на загрузку истории НКД (RuData)
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: FIGI либо ALL
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Начало периода YYYY-MM-DD
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Конец периода YYYY-MM-DD
+        - name: mailto
+          in: query
+          required: true
+          schema:
+            type: string
+          description: E-mail (или несколько через пробел) (RFC 5322 и только для @tinkoff.ru)
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsRuDataAciPut'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{figi}/status-system':
+    get:
+      summary: Получение информации о проверке статуса инструмента в системах
+      tags:
+        - Instruments
+      parameters:
+        - name: figi
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента в Bloomberg
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsFigiSystemStatusGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/events':
+    get:
+      summary: Получения событий по ФИ за период
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Идентификатор инструмента (в зависимости от id_kind передается либо код figi, isin, ticker либо id)
+        - name: id_kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - id
+              - figi
+              - isin
+              - ticker
+          required: true
+          description: Тип идентификатора
+        - name: class_code
+          in: query
+          schema:
+            type: string
+          description: Код класса в QUIK
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Начало периода YYYY-MM-DD
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: Конец периода YYYY-MM-DD
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - CPN
+              - CALL
+              - MTY
+              - CONV
+          description: Тип события
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsEventsListGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{figi}/spreads':
+    put:
+      summary: Обновление спредов финансового инструмента
+      tags:
+        - Instruments
+      parameters:
+        - name: figi
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Код FIGI
+      requestBody:
+        $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsFigiSpreadsPut'
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsFigiSpreadsPut'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '429':
+          $ref: 'common/errors.yaml#/components/responses/TooManyRequests'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{figi}/flags':
+    post:
+      summary: Обновление флагов по инструменту
+      tags:
+        - Instruments
+      parameters:
+        - name: figi
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Код FIGI
+      requestBody:
+        $ref: 'instruments/components.yaml#/components/requestBodies/InstrumentsFigiFlagsPost'
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentsFigiFlagsPost'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{figi}/event':
+    post:
+      summary: Обновление календаря событий для облигации за период
+      tags:
+        - Instruments
+      parameters:
+        - name: figi
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Код FIGI
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: 'date'
+          description: Начало периода YYYY-MM-DD
+      responses:
+        '200':
+          $ref: 'instruments/components.yaml#/components/responses/InstrumentEventTaskPost'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/instruments/{instrument_id}/ixxi':
+    put:
+      summary: Метод по загрузке информации по фьючерсам в ixxi
+      tags:
+        - Instruments
+      parameters:
+        - name: instrument_id
+          in: path
+          schema:
+            type: string
+            format: int64
+          required: true
+          description: ID инструмента
+      responses:
+        '200':
+          description: Успех
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /instruments/{instrument_id}/history-discounts:
+    $ref: common/discounts/history_discounts.yaml
+  /countries:
+    get:
+      summary: Получение списка стран
+      tags:
+        - Countries
+      responses:
+        '200':
+          $ref: 'countries/components.yaml#/components/responses/CountriesGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /enumeration:
+    get:
+      summary: Получение перечисляемых типов
+      tags:
+        - Enumeration
+      parameters:
+        - name: sys_name
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: 'enumeration/components.yaml#/components/responses/EnumerationGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/trading-schedules':
+    $ref: common/trading_schedule/trading_schedule.yaml#/root
+  '/trading-schedules/{exchange}':
+    $ref: common/trading_schedule/trading_schedule.yaml#/exchange
+  '/brands':
+    get:
+      summary: Получение списка брендов
+      tags:
+        - Brands
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/marker'
+      responses:
+        '200':
+          $ref: 'brands/components.yaml#/components/responses/BrandsGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+    put:
+      summary: Добавление информации о бренде
+      tags:
+        - Brands
+      requestBody:
+        $ref: 'brands/components.yaml#/components/requestBodies/BrandsPut'
+      responses:
+        '200':
+          $ref: 'brands/components.yaml#/components/responses/BrandsPut'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  '/brands/{brand_id}':
+    delete:
+      summary: Удаление бренда
+      parameters:
+        - name: brand_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id или brand_name записи
+      tags:
+        - Brands
+      responses:
+        '200':
+          description: Бренд успешно удален
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /corp-actions:
+    get:
+      summary: Получения информации по корпоративным событиям (КД)
+      tags:
+        - Corp Actions
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/marker'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - DELIST
+              - DVD_CASH
+              - DVD_STOCK
+              - RECLASS
+              - SPIN
+              - STOCK_SPLT
+          description: Тип КД
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - wait_enrichment
+              - wait_approve
+              - deleted
+              - approved
+              - not_approved
+              - processing
+              - ready
+              - conflict
+          description: Статус КД
+        - name: effective_date
+          in: query
+          schema:
+            type: string
+            format: 'date'
+          description: YYYY-MM-DD Дата, в которую событие вступит в силу
+      responses:
+        '200':
+          $ref: 'corpaction/components.yaml#/components/responses/CorpActionListGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /corp-actions/{action_id}:
+    get:
+      summary: Получения информации по корпоративному событию
+      tags:
+        - Corp Actions
+      parameters:
+        - name: action_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Идентификатор корпоративного события
+      responses:
+        '200':
+          $ref: 'corpaction/components.yaml#/components/responses/CorpActionGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /corp-actions/{action_id}/status/token:
+    get:
+      summary: Смена статуса по корпоративному событию (токен)
+      tags:
+        - Corp Actions
+      parameters:
+        - name: action_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Идентификатор корпоративного события
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
+          description: Токен для однократной активации статуса корпоративного события в системе
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - deleted
+              - approved
+              - not_approved
+          required: true
+          description: |
+            Наименование статуса
+            deleted - удалено
+            approved - подтверждено
+            not_approved - отклонено
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - conflict
+              - wait_approve
+          required: true
+          description: Тип (статус требующий ручного подтверждения)
+      responses:
+        '200':
+          $ref: 'corpaction/components.yaml#/components/responses/CorpActionStatusSetWithTokenGet'
+        '400':
+          $ref: 'common/errors.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common/errors.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common/errors.yaml#/components/responses/InternalServerError'
+  /reports/asset-statements:
+    $ref: reports/asset_statements.yaml
+  /issuers/{issuer_id}:
+    $ref: common/issuers/issuers.yaml
+
+  /index/index_instruments:
+    $ref: common/index/index_instr.yaml
+  /index/index_description:
+    $ref: common/index/index_desc.yaml
+
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Выводится не более, чем указанное количество строк (по умолчанию, 100)
+      schema:
+        type: integer
+        format: int64
+        default: 100
+        minimum: 1
+        maximum: 100
+    offset:
+      deprecated: true
+      name: offset
+      in: query
+      description: Количество пропущенных строк перед началом вывода (по умолчанию, 0)
+      schema:
+        type: integer
+        format: int64
+    marker:
+      name: marker
+      in: query
+      description: Маркер курсора (по умолчанию, 0)
+      schema:
+        type: integer
+        format: int64
+        default: 0
+        minimum: 0
+  schemas:
+    sector:
+      type: string
+      description: |
+        Сектор
+        consumer - потребительские товары
+        energy - энергетика
+        financial - финансовый сектор
+        health_care - здравоохранение
+        industrials - машиностроение и транспорт
+        it - информационные технологии
+        materials - сырьевая промышленность
+        real_estate - недвижимость
+        telecom - телекоммуникации
+        utilities - электроэнергетика
+        government - государственные бумаги
+        municipal - муниципальный сектор
+      enum:
+        - consumer
+        - energy
+        - financial
+        - health_care
+        - industrials
+        - it
+        - materials
+        - real_estate
+        - telecom
+        - utilities
+        - government
+        - municipal

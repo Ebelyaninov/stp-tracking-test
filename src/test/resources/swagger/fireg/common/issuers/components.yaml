@@ -1,0 +1,114 @@
+components:
+  schemas:
+    issuer:
+      description: Эмитент
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор эмитента
+        rudata_id:
+          type: string
+          description: Идентификатор эмитента в базе Интерфакс (RuData)
+        code_nsd:
+          type: string
+          description: Код НРД
+        created_at:
+          type: string
+          format: 'date-time'
+          description: Дата создания записи
+        updated_at:
+          type: string
+          format: 'date-time'
+          description: Дата обновления записи
+        name_brief:
+          type: string
+          description: Краткое наименование эмитента
+        name_brief_eng:
+          type: string
+          description: Краткое наименование эмитента на английском
+        name:
+          type: string
+          description: Полное наименование эмитента
+        inn:
+          type: string
+          description: ИНН эмитента
+        tax_number:
+          type: string
+          description: Номер налоговой регистрации (для иностранных компаний)
+        tin:
+          type: string
+          description: TIN (для иностранных компаний)
+        state_reg_num:
+          type: string
+          description: Регистрационный номер
+        credit_cmp_flag:
+          type: boolean
+          description: Признак кредитной организации
+        bank_4_non_resident_flag:
+          type: boolean
+          description: Признак банк / не банк (для иностранных организаций)
+        sector:
+          type: string
+          description: Отрасль
+        kpp:
+          type: string
+          description: КПП
+        okpo:
+          type: string
+          description: ОКПО
+        ogrn:
+          type: string
+          description: ОГРН
+        address:
+          type: string
+          description: Адрес
+        phone:
+          type: string
+          description: Телефон
+        bik:
+          type: string
+          description: БИК
+        swift:
+          type: string
+          description: SWIFT-код
+        okved:
+          type: string
+          description: ОКВЭД
+        okato:
+          type: string
+          description: ОКАТО
+        code_oksm:
+          type: string
+          description: Код ОКСМ
+        lei_code:
+          type: string
+          description: LEI-код
+        egrul_date:
+          type: string
+          format: 'date-time'
+          description: Дата внесения записи в ЕГРЮЛ
+        non_resident_type:
+          type: string
+          description: >-
+            Тип эмитента-нерезидента. Возможные значения:
+            100 - Иностранные банки, кроме центральных (национальных) банков;
+            200 - Центральные (национальные) банки;
+            400 - Международные организации;
+            511 - Иностранные страховые организации и пенсионные фонды;
+            512 - Инвестиционные фонды;
+            513 - Прочие финансовые организации;
+            520 - Органы государственного управления;
+            530 - Нефинансовые организации;
+            540 - Физические лица.
+        active_flag:
+          type: boolean
+          description: Признак действующего эмитента. Принимает значение false, если бумага дедуплицировалась.
+  responses:
+    IssuersItemGet:
+      description: Информация по эмитенту
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/issuer'

@@ -148,6 +148,7 @@ tasks.compileJava {
         "generateMiofApi",
         "generateTrackingCacheApi",
         "generateTrackingSlaveCacheApi",
+        "generateFiregApi",
         "generateMDApi")
 }
 
@@ -296,6 +297,37 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
         )
     )
 }
+
+
+
+tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateFiregApi") {
+    val openApiPackage = "ru.qa.tinkoff.swagger"
+    val path = "$buildDir/generated/sources/swagger"
+
+    inputSpec.set("$projectDir/src/test/resources/swagger/fireg/swagger.yaml")
+    outputDir.set(path)
+
+    generateApiTests.set(false)
+    skipValidateSpec.set(true)
+    generatorName.set("java")
+    apiPackage.set("$openApiPackage.fireg.api")
+    invokerPackage.set("$openApiPackage.fireg.invoker")
+    modelPackage.set("$openApiPackage.fireg.model")
+    library.set("rest-assured")
+    generateModelDocumentation.set(false)
+    generateApiDocumentation.set(false)
+
+    typeMappings.put("float", "java.math.BigDecimal")
+    typeMappings.put("double", "java.math.BigDecimal")
+
+    configOptions.set(
+        mapOf(
+            "dateLibrary" to "java8",
+            "serializationLibrary" to "jackson"
+        )
+    )
+}
+
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateMDApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"

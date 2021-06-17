@@ -1,0 +1,161 @@
+components:
+  requestBodies:
+    DiscountsPut:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/discounts_put'
+  responses:
+    DiscountsAllGet:
+      description: Информация по рискам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/discounts_all'
+    DiscountsHistoryGet:
+      description: Информация по рискам
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/discounts_ext'
+    DiscountsGet:
+      description: Информация по рискам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/discounts_ext'
+    DiscountsUpdatedGet:
+      description: Информация по рискам
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/discounts_updated'
+  schemas:
+    discounts_put:
+      description: Информация по рискам
+      type: array
+      items:
+        $ref: '#/components/schemas/discounts'
+    discounts_updated:
+      description: Информация по рискам
+      type: object
+      properties:
+        status_msg:
+          type: string
+          description: Дополнительная информация о результате работы метода
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/discounts_ext'
+    discounts_all:
+      description: Информация по рискам (по возрастанию instrument_id)
+      type: object
+      properties:
+        limit:
+          description: Количество выводимых строк
+          type: integer
+          format: int64
+        offset:
+          description: Количество пропущенных строк перед началом вывода
+          type: integer
+          format: int64
+        total:
+          description: Всего строк
+          type: integer
+          format: int64
+        discounts:
+          description: Информация по рискам всех ФИ
+          type: array
+          items:
+            $ref: '#/components/schemas/discounts_ext'
+    discounts:
+      description: Информация по рискам
+      type: object
+      properties:
+        source:
+          type: string
+          description: Источник
+          enum:
+            - bloomberg
+            - quik
+            - middle_office
+        short_enabled_flag:
+          type: boolean
+          description: Признак доступности для операций шорт
+          example: false
+        num:
+          type: number
+          format: float
+          description: Диапазон
+        load_date:
+          type: string
+          format: 'date-time'
+          description: Дата торговой сессии
+        created_at:
+          type: string
+          format: 'date-time'
+          description: Время добавления значения в базу
+        change_time:
+          type: string
+          format: 'date-time'
+          description: Время изменения ставок риска
+        qty_begin_rub:
+          type: number
+          format: float
+          description: Начало диапазона, руб.
+        qty_end_rub:
+          type: number
+          format: float
+          description: Конец диапазона, руб.
+        klong:
+          type: number
+          format: float
+          description: Коэффициент ставки риска длинной позиции по клиенту 2 – клиент со стандартным уровнем риска (КСУР)
+        kshort:
+          type: number
+          format: float
+          description: Коэффициент ставки риска короткой позиции по клиенту 2 – клиент со стандартным уровнем риска (КСУР)
+        dlong:
+          type: number
+          format: float
+          description: Ставка риска минимальной маржи лонг (для КСУР)
+        dshort:
+          type: number
+          format: float
+          description: Ставка риска минимальной маржи шорт (для КСУР)
+        dlong_min:
+          type: number
+          format: float
+          description: Ставка риска начальной маржи лонг (для КСУР)
+        dshort_min:
+          type: number
+          format: float
+          description: Ставка риска начальной маржи шорт (для КСУР)
+        load_from_quik_flag:
+          type: boolean
+          description: Признак загрузки ставок КЦ из quik
+        cc_source:
+          type: string
+          description: Источник по загрузке ставок КЦ (разбивка для source = quik)
+          enum: [ quik, spb, iss ]
+    discounts_ext:
+      allOf:
+        - $ref: '#/components/schemas/discounts'
+        - type: object
+          properties:
+            instrument_id:
+              type: number
+              format: int64
+              description: Идентификатор инструмента
+            ticker:
+              type: string
+              description: Тикер
+            class_code:
+              type: string
+              description: Код класса в QUIK
+          required:
+            - instrument_id
+            - ticker

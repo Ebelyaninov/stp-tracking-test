@@ -1,0 +1,153 @@
+post:
+  summary: Создание задачи на сбор дивидендов
+  tags:
+    - Instruments
+  parameters:
+    - name: instrument_id
+      in: path
+      description: Внутренний ID инструмента
+      schema:
+        type: integer
+        required: true
+    - name: event_date
+      in: query
+      description: "С какой даты собирать"
+      schema:
+        type: string
+        format: date
+    - name: source
+      in: query
+      description: Источник данных для загрузки
+      schema:
+        type: string
+        enum: ["", "bloomberg", "rudata"]
+
+  responses:
+    '200':
+      description: Представление задачи в таблице instrument_dividend_task
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Идентификатор задачи
+              instrument_id:
+                type: integer
+                description: Идентификатор инструмента
+              event_date:
+                type: string
+                format: date-time
+              source:
+                type: string
+                description: Источник данных
+              status:
+                type: string
+                description: Статус выполнения задачи
+              error:
+                type: string
+                description: Последняя ошибкка при выполнении задачи
+    '400':
+      $ref: './../errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: './../errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: './../errors.yaml#/components/responses/InternalServerError'
+
+get:
+  summary: Получение дивидендов по инструменту
+  tags:
+    - Instruments
+  parameters:
+    - name: instrument_id
+      in: path
+      description: ID инструмента в зависимости от id_kind
+      schema:
+        type: string
+        required: true
+    - name: id_kind
+      in: query
+      schema:
+        type: string
+        enum:
+          - id
+          - figi
+          - ticker
+          - isin
+      required: true
+      description: Тип идентификатора
+    - name: class_code
+      in: query
+      schema:
+        type: string
+      description: Код класса в QUIK
+    - name: start_date
+      in: query
+      description: "Начальная дата"
+      schema:
+        required: false
+        type: string
+        format: date
+    - name: end_date
+      in: query
+      description: "Конечная дата"
+      schema:
+        required: false
+        type: string
+        format: date
+
+  responses:
+    '200':
+      description: Массив дивидендов. Пустой массив, если дивидендов нет
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Идентификатор дивиденда
+              instrument_id:
+                type: integer
+                description: Идентификатор инструмента
+              source:
+                type: string
+                description: Источник данных
+              status:
+                type: string
+              dividend_net:
+                type: number
+              dividend_currency:
+                type: string
+              payment_date:
+                type: string
+                format: date-time
+              declared_date:
+                type: string
+                format: date-time
+              last_buy_date:
+                type: string
+                format: date-time
+              dividend_type:
+                type: string
+              reason_for_pay:
+                type: string
+              record_date:
+                type: string
+                format: date-time
+              regularity:
+                type: string
+              close_price:
+                type: number
+              yield_value:
+                type: number
+              created_at:
+                type: string
+                format: date-time
+    '400':
+      $ref: './../errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: './../errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: './../errors.yaml#/components/responses/InternalServerError'

@@ -1,0 +1,56 @@
+# Здесь лежат общие поля схемы инструмента
+properties:
+  min_price_increment:
+    type: number
+    format: float
+    description: Изменение шага цены для ФИ
+  #    required: false
+
+  sector:
+    type: string
+    description: Сектор
+    enum:
+      - consumer
+      - energy
+      - financial
+      - health_care
+      - industrials
+      - it
+      - materials
+      - real_estate
+      - telecom
+      - utilities
+      - government
+      - municipal
+
+  type:
+    type: string
+    description: |
+      Тип финансового инструмента
+      bond - облигация
+      share - акция
+      etf - ETF
+      sp - структурная нота
+      currency - валюта
+      futures - фьючерс
+    enum:
+      - bond
+      - share
+      - etf
+      - sp
+      - currency
+      - futures
+
+# Поля, обязательные для схемы инструмента
+required_on_schema:
+  - source
+  - request_id
+  - instrument_type
+  - name
+  - name_brief
+  - settlement_currency
+  - lot
+  - otc_flag
+  - ticker
+  - class_code
+  - type

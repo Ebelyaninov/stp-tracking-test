@@ -1,0 +1,57 @@
+get:
+  summary: Получение истории ставок риска по инструменту за период в разрезе источника
+  tags:
+    - Discounts
+  parameters:
+    - name: id_kind
+      in: query
+      schema:
+        type: string
+        enum:
+          - ticker
+          - figi
+      required: true
+      description: Тип идентификатора. Если id_kind = ticker, проверяется, что передано поле class_code
+    - name: instrument_id
+      in: path
+      schema:
+        type: string
+        format: string
+      required: true
+      description: Идентификатор финансового инструмента (либо код FIGI, либо тикер)
+    - name: class_code
+      in: query
+      schema:
+        type: string
+      description: Код класса в QUIK
+    - name: source
+      in: query
+      schema:
+        type: string
+        enum:
+          - bloomberg
+          - quik
+          - middle_office
+      required: true
+      description: Источник данных
+    - name: start_date
+      in: query
+      schema:
+        type: string
+        format: 'date'
+      description: Начало периода YYYY-MM-DD
+    - name: end_date
+      in: query
+      schema:
+        type: string
+        format: 'date'
+      description: Окончание периода YYYY-MM-DD
+  responses:
+    '200':
+      $ref: 'common/discounts/components.yaml#/components/responses/DiscountsHistoryGet'
+    '400':
+      $ref: 'common/errors.yaml#/components/responses/BadRequest'
+    '404':
+      $ref: 'common/errors.yaml#/components/responses/NotFound'
+    '500':
+      $ref: 'common/errors.yaml#/components/responses/InternalServerError'

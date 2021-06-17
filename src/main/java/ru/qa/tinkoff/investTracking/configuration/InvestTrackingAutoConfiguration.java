@@ -1,11 +1,9 @@
 package ru.qa.tinkoff.investTracking.configuration;
 
 
-import com.datastax.driver.core.AuthProvider;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PlainTextAuthProvider;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MappingManager;
+import lombok.Getter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -19,6 +17,12 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 @ComponentScan("ru.qa.tinkoff.investTracking")
 @EnableConfigurationProperties(InvestTrackingCassandraDbConfigurationProperties.class)
 public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfiguration {
+
+    @Getter
+    private ConsistencyLevel defaultConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM;
+    @Getter
+    private ConsistencyLevel writeConsistencyLevel = ConsistencyLevel.EACH_QUORUM;
+
 
     @Bean
     public InvestTrackingCassandraDbConfigurationProperties dbConf() {
@@ -39,6 +43,17 @@ public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfigur
     protected AuthProvider getAuthProvider() {
         return new PlainTextAuthProvider(dbConf().getUsername(), dbConf().getPassword());
     }
+
+
+    @Override
+    protected QueryOptions getQueryOptions() {
+        var queryOptions = super.getQueryOptions();
+        if (queryOptions == null) {
+            queryOptions = new QueryOptions();
+        }
+        return queryOptions.setConsistencyLevel(defaultConsistencyLevel);
+    }
+
 
     @Override
     protected String getClusterName() {

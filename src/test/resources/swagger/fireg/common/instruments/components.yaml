@@ -1,0 +1,759 @@
+components:
+  schemas:
+    currency:
+      type: string
+      enum:
+        - rub
+        - usd
+        - eur
+        - cad
+        - chf
+        - gbp
+        - hkd
+        - nok
+        - sek
+        - try
+        - trl
+        - ils
+        - cny
+        - jpy
+    quoted_currency:
+      type: string
+      description: Валюта, в которой оценивается контракт
+      enum:
+        - rub
+        - usd
+        - eur
+        - cad
+        - chf
+        - gbp
+        - hkd
+        - nok
+        - sek
+        - try
+        - trl
+        - ils
+        - cny
+        - jpy
+    sp:
+      description: Основные атрибуты по структурной ноте
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор структурной ноты
+        issue:
+          type: string
+          description: Полное наименование эмитента
+        type:
+          type: string
+          description: |
+            Код типа структурной ноты
+            deliverable - поставочный
+            non_deliverable - беспоставочный
+          enum:
+            - deliverable
+            - non_deliverable
+        logic_portfolio:
+          type: string
+          description: |
+            Код стратегии портфеля
+            volatility - волантильность
+            correlation - корреляция
+          enum:
+            - volatility
+            - correlation
+        asset_type:
+          type: string
+          description: |
+            Код типа базового актива
+            commodity - товар
+            currency - валюта
+            security - ценная бумага
+            index - индекс
+          enum:
+            - commodity
+            - currency
+            - security
+            - index
+        basic_asset:
+          type: string
+          description: >-
+            Вид базового актива в зависимости от типа базового актива. Если
+            валюта, то наименование валюты. Если ЦБ, то код FIGI. Если индекс,
+            то наименование индекса.
+        safety_barrier:
+          type: number
+          format: float
+          description: Барьер сохранности (в процентах)
+        maturity_date:
+          type: string
+          format: 'date-time'
+          description: Дата погашения
+        coupons:
+          description: Купоны по структурной ноте
+          type: array
+          items:
+            $ref: '#/components/schemas/sp_coupon'
+        nominal:
+          description: Номинал
+          type: number
+        nominal_currency:
+          $ref: '#/components/schemas/currency'
+          description: Валюта номинала
+        issuer_id:
+          description: Идентификатор эмитента
+          type: integer
+          format: int64
+      required:
+        - issue
+        - type
+        - logic_portfolio
+        - asset_type
+        - basic_asset
+        - safety_barrier
+        - maturity_date
+    share:
+      description: Основные атрибуты по акции
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор акции
+        type:
+          type: string
+          description: |
+            Код типа акции:
+            preferred - привилегированная,
+            common - обыкновенная,
+            adr - американские депозитарные расписки,
+            gdr - глобальные депозитарные расписки,
+            mlp - товарищество с ограниченной ответственностью,
+            ny_reg_shrs - акции из реестра Нью-Йорка,
+            closed_end_fund - закрытый инвестиционный фонд,
+            reit - траст недвижимости
+          enum:
+            - preferred
+            - common
+            - adr
+            - gdr
+            - mlp
+            - ny_reg_shrs
+            - closed_end_fund
+            - reit
+        issue:
+          type: string
+          description: Полное наименование эмитента
+        issue_size:
+          type: number
+          format: float
+          description: Объем (стоимость)
+        nominal:
+          type: number
+          description: Номинал акции
+        nominal_currency:
+          $ref: '#/components/schemas/currency'
+          description: Валюта номинала
+        sector:
+          $ref: 'properties.yaml#/properties/sector'
+        primary_index:
+          type: string
+          description: Индекс (Bloomberg)
+        dividend_rate:
+          type: number
+          format: float
+          description: Ставка дивиденда (для привилегированных акций)
+        preferred_share_type:
+          type: string
+          description: |
+            Код типа привилегированной акции
+            cumulative - кумулятивная
+            non_cumulative - некумулятивная
+          enum:
+            - cumulative
+            - non_cumulative
+        ipo_date:
+          type: string
+          format: 'date-time'
+          description: Дата IPO
+        registry_date:
+          type: string
+          format: 'date-time'
+          description: Дата регистрации
+        dividends:
+          description: Дивиденды по акции
+          type: array
+          items:
+            $ref: '#/components/schemas/share_dividend'
+        issuer_id:
+          description: Идентификатор эмитента
+          type: integer
+          format: int64
+      required:
+        - type
+        - issue
+        - sector
+    etf:
+      description: Основные атрибуты по ETF
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор ETF
+        issue:
+          type: string
+          description: Полное наименование эмитента
+        hurdle_rate:
+          type: number
+          format: float
+          description: >-
+            Барьерная ставка доходности после которой фонд имеет право на
+            perfomance fee (в процентах)
+        perfomance_fee:
+          type: number
+          format: float
+          description: Комиссия за успешные результаты фонда (в процентах)
+        fixed_commision:
+          type: number
+          format: float
+          description: Фиксированная комиссия за управление (в процентах)
+        payment_type:
+          type: string
+          description: |
+            Код типа распределения доходов от выплат по бумагам
+            income - распределяются инвесторам
+            accumulation - остаются в фонде
+          enum:
+            - income
+            - accumulation
+        water_mark_flag:
+          type: boolean
+          description: Признак необходимости выхода фонда в плюс для получения комиссии
+          default: false
+        no_commission_flag:
+          type: boolean
+          description: Признак отсутствия комиссии по ФИ
+          default: false
+        auto_investing_flag:
+          type: boolean
+          description: Признак автоинвестирования
+          default: false
+        buy_premium:
+          type: number
+          format: float
+          description: Премия (надбавка к цене) при покупке доли в фонде (в процентах)
+        sell_discount:
+          type: number
+          format: float
+          description: >-
+            Ставка дисконта (вычет из цены) при продаже доли в фонде (в
+            процентах)
+        rebalancing_flag:
+          type: boolean
+          description: Признак ребалансируемости портфеля фонда
+          default: false
+        rebalancing_freq:
+          type: string
+          description: |
+            Код периодичности ребалансировки
+            annual - ежегодный
+            semi_annual - полугодовой
+            quarterly - ежеквартальный
+            daily - ежедневный
+            weekly - еженедельный
+          enum:
+            - annual
+            - semi_annual
+            - quarterly
+            - daily
+            - weekly
+        management_type:
+          type: string
+          description: |
+            Код типа управления
+            active - активный
+            passive - пассивный
+          enum:
+            - active
+            - passive
+        primary_index:
+          type: string
+          description: Индекс (Bloomberg)
+        focus_type:
+          type: string
+          description: |
+            Код базы ETF
+            equity - акции
+            fixed_income - облигации
+            mixed_allocation - смешанный
+            money_market - денежный рынок
+            real_estate - недвижимость
+            commodity - товары
+            specialty - специальный
+            private_equity - private equity
+            alternative_investment - альтернативные инвестиции
+          enum:
+            - equity
+            - fixed_income
+            - mixed_allocation
+            - money_market
+            - real_estate
+            - commodity
+            - specialty
+            - private_equity
+            - alternative_investment
+        leveraged_flag:
+          type: boolean
+          description: Признак использования заемных активов (плечо)
+          default: false
+        num_shares:
+          type: number
+          format: float
+          description: Количество акций в обращении
+        ucits_flag:
+          type: boolean
+          description: Признак обязательства по отчетности перед регулятором
+          default: false
+        released_date:
+          type: string
+          format: 'date-time'
+          description: Дата выпуска
+        logic_assets:
+          type: object
+          properties:
+            share:
+              type: number
+              format: float
+            gold:
+              type: number
+              format: float
+            long_term_bond:
+              type: number
+              format: float
+            short_term_bond:
+              type: number
+              format: float
+        extra_parameters:
+          type: object
+          properties:
+            average_annual_return:
+              type: number
+              format: float
+            yield_without_inflation:
+              type: number
+              format: float
+            volatility:
+              type: number
+              format: float
+            max_growth:
+              type: number
+              format: float
+            max_fall:
+              type: number
+              format: float
+            success_years:
+              type: number
+              format: float
+            fall_years:
+              type: number
+              format: float
+            ddigit_return_period_percent:
+              type: number
+              format: float
+            success_period_percent:
+              type: number
+              format: float
+            sharpe_ratio:
+              type: number
+              format: float
+            geography:
+              type: string
+        description:
+          type: string
+          description: Описание фонда
+        primary_index_description:
+          type: string
+          description: Описание индекса, за которым следует фонд
+        primary_index_company:
+          type: string
+          description: Основные компании, в которые вкладывается фонд
+        index_recovery_period:
+          type: number
+          format: integer
+          description: Срок восстановления индекса (после просадки)
+        success_fee_flag:
+          type: boolean
+          description: Признак взимания Success Fee по ФИ
+        sector:
+          $ref: "properties.yaml#/properties/sector"
+        inav_code:
+          type: string
+          description: INAV-код. По умолчанию, пустое поле.
+        issuer_id:
+          description: Идентификатор эмитента
+          type: integer
+          format: int64
+      required:
+        - issue
+        - focus_type
+    share_dividend:
+      description: Атрибуты по дивидендам
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор записи
+        dividend_net:
+          type: number
+          format: float
+          description: Величина дивидендов на 1 акцию
+        payment_date:
+          type: string
+          format: 'date-time'
+          description: Дата начала фактических выплат
+        declared_date:
+          type: string
+          format: 'date-time'
+          description: Дата объявления дивидендов
+        exdividend_date:
+          type: string
+          format: 'date-time'
+          description: Экс-дивидендная дата
+        type:
+          type: string
+          description: |
+            Код типа выплаты
+            cash - деньги
+            share - акции
+          default: cash
+          enum:
+            - cash
+            - share
+        reason_for_pay:
+          type: string
+          description: |
+            Код основания выплаты
+            cash - деньги
+            stock - акции
+            spin_off - спин-офф
+            split - сплит
+            rights - права
+            capital_change- изменение капитала
+          enum:
+            - cash
+            - stock
+            - spin_off
+            - split
+            - rights
+            - capital_change
+      required:
+        - dividend_net
+        - dividend_type
+    sp_coupon:
+      description: Атрибуты по купону
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор купона
+        coupon_number:
+          type: integer
+          description: Номер купона
+        type:
+          type: string
+          description: |
+            Код вида купона
+            fixed_permanent - фиксированный постоянный
+            fixed_variable - фиксированный переменный
+            floating - плавающий
+          enum:
+            - fixed_permanent
+            - fixed_variable
+            - floating
+        interest_rate:
+          type: number
+          format: float
+          description: Процентная ставка
+        coupon_value:
+          type: number
+          format: float
+          description: Размер купона облигации
+        start_date:
+          type: string
+          format: 'date-time'
+          description: Дата начала купонного периода
+        end_date:
+          type: string
+          format: 'date-time'
+          description: Дата окончания купонного периода
+        plan_date:
+          type: string
+          format: 'date-time'
+          description: Плановая дата платежа
+        issuer_date:
+          type: string
+          format: 'date-time'
+          description: Дата платежа объявленная эмитентом
+        fact_date:
+          type: string
+          format: 'date-time'
+          description: Фактическая дата платежа
+        early_withdrawal_barrier:
+          type: number
+          format: float
+          description: Процентная ставка
+        coupon_barrier:
+          type: number
+          format: float
+          description: Процентная ставка
+      required:
+        - coupon_number
+        - type
+        - interest_rate
+        - coupon_value
+        - start_date
+        - end_date
+        - plan_date
+    instrument_flag:
+      description: Флаг ФИ
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор флага
+        instrument_id:
+          type: integer
+          format: int64
+          description: Идентификатор финансового инструмента
+        type:
+          type: string
+          description: |
+            Код типа флага
+            qual_investor - бумага для квалифицированного инвестора
+            listing_level - уровень листинга
+            ipo_security - бумага для IPO
+          enum:
+            - qual_investor
+            - listing_level
+            - ipo_security
+        start_date:
+          type: string
+          format: 'date-time'
+          description: Дата начала действия
+        end_date:
+          type: string
+          format: 'date-time'
+          description: Дата окончания действия
+        value:
+          type: string
+          description: |
+            Значение флага
+            Если type = qual_investor или ipo_security, то
+            true - да
+            false - нет
+            Если type = listing_level, то
+            level_1 - уровень 1
+            level_2 - уровень 2
+            level_3 - уровень 3
+          enum:
+            - true
+            - false
+            - level_1
+            - level_2
+            - level_3
+      required:
+        - type
+        - value
+    instrument_status_system:
+      description: Статус ФИ в системе
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор записи
+        instrument_id:
+          type: integer
+          format: int64
+          description: Идентификатор финансового инструмента
+        system:
+          type: string
+          description: |
+            Код системы
+            quik - QUIK
+            ixxi - IXXI
+            depositary - депозитарий
+            nalog - налоговый модуль
+            middle_office - Middle Office
+            trading_api - Trading API
+            wm_api - WM API
+            aton_psm - ATON PSM
+            bloomberg - Bloomberg
+            config - конфиг параметров бумаг
+          enum:
+            - quik
+            - ixxi
+            - depositary
+            - nalog
+            - middle_office
+            - trading_api
+            - wm_api
+            - aton_psm
+            - bloomberg
+            - config
+        status:
+          type: string
+          description: |
+            Код статуса
+            approved - одобрено
+            wait_approve - ожидание
+            not_approved - не одобрено
+          enum:
+            - approved
+            - wait_approve
+            - not_approved
+        reason:
+          type: string
+          description: Причина неуспешной проверки
+        check_date:
+          type: string
+          format: 'date-time'
+          description: Дата проверки
+      required:
+        - instrument_id
+        - system
+        - status
+        - check_date
+    bond_coupon:
+      description: Атрибуты по купону
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор купона
+        coupon_number:
+          type: integer
+          description: Номер купона
+        type:
+          type: string
+          description: |
+            Код типа купона
+            fixed_permanent - фиксированный постоянный
+            fixed_variable - фиксированный переменный
+            floating - плавающий
+          enum:
+            - fixed_permanent
+            - fixed_variable
+            - floating
+        interest_rate:
+          type: number
+          format: float
+          description: Процентная ставка
+        coupon_value:
+          type: number
+          format: float
+          description: Размер купона облигации
+        start_date:
+          type: string
+          format: 'date-time'
+          description: Дата начала купонного периода
+        end_date:
+          type: string
+          format: 'date-time'
+          description: Дата окончания купонного периода
+        plan_date:
+          type: string
+          format: 'date-time'
+          description: Плановая дата платежа
+        issuer_date:
+          type: string
+          format: 'date-time'
+          description: Дата платежа объявленная эмитентом
+        fact_date:
+          type: string
+          format: 'date-time'
+          description: Фактическая дата платежа
+      required:
+        - coupon_number
+        - type
+        - interest_rate
+        - coupon_value
+        - start_date
+        - end_date
+        - plan_date
+    bond_offer:
+      description: Атрибуты по выкупу
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор выкупа
+        type:
+          type: string
+          description: |
+            Код выкупа
+            put - put-опцион
+            call - call-опцион
+          enum:
+            - put
+            - call
+        date:
+          type: string
+          format: 'date-time'
+          description: Дата выкупа
+        price:
+          type: number
+          format: float
+          description: Цена выкупа (в процентах от номинала)
+      required:
+        - id
+        - type
+        - date
+        - price
+    instrument_status_system_reason:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Причина неуспешной проверки
+    instrument_spreads:
+      description: Спреды ФИ
+      type: object
+      properties:
+        wide_spread:
+          type: number
+          format: float
+          description: Широкий спред
+        narrow_spread:
+          type: number
+          format: float
+          description: Узкий спред
+        stamp_duty:
+          type: number
+          format: float
+          description: Гербовый сбор
+        aton_commission:
+          type: number
+          format: float
+          description: Комиссия АТОН
+    instrument_accrued_interest_put:
+      description: Режим загрузки НКД
+      type: object
+      properties:
+        id:
+          type: string
+          description: Идентификатор финансового инструмента
+        source:
+          type: string
+          description: Источник
+        status:
+          description: Статус
+          type: string

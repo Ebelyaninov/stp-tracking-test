@@ -1,0 +1,26 @@
+put:
+  tags:
+    - Index
+  summary: Создать связь индекса и инструмента
+  parameters:
+    - name: index
+      in: query
+      description: Название индекса
+      required: true
+      schema:
+        #        required: true
+        type: string
+    - name: instruments
+      in: query
+      description: Список идентификаторов инструментов, разделенных запятой
+      required: false
+      schema:
+        type: string
+
+  responses:
+    '200':
+      descrition: 'OK'
+    '400':
+      $ref: 'common/errors.yaml#/components/responses/BadRequest'
+    '500':
+      $ref: 'common/errors.yaml#/components/responses/InternalServerError'
