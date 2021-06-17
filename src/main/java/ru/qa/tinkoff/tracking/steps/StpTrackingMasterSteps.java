@@ -2,24 +2,40 @@ package ru.qa.tinkoff.tracking.steps;
 
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
+import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
+import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
+import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
+import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
-
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 
 @Slf4j
 @Service
@@ -29,18 +45,36 @@ public class StpTrackingMasterSteps {
     private final ContractService contractService;
     private final TrackingService trackingService;
     private final ClientService clientService;
+    private final SubscriptionService subscriptionService;
+    private final ExchangePositionService exchangePositionService;
+    private final ByteArrayReceiverService kafkaReceiver;
+    private final StringToByteSenderService kafkaSender;
+
+
+    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+
+    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
+
+
+    public Client clientMaster;
+    public Contract contractMaster;
+    public Strategy strategyMaster;
+    public Subscription subscription;
+    public Contract contractSlave;
+    public Client clientSlave;
 
     //Создаем в БД tracking данные по ведущему (Master-клиент): client, contract, strategy
     @Step("Создать договор и стратегию в бд автоследования для ведущего клиента {client}")
     @SneakyThrows
-    public void createClientWithContractAndStrategy(Client clientMaster, Contract contractMaster, Strategy strategy, UUID investId,
-                                                    String contractId, ContractRole contractRole, ContractState contractState,
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                                    StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus, int slaveCount,
-                                                    LocalDateTime date) {
-        //Создаем запись о клиенте в tracking.client
-//        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
-        //Создаем запись о договоре клиента в tracking.contract
+                                                    ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+        //создаем запись о клиенте в tracking.client
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
@@ -49,8 +83,8 @@ public class StpTrackingMasterSteps {
             .setStrategyId(null)
             .setBlocked(false);
         contractMaster = contractService.saveContract(contractMaster);
-        //Создаем запись о стратегии клиента в tracking.strategy
-        strategy = new Strategy()
+        //создаем запись о стратегии клиента
+        strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
             .setTitle(title)
@@ -59,8 +93,62 @@ public class StpTrackingMasterSteps {
             .setDescription(description)
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
-            .setActivationTime(date);
-        strategy = trackingService.saveStrategy(strategy);
+            .setActivationTime(date)
+            .setScore(1);
+        strategyMaster = trackingService.saveStrategy(strategyMaster);
+    }
+
+
+    //вызываем метод CreateSubscription для slave
+    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebleIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        contractSlave = contractService.getContract(contractIdSlave);
+    }
+
+
+    //метод проверяет инструмент в tracking.exchange_position и создает его при необоходимости
+    public void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+                                    Boolean trackingAllowed, Integer dailyQuantityLimit) {
+        //проверяем запись в tracking.exchange_position
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
+        if (exchangePositionOpt.isPresent() == false) {
+            List<OrderQuantityLimit> orderQuantityLimitList
+                = new ArrayList<>();
+            OrderQuantityLimit orderQuantityLimit = new OrderQuantityLimit();
+            orderQuantityLimit.setLimit(1000);
+            orderQuantityLimit.setPeriodId("additional_liquidity");
+            orderQuantityLimitList.add(orderQuantityLimit);
+            //формируем тело запроса
+            CreateExchangePositionRequest createExPosition = new CreateExchangePositionRequest();
+            createExPosition.exchange(exchange);
+            createExPosition.dailyQuantityLimit(dailyQuantityLimit);
+            createExPosition.setOrderQuantityLimits(orderQuantityLimitList);
+            createExPosition.setTicker(ticker);
+            createExPosition.setTrackingAllowed(trackingAllowed);
+            createExPosition.setTradingClearingAccount(tradingClearingAccount);
+            //вызываем метод createExchangePosition
+            exchangePositionApi.createExchangePosition()
+                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .xAppNameHeader("invest")
+                .xAppVersionHeader("4.5.6")
+                .xPlatformHeader("android")
+                .xDeviceIdHeader("test")
+                .xTcsLoginHeader("tracking_admin")
+                .body(createExPosition)
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
+        }
     }
 
 
@@ -106,6 +194,69 @@ public class StpTrackingMasterSteps {
                 .build())
             .setPortfolio(portfolio)
             .setSignal(signal)
+            .build();
+        return command;
+    }
+
+
+    @Step("Переместить offset до текущей позиции")
+    public void resetOffsetToLate(Topics topic) {
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
+        await().atMost(Duration.ofSeconds(30))
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
+    }
+
+    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
+    public void createEventInTrackingEvent(String contractIdSlave) {
+        //создаем событие
+        Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
+        log.info("Команда в tracking.event:  {}", event);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = event.toByteArray();
+        //отправляем событие в топик kafka tracking.event
+        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
+    }
+
+
+    // создаем команду в топик кафка tracking.master.command
+    Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
+        OffsetDateTime now = OffsetDateTime.now();
+        Tracking.Event event = Tracking.Event.newBuilder()
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setAction(Tracking.Event.Action.UPDATED)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .setContract(Tracking.Contract.newBuilder()
+                .setId(contractId)
+                .setState(Tracking.Contract.State.TRACKED)
+                .setBlocked(false)
+                .build())
+            .build();
+        return event;
+    }
+
+
+    // создаем команду в топик кафка tracking.master.command
+    public Tracking.PortfolioCommand createCommandToTrackingMasterCommand(String contractId, OffsetDateTime time, long unscaled, int scale) {
+        Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractId)
+            .setOperation(Tracking.PortfolioCommand.Operation.INITIALIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .setPortfolio(Tracking.Portfolio.newBuilder()
+                .setVersion(1)
+                .setBaseMoneyPosition(Tracking.Portfolio.BaseMoneyPosition.newBuilder()
+                    .setQuantity(Tracking.Decimal.newBuilder()
+                        .setUnscaled(unscaled)
+                        .setScale(scale)
+                        .build())
+                    .build())
+                .build())
             .build();
         return command;
     }
