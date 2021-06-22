@@ -12,11 +12,19 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -26,6 +34,16 @@ import java.util.*;
 @RequiredArgsConstructor
 public class StpTrackingAnalyticsSteps {
 
+    private final ContractService contractService;
+    private final TrackingService trackingService;
+    private final ClientService clientService;
+
+    @Autowired(required = false)
+    MasterPortfolioDao masterPortfolioDao;
+
+    public Client clientMaster;
+    public Contract contractMaster;
+    public Strategy strategy;
 
     public String ticker1 = "SBER";
     public String tradingClearingAccount1 = "L01+00000F00";
@@ -102,10 +120,44 @@ public class StpTrackingAnalyticsSteps {
     public String company8= "Яндекс";
     public String instrumet8 = ticker8 + "_" + classCode8;
 
-    @Autowired(required = false)
-    MasterPortfolioDao masterPortfolioDao;
+
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
         .ApiClient.Config.apiConfig()).prices();
+
+//    public StpTrackingAnalyticsSteps() {
+//    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+        //создаем запись о клиенте в tracking.client
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractMaster = new Contract()
+            .setId(contractId)
+            .setClientId(clientMaster.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractMaster = contractService.saveContract(contractMaster);
+        //создаем запись о стратегии клиента
+        strategy = new Strategy()
+            .setId(strategyId)
+            .setContract(contractMaster)
+            .setTitle(title)
+            .setBaseCurrency(strategyCurrency)
+            .setRiskProfile(strategyRiskProfile)
+            .setDescription(description)
+            .setStatus(strategyStatus)
+            .setSlavesCount(slaveCount)
+            .setActivationTime(date)
+            .setScore(1);
+        strategy = trackingService.saveStrategy(strategy);
+    }
 
     // создаем портфель ведущего с позициями в кассандре
     @Step("Создать договор и стратегию в бд автоследования для ведущего клиента {client}")

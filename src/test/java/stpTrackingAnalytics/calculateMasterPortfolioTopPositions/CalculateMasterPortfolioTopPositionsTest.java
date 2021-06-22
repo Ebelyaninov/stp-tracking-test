@@ -2,7 +2,6 @@ package stpTrackingAnalytics.calculateMasterPortfolioTopPositions;
 
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -22,6 +21,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -31,6 +31,8 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioTopPositionsDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
+import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.steps.StpTrackingAnalyticsSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -63,17 +65,23 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-analytics")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
 @SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
+    TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class
 })
 public class CalculateMasterPortfolioTopPositionsTest {
+
     @Autowired
     ByteToByteSenderService byteToByteSenderService;
     @Autowired
     MasterSignalDao masterSignalDao;
     @Autowired
     MasterPortfolioTopPositionsDao masterPortfolioTopPositionsDao;
+    @Autowired
+    StpTrackingAnalyticsSteps steps;
 
     UUID strategyId;
     MasterPortfolioTopPositions masterPortfolioTopPositions;
@@ -116,8 +124,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createTestDateToMasterSignal(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand command = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            operation, strategyIdByte);
+        Tracking.AnalyticsCommand command = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", command);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -168,8 +176,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createTestDateToMasterSignalNotPeriodTopPos(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand command = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            operation, strategyIdByte);
+        Tracking.AnalyticsCommand command = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS, strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", command);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -215,8 +223,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createTestDateToMasterSignalRepeat(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand command = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand command = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", command);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -252,8 +261,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createMasterSignal(5, 4, 8, strategyId, "AAPL", "L01+00000SPB",
             "107.81", "1", 12);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand commandNew = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.RECALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand commandNew = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.RECALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS,
+            strategyIdByte);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = commandNew.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command повторно
@@ -289,8 +299,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createTestDateToMasterSignalRepeat(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand command = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand command = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", command);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -325,8 +336,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         createMasterSignal(5, 4, 8, strategyId, "AAPL", "L01+00000SPB",
             "107.81", "1", 12);
         //создаем команду для пересчета топа-позиций master-портфеля
-        Tracking.AnalyticsCommand commandNew = createCommandAnalyticsMasterPortfolioTopPosition(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand commandNew = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS,
+            strategyIdByte);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = commandNew.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command повторно
@@ -351,28 +363,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
     public ByteString byteString(UUID uuid) {
         return ByteString.copyFrom(bytes(uuid));
-    }
-
-
-    //создаем команду в формате Protobuf в соответствии со схемой tracking.proto (message AnalyticsCommand)
-
-    Tracking.AnalyticsCommand createCommandAnalyticsMasterPortfolioTopPosition(OffsetDateTime createTime, OffsetDateTime cutTime,
-                                                                               Tracking.AnalyticsCommand.Operation operation,
-                                                                               ByteString strategyId) {
-        Tracking.AnalyticsCommand command = Tracking.AnalyticsCommand.newBuilder()
-            .setCreatedAt(Timestamp.newBuilder()
-                .setSeconds(createTime.toEpochSecond())
-                .setNanos(createTime.getNano())
-                .build())
-            .setOperation(operation)
-            .setCalculation(Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS)
-            .setStrategyId(strategyId)
-            .setCut(Timestamp.newBuilder()
-                .setSeconds(cutTime.toEpochSecond())
-                .setNanos(cutTime.getNano())
-                .build())
-            .build();
-        return command;
     }
 
 

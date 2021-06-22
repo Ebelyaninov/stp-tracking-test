@@ -76,7 +76,7 @@ public class GetStrategyTest {
     Client client;
     Contract contract;
     Strategy strategy;
-    String SIEBEL_ID = "5-ZSACB4M2";
+    String SIEBEL_ID = "5-4CENGZ1L";
 
 
 

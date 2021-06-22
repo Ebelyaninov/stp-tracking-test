@@ -1,6 +1,5 @@
 package stpTrackingApi.createSubscription;
 
-import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -8,7 +7,8 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,12 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaMessageConsumer;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -34,11 +31,15 @@ import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.steps.StpTrackingApiSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -49,20 +50,22 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 
+@Slf4j
 @Epic("createSubscription - Создание подписки на торговую стратегию")
 @Feature("TAP-7383")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class})
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class
+})
 public class CreateSubscriptionTest {
-    private KafkaHelper kafkaHelper = new KafkaHelper();
 
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -75,6 +78,10 @@ public class CreateSubscriptionTest {
     ProfileService profileService;
     @Autowired
     TrackingService trackingService;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
+    @Autowired
+    StpTrackingApiSteps steps;
 
     Client clientMaster;
     Contract contractMaster;
@@ -82,7 +89,6 @@ public class CreateSubscriptionTest {
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-    Profile profile;
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
@@ -149,37 +155,31 @@ public class CreateSubscriptionTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        Tracking.Event event = null;
-        LocalDateTime dateCreateTr = null;
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
-        try (KafkaMessageConsumer<byte[], byte[]> messageConsumer =
-                 new KafkaMessageConsumer<>(kafkaHelper, "tracking.event",
-                     ByteArrayDeserializer.class, ByteArrayDeserializer.class)) {
-            messageConsumer.startUp();
-            //вызываем метод CreateSubscription
-            subscriptionApi.createSubscription()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdSlave)
-                .contractIdQuery(contractIdSlave)
-                .strategyIdPath(strategyId)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(ResponseBodyData::asString);
-            //смотрим, сообщение, которое поймали в топике kafka
-            KafkaMessageConsumer.Record<byte[], byte[]> record = messageConsumer.await()
-                .orElseThrow(() -> new RuntimeException("Сообщение не получено"));
-            Thread.sleep(5000);
-            List<KafkaMessageConsumer.Record<byte[], byte[]>> records = messageConsumer.listRecords();
-            //парсим сообщение из топика tracking.event
-//            event = Tracking.Event.parseFrom(record.value);
-            event = Tracking.Event.parseFrom(records.get(records.size() - 1).value);
-            dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
-                .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
-        }
+        //вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_EVENT);
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.master.command:  {}", event);
+        LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
         //проверяем, данные в сообщении
         checkParamEvent(event, "CREATED", contractIdSlave, strategyId);
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
@@ -222,39 +222,33 @@ public class CreateSubscriptionTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        Tracking.Event event = null;
-        LocalDateTime dateCreateTr = null;
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем запись о ведомом в client
-        createClient(siebelIdSlave, investIdSlave, ClientStatusType.none);
-        try (KafkaMessageConsumer<byte[], byte[]> messageConsumer =
-                 new KafkaMessageConsumer<>(kafkaHelper, "tracking.event",
-                     ByteArrayDeserializer.class, ByteArrayDeserializer.class)) {
-            messageConsumer.startUp();
-            //вызываем метод CreateSubscription
-            subscriptionApi.createSubscription()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdSlave)
-                .contractIdQuery(contractIdSlave)
-                .strategyIdPath(strategyId)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(ResponseBodyData::asString);
-            //смотрим, сообщение, которое поймали в топике kafka
-            KafkaMessageConsumer.Record<byte[], byte[]> record = messageConsumer.await()
-                .orElseThrow(() -> new RuntimeException("Сообщение не получено"));
-            Thread.sleep(5000);
-            List<KafkaMessageConsumer.Record<byte[], byte[]>> records = messageConsumer.listRecords();
-            //парсим сообщение из топика tracking.event
-//            event = Tracking.Event.parseFrom(record.value);
-            event = Tracking.Event.parseFrom(records.get(records.size() - 1).value);
-            dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
-                .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
-        }
+        steps.createClient(siebelIdSlave, investIdSlave, ClientStatusType.none);
+        //вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_EVENT);
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.master.command:  {}", event);
+        LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
         //проверяем, данные в сообщении
         checkParamEvent(event, "CREATED", contractIdSlave, strategyId);
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
@@ -297,39 +291,33 @@ public class CreateSubscriptionTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        LocalDateTime dateCreateTr = null;
-        Tracking.Event event = null;
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем запись о ведомом в client c договором
-        createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, contractIdSlave, null, ContractState.untracked, null);
-        try (KafkaMessageConsumer<byte[], byte[]> messageConsumer =
-                 new KafkaMessageConsumer<>(kafkaHelper, "tracking.event",
-                     ByteArrayDeserializer.class, ByteArrayDeserializer.class)) {
-            messageConsumer.startUp();
-            //вызываем метод CreateSubscription
-            subscriptionApi.createSubscription()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdSlave)
-                .contractIdQuery(contractIdSlave)
-                .strategyIdPath(strategyId)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(ResponseBodyData::asString);
-            //смотрим, сообщение, которое поймали в топике kafka
-            KafkaMessageConsumer.Record<byte[], byte[]> record = messageConsumer.await()
-                .orElseThrow(() -> new RuntimeException("Сообщение не получено"));
-            Thread.sleep(5000);
-            List<KafkaMessageConsumer.Record<byte[], byte[]>> records = messageConsumer.listRecords();
-            //парсим сообщение из топика tracking.event
-//            event = Tracking.Event.parseFrom(record.value);
-            event = Tracking.Event.parseFrom(records.get(records.size() - 1).value);
-            dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
-                .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
-        }
+        steps.createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, contractIdSlave, null, ContractState.untracked, null);
+        //вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_EVENT);
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.master.command:  {}", event);
+        LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
         //проверяем, данные в сообщении
         checkParamEvent(event, "CREATED", contractIdSlave, strategyId);
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
@@ -373,7 +361,7 @@ public class CreateSubscriptionTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -413,80 +401,10 @@ public class CreateSubscriptionTest {
 
 
     //***методы для работы тестов**************************************************************************
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
-        //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
-        // создаем запись о договоре клиента в tracking.contract
-        contractMaster = new Contract()
-            .setId(contractId)
-            .setClientId(clientMaster.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractMaster = contractService.saveContract(contractMaster);
-        //создаем запись о стратегии клиента
-        strategyMaster = new Strategy()
-            .setId(strategyId)
-            .setContract(contractMaster)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-        strategyMaster = trackingService.saveStrategy(strategyMaster);
-    }
-
-
-    //метод создает клиента
-    void createClient(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
-        //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
-    }
-
-    //метод создает клиента c договором
-    void createClientWithContract(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType,
-                                  String contractId, ContractRole contractRole, ContractState contractState,
-                                  UUID strategyId) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
-        //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
-        // создаем запись о договоре клиента в tracking.contract
-        contractSlave = new Contract()
-            .setId(contractId)
-            .setClientId(clientSlave.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractSlave = contractService.saveContract(contractSlave);
-    }
-
     void checkParamEvent(Tracking.Event event, String action, String contractId, UUID strategyId) {
         assertThat("ID события не равен", event.getAction().toString(), is(action));
         assertThat("ID договора не равен", event.getSubscription().getContractId(), is(contractId));
-        assertThat("ID стратегии не равен", uuid(event.getSubscription().getStrategy().getId()), is(strategyId));
+        assertThat("ID стратегии не равен", steps.uuid(event.getSubscription().getStrategy().getId()), is(strategyId));
     }
 
     void checkParamSubscription(UUID strategyId, String status, LocalDateTime dateCreateTr) {
@@ -499,15 +417,6 @@ public class CreateSubscriptionTest {
         assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
         assertThat("статус ведомого не равен", contractSlave.getState().toString(), is(status));
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
-    }
-
-    public UUID uuid(ByteString bytes) {
-        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
-        return new UUID(buff.getLong(), buff.getLong());
-    }
-
-    public String uuidString(ByteString bytes) {
-        return uuid(bytes).toString();
     }
 }
 

@@ -20,12 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
-import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
-import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -35,9 +31,9 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.steps.StpTrackingApiSteps;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -52,12 +48,13 @@ import static org.hamcrest.Matchers.is;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class})
+@SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
+    TrackingDatabaseAutoConfiguration.class
+})
+
+
 public class DeleteSubscriptionErrorTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -67,48 +64,52 @@ public class DeleteSubscriptionErrorTest {
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
-    ProfileService profileService;
-    @Autowired
     TrackingService trackingService;
-
+    @Autowired
+    StpTrackingApiSteps steps;
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client clientMaster;
     Contract contractMaster;
     Strategy strategyMaster;
-    Profile profile;
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
     String siebelIdMaster = "1-2X5IYXJ";
     String siebelIdSlave = "5-12UL9UV9C";
-    String contractIdMaster;
-    String contractIdSlave;
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
                 subscriptionService.deleteSubscription(subscription);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
                 contractService.deleteContract(contractSlave);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
-                clientSlave= clientService.getClient(clientSlave.getId());
-            } catch (Exception e) {}
+                clientSlave = clientService.getClient(clientSlave.getId());
+            } catch (Exception e) {
+            }
             try {
                 clientService.deleteClient(clientSlave);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
                 trackingService.deleteStrategy(strategyMaster);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
                 contractService.deleteContract(contractMaster);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             try {
                 clientService.deleteClient(clientMaster);
-            } catch (Exception e) {}
-
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -132,16 +133,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID  investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -177,21 +187,11 @@ public class DeleteSubscriptionErrorTest {
         deleteSubscription.execute(ResponseBodyData::asString);
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем по ней данные
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contract, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contract);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
-        assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+        checkParam(count, strategyId);
     }
-
 
 
     @Test
@@ -199,20 +199,29 @@ public class DeleteSubscriptionErrorTest {
     @DisplayName("C535364.DeleteSubscription.Валидация обязательных параметров: contractId")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
-    void C535364_1() throws Exception {
+    void C535364_1()  {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -242,21 +251,11 @@ public class DeleteSubscriptionErrorTest {
             deleteSubscription = deleteSubscription.contractIdQuery(contractIdSlave);
         }
         deleteSubscription.execute(ResponseBodyData::asString);
-        //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем по ней данные
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
-        assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+        checkParam(count, strategyId);
     }
 
 
@@ -265,21 +264,30 @@ public class DeleteSubscriptionErrorTest {
     @DisplayName("C535365.DeleteSubscription.Валидация обязательных параметров: x-tcs-siebel-id")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
-    void C535365() throws Exception {
+    void C535365() {
         //находим в активных подписках договор и стратегию
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -305,20 +313,12 @@ public class DeleteSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(401));
         deleteSubscription.execute(ResponseBodyData::asString);
-        //проверяем, что количество подписок на стратегию не изменилось
+
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
     private static Stream<Arguments> provideParamSiebleDeleteSubscription() {
@@ -338,16 +338,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -376,18 +385,10 @@ public class DeleteSubscriptionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
 
@@ -408,16 +409,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -446,18 +456,10 @@ public class DeleteSubscriptionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
 
@@ -470,16 +472,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -508,18 +519,10 @@ public class DeleteSubscriptionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
 
@@ -532,16 +535,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -570,18 +582,10 @@ public class DeleteSubscriptionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
 
@@ -595,16 +599,25 @@ public class DeleteSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //находим данные по мастеру в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        UUID investIdMaster = findValidAccountWithSiebleIdMaster.get(0).getInvestAccount().getId();
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
-        //находим данные по слейву в Бд сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdSlave = billingService.getFindValidAccountWithSiebelId(siebelIdSlave);
-        UUID investIdSlave = findValidAccountWithSiebleIdSlave.get(0).getInvestAccount().getId();
-        contractIdSlave = findValidAccountWithSiebleIdSlave.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -632,56 +645,57 @@ public class DeleteSubscriptionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
-        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
-        //находим подписку и проверяем, что данные по ней не изменились
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
-        //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
-        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
-        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
+        checkParam(count, strategyId);
     }
 
 
     //***методы для работы тестов**************************************************************************
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(String SIEBEL_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
-        // создаем запись о договоре клиента в tracking.contract
-        contractMaster = new Contract()
-            .setId(contractId)
-            .setClientId(clientMaster.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractMaster = contractService.saveContract(contractMaster);
-        //создаем запись о стратегии клиента
-        strategyMaster = new Strategy()
-            .setId(strategyId)
-            .setContract(contractMaster)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-        strategyMaster = trackingService.saveStrategy(strategyMaster);
+//    //метод создает клиента, договор и стратегию в БД автоследования
+//    void createClientWintContractAndStrategy(String SIEBEL_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+//                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+//                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+//                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+//        //создаем запись о клиенте в tracking.client
+//        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+//        // создаем запись о договоре клиента в tracking.contract
+//        contractMaster = new Contract()
+//            .setId(contractId)
+//            .setClientId(clientMaster.getId())
+//            .setRole(contractRole)
+//            .setState(contractState)
+//            .setStrategyId(null)
+//            .setBlocked(false);
+//        contractMaster = contractService.saveContract(contractMaster);
+//        //создаем запись о стратегии клиента
+//        strategyMaster = new Strategy()
+//            .setId(strategyId)
+//            .setContract(contractMaster)
+//            .setTitle(title)
+//            .setBaseCurrency(strategyCurrency)
+//            .setRiskProfile(strategyRiskProfile)
+//            .setDescription(description)
+//            .setStatus(strategyStatus)
+//            .setSlavesCount(slaveCount)
+//            .setActivationTime(date)
+//            .setScore(1);
+//        strategyMaster = trackingService.saveStrategy(strategyMaster);
+//    }
+
+
+    void checkParam(int count, UUID strategyId) {
+        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
+        //находим подписку и проверяем по ней данные
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
+        //находим запись по контракту ведомого и проверяем значения
+        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
+        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
+        assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
     }
 }
 

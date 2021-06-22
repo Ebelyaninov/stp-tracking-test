@@ -103,14 +103,10 @@ public class CalculateMasterPortfolioRateTest {
     StpTrackingAnalyticsSteps steps;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
-    Client client;
-    Contract contract;
+
     UUID strategyId;
     MasterPortfolioRate masterPortfolioRate;
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
-    Client clientMaster;
-    Contract contractMaster;
-    Strategy strategy;
     String contractIdMaster;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
@@ -123,15 +119,15 @@ public class CalculateMasterPortfolioRateTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                strategyService.deleteStrategy(strategy);
+                strategyService.deleteStrategy(steps.strategy);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contract);
+                contractService.deleteContract(steps.contractMaster);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(client);
+                clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
             try {
@@ -177,7 +173,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
@@ -260,7 +256,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
@@ -363,7 +359,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
@@ -470,7 +466,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
@@ -646,7 +642,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -691,7 +687,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
@@ -769,7 +765,7 @@ public class CalculateMasterPortfolioRateTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
@@ -823,38 +819,7 @@ public class CalculateMasterPortfolioRateTest {
     }
 
 
-
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
-        // создаем запись о договоре клиента в tracking.contract
-        contractMaster = new Contract()
-            .setId(contractId)
-            .setClientId(clientMaster.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractMaster = contractService.saveContract(contractMaster);
-        //создаем запись о стратегии клиента
-        strategy = new Strategy()
-            .setId(strategyId)
-            .setContract(contractMaster)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-        strategy = trackingService.saveStrategy(strategy);
-    }
-
+//методы для работы тестов*******************************************************************************
 
     Map<PositionDateFromFireg, BigDecimal> getPositionsMap(Map<String, BigDecimal> pricesPos, String nominal,
                                                            BigDecimal minPriceIncrement, String aciValue,String baseMoney) {
