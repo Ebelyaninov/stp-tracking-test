@@ -92,15 +92,8 @@ public class UpdateStrategyAdminSuccessTest {
     Strategy strategy;
     String SIEBEL_ID = "4-1UBHYQ63";
 
-//    @Resource(name = "customReceiverFactory")
-//    KafkaProtobufCustomReceiver<String, byte[]> kafkaReceiver;
-//
-//    @Resource(name = "bytesReceiverFactory")
-//    KafkaProtobufBytesReceiver<String, BytesValue> receiverBytes;
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-
     @Autowired
     BillingService billingService;
     @Autowired
@@ -189,24 +182,12 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseUpdateStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseUpdateStrategy.getHeaders().getValue("x-server-time").isEmpty());
-
-//        //Смотрим, сообщение, которое поймали в топике kafka
-//        Map<String, byte[]> message = await().atMost(Duration.ofSeconds(20))
-//            .until(
-//                () -> kafkaReceiver.receiveBatch(TRACKING_EVENT.getName()), is(not(empty()))
-//            )
-//            .stream().findFirst().orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//
-//        Tracking.Event event = Tracking.Event.parseFrom(message.values().stream().findAny().get());
-        //Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
-
-
         assertThat("action события не равен", event.getAction().toString(), is("UPDATED"));
         assertThat("ID стратегии не равен", uuid(event.getStrategy().getId()), is(strategyId));
         assertThat("название стратегии не равен", (event.getStrategy().getTitle()), is(titleUpdate));

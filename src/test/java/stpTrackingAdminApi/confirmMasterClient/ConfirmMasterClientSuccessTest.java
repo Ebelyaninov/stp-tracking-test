@@ -308,7 +308,7 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
         assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
-        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage()), is(profile.getImage()));
+        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage().toString()), is(profile.getImage().toString()));
     }
 
 

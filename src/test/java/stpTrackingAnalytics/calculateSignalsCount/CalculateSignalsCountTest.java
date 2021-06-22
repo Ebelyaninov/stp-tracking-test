@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.SignalsCount;
@@ -31,6 +32,8 @@ import ru.qa.tinkoff.investTracking.services.SignalsCountDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 
+import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.steps.StpTrackingAnalyticsSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import java.math.BigDecimal;
@@ -59,6 +62,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
 @DisplayName("stp-tracking-analytics")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
+    BillingDatabaseAutoConfiguration.class,
+    TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class
 })
@@ -69,6 +74,8 @@ public class CalculateSignalsCountTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     SignalsCountDao signalsCountDao;
+    @Autowired
+    StpTrackingAnalyticsSteps steps;
     SignalsCount signalsCount;
     UUID strategyId;
 
@@ -78,13 +85,6 @@ public class CalculateSignalsCountTest {
             Arguments.of(OffsetDateTime.now(), OffsetDateTime.now().minusDays(3))
         );
     }
-
-//    private static Stream<Arguments> cutTimeCalculate() {
-//        return Stream.of(
-//            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now(), 9),
-//            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now().minusDays(3), 6)
-//        );
-//    }
 
     @AfterEach
     void deleteClient() {
@@ -114,8 +114,9 @@ public class CalculateSignalsCountTest {
         createTestDateToMasterSignal(strategyId);
         Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
-        Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.RECALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.RECALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
@@ -149,8 +150,9 @@ public class CalculateSignalsCountTest {
         createTestDateToMasterSignal(strategyId);
         Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
-        Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
@@ -200,8 +202,10 @@ public class CalculateSignalsCountTest {
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
-        Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
+            strategyIdByte);
+
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
@@ -265,8 +269,9 @@ public class CalculateSignalsCountTest {
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
-        Tracking.AnalyticsCommand calculateCommand = createCommandAnalyticsSingnalsCount(createTime, cutTime,
-            Tracking.AnalyticsCommand.Operation.CALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
@@ -294,8 +299,9 @@ public class CalculateSignalsCountTest {
         Thread.sleep(3000);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         OffsetDateTime createTimeNew = OffsetDateTime.now();
-        Tracking.AnalyticsCommand reCalculateCommand = createCommandAnalyticsSingnalsCount(createTimeNew, cutTime,
-            Tracking.AnalyticsCommand.Operation.RECALCULATE, strategyIdByte);
+        Tracking.AnalyticsCommand reCalculateCommand = steps.createCommandAnalytics(createTimeNew, cutTime,
+            Tracking.AnalyticsCommand.Operation.RECALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
+            strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", reCalculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = reCalculateCommand.toByteArray();
@@ -330,26 +336,6 @@ public class CalculateSignalsCountTest {
         return ByteString.copyFrom(bytes(uuid));
     }
 
-
-    //создаем команду в формате Protobuf в соответствии со схемой tracking.proto (message AnalyticsCommand)
-    Tracking.AnalyticsCommand createCommandAnalyticsSingnalsCount(OffsetDateTime createTime, OffsetDateTime cutTime,
-                                                                  Tracking.AnalyticsCommand.Operation operation,
-                                                                  ByteString strategyId) {
-        Tracking.AnalyticsCommand command = Tracking.AnalyticsCommand.newBuilder()
-            .setCreatedAt(Timestamp.newBuilder()
-                .setSeconds(createTime.toEpochSecond())
-                .setNanos(createTime.getNano())
-                .build())
-            .setOperation(operation)
-            .setCalculation(Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT)
-            .setStrategyId(strategyId)
-            .setCut(Timestamp.newBuilder()
-                .setSeconds(cutTime.toEpochSecond())
-                .setNanos(cutTime.getNano())
-                .build())
-            .build();
-        return command;
-    }
 
 
    //методы создает записи по сигналам стратегии

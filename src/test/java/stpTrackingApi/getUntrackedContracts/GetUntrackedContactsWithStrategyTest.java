@@ -22,6 +22,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetUntrackedContractsResponse;
@@ -68,6 +70,8 @@ public class GetUntrackedContactsWithStrategyTest {
     ProfileService profileService;
 
     ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
     Contract contract;
     Strategy strategy;
@@ -89,30 +93,41 @@ public class GetUntrackedContactsWithStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список доступных договоров для подключения стратегии. Валидируем договоры клиента на доступность подключения к автоследованию")
     void C173619() {
-        //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //получаем список Брокерских договоров, по SIEBLE_ID
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        //создаем по полученному InvestId запись в tracking.client
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+//        //находим клиента в social и берем данные по профайлу
+//        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+//        SocialProfile socialProfile = new SocialProfile()
+//            .setId(profile.getId().toString())
+//            .setNickname(profile.getNickname())
+//            .setImage(profile.getImage().toString());
+//        //получаем список Брокерских договоров, по SIEBLE_ID
+//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
+//        //создаем по полученному InvestId запись в tracking.client
+//        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
+
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+
+        client = clientService.createClient(investId, ClientStatusType.registered, null);
         //для каждого брокерского договора создаем записи в БД tracking.contract и tracking.strategy
-        for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {
+        for (int i = 0; i < resAccountMaster.getBrokerAccounts().size(); i++) {
             UUID strategyId = UUID.randomUUID();
-            String contractId = findValidAccountWithSiebleId.get(i).getId();
-            createClientWintContractAndStrategyMulti(investId, socialProfile, contractId, null, ContractState.untracked,
+            String contractId = resAccountMaster.getBrokerAccounts().get(i).getId();
+//                .get(i).getId();
+            createClientWintContractAndStrategyMulti(investId, null, contractId, null, ContractState.untracked,
                 StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active, 0, LocalDateTime.now());
         }
         List<String> contractIdsDB = new ArrayList<>();
-        for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {
+        for (int i = 0; i < resAccountMaster.getBrokerAccounts().size(); i++) {
             //проверяем, что контракт не найден в tracking.contract или если его статус untracked
-            Optional<Contract> contractOpt = contractService.findContract(findValidAccountWithSiebleId.get(i).getId());
+            Optional<Contract> contractOpt = contractService.findContract(resAccountMaster.getBrokerAccounts().get(i).getId());
             if (!contractOpt.isPresent() || contractOpt.get().getState() == ContractState.untracked) {
-                contractIdsDB.add(findValidAccountWithSiebleId.get(i).getId());
+                contractIdsDB.add(resAccountMaster.getBrokerAccounts().get(i).getId());
             }
         }
         contractIdsDB.sort(String::compareTo);

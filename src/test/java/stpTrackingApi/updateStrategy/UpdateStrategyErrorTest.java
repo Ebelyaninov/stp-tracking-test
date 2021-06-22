@@ -25,6 +25,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
@@ -72,18 +74,17 @@ public class UpdateStrategyErrorTest {
     StrategyService strategyService;
 
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
     Contract contract;
     Strategy strategy;
     Profile profile;
-    String SIEBEL_ID = "5-10KF9CLVT";
+    String SIEBEL_ID = "5-KHGHC74O";
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
-//            trackingService.deleteStrategy(strategy);
-//            сontractService.deleteContract(contract);
-//            clientService.deleteClient(client);
             try {
                 trackingService.deleteStrategy(strategy);
             } catch (Exception e) {}
@@ -114,19 +115,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
-
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -170,20 +169,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -221,20 +217,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -272,20 +265,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе активная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active, LocalDateTime.now());
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -323,20 +313,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -365,43 +352,25 @@ public class UpdateStrategyErrorTest {
     }
 
 
-    //
-//    private static Stream<Arguments> provideStringsForBodyUpdateStrategy() {
-//        return Stream.of(
-//            Arguments.of(null, ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD,
-//                ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE,
-//                "Тестовая стратегия для работы автотестов 01" ),
-//            Arguments.of("Тест стратегия автотестов 01", null,
-//                ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE,
-//                "Тестовая стратегия для работы автотестов 01"),
-//            Arguments.of("Тест стратегия автотестов 01",
-//                ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD,
-//                null,"Тестовая стратегия для работы автотестов 01" )
-//        );
-//    }
 
     @Test
-//    @MethodSource("provideStringsForBodyUpdateStrategy")
     @AllureId("542533")
     @DisplayName("C542533.UpdateStrategy.Не переданы Параметры: title, Description")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542533() {
         UUID strategyId = UUID.randomUUID();
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -439,20 +408,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -497,20 +463,17 @@ public class UpdateStrategyErrorTest {
             " понятия военная стратегия — наука о ведении войны, одна из областей военного искусства, высшее его" +
             " проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование и ведение," +
             " исследует закономерности войны.";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -550,20 +513,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -603,25 +563,21 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
-//        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD);
-//        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
         request.setDescription(description);
         // вызываем метод updateStrategy()
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
@@ -654,20 +610,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -706,20 +659,17 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
-        //находим клиента в social и берем данные по профайлу
-//        profile = profileService.getProfile();
-//        String SIEBLE_ID = profile.getSiebelId();
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, socialProfile, contractId, strategyId, null, ContractState.untracked,
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
             StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
