@@ -5,7 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -14,8 +18,12 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+
+import static org.awaitility.Awaitility.await;
 
 @Slf4j
 @Service
@@ -24,15 +32,22 @@ public class StpTrackingAdminSteps {
     private final ContractService contractService;
     private final TrackingService trackingService;
     private final ClientService clientService;
+    private final ByteArrayReceiverService kafkaReceiver;
+    private final ProfileService profileService;
+    public Client client;
+    public Contract contract;
+    public Strategy strategy;
 
     //Метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
-    public void createContractAndStrategy(Client client, Contract contract, Strategy strategy, String contractId,
-                                          ContractRole contractRole, ContractState contractState, UUID strategyId,
-                                          String title, String description, StrategyCurrency strategyCurrency,
-                                          StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus,
-                                          int slaveCount, LocalDateTime date, Integer score) {
+    public void createClientWithContractAndStrategy(UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                                    UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                                    ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
+        //создаем запись о клиенте в tracking.client
+        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        // создаем запись о договоре клиента в tracking.contract
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
@@ -40,9 +55,8 @@ public class StpTrackingAdminSteps {
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
-
         contract = contractService.saveContract(contract);
-
+        //создаем запись о стратегии клиента
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -55,6 +69,25 @@ public class StpTrackingAdminSteps {
             .setActivationTime(date)
             .setScore(score);
         strategy = trackingService.saveStrategy(strategy);
+    }
+
+    @Step("Перемещение offset до текущей позиции")
+    public void resetOffsetToLate(Topics topic) {
+        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
+        await().atMost(Duration.ofSeconds(30))
+            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
+        log.info("Все сообщения из {} топика вычитаны", topic.getName());
+    }
+
+
+    @Step("Данные по profile из social")
+   public SocialProfile getProfile(String SIEBEL_ID) {
+        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        SocialProfile socialProfile = new SocialProfile()
+            .setId(profile.getId().toString())
+            .setNickname(profile.getNickname())
+            .setImage(profile.getImage().toString());
+        return socialProfile;
     }
 
 

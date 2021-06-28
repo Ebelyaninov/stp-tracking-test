@@ -107,15 +107,15 @@ public class ActivateStrategySuccessTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                strategyService.deleteStrategy(strategy);
+                strategyService.deleteStrategy(steps.strategy);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contract);
+                contractService.deleteContract(steps.contract);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(client);
+                clientService.deleteClient(steps.client);
             } catch (Exception e) {
             }
         });
@@ -143,11 +143,11 @@ public class ActivateStrategySuccessTest {
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
         client = clientService.createClient(investId, ClientStatusType.registered, null);
-        steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вычитываем из топика кафка tracking.event все offset
-        resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -161,7 +161,6 @@ public class ActivateStrategySuccessTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
-
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -186,12 +185,6 @@ public class ActivateStrategySuccessTest {
         String description = null;
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
-//        //Находим клиента в БД Social
-//        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-//        SocialProfile socialProfile = new SocialProfile()
-//            .setId(profile.getId().toString())
-//            .setNickname(profile.getNickname())
-//            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -204,7 +197,7 @@ public class ActivateStrategySuccessTest {
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
         client = clientService.createClient(investId, ClientStatusType.registered, null);
-        steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy
@@ -236,12 +229,6 @@ public class ActivateStrategySuccessTest {
         String description = "Тест стратегия Autotest 003 - Описание";
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
-//        //Находим клиента в БД social
-//        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-//        SocialProfile socialProfile = new SocialProfile()
-//            .setId(profile.getId().toString())
-//            .setNickname(profile.getNickname())
-//            .setImage(profile.getImage().toString());
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -254,11 +241,11 @@ public class ActivateStrategySuccessTest {
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         client = clientService.createClient(investId, ClientStatusType.registered, null);
-        steps.createContractAndStrategy(client, contract, strategy, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вычитываем из топика кафка tracking.event все offset
-        resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
@@ -299,15 +286,6 @@ public class ActivateStrategySuccessTest {
             StrategyRiskProfile.CONSERVATIVE, score);
     }
 
-
-    //*** Методы для работы тестов ***
-    @Step("Переместить offset до текущей позиции")
-    public void resetOffsetToLate(Topics topic) {
-        log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
-        await().atMost(Duration.ofSeconds(30))
-            .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
-        log.info("Все сообщения из {} топика вычитаны", topic.getName());
-    }
 
     public UUID uuid(ByteString bytes) {
         ByteBuffer buff = bytes.asReadOnlyByteBuffer();

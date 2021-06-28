@@ -19,6 +19,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -56,7 +57,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class})
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class
+})
 public class UpdateStrategySuccessTest {
     @Autowired
     BillingService billingService;

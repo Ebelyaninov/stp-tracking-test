@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
@@ -34,6 +35,7 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.tracking.steps.StpTrackingAdminSteps;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -51,7 +53,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    SocialDataBaseAutoConfiguration.class
+    SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class
 })
 public class ActivateStrategyErrorTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
@@ -74,20 +77,22 @@ public class ActivateStrategyErrorTest {
     ProfileService profileService;
     @Autowired
     BillingService billingService;
+    @Autowired
+    StpTrackingAdminSteps steps;
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                strategyService.deleteStrategy(strategy);
+                strategyService.deleteStrategy(steps.strategy);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contract);
+                contractService.deleteContract(steps.contract);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(client);
+                clientService.deleteClient(steps.client);
             } catch (Exception e) {
             }
         });
@@ -114,7 +119,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем ActiveStrategy
@@ -169,7 +174,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy с некоррентным значением api-key
@@ -203,7 +208,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy без api-key
@@ -255,7 +260,7 @@ public class ActivateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft, при этом score передаем как null
-        createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy без api-key
@@ -268,37 +273,37 @@ public class ActivateStrategyErrorTest {
     }
 
 
-    //*** Методы для работы тестов ***
-    //Метод создает клиента, договор и стратегию в БД автоследования: tracking.client / tracking.contract / tracking.strategy
-    void createClientWithContractAndStrategy(UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
-
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
-
-        //Создаем запись в таблице tracking.contract
-        contract = new Contract()
-            .setId(contractId)
-            .setClientId(client.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contract = contractService.saveContract(contract);
-
-        //Создаем запись в таблице tracking.strategy
-        strategy = new Strategy()
-            .setId(strategyId)
-            .setContract(contract)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(score);
-        strategy = trackingService.saveStrategy(strategy);
-    }
+//    //*** Методы для работы тестов ***
+//    //Метод создает клиента, договор и стратегию в БД автоследования: tracking.client / tracking.contract / tracking.strategy
+//    void createClientWithContractAndStrategy(UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
+//                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+//                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+//                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
+//
+//        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+//
+//        //Создаем запись в таблице tracking.contract
+//        contract = new Contract()
+//            .setId(contractId)
+//            .setClientId(client.getId())
+//            .setRole(contractRole)
+//            .setState(contractState)
+//            .setStrategyId(null)
+//            .setBlocked(false);
+//        contract = contractService.saveContract(contract);
+//
+//        //Создаем запись в таблице tracking.strategy
+//        strategy = new Strategy()
+//            .setId(strategyId)
+//            .setContract(contract)
+//            .setTitle(title)
+//            .setBaseCurrency(strategyCurrency)
+//            .setRiskProfile(strategyRiskProfile)
+//            .setDescription(description)
+//            .setStatus(strategyStatus)
+//            .setSlavesCount(slaveCount)
+//            .setActivationTime(date)
+//            .setScore(score);
+//        strategy = trackingService.saveStrategy(strategy);
+//    }
 }
