@@ -73,9 +73,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Slf4j
 @Epic("handleActualizeCommand - Обработка команд на актуализацию виртуального портфеля")
 @Feature("TAP-8055")
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-master")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,

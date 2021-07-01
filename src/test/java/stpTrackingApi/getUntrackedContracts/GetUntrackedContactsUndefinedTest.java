@@ -78,9 +78,9 @@ public class GetUntrackedContactsUndefinedTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод возвращает список доступных договоров для подключения стратегии")
     void C244867() {
-       String SIEBLE_ID = "5-4PT2NXOL";
+       String SIEBEL_ID = "5-4PT2NXOL";
         //получаем список Брокерских договоров
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBLE_ID);
+        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         //получаем идентификатор догорова
         String contractId = findValidAccountWithSiebleId.get(0).getId();
@@ -102,7 +102,7 @@ public class GetUntrackedContactsUndefinedTest {
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBLE_ID)
+            .xTcsSiebelIdHeader(SIEBEL_ID)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetUntrackedContractsResponse.class));
         //записываем список договоров, который вернул метод GetUntrackedContract
