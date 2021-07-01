@@ -66,7 +66,7 @@ public class ConfirmMasterClientErrorTest {
 
     private static Stream<Arguments> provideStringsForHeadersConfirmMasterClient() {
         return Stream.of(
-            Arguments.of(null,  "tracking_admin"),
+            Arguments.of(null, "tracking_admin"),
             Arguments.of("trading-invest", null)
         );
     }

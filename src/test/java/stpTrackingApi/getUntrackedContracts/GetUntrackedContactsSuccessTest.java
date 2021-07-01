@@ -98,7 +98,7 @@ public class GetUntrackedContactsSuccessTest {
     @Description("Метод возвращает список доступных договоров для подключения стратегии")
     void C173602() {
         String SIEBEL_ID = "5-164JGM7QI";
-        //получаем список открытых Брокерских договоров по SIEBLE_ID, записываем  сортируем их
+        //получаем список открытых Брокерских договоров по SIEBEL_ID, записываем  сортируем их
         List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         List<String> contractIdsDB = new ArrayList<>();
         for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {

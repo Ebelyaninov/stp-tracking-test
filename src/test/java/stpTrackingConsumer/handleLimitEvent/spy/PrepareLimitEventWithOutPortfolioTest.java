@@ -171,7 +171,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
         String clientCodeSlave = findClientCodeByContractIdSlave.get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем запись о ведомом в client
@@ -295,7 +295,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        String clientCode = findClientCodeByContractId.get(0).getId();
 //        //создаем в БД tracking  договор: client, contract, strategy
 //        strategyId = UUID.randomUUID();
-//        createClientWintContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
+//        createClientWithContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
 //            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active);
 //        //создаем портфель master в cassandra
 //        List<MasterPortfolio.Position> positionList = new ArrayList<>();
@@ -432,7 +432,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        String clientCode = findClientCodeByContractId.get(0).getId();
 //        //создаем в БД tracking  договор: client, contract, strategy
 //        strategyId = UUID.randomUUID();
-//        createClientWintContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
+//        createClientWithContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
 //            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active);
 //        //создаем портфель master в cassandra
 //        List<MasterPortfolio.Position> positionList = new ArrayList<>();
@@ -528,7 +528,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        String clientCode = findClientCodeByContractId.get(0).getId();
 //        //создаем в БД tracking  договор: client, contract, strategy
 //        strategyId = UUID.randomUUID();
-//        createClientWintContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
+//        createClientWithContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
 //            StrategyCurrency.usd, StrategyRiskProfile.conservative, StrategyStatus.active);
 //        //включаем kafka - consumer для топика tracking.master.tracking.master.command
 //        Tracking.PortfolioCommand portfolioCommand = null;
@@ -647,7 +647,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        String clientCode = findClientCodeByContractId.get(0).getId();
 //        //создаем в БД tracking  договор: client, contract, strategy
 //        strategyId = UUID.randomUUID();
-//        createClientWintContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
+//        createClientWithContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
 //            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active);
 //        //создаем портфель master в cassandra
 //        List<MasterPortfolio.Position> positionList = new ArrayList<>();
@@ -783,7 +783,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        String clientCode = findClientCodeByContractId.get(0).getId();
 //        //создаем в БД tracking  договор: client, contract, strategy
 //        strategyId = UUID.randomUUID();
-//        createClientWintContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
+//        createClientWithContractAndStrategy(investId, ClientStatusType.registered, null, contractId, strategyId, ContractRole.master, ContractState.tracked,
 //            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active);
 //        Tracking.PortfolioCommand portfolioCommand = null;
 //        LocalDateTime dateCreateTr = null;
@@ -879,7 +879,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 //        //формируем тело запроса
 //        ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
 //        request.setContractId(contractId);
-//        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.StrategyBaseCurrency.RUB);
+//        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
 //        request.setDescription("autotest стратегия по актуализации портфеля description");
 //        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
 //        request.setTitle("autotest стратегия по актуализации портфеля");
@@ -903,7 +903,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 // //***методы для работы тестов**************************************************************************
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId,  String contractId, ContractRole contractRole, ContractState contractState,
+    void createClientWithContractAndStrategy(String SIEBEL_ID, UUID investId,  String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
@@ -960,7 +960,7 @@ public class PrepareLimitEventWithOutPortfolioTest {
 
 
 //    //метод создает клиента, договор и стратегию в БД автоследования
-//    void createClientWintContractAndStrategy (UUID investId, ClientStatusType сlientStatusType, SocialProfile socialProfile, String contractId, UUID strategyId, ContractRole contractRole,
+//    void createClientWithContractAndStrategy (UUID investId, ClientStatusType сlientStatusType, SocialProfile socialProfile, String contractId, UUID strategyId, ContractRole contractRole,
 //                                              ContractState contractState, StrategyCurrency strategyCurrency,
 //                                              StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus) {
 //        client = clientService.createClient(investId, сlientStatusType, socialProfile);
