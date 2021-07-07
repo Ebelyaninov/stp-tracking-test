@@ -1,4 +1,4 @@
-package ru.qa.tinkoff.tracking.steps;
+package ru.qa.tinkoff.steps.trackingMasterSteps;
 
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;

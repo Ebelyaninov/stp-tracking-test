@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -31,7 +33,7 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.tracking.steps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -50,7 +52,8 @@ import static org.hamcrest.Matchers.is;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class
+    TrackingDatabaseAutoConfiguration.class,
+    StpTrackingApiStepsConfiguration.class
 })
 
 
@@ -67,6 +70,8 @@ public class DeleteSubscriptionErrorTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingApiSteps steps;
+
+
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -76,8 +81,8 @@ public class DeleteSubscriptionErrorTest {
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-    String siebelIdMaster = "1-2X5IYXJ";
-    String siebelIdSlave = "5-12UL9UV9C";
+    String siebelIdMaster = "5-1233IJLHQ";
+    String siebelIdSlave = "5-7ECGV169";
 
     @AfterEach
     void deleteClient() {
@@ -116,9 +121,9 @@ public class DeleteSubscriptionErrorTest {
 
     private static Stream<Arguments> provideRequiredParamDeleteSubscription() {
         return Stream.of(
-            Arguments.of(null, "4.5.6", "android", "2010104269"),
-            Arguments.of("trading-invest", null, "android", "2010104269"),
-            Arguments.of("trading-invest", "4.5.6", null, "2010104269")
+            Arguments.of(null, "4.5.6", "android", "2010103725"),
+            Arguments.of("trading-invest", null, "android", "2010103725"),
+            Arguments.of("trading-invest", "4.5.6", null, "2010103725")
         );
     }
 

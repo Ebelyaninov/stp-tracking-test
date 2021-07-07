@@ -19,9 +19,7 @@ import ru.qa.tinkoff.tracking.repositories.ContractRepository;
 import ru.qa.tinkoff.tracking.repositories.StrategyRepository;
 import ru.qa.tinkoff.tracking.repositories.SubscriptionRepository;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.PersistenceContext;
 import java.util.UUID;
 
 @Slf4j

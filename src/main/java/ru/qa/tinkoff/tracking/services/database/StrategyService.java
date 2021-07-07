@@ -11,6 +11,7 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.repositories.StrategyRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +91,17 @@ public class StrategyService {
         log.info("Successfully deleted strategy {}", strategy.toString());
     }
 
+    @Step("Удаление стратегии по идентификатору")
+    @SneakyThrows
+    public void deleteStrategyByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
+        }
+        // todo Allure.addAttachment("Удаленная стратегия", "application/json", strategy));
+        strategyRepository.deleteStrategiesByIdIn(ids);
+        log.info("Successfully deleted strategy {}", ids);
+    }
+
 
     @Step("Сохранение стратегии")
     public Strategy saveStrategy(Strategy strategy) throws JsonProcessingException {
@@ -108,4 +120,35 @@ public class StrategyService {
         Allure.addAttachment("Найденная стратегия", "application/json", objectMapper.writeValueAsString(strategy));
         return strategy;
     }
+
+    @Step("Поиск стратегий по статусу и не пустому значению Description")
+    @SneakyThrows
+    public List<Strategy> getStrategysMaxLimit() {
+        List<Strategy> strategy = strategyRepository.selectStrategiesLimit();
+        log.info("Successfully find strategys {}");
+        return strategy;
+    }
+
+
+    @Step("Поиск стратегий меньше Cursor и с ограничением по лимиту")
+    @SneakyThrows
+    public List<Strategy> getStrategysByPositionAndLimitmit(Integer position, Integer limit) {
+        List<Strategy> strategy = strategyRepository.findListStrategysByPositionAndLimit(position, limit);
+        log.info("Successfully find strategys {}", position, limit);
+        Allure.addAttachment("Найденные стратегии", "application/json", objectMapper.writeValueAsString(strategy));
+        return strategy;
+    }
+
+    @Step("Поиск стратегий меньше Cursor и с ограничением по лимиту")
+    @SneakyThrows
+    public List<Strategy> getStrategysByOrderPosition() {
+        List<Strategy> strategy = strategyRepository.findListStrategysByOrderPosition();
+        log.info("Successfully find strategys {}");
+        Allure.addAttachment("Найденные стратегии", "application/json", objectMapper.writeValueAsString(strategy));
+        return strategy;
+    }
+
+
+
+
 }

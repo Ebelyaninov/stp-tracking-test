@@ -20,8 +20,9 @@ import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
@@ -35,9 +36,8 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.qa.tinkoff.tracking.steps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
@@ -54,7 +54,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class,
+    SptTrackingAdminStepsConfiguration.class
 })
 public class ActivateStrategyErrorTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
@@ -64,7 +65,7 @@ public class ActivateStrategyErrorTest {
     Strategy strategy;
     Client client;
     Contract contract;
-    static final String SIEBEL_ID = "5-F25SJ7BD";
+    static final String SIEBEL_ID = "5-55RUONV5";
     @Autowired
     StrategyService strategyService;
     @Autowired

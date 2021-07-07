@@ -12,6 +12,7 @@ import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.repositories.ContractRepository;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -100,6 +101,18 @@ public class ContractService {
         log.info("Successfully find exchangePosition {}", contract);
         Allure.addAttachment("Найденный контакт", "application/json", objectMapper.writeValueAsString(contract));
         return contract;
+    }
+
+
+    @Step("Удаление контракта по идентификатору")
+    @SneakyThrows
+    public void deleteStrategyByIds(Collection<String> ids) {
+        if (ids.isEmpty()) {
+            log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
+        }
+        // todo Allure.addAttachment("Удаленная стратегия", "application/json", strategy));
+        contractRepository.deleteContractsByIdIn(ids);
+        log.info("Successfully deleted strategy {}", ids);
     }
 
 

@@ -18,6 +18,7 @@ import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetUntrackedContractsResponse;
@@ -45,7 +46,9 @@ import static org.hamcrest.Matchers.is;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
-    TrackingDatabaseAutoConfiguration.class})
+    TrackingDatabaseAutoConfiguration.class,
+    StpTrackingApiStepsConfiguration.class
+})
 public class GetUntrackedContactsUndefinedTest {
     @Autowired
     BillingService billingService;
