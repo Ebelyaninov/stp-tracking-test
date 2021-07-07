@@ -26,6 +26,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -39,7 +40,7 @@ import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.tracking.steps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
@@ -64,7 +65,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 @SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
-    KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class,
+    StpTrackingApiStepsConfiguration.class
 })
 public class DeleteSubscriptionTest {
     @Autowired
@@ -96,7 +98,7 @@ public class DeleteSubscriptionTest {
     Contract contractSlave;
     Subscription subscription;
     Profile profile;
-    String siebelIdMaster = "5-11PX4UETD";
+    String siebelIdMaster = "5-1233IJLHQ";
     String siebelIdSlave = "5-7ECGV169";
 
     @AfterEach

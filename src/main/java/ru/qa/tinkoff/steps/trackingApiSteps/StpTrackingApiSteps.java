@@ -1,4 +1,4 @@
-package ru.qa.tinkoff.tracking.steps;
+package ru.qa.tinkoff.steps.trackingApiSteps;
 
 import com.google.protobuf.ByteString;
 import io.qameta.allure.Step;

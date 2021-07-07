@@ -13,6 +13,7 @@ import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.repositories.ClientRepository;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,5 +109,16 @@ public class ClientService {
         log.info("Successfully update client {}", client);
         Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(client));
         return client;
+    }
+
+    @Step("Удаление клиентов по идентификатору")
+    @SneakyThrows
+    public void deleteStrategyByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
+        }
+        // todo Allure.addAttachment("Удаленная стратегия", "application/json", strategy));
+        clientRepository.deleteClientsByIdIn(ids);
+        log.info("Successfully deleted clients {}", ids);
     }
 }

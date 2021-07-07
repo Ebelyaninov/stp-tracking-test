@@ -1,4 +1,4 @@
-package ru.qa.tinkoff.tracking.steps;
+package ru.qa.tinkoff.steps.trackingAnalyticsSteps;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;

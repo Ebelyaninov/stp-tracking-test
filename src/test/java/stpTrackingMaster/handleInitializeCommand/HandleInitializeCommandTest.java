@@ -27,6 +27,8 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -37,7 +39,7 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.qa.tinkoff.tracking.steps.StpTrackingMasterSteps;
+import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -71,7 +73,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingMasterStepsConfiguration.class
 })
 public class HandleInitializeCommandTest {
 
@@ -103,7 +106,7 @@ public class HandleInitializeCommandTest {
     MasterPortfolio masterPortfolio;
     String contractId;
     UUID strategyId;
-    String SIEBEL_ID = "5-A0ZYFKHF";
+    String SIEBEL_ID = "5-EDMRXI6R";
 
 
     @AfterEach

@@ -7,9 +7,13 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.tracking.entities.ExchangePosition;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.repositories.ExchangePositionRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Slf4j
@@ -65,6 +69,33 @@ public class ExchangePositionService {
     }
 
 
+    @Step("Поиск стратегий меньше Cursor и с ограничением по лимиту")
+    @SneakyThrows
+    public List<ExchangePosition> getExchangePositionByPositionAndLimitmit(Integer position, Integer limit) {
+        List<ExchangePosition> exchangePosition = exchangePositionRepository.findExchangePositionByPositionAndLimit(position, limit);
+        log.info("Successfully find ExchangePositions {}", position, limit);
+        Allure.addAttachment("Найденные инструменты по автоследованию", "application/json", objectMapper.writeValueAsString(exchangePosition));
+        return exchangePosition;
+    }
+
+    @Step("Поиск стратегий меньше Cursor и с ограничением по лимиту")
+    @SneakyThrows
+    public List<ExchangePosition> getExchangePositionOrderByTickerAndTraAndTradingClearingAccount() {
+        List<ExchangePosition> exchangePosition = exchangePositionRepository.findExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
+        log.info("Successfully find ExchangePositions {}");
+        Allure.addAttachment("Найденные инструменты по автоследованию", "application/json", objectMapper.writeValueAsString(exchangePosition));
+        return exchangePosition;
+    }
+
+
+    @Step("Удаление стратегии по идентификатору")
+    @SneakyThrows
+    public void deleteExchangePositionsByKey(String ticker, String tradingClearingAccount) {
+
+        // todo Allure.addAttachment("Удаленная стратегия", "application/json", strategy));
+        exchangePositionRepository.deleteExchangePositionsByTickerAndTradingClearingAccount(ticker, tradingClearingAccount);
+        log.info("Successfully deleted strategy {}", ticker, tradingClearingAccount);
+    }
 
 
 }

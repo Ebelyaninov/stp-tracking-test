@@ -4,14 +4,14 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.*;
 import ru.qa.tinkoff.PostgreSQLEnumType;
 import ru.qa.tinkoff.tracking.entities.enums.ExchangePositionExchange;
 
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -59,4 +59,8 @@ public class ExchangePosition implements Serializable {
 
     @Column(name = "otc_class_code")
     String otcClassCode;
+
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "position", insertable = false, updatable = false)
+    Integer position;
 }

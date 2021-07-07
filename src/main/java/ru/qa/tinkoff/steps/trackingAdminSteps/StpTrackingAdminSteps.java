@@ -1,4 +1,4 @@
-package ru.qa.tinkoff.tracking.steps;
+package ru.qa.tinkoff.steps.trackingAdminSteps;
 
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
@@ -10,17 +10,22 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
+import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.awaitility.Awaitility.await;
@@ -34,9 +39,13 @@ public class StpTrackingAdminSteps {
     private final ClientService clientService;
     private final ByteArrayReceiverService kafkaReceiver;
     private final ProfileService profileService;
+    private final ExchangePositionService exchangePositionService;
     public Client client;
     public Contract contract;
     public Strategy strategy;
+
+    ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
+    ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
 
     //Метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
@@ -68,6 +77,7 @@ public class StpTrackingAdminSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(score);
+//            .setPosition();
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -81,12 +91,12 @@ public class StpTrackingAdminSteps {
 
 
     @Step("Данные по profile из social")
-   public SocialProfile getProfile(String SIEBEL_ID) {
+    public SocialProfile getProfile(String SIEBEL_ID) {
         Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+            .setNickname(profile.getNickname());
+//            .setImage(profile.getImage().toString());
         return socialProfile;
     }
 
@@ -122,4 +132,24 @@ public class StpTrackingAdminSteps {
             .setScore(score);
         strategy = trackingService.saveStrategy(strategy);
     }
+
+    //создаем запись в tracking.exchange_position по инструменту
+    public void createExchangePosition(String ticker, String tradingClearingAccount, ExchangePositionExchange exchangePositionExchange,
+                                       String otcTicker, String otcClassCode) {
+        Map<String, Integer> mapValue = new HashMap<String, Integer>();
+        mapValue.put("default", 100);
+        mapValue.put("primary", 100);
+        exchangePosition = new ru.qa.tinkoff.tracking.entities.ExchangePosition()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setExchangePositionExchange(exchangePositionExchange)
+            .setTrackingAllowed(false)
+            .setDailyQuantityLimit(200)
+            .setOrderQuantityLimits(mapValue)
+            .setOtcTicker(otcTicker)
+            .setOtcClassCode(otcClassCode);
+        exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
+    }
 }
+
+

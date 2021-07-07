@@ -23,7 +23,6 @@ public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfigur
     @Getter
     private ConsistencyLevel writeConsistencyLevel = ConsistencyLevel.EACH_QUORUM;
 
-
     @Bean
     public InvestTrackingCassandraDbConfigurationProperties dbConf() {
         return new InvestTrackingCassandraDbConfigurationProperties();

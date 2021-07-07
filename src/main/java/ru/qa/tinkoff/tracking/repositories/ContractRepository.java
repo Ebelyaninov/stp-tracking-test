@@ -1,11 +1,15 @@
 package ru.qa.tinkoff.tracking.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
+
+import javax.transaction.Transactional;
+import java.util.Collection;
 
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, String> {
@@ -19,6 +23,10 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
     // находим 1 запись по договору
     @Query(nativeQuery = true, value = "select * from tracking.contract limit 1")
     Contract selectOneContract();
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    void deleteContractsByIdIn(Collection<String> ids);
 
 
 }

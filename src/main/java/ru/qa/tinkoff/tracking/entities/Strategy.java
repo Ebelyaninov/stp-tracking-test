@@ -1,8 +1,9 @@
 package ru.qa.tinkoff.tracking.entities;
 
-
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import ru.qa.tinkoff.PostgreSQLEnumType;
@@ -11,9 +12,7 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -61,6 +60,10 @@ public class Strategy {
 
     @Column(name = "score")
     Integer score;
+
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "position", insertable = false, updatable = false)
+    Integer position;
 
 //    @Type( type = "jsonb" )
 //    @Column(name = "fee_rate", columnDefinition = "jsonb")

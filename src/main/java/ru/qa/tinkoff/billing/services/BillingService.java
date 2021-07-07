@@ -30,7 +30,6 @@ public class BillingService {
     @PersistenceContext
     EntityManager entityManager;
 
-
     public BillingService(BrokerAccountRepository repository,
                           InvestAccountRepository repositoryIn,
                           ClientCodeRepository repositoryCc,
