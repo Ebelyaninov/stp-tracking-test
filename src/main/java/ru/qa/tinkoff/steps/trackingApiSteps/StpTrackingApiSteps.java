@@ -22,10 +22,13 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.awaitility.Awaitility.await;
@@ -37,22 +40,17 @@ public class StpTrackingApiSteps {
 
     @Autowired(required = false)
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired(required = false)
-    ProfileService profileService;
-    @Autowired(required = false)
-    ClientService clientService;
-    @Autowired(required = false)
-    ContractService contractService;
-    @Autowired(required = false)
-    StrategyService strategyService;
-    @Autowired(required = false)
-    TrackingService trackingService;
+    private final ContractService contractService;
+    private final TrackingService trackingService;
+    private final ClientService clientService;
+    private final ProfileService profileService;
+
+    public Client clientMaster;
+    public Contract contractMaster;
+    public Strategy strategyMaster;
 
 
     Profile profile;
-    Client clientMaster;
-    Contract contractMaster;
-    Strategy strategyMaster;
     Client clientSlave;
     Contract contractSlave;
 
@@ -79,6 +77,9 @@ public class StpTrackingApiSteps {
             .setBlocked(false);
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -89,8 +90,14 @@ public class StpTrackingApiSteps {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
+    }
+
+    //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
+    public void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
+        clientMaster = clientService.createClient(investId, clientStatusType, socialProfile);
     }
 
 

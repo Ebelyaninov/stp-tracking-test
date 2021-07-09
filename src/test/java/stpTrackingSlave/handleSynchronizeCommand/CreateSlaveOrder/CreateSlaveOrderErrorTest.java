@@ -548,6 +548,9 @@ public class CreateSlaveOrderErrorTest {
 
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -558,7 +561,8 @@ public class CreateSlaveOrderErrorTest {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
         strategy = trackingService.saveStrategy(strategy);
     }
 

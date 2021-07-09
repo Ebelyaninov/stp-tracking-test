@@ -28,6 +28,7 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
@@ -69,7 +70,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    SptTrackingAdminStepsConfiguration.class
+    StpTrackingAdminStepsConfiguration.class
 })
 public class UpdateStrategyAdminErrorTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();

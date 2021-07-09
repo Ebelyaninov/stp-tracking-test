@@ -12,7 +12,9 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -60,6 +62,10 @@ public class Strategy {
 
     @Column(name = "score")
     Integer score;
+
+    @Type( type = "jsonb" )
+    @Column(name = "fee_rate", columnDefinition = "jsonb")
+    Map<String, BigDecimal> feeRate;
 
     @Generated(GenerationTime.INSERT)
     @Column(name = "position", insertable = false, updatable = false)

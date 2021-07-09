@@ -117,15 +117,15 @@ public class CreateSubscriptionTest {
             } catch (Exception e) {
             }
             try {
-                trackingService.deleteStrategy(strategyMaster);
+                trackingService.deleteStrategy(steps.strategyMaster);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contractMaster);
+                contractService.deleteContract(steps.contractMaster);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(clientMaster);
+                clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
         });

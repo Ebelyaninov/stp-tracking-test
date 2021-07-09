@@ -40,10 +40,13 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
@@ -279,7 +282,9 @@ public class UpdateStrategySuccessTest {
             .setBlocked(false);
 
         contract = сontractService.saveContract(contract);
-
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -290,7 +295,8 @@ public class UpdateStrategySuccessTest {
             .setStatus(strategyStatus)
             .setSlavesCount(0)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
 
         strategy = trackingService.saveStrategy(strategy);
     }

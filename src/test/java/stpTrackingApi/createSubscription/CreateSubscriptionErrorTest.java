@@ -21,10 +21,9 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -34,7 +33,9 @@ import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.time.LocalDateTime;
@@ -72,31 +73,33 @@ public class CreateSubscriptionErrorTest {
     ProfileService profileService;
     @Autowired
     TrackingService trackingService;
+    @Autowired
+    StpTrackingApiSteps steps;
 
-    SubscriptionApi subscriptionApi= ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    Profile profile;
-    Client clientMaster;
-    Contract contractMaster;
     Strategy strategyMaster;
     String siebelIdMaster = "1-5RLRHAS";
-    String siebelIdSlave = "5-11PX4UETD";
-    String siebelIdSlaveNotBrokerOpen = "5-164JGM7QI";
-    String siebelIdSlaveNotBroker = "5-YE3B7BWM";
+    String siebelIdSlave = "1-1P4N1RM";
+    String siebelIdSlaveNotBrokerOpen = "4-1ZCANCVZ";
+    String siebelIdSlaveNotBroker = "5-GGI9D1AG";
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                trackingService.deleteStrategy(strategyMaster);
-            } catch (Exception e) {}
+                trackingService.deleteStrategy(steps.strategyMaster);
+            } catch (Exception e) {
+            }
             try {
-                contractService.deleteContract(contractMaster);
-            } catch (Exception e) {}
+                contractService.deleteContract(steps.contractMaster);
+            } catch (Exception e) {
+            }
             try {
-                clientService.deleteClient(clientMaster);
-            } catch (Exception e) {}
+                clientService.deleteClient(steps.clientMaster);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -140,7 +143,7 @@ public class CreateSubscriptionErrorTest {
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         LocalDateTime dateCreateTr = null;
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -199,7 +202,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -256,7 +259,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -314,7 +317,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -364,7 +367,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         subscriptionApi.createSubscription()
@@ -414,7 +417,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlaveNotBroker = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -455,7 +458,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlaveNotBroker)
+            .siebelIdPath(siebelIdSlaveNotBrokerOpen)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("closed")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -463,7 +466,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlaveNotBrokerOpen = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -484,7 +487,6 @@ public class CreateSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
-
 
 
     @Test
@@ -514,7 +516,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -564,7 +566,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -614,7 +616,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null);
         SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
@@ -641,7 +643,7 @@ public class CreateSubscriptionErrorTest {
     @DisplayName("C639163.CreateSubscription.Создание подписки на тот же договор, что и стратегия")
     @Subfeature("Успешные сценарии")
     @Description("Метод создания подписки на торговую стратегию ведомым.")
-    void C639163()  {
+    void C639163() {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
@@ -655,7 +657,7 @@ public class CreateSubscriptionErrorTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
@@ -676,40 +678,4 @@ public class CreateSubscriptionErrorTest {
 
     }
 
-    //***методы для работы тестов**************************************************************************
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWithContractAndStrategy(String SIEBEL_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-        //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
-        // создаем запись о договоре клиента в tracking.contract
-        contractMaster = new Contract()
-            .setId(contractId)
-            .setClientId(clientMaster.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractMaster = contractService.saveContract(contractMaster);
-        //создаем запись о стратегии клиента
-        strategyMaster = new Strategy()
-            .setId(strategyId)
-            .setContract(contractMaster)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-        strategyMaster = trackingService.saveStrategy(strategyMaster);
-    }
 }

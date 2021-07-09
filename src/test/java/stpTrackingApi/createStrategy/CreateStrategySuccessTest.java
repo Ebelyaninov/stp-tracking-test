@@ -1,6 +1,5 @@
 package stpTrackingApi.createStrategy;
 
-import com.google.protobuf.BytesValue;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -23,22 +22,19 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioPositionRetentionDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
-import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse;
-import ru.qa.tinkoff.swagger.tracking.model.Currency;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
+import ru.qa.tinkoff.swagger.tracking.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -49,13 +45,8 @@ import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
-//import ru.tinkoff.invest.sdet.kafka.protobuf.KafkaProtobufFactoryAutoConfiguration;
-//import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufBytesReceiver;
-//import ru.tinkoff.invest.sdet.kafka.protobuf.reciever.KafkaProtobufCustomReceiver;
 import ru.tinkoff.trading.tracking.Tracking;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.Duration;
@@ -63,7 +54,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -76,7 +66,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
@@ -98,7 +87,9 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
+
     StrategyApi strategyApi;
+
     @Autowired
     BillingService billingService;
     @Autowired
@@ -113,12 +104,16 @@ public class CreateStrategySuccessTest {
     MasterPortfolioPositionRetentionDao masterPortfolioPositionRetentionDao;
     @Autowired
     StrategyService strategyService;
+    @Autowired
+    StpTrackingApiSteps steps;
 
 
     Client client;
     Contract contract;
     Strategy strategy;
+
     Profile profile;
+
     MasterPortfolio masterPortfolio;
     MasterPortfolioPositionRetention masterPortfolioPositionRetention;
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
@@ -172,23 +167,15 @@ public class CreateStrategySuccessTest {
         String title = "Тест стратегия Autotest 001 " + dateNow;
         String description = "New test стратегия Autotest 001 " + dateNow;
         String positionRetentionId = "days";
-        //Находим клиента в social и берем данные по профайлу
-        //В этом и последующих тестах временно отключаем логику обращение в сторонний сервис, т.к. это приводит к замедлению выолнения тестов
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Получаем данные по Master клиенту через API сервиса счетов
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("15000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -199,25 +186,22 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
-
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
         strategyId = UUID.fromString(expectedResponse.getStrategy().getId().toString());
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
-
+        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.2", "0.04");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioPositionRetention =
@@ -239,22 +223,14 @@ public class CreateStrategySuccessTest {
         String title = "Тест стратегия Autotest 002 " + dateNow;
         String description = "New test стратегия Autotest 002 " + dateNow;
         String positionRetentionId = "days";
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.03);
+        feeRate.setResult(0.1);
         //Получаем данные по Master клиенту через API сервиса счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
         createClientWithContract(investId, ClientStatusType.registered, null, contractId, null, ContractState.untracked, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("10000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -265,7 +241,7 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
-
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -276,27 +252,22 @@ public class CreateStrategySuccessTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
-
         //Достаем из response идентификатор стратегии
         strategyId = UUID.fromString(expectedResponse.getBody().asString().substring(19, 55));
-
         //Проверяем мета-данные response, x-trace-id не пустое значение, x-server-time текущее время до минут
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
-
+        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.1", "0.03");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioPositionRetention =
@@ -317,24 +288,15 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Тест стратегия Autotest 003 " + dateNow;
         String description = "New test стратегия Autotest 003 " + dateNow;
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.05);
+        feeRate.setResult(0.5);
         //Получаем данные по Master-клиенту через API сервиса счетов
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("5000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -345,24 +307,21 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId("days");
-
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         strategyId = expectedResponse.getStrategy().getId();
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(expectedResponse.getStrategy().getId());
-        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
-
+        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.5", "0.05");
         //Находим запись о портфеле мастера в cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Вызываем метод второй раз
         strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -373,7 +332,6 @@ public class CreateStrategySuccessTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response.as(CreateStrategyResponse.class));
-
         List<Strategy> strategyOpt = strategyService.findListStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.size(), is(1));
     }
@@ -391,24 +349,15 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Тест стратегия Autotest 004 " + dateNow;
         String positionRetentionId = "days";
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Получаем данные по Master-клиенту через API сервиса счетов
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("3000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -418,6 +367,7 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -431,16 +381,12 @@ public class CreateStrategySuccessTest {
             .execute(response -> response);
         //Достаем из response идентификатор стратегии
         strategyId = UUID.fromString(expectedResponse.getBody().asString().substring(19, 55));
-
         //Проверяем мета-данные response, x-trace-id не пустое значение, x-server-time текущее время до минут
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //assertThat("x-server-time не равно", expectedResponse.getHeaders().getValue("x-server-time").substring(0, 16), is(dateNow));
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
@@ -451,12 +397,10 @@ public class CreateStrategySuccessTest {
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
         assertThat("кол-во подписок на договоре не равно", strategy.getSlavesCount(), is(0));
-
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioPositionRetention =
@@ -475,24 +419,15 @@ public class CreateStrategySuccessTest {
         String titleNew = "Тест стратегия Autotest 005";
         String description = "  New test стратегия Autotest 005  ";
         String positionRetentionId = "days";
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("7000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -503,23 +438,21 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         strategyId = expectedResponse.getStrategy().getId();
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(expectedResponse.getStrategy().getId());
-        checkParamStrategy(contractId, titleNew, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
-
+        checkParamStrategy(contractId, titleNew, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.2", "0.04");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioPositionRetention =
@@ -546,24 +479,15 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Тест стратегия Autotest 006 " + dateNow;
         String description = "New test стратегия Autotest 006 " + dateNow;
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Получаем данные по Master-клиенту через API сервиса счетов
         GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = masterBrokerAccount.getInvestId();
         contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело для запроса createStrategy
         BigDecimal baseMoney = new BigDecimal("15000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -574,25 +498,22 @@ public class CreateStrategySuccessTest {
         request.setDescription(description);
         request.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         request.setPositionRetentionId(retentionForStrategy);
-
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
         strategyId = UUID.fromString(expectedResponse.getStrategy().getId().toString());
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = contractService.getContract(contractId);
         checkParamContract(contractId, investId, "untracked");
-
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
-
+        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.2", "0.04");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
-
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioPositionRetention =
@@ -619,28 +540,18 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname());
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
         contractId = brokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         BigDecimal baseMoney = new BigDecimal("12000.0");
-
         //Вычитываем из топика kafka: tracking.master.command все offset
         resetOffsetToLate(TRACKING_MASTER_COMMAND);
-
         //Формируем тело запроса
         CreateStrategyRequest request = new CreateStrategyRequest();
         request.setContractId(contractId);
@@ -650,7 +561,7 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
-
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
@@ -678,7 +589,8 @@ public class CreateStrategySuccessTest {
         assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));
         strategy = strategyService.getStrategy(strategyId);
-        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE, 0);
+        checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
+            0, "0.2", "0.04");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
@@ -750,7 +662,8 @@ public class CreateStrategySuccessTest {
     }
 
     void checkParamStrategy(String contractId, String title, Currency currency, String description,
-                            String status, StrategyRiskProfile riskProfile, int slaveCount) {
+                            String status, StrategyRiskProfile riskProfile, int slaveCount,
+                            String result, String management) {
         step("Проверка полей записи о стратегии - PostgreSQL: tracking.strategy", () -> {
             assertAll(
                 () -> assertThat("номер договора клиента не совпадает с ожидаемым номером",
@@ -766,7 +679,13 @@ public class CreateStrategySuccessTest {
                 () -> assertThat("риск-профиль стратегии не совпадает с ожидаемым риск-профилем",
                     strategy.getRiskProfile().toString(), is(StrategyRiskProfile.CONSERVATIVE.toString())),
                 () -> assertThat("кол-во подписок на договоре отлично от нуля",
-                    strategy.getSlavesCount(), is(0))
+                    strategy.getSlavesCount(), is(0)),
+                () -> assertThat("кол-во подписок на договоре отлично от нуля",
+                    strategy.getSlavesCount(), is(0)),
+                () -> assertThat("ставка комиссии за результат",
+                    strategy.getFeeRate().get("result").toString(), is(result)),
+                () -> assertThat("ставка комиссии за управление",
+                    strategy.getFeeRate().get("management").toString(), is(management))
             );
         });
     }
