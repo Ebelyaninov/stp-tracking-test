@@ -40,7 +40,7 @@ app:
         idle-timeout: 10000
     social:
       #url: jdbc:postgresql://db.social.trading.local:5640/social
-      url: jdbc:postgresql://pg-invest-social-qa.ds.invest.cloud:5640/social
+      url: jdbc:postgresql://pg-invest-social-qa.ds.invest.cloud:5432/social
       username: social
       password: social
       driver-class-name: org.postgresql.Driver

@@ -42,8 +42,11 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -718,7 +721,9 @@ public class UpdateStrategyErrorTest {
             .setBlocked(false);
 
         contract = сontractService.saveContract(contract);
-
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -729,7 +734,8 @@ public class UpdateStrategyErrorTest {
             .setStatus(strategyStatus)
             .setSlavesCount(0)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
 
         strategy = trackingService.saveStrategy(strategy);
     }

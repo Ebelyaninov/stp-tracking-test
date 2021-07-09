@@ -50,10 +50,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static java.rmi.server.LogStream.log;
@@ -113,10 +110,10 @@ public class Handle30DelayRetryCommandTest {
     Contract contractSlave;
     Subscription subscription;
     String contractIdMaster;
-    String contractIdSlave = "2006319202";
+    String contractIdSlave = "2013919085";
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-F25SJ7BD";
-    String SIEBEL_ID_SLAVE = "5-CAIE6SAD";
+    String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
     String tradingClearingAccount = "L01+00000SPB";
     String classCode = "SPBXM";
@@ -348,6 +345,9 @@ public class Handle30DelayRetryCommandTest {
 
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -358,7 +358,8 @@ public class Handle30DelayRetryCommandTest {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
 
         strategy = trackingService.saveStrategy(strategy);
     }

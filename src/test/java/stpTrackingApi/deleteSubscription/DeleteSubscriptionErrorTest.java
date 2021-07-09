@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -52,6 +53,7 @@ import static org.hamcrest.Matchers.is;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
 })
@@ -104,15 +106,15 @@ public class DeleteSubscriptionErrorTest {
             } catch (Exception e) {
             }
             try {
-                trackingService.deleteStrategy(strategyMaster);
+                trackingService.deleteStrategy(steps.strategyMaster);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contractMaster);
+                contractService.deleteContract(steps.contractMaster);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(clientMaster);
+                clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
         });
@@ -658,38 +660,6 @@ public class DeleteSubscriptionErrorTest {
 
 
     //***методы для работы тестов**************************************************************************
-//    //метод создает клиента, договор и стратегию в БД автоследования
-//    void createClientWintContractAndStrategy(String SIEBEL_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-//                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-//                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-//                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
-//        //создаем запись о клиенте в tracking.client
-//        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
-//        // создаем запись о договоре клиента в tracking.contract
-//        contractMaster = new Contract()
-//            .setId(contractId)
-//            .setClientId(clientMaster.getId())
-//            .setRole(contractRole)
-//            .setState(contractState)
-//            .setStrategyId(null)
-//            .setBlocked(false);
-//        contractMaster = contractService.saveContract(contractMaster);
-//        //создаем запись о стратегии клиента
-//        strategyMaster = new Strategy()
-//            .setId(strategyId)
-//            .setContract(contractMaster)
-//            .setTitle(title)
-//            .setBaseCurrency(strategyCurrency)
-//            .setRiskProfile(strategyRiskProfile)
-//            .setDescription(description)
-//            .setStatus(strategyStatus)
-//            .setSlavesCount(slaveCount)
-//            .setActivationTime(date)
-//            .setScore(1);
-//        strategyMaster = trackingService.saveStrategy(strategyMaster);
-//    }
-
-
     void checkParam(int count, UUID strategyId) {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(count));
         //находим подписку и проверяем по ней данные

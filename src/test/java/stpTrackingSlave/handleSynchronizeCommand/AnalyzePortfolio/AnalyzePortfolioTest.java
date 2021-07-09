@@ -662,8 +662,8 @@ public class AnalyzePortfolioTest {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
-//            .setFeeRate(feeRateProperties);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
 
         strategy = trackingService.saveStrategy(strategy);
     }

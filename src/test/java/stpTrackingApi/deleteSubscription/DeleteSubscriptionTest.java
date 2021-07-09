@@ -55,6 +55,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
 
 @Slf4j
 @Epic("deleteSubscription - Удаление подписки на торговую стратегию")
@@ -98,7 +99,7 @@ public class DeleteSubscriptionTest {
     Contract contractSlave;
     Subscription subscription;
     Profile profile;
-    String siebelIdMaster = "5-1233IJLHQ";
+    String siebelIdMaster = "1-1P4N1RM";
     String siebelIdSlave = "5-7ECGV169";
 
     @AfterEach
@@ -121,15 +122,15 @@ public class DeleteSubscriptionTest {
             } catch (Exception e) {
             }
             try {
-                trackingService.deleteStrategy(strategyMaster);
+                trackingService.deleteStrategy(steps.strategyMaster);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contractMaster);
+                contractService.deleteContract(steps.contractMaster);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(clientMaster);
+                clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
 

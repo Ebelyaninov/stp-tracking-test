@@ -25,6 +25,7 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
@@ -52,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    SptTrackingAdminStepsConfiguration.class
+    StpTrackingAdminStepsConfiguration.class
 })
 
 public class ConfirmMasterClientSuccessTest {

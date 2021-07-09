@@ -152,7 +152,7 @@ public class CreateSignalSuccessTest {
         Tracking.PortfolioCommand portfolioCommand = null;
         String key = null;
         double money = 1500.0;
-        double price = 10.0;
+        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
@@ -216,7 +216,7 @@ public class CreateSignalSuccessTest {
         OffsetDateTime dateFromCommand = OffsetDateTime.of(dateCreateTr, ZoneOffset.of("+3"));
         String dateFromCommandWithMinut = (fmt.format(dateFromCommand));
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (quantityRequest * price);
+        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
         double quantityCommandBaseMoney = portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
@@ -244,7 +244,7 @@ public class CreateSignalSuccessTest {
         Tracking.PortfolioCommand portfolioCommand = null;
         String key = null;
         double money = 3500.0;
-        double price = 10.0;
+        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
         double quantityPosMasterPortfolio = 12.0;
@@ -312,7 +312,8 @@ public class CreateSignalSuccessTest {
         OffsetDateTime dateFromCommand = OffsetDateTime.of(dateCreateTr, ZoneOffset.of("+3"));
         String dateFromCommandWithMinut = (fmt.format(dateFromCommand));
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (quantityRequest * price);
+//        double quantityReqBaseMoney = money - (quantityRequest * price);
+        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
         double quantityCommandBaseMoney = portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
@@ -341,7 +342,7 @@ public class CreateSignalSuccessTest {
         Tracking.PortfolioCommand portfolioCommand = null;
         String key = null;
         double money = 3500.0;
-        double price = 10.0;
+        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
@@ -405,7 +406,8 @@ public class CreateSignalSuccessTest {
         }
         log.info("Команда в tracking.slave.command:  {}", portfolioCommand);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money + (quantityRequest * price);
+//        double quantityReqBaseMoney = money + (quantityRequest * price);
+        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
         double quantityCommandBaseMoney = portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
@@ -440,7 +442,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C660682(String riskInst, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile) {
         String SIEBEL_ID = "5-DMYMSG6P";
-        double price = 10.0;
+        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
         versionNew = version + 1;
@@ -611,7 +613,7 @@ public class CreateSignalSuccessTest {
 
 
     void assertCommand(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
-                       double quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, double quantityReqBaseMoney, double price,
+                       double quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, double quantityReqBaseMoney, BigDecimal price,
                        int quantityRequest) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractId));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));

@@ -24,7 +24,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
-import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse;
+import ru.qa.tinkoff.swagger.tracking.model.StrategyFeeRate;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -93,21 +93,13 @@ public class CreateStrategyErrorValidDataTest {
     void C435867() {
         String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         String description = "new test стратегия autotest CreateStrategy007";
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
         String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -120,6 +112,7 @@ public class CreateStrategyErrorValidDataTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId("days");
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -159,24 +152,15 @@ public class CreateStrategyErrorValidDataTest {
             "Понятие произошло от понятия военная стратегия — наука о ведении войны, одна из областей военного искусства, " +
             "высшее его проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование " +
             "и ведение, исследует закономерности войны.";
-
-        //Находим клиента в social и берем данные по профайлу
-        /*
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
-         */
-
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
         String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
-
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("6000.0");
         CreateStrategyRequest request = new CreateStrategyRequest();
@@ -187,6 +171,7 @@ public class CreateStrategyErrorValidDataTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId("days");
+        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -200,7 +185,6 @@ public class CreateStrategyErrorValidDataTest {
         //Проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = сontractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));

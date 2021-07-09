@@ -22,6 +22,8 @@ public enum Topics {
     TRACKING_ANALYTICS_COMMAND("tracking.analytics.command"),
     SOCIAL_EVENT("social.event"),
     TRACKING_SPB_MORNING_RETRYER_COMMAND("tracking.spb-morning.retryer.command"),
-    TRACKING_FX_RETRYER_COMMAND("tracking.fx.retryer.command"),;
+    TRACKING_FX_RETRYER_COMMAND("tracking.fx.retryer.command"),
+    TRACKING_FEE_COMMAND(" tracking.fee.command"),
+    ;
     private final String name;
 }

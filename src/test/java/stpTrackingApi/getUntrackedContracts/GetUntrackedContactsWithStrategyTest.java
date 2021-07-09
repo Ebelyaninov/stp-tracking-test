@@ -38,11 +38,9 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -268,6 +266,9 @@ public class GetUntrackedContactsWithStrategyTest {
             .setStrategyId(null)
             .setBlocked(false);
         contract = contractService.saveContract(contract);
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -278,7 +279,8 @@ public class GetUntrackedContactsWithStrategyTest {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(1);
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
         strategy = trackingService.saveStrategy(strategy);
     }
 }
