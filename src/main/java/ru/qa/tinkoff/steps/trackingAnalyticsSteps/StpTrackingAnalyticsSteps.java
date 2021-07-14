@@ -54,7 +54,6 @@ public class StpTrackingAnalyticsSteps {
     public String classCode1 = "TQBR";
     public String instrumet1 = ticker1 + "_" + classCode1;
 
-
     public String ticker2 = "SU29009RMFS6";
    public String tradingClearingAccount2 = "L01+00000F00";
    public String quantity2 = "3";
