@@ -3,6 +3,8 @@ package ru.qa.tinkoff.investTracking.configuration;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MappingManager;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -78,4 +80,12 @@ public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfigur
         mappingManager.udtCodec(SlavePortfolio.BaseMoneyPosition.class);
         return mappingManager;
     }
+
+    @Bean
+    public ObjectMapper contextMapper() {
+        var objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
+        return objectMapper;
+    }
+
 }

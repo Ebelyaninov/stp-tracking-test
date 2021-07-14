@@ -1,6 +1,7 @@
 package stpTrackingApi.deleteSubscription;
 
 
+import com.google.protobuf.StringValue;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -54,6 +55,7 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
 
@@ -231,5 +233,109 @@ public class DeleteSubscriptionTest {
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(IsNull.nullValue()));
         clientSlave = clientService.getClient(investIdSlave);
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+    }
+
+
+    @Test
+    @AllureId("1051655")
+    @DisplayName("C1051655.DeleteSubscription. Отправка команд при удалении подписки через deleteSubscription" +
+        " на списание каждого из типа комиссии (management и result)")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод создания подписки на торговую стратегию ведомым.")
+    void C1051655() throws Exception {
+        //создаем данные для стратегии
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        UUID strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
+        strategyMaster = strategyService.getStrategy(strategyId);
+        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
+        //находим подписку и проверяем по ней данные
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        //находим запись по контракту ведомого и проверяем значения
+        contractSlave = contractService.getContract(contractIdSlave);
+        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
+        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
+        clientSlave = clientService.getClient(investIdSlave);
+        assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+        //вычитываем из топика кафка tracking.fee.calculate.command все offset
+        steps.resetOffsetToLate(TRACKING_FEE_COMMAND);
+        LocalDateTime time = LocalDateTime.now().withNano(0);
+        subscriptionApi.deleteSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        List<Pair<String, byte[]>> commands = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(20));
+        Tracking.ActivateFeeCommand commandeMan = null;
+        Tracking.ActivateFeeCommand commandeRes = null;
+        String keyMan ="";
+        String keyRes ="";
+        for (int i = 0; i < commands.size(); i++) {
+            Tracking.ActivateFeeCommand commande = Tracking.ActivateFeeCommand.parseFrom(commands.get(i).getValue());
+            String commandeKey = commands.get(i).getKey();
+            if(commande.getContextCase().getNumber()==3){
+                log.info("Команда в tracking.fee.command по management:  {}", commande);
+                commandeMan = commande;
+                keyMan = commandeKey;
+            }
+            if(commande.getContextCase().getNumber()==4){
+                log.info("Команда в tracking.fee.command по result:  {}", commande);
+                commandeRes = commande;
+                keyRes = commandeKey;
+            }
+        }
+        //находим подписку и проверяем по ней данные
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        LocalDateTime dateCreateMan = Instant.ofEpochSecond(commandeMan.getCreatedAt().getSeconds())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
+        LocalDateTime dateCreateRs = Instant.ofEpochSecond(commandeRes.getCreatedAt().getSeconds())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
+        assertThat("ключ команды не равен", keyMan, is(contractIdSlave));
+        assertThat("ID подписки не равен", commandeMan.getSubscription().getId(), is(subscription.getId().longValue()));
+        assertThat("Тип комиссии не равен", commandeMan.getManagement(), is(notNullValue()));
+        assertThat("дата создания команды не равна", dateCreateMan, is(time));
+        assertThat("ключ команды не равен", keyRes, is(contractIdSlave));
+        assertThat("ID подписки не равен", commandeRes.getSubscription().getId(), is(subscription.getId().longValue()));
+        assertThat("Тип комиссии не равен", commandeRes.getResult(), is(notNullValue()));
+        assertThat("дата создания команды не равна", dateCreateRs, is(time));
     }
 }

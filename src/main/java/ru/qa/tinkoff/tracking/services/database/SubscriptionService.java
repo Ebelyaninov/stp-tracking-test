@@ -17,6 +17,7 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.repositories.SubscriptionRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +44,16 @@ public class SubscriptionService {
         Allure.addAttachment("Найденная подписка", "application/json", objectMapper.writeValueAsString(contractId));
         return subscription.orElseThrow(() -> new RuntimeException("Не найдена подписка"));
     }
+
+
+    @Step("Поиск подписки по contractId ведомого")
+    @SneakyThrows
+    public void updateStartTimeSubscriptionById (LocalDateTime startTime, long subscriptionId) {
+        subscriptionRepository.updateSubscriptionStartTimeById(startTime, subscriptionId);
+        log.info("Successfully find subscription {}", subscriptionId);
+        Allure.addAttachment("Найденная подписка", "application/json", objectMapper.writeValueAsString(subscriptionId));
+    }
+
 
 
     @Step("Поиск подписки по contractId ведомого")

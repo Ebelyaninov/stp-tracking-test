@@ -38,6 +38,7 @@ import static org.awaitility.Awaitility.await;
 @RequiredArgsConstructor
 public class StpTrackingApiSteps {
 
+
     @Autowired(required = false)
     ByteArrayReceiverService kafkaReceiver;
     private final ContractService contractService;

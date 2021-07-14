@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.steps.trackingAdminSteps;
 
+
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -154,6 +155,5 @@ public class StpTrackingAdminSteps {
             .setOtcClassCode(otcClassCode);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
     }
+
 }
-
-
