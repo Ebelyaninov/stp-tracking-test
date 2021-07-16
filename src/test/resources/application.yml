@@ -75,5 +75,8 @@ grpc:
     #port: 30001
     url: internal.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru
     port: 80
+  middle:
+    url: invest-qa.tinkoff.ru
+    port: 80
 #logging.level.com.baeldung.cloud.openfeign.client: DEBUG
 logging.level.ru.qa.tinkoff.swagger.tracking.api: DEBUG

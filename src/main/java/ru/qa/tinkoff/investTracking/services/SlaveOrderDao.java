@@ -33,6 +33,17 @@ public class SlaveOrderDao {
     }
 
 
+
+    public SlaveOrder getSlaveOrderWithVersionAndAttemps(String contractId, UUID strategyId, Integer version, Byte attemptsCount) {
+        String query = "select * " +
+            "from invest_tracking.slave_order " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "and version = ?  and attempts_count = ?";
+        return cqlTemplate.queryForObject(query, slaveOrderRowMapper, contractId, strategyId, version, attemptsCount);
+    }
+
+
     public Optional<SlaveOrder> findSlaveOrder(String contractId, UUID strategyId) {
         String query = "select * " +
             "from invest_tracking.slave_order " +
@@ -49,6 +60,26 @@ public class SlaveOrderDao {
         }
         return Optional.of(result.get(0));
     }
+
+    public Optional<SlaveOrder> findSlaveOrderWithVersionAndAttemps(String contractId, UUID strategyId, Integer version, Byte attemptsCount) {
+        String query = "select * " +
+            "from invest_tracking.slave_order " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "and version = ?  and attempts_count = ?";
+        List<SlaveOrder> result = cqlTemplate.query(query, slaveOrderRowMapper, contractId, strategyId,version, attemptsCount);
+        if (result.size() > 1) {
+            throw new RuntimeException("Too many results");
+        }
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(result.get(0));
+    }
+
+
+
+
 
     public void insertIntoSlaveOrder(String contractId, UUID strategyId, int version, int attemptsCount,
                                      int action, String classCode, UUID idempotencyKey, BigDecimal price,

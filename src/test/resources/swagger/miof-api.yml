@@ -5,7 +5,8 @@ info:
   version: ''
 
 servers:
-  - url: https://www-dev1.tcsbank.ru/api/miof
+#  - url: https://www-dev1.tcsbank.ru/api/miof
+  - url: https://www-qa1.tcsbank.ru/api/miof
     variables: {}
 
 components:

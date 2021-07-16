@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Validated
-@ConfigurationProperties(prefix = "grpc.tracking")
+@ConfigurationProperties(prefix = "grpc.middle")
 public class GrpcServiceConfigurationProperties {
     @NotNull
     private String url;

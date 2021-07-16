@@ -1,4 +1,4 @@
-package stpTrackingConsumer.handleLimitEvent.spy;
+package stpTrackingConsumer.handleLimitEventSpy;
 
 
 import extenstions.RestAssuredExtension;

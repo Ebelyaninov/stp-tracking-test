@@ -196,11 +196,17 @@ message Portfolio {
     // Позиция в портфеле
     BaseMoneyPosition base_money_position = 5;
 
+  // Признак формирования команды в результате отложенных изменений
+  bool delayed_correction = 6;
+
+
+
+    // TODO: load_date?
     // TODO: load_date?
 
-    // Действие над портфелем, приведшее к изменению его состава
-    // Набор значений задаётся master-системой middle
-    // TODO: draft
+  // Действие над портфелем, приведшее к изменению его состава
+  // Набор значений задаётся master-системой middle
+  // TODO: draft
     enum Action {
         UNKNOWN = 0;
         MARGIN_FEE = 1; // Взимание комиссии за непокрытую позицию
@@ -234,11 +240,23 @@ message Portfolio {
         MORNING_UPDATE = 29; // Событие со слепком позиций после выгрузки утренних лимитов
         OTC_CONFIRM = 30; // Подтверждение исполнения внебиржевой заявки
         CURRENCY_SWAP_SELL = 31; // Валютный своп (продажа валюты)
+        FUTURES_BUY_TRADE = 32; // Совершение сделки по покупке фьючерсов
+        FUTURES_SELL_TRADE = 33; // Совершение сделки по продаже фьючерсов
+        FUTURES_CLEARING = 34; // Фиксация вар. маржи по промежуточному или основному клирингу
+        OTC_EXECUTION_SELL_TRADE = 35; // Совершение внебиржевой сделки продажи через OTC-Execution
+        OTC_EXECUTION_BUY_TRADE = 36; // Совершение внебиржевой сделки покупки через OTC-Execution
+        OTC_EXECUTION_FEE = 37; // Удержание комиссии за сделку выставленную через OTC-Execution
+        // Корректировка отложенных изменений позиций
+        DELAYED_CORRECTION = 38;
+        // Изменения состояния отслеживания договора в автоследовании
+        TRACKING_STATE_UPDATE = 39;
+
     }
 
+
     message ActionValue {
-        Action action = 1;
-    }
+    Action action = 1;
+  }
 
     // Позиция в портфеле
     message Position {
@@ -256,13 +274,17 @@ message Portfolio {
         ActionValue action = 4;
     }
 
-    // Позиция базовой валюты портфеля
+  // Позиция базовой валюты портфеля
     message BaseMoneyPosition {
 
         // Актуальное кол-во единиц актива (не лоты)
         Decimal quantity = 1;
+
+        // Действие над позицией
+        ActionValue action = 2;
     }
 }
+
 
 // Торговый сигнал
 message Signal {

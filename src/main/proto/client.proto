@@ -1,0 +1,63 @@
+syntax = "proto3";
+package ru.tinkoff.invest.miof;
+
+import "common.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+message GetClientPositionsReq {
+  oneof id {
+    string client_code = 1;
+    string agreement_id = 2;
+  }
+}
+
+message GetClientPositionsResp {
+  oneof result {
+    ClientPositions client_positions = 1;
+    ErrorResponse error = 2;
+  }
+}
+
+message ClientPositions {
+  google.protobuf.Int32Value version = 1;
+  repeated MoneyPosition money = 2;
+  repeated SecurityPosition securities = 3;
+  repeated FuturesPosition futures = 4;
+  bool limits_loading_in_progress = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message MoneyPosition {
+  Decimal balance = 1;
+  Decimal blocked = 2;
+  Kind kind = 3;
+  string currency = 4;
+  string account_id = 5;
+}
+
+message SecurityPosition {
+  Decimal balance = 1;
+  Decimal blocked = 2;
+  Kind kind = 3;
+  string ticker = 4;
+  string account_id = 5;
+}
+
+message FuturesPosition {
+  Decimal balance = 1;
+  Decimal blocked = 2;
+  string ticker = 4;
+  string account_id = 5;
+}
+
+enum Kind {
+  T0 = 0;
+  T1 = 1;
+  T2 = 2;
+  T365 = 3;
+}
+
+service ClientService {
+  rpc GetClientPositions (GetClientPositionsReq) returns (GetClientPositionsResp);
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.miof;
+option java_package = "ru.tinkoff.invest.miof";
+
+message ErrorResponse {
+  string code = 1;
+  string message = 2;
+}
+
+message Decimal {
+  int64 unscaled = 1;
+  int32 scale = 2;
+}
+
+enum SideProto {
+  SIDE_UNKNOWN = 0;
+  BUY = 1;
+  SELL = 2;
+}
+
+enum OrderTypeProto {
+  TYPE_UNKNOWN = 0;
+  LIMIT = 1;
+  MARKET = 2;
+}

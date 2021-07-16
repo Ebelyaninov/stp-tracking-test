@@ -48,6 +48,8 @@ public class SlavePortfolio {
         private BigDecimal quantityDiff;
         @Field(name = "changed_at")
         private Date changedAt;
+        @Field(name = "last_change_action")
+        private Byte lastChangeAction;
     }
 
     @UDT(name = "slave_portfolio_base_money_position")
@@ -59,8 +61,10 @@ public class SlavePortfolio {
     public static class BaseMoneyPosition {
         @Field(name = "quantity")
         private BigDecimal quantity;
-
         @Field(name = "changed_at")
         private Date changedAt;
+        @Field(name = "last_change_action")
+        private Byte lastChangeAction;
+
     }
 }
