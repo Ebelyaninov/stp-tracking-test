@@ -12,6 +12,8 @@ import ru.tinkoff.invest.sdet.kafka.prototype.sender.BoostedSenderImpl;
 
 import java.util.Properties;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+
 @Configuration
 @ComponentScan("ru.qa.tinkoff.kafka.services")
 @Import({JacksonAutoConfiguration.class})
@@ -26,6 +28,7 @@ public class KafkaAutoConfiguration {
         props.put("group.id", "social_game_autotests");
         props.put("enable.auto.commit", "false");
         props.put("acks", "all");
+        props.put(AUTO_OFFSET_RESET_CONFIG, "latest");
         return props;
     }
 
