@@ -606,7 +606,7 @@ public class HandleActualizeCommandTest {
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -698,7 +698,7 @@ public class HandleActualizeCommandTest {
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         BigDecimal lot = new BigDecimal("1");
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
@@ -834,7 +834,7 @@ public class HandleActualizeCommandTest {
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -1073,7 +1073,7 @@ public class HandleActualizeCommandTest {
     void C1071599() {
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
@@ -1152,7 +1152,7 @@ public class HandleActualizeCommandTest {
     void C1071663() {
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
@@ -1235,7 +1235,7 @@ public class HandleActualizeCommandTest {
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         BigDecimal lot = new BigDecimal("1");
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");

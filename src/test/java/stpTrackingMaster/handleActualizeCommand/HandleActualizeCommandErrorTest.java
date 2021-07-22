@@ -110,7 +110,8 @@ public class HandleActualizeCommandErrorTest {
     String contractIdMaster;
     int version;
     String ticker = "XS0587031096";
-    String tradingClearingAccount = "L01+00000SPB";
+//    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "NDS000000001";
 
     UUID strategyId;
     String contractIdSlave;
@@ -528,7 +529,7 @@ public class HandleActualizeCommandErrorTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;

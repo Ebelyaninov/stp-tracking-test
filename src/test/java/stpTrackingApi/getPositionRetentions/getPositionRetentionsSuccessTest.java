@@ -59,9 +59,7 @@ public class getPositionRetentionsSuccessTest {
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetPositionRetentionsResponse.class));
-
         GetPositionRetentionsResponse expectedResponse = createExpectedGetPositionRetentionsResponse();
-
         step("Проверка полученного ответа с ожидаемымы ответом", () -> {
             assertThat("Полученный Response совпадает с ожидаемым", actualResponse, is(equalTo(expectedResponse)));
         });
@@ -70,28 +68,22 @@ public class getPositionRetentionsSuccessTest {
     GetPositionRetentionsResponse createExpectedGetPositionRetentionsResponse() {
         GetPositionRetentionsResponse expectedResponse = new GetPositionRetentionsResponse();
         List<PositionRetention> expectedItems = new ArrayList<>();
-
         PositionRetention entity1 = new PositionRetention();
         entity1.setPositionRetentionId("days");
         entity1.setTitle("до дня");
-
         PositionRetention entity2 = new PositionRetention();
         entity2.setPositionRetentionId("weeks");
         entity2.setTitle("до недели");
-
         PositionRetention entity3 = new PositionRetention();
         entity3.setPositionRetentionId("months");
         entity3.setTitle("до месяца");
-
         PositionRetention entity4 = new PositionRetention();
         entity4.setPositionRetentionId("forever");
         entity4.setTitle("больше месяца");
-
         expectedItems.add(entity1);
         expectedItems.add(entity2);
         expectedItems.add(entity3);
         expectedItems.add(entity4);
-
         expectedResponse.setItems(expectedItems);
         return expectedResponse;
     }

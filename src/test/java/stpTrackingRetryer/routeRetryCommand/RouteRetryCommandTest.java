@@ -118,7 +118,7 @@ public class RouteRetryCommandTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "NDS000000001";
     String classCode = "SPBXM";
 
 
@@ -251,10 +251,10 @@ public class RouteRetryCommandTest {
 
     private static Stream<Arguments> provideStringsForAllExchange() {
         return Stream.of(
-            Arguments.of("SPB", "ABBV", "L01+00000SPB", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
-            Arguments.of("MOEX_PLUS", "FXRB", "L01+00002F00", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
-            Arguments.of("MOEX", "YNDX", "L01+00000F00", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
-            Arguments.of("SPB_MORNING", "INTC", "L01+00000SPB", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
+            Arguments.of("SPB", "ABBV", "NDS000000001", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
+            Arguments.of("MOEX_PLUS", "FXRB", "NDS000000001", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
+            Arguments.of("MOEX", "YNDX", "NDS000000001", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
+            Arguments.of("SPB_MORNING", "INTC", "NDS000000001", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
             Arguments.of("FX", "USD000UTSTOM", "MB0253214128", TRACKING_FX_RETRYER_COMMAND, "74.2575")
         );
     }

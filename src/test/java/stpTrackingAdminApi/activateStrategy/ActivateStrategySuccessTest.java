@@ -80,6 +80,7 @@ public class ActivateStrategySuccessTest {
     Contract contract;
     Strategy strategy;
     String SIEBEL_ID = "5-55RUONV5";
+    String xApiKey = "x-api-key";
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -144,7 +145,7 @@ public class ActivateStrategySuccessTest {
         steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -196,7 +197,7 @@ public class ActivateStrategySuccessTest {
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -242,7 +243,7 @@ public class ActivateStrategySuccessTest {
         steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -266,7 +267,7 @@ public class ActivateStrategySuccessTest {
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
         strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

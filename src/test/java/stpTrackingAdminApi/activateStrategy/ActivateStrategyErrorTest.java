@@ -65,6 +65,7 @@ public class ActivateStrategyErrorTest {
 
 
     static final String SIEBEL_ID = "5-55RUONV5";
+    String xApiKey = "x-api-key";
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -124,7 +125,7 @@ public class ActivateStrategyErrorTest {
             StrategyStatus.draft, 0, null, score);
         //Вызываем ActiveStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -142,7 +143,7 @@ public class ActivateStrategyErrorTest {
     void C457269() {
         //Вызываем метод activateStrategy с некоррентным значением strategyId (не формат UUID)
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath("1111234")
@@ -179,7 +180,7 @@ public class ActivateStrategyErrorTest {
             StrategyStatus.draft, 0, null, score);
         //Вызываем метод activateStrategy с некоррентным значением api-key
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "trackinnng"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trackinnng"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId)
@@ -228,7 +229,7 @@ public class ActivateStrategyErrorTest {
     void C457272() {
         //Вызываем метод activateStrategy с несуществующим значением strategyId
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath("85d42f98-cd5e-4bb6-82be-d46e722b8888")
@@ -271,39 +272,4 @@ public class ActivateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
     }
-
-
-//    //*** Методы для работы тестов ***
-//    //Метод создает клиента, договор и стратегию в БД автоследования: tracking.client / tracking.contract / tracking.strategy
-//    void createClientWithContractAndStrategy(UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
-//                                             UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-//                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-//                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
-//
-//        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
-//
-//        //Создаем запись в таблице tracking.contract
-//        contract = new Contract()
-//            .setId(contractId)
-//            .setClientId(client.getId())
-//            .setRole(contractRole)
-//            .setState(contractState)
-//            .setStrategyId(null)
-//            .setBlocked(false);
-//        contract = contractService.saveContract(contract);
-//
-//        //Создаем запись в таблице tracking.strategy
-//        strategy = new Strategy()
-//            .setId(strategyId)
-//            .setContract(contract)
-//            .setTitle(title)
-//            .setBaseCurrency(strategyCurrency)
-//            .setRiskProfile(strategyRiskProfile)
-//            .setDescription(description)
-//            .setStatus(strategyStatus)
-//            .setSlavesCount(slaveCount)
-//            .setActivationTime(date)
-//            .setScore(score);
-//        strategy = trackingService.saveStrategy(strategy);
-//    }
 }

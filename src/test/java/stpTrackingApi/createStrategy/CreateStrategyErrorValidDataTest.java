@@ -4,6 +4,9 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +27,9 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyFeeRate;
+import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -85,6 +90,7 @@ public class CreateStrategyErrorValidDataTest {
         });
     }
 
+    @SneakyThrows
     @Test
     @AllureId("435867")
     @DisplayName("C435867.CreateStrategy.Валидация запроса: title > 50 символов")
@@ -104,28 +110,22 @@ public class CreateStrategyErrorValidDataTest {
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("4000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId("days");
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, "days", feeRate);
         //Вызываем метод CreateStrategy
-        Response expectedResponse = strategyApi.createStrategy()
+        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
+            .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .xPlatformHeader("ios 8.1")
             .body(request)
-            .respSpec(spec -> spec.expectStatusCode(500))
-            .execute(response -> response);
-        //Проверяем мета-данные response, x-trace-id  x-server-time не пустые значения
-        assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
-        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
+            .respSpec(spec -> spec.expectStatusCode(500));
+        createStrategy.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createStrategy.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = сontractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));
@@ -136,7 +136,7 @@ public class CreateStrategyErrorValidDataTest {
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("435886")
     @DisplayName("C435886.CreateStrategy.Создание стратегии со значением description > 500 символов")
@@ -163,15 +163,8 @@ public class CreateStrategyErrorValidDataTest {
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("6000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId("days");
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -213,5 +206,22 @@ public class CreateStrategyErrorValidDataTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         return resBrokerAccount;
+    }
+
+
+    CreateStrategyRequest createStrategyRequest (Currency currency, String contractId, String description,
+                                                 StrategyRiskProfile strategyRiskProfile, String title,
+                                                 BigDecimal basemoney, String  positionRetentionId,
+                                                 StrategyFeeRate feeRate) {
+        CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
+        createStrategyRequest.setBaseCurrency(currency);
+        createStrategyRequest.setContractId(contractId);
+        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setRiskProfile(strategyRiskProfile);
+        createStrategyRequest.setTitle(title);
+        createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
+        createStrategyRequest.setPositionRetentionId(positionRetentionId);
+        createStrategyRequest.setFeeRate(feeRate);
+        return createStrategyRequest;
     }
 }

@@ -92,15 +92,15 @@ public class DeleteSubscriptionTest {
     StpTrackingApiSteps steps;
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    Client clientMaster;
-    Contract contractMaster;
+//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+//    Client clientMaster;
+//    Contract contractMaster;
     Strategy strategyMaster;
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-    Profile profile;
+//    Profile profile;
     String siebelIdMaster = "1-1P4N1RM";
     String siebelIdSlave = "5-7ECGV169";
 
@@ -150,20 +150,11 @@ public class DeleteSubscriptionTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -238,7 +229,7 @@ public class DeleteSubscriptionTest {
 
     @Test
     @AllureId("1051655")
-    @DisplayName("C1051655.DeleteSubscription. Отправка команд при удалении подписки через deleteSubscription" +
+    @DisplayName("C1051655.DeleteSubscription.Отправка команд при удалении подписки через deleteSubscription" +
         " на списание каждого из типа комиссии (management и result)")
     @Subfeature("Успешные сценарии")
     @Description("Метод создания подписки на торговую стратегию ведомым.")
@@ -248,20 +239,11 @@ public class DeleteSubscriptionTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -294,6 +276,7 @@ public class DeleteSubscriptionTest {
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафка tracking.fee.calculate.command все offset
         steps.resetOffsetToLate(TRACKING_FEE_COMMAND);
+        Thread.sleep(3000);
         LocalDateTime time = LocalDateTime.now().withNano(0);
         subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
@@ -304,7 +287,7 @@ public class DeleteSubscriptionTest {
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
-        List<Pair<String, byte[]>> commands = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> commands = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(30));
         Tracking.ActivateFeeCommand commandeMan = null;
         Tracking.ActivateFeeCommand commandeRes = null;
         String keyMan ="";

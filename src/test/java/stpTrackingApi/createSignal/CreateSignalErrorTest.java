@@ -1,6 +1,6 @@
 package stpTrackingApi.createSignal;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -38,8 +38,9 @@ import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
-import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
@@ -47,9 +48,6 @@ import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
@@ -98,33 +96,36 @@ public class CreateSignalErrorTest {
     StrategyService strategyService;
     @Autowired
     ExchangePositionService exchangePositionService;
+    @Autowired
+    StpTrackingApiSteps steps;
 
-    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
+    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     SignalApi signalApi = ApiClient.api(ApiClient.Config.apiConfig()).signal();
-    Client client;
-    Contract contract;
-    Strategy strategy;
+
     String contractId;
     UUID strategyId;
-    String ticker = "XS0587031096";
-    String tradingClearingAccount = "L01+00000SPB";
-    String SIEBEL_ID = "1-3W70RM8";
 
+//    String tradingClearingAccount = "L01+00000SPB";
+    String ticker = "XS0587031096";
+    String tradingClearingAccount = "NDS000000001";
+
+    String SIEBEL_ID = "1-3W70RM8";
+    String contractIdMaster = "2041774643";
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                strategyService.deleteStrategy(strategy);
+                strategyService.deleteStrategy(steps.strategyMaster);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contract);
+                contractService.deleteContract(steps.contractMaster);
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(client);
+                clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
             try {
@@ -147,22 +148,16 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForHeadersCreateSignal")
     @AllureId("653780")
     @DisplayName("C653780.CreateSignal.Валидация запроса: x-app-name, x-app-version, x-platform")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C653780(String appName, String appVersion, String appPlatform) {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-//       //формируем тело запроса метода CreateSignal
-        var request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId,
+            ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xDeviceIdHeader("new")
@@ -186,26 +181,20 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("655896")
     @DisplayName("C655896.CreateSignal.Валидация запроса: не передан заголовок x-tcs-siebel-id")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C655896() {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        var request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId,
+            ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -214,7 +203,13 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(401));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
     }
+
 
 
     private static Stream<Arguments> provideStringsForBodyCreateSignal() {
@@ -235,7 +230,7 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForBodyCreateSignal")
     @AllureId("656034")
     @DisplayName("C656034.CreateSignal.Валидация запроса: contractId, strategyId, version, ticker, tradingClearingAccount, action, quantity, price")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656034(CreateSignalRequest.ActionEnum action, String contractIdTest, BigDecimal price, Integer quantityRequest,
                  UUID strategyIdTest, String ticker, String tradingClearingAccount, Integer version) {
@@ -259,6 +254,12 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+
     }
 
 
@@ -273,7 +274,7 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForSiebelIdCreateSignal")
     @AllureId("655947")
     @DisplayName("C655947.CreateSignal.Валидация запроса: заголовок x-tcs-siebel-id, количество символов > 12 и < 1")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C655947(String siebelId) {
         BigDecimal price = new BigDecimal("10.0");
@@ -284,15 +285,8 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -303,6 +297,11 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -317,7 +316,7 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForContractIdCreateSignal")
     @AllureId("656238")
     @DisplayName("C656238.CreateSignal.Валидация запроса: параметр contractId, количество символов > 10 и < 1")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656238(String contract) {
         BigDecimal price = new BigDecimal("10.0");
@@ -325,15 +324,8 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contract);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contract,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -344,7 +336,14 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
+
 
     private static Stream<Arguments> provideStringsForTickerCreateSignal() {
         return Stream.of(
@@ -357,26 +356,17 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForTickerCreateSignal")
     @AllureId("656466")
     @DisplayName("C656466.CreateSignal.Валидация запроса: параметр ticker, количество символов > 12 и < 1")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656466(String ticker) {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -387,6 +377,11 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
     private static Stream<Arguments> provideStringsForTradingClearingAccountCreateSignal() {
@@ -400,26 +395,16 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForTradingClearingAccountCreateSignal")
     @AllureId("656470")
     @DisplayName("C656470.CreateSignal.Валидация запроса: параметр tradingClearingAccount, количество символов > 12 и < 1")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656470(String tradingClearingAccount) {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -430,9 +415,16 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
-    BigDecimal price = new BigDecimal("10.0");
+
+
+
     private static Stream<Arguments> provideStringsForPriceCreateSignal() {
         return Stream.of(
             Arguments.of(new BigDecimal("0.0")),
@@ -444,25 +436,15 @@ public class CreateSignalErrorTest {
     @MethodSource("provideStringsForPriceCreateSignal")
     @AllureId("656271")
     @DisplayName("C656271.CreateSignal.Валидация запроса: значение параметра price 0, отрицательное значение")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656271(BigDecimal price) {
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -473,32 +455,27 @@ public class CreateSignalErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(400));
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
     @SneakyThrows
     @Test
     @AllureId("656481")
     @DisplayName("C656481.CreateSignal.Не удалось получить clientId из кэше clientIdCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656481() {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -512,35 +489,26 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки ClientId not found не равно", errorCode, is("0350-06-B13"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
     @SneakyThrows
     @Test
     @AllureId("656494")
     @DisplayName("C656494.CreateSignal.ClientId, найденный в clientIdCache, <> contract.client_id")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656494() {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         String contractOther = contractService.findOneContract().get().getId();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractOther);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractOther,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -554,7 +522,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect clientId не равно", errorCode, is("0350-06-B14"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -562,7 +530,7 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("656513")
     @DisplayName("C656513.CreateSignal.Не существующее значение contractId")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656513() {
         BigDecimal price = new BigDecimal("10.0");
@@ -570,15 +538,8 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId("1000356465");
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, "1000356465",
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -592,7 +553,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Contract not found не равно", errorCode, is("0350-06-B08"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -600,26 +561,16 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("656553")
     @DisplayName("C656553.CreateSignal.Стратегия strategyId не соответствует договору")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656553() {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         UUID strategyOther = strategyService.findOneContract().get().getId();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyOther);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyOther, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -633,7 +584,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect strategy contract не равно", errorCode, is("0350-06-B17"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -642,26 +593,16 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("656557")
     @DisplayName("C656557.CreateSignal.Стратегия strategyId не существует")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656557() {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -675,7 +616,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Strategy not found не равно", errorCode, is("0350-06-B06"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -683,31 +624,26 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("657123")
     @DisplayName("C657123.CreateSignal.Не найдена запись в таблице master_potfolio")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657123() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 1;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -719,8 +655,10 @@ public class CreateSignalErrorTest {
             .respSpec(spec -> spec.expectStatusCode(422));
         createSignal.execute(ResponseBodyData::asString);
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        assertThat("код ошибки Master portfolio not found не равно", jsonObject.getString("errorCode"), is("0350-06-B22"));
-        assertThat("Сообщение об ошибке не равно", jsonObject.getString("errorMessage"), is("Сервис временно недоступен"));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -728,33 +666,31 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("657138")
     @DisplayName("C657138.CreateSignal.Version из запроса != master_portfolio.version найденного портфеля")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657138() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 5;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, 3, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 3, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -768,8 +704,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect master portfolio version не равно",errorCode, is("0350-06-B23"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Виртуальный портфель устарел"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -777,33 +713,31 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("657144")
     @DisplayName("C657144.CreateSignal.Позиция не найдена в кэше trackingExchangePositionCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657144() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 5;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker("GMKN1022");
-        request.setTradingClearingAccount("L01+00000SPB");
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, "GMKN1022", "NDS000000001", version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -817,7 +751,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Tracking exchange position not found не равно",errorCode, is("0350-06-B15"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -825,37 +759,33 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("657162")
     @DisplayName("C657162.CreateSignal.Pасписание не найдено в кэше exchangeTradingScheduleCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657162() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 5;
         String ticker = "TEST";
         String tradingClearingAccount = "TEST";
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.FX, true, 1000);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -869,45 +799,42 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Trading schedule not found version не равно",errorCode, is("0350-06-B18"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Торговая площадка не работает"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
     @SneakyThrows
     @Test
     @AllureId("657198")
     @DisplayName("C657198.CreateSignal.Позиция не найдена в кэше exchangePositionCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657198() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 5;
         String ticker = "MTS_TEST";
         String tradingClearingAccount = "L01+00000SPB";
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -921,7 +848,7 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Exchange position not found не равно",errorCode, is("0350-06-B20"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -929,37 +856,35 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("656524")
     @DisplayName("C656524.CreateSignal.Биржа не работает")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656524() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
         int version = 5;
         String ticker = "XS0743596040";
-        String tradingClearingAccount = "L01+00000F00";
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        String tradingClearingAccount = "NDS000000001";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -973,18 +898,21 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Trading schedule doesn't work now не равно",errorCode, is("0350-06-B19"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
 
     @SneakyThrows
     @Test
     @AllureId("657204")
     @DisplayName("C657204.CreateSignal.Quantity из запроса / значение lot из exchangePositionCache != целое число")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657204() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
@@ -997,29 +925,25 @@ public class CreateSignalErrorTest {
         String key = "BBG000BMX289";
         //отправляем событие в топик kafka social.event
         stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1033,43 +957,41 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Not integer number of lots to change не равно",errorCode, is("0350-06-B21"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Необходимо указать целое число лотов"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
     @SneakyThrows
     @Test
     @AllureId("657314")
     @DisplayName("C657314.CreateSignal.Полученное значение quantity денежной позиции < 0, action = 'buy'")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657314() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("1000.0");
         int quantityRequest = 6;
         int version = 2;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.BUY);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1083,43 +1005,42 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Not enough money in portfolio to increase не равно",errorCode, is("0350-06-B24"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно денег в портфеле для увеличения позиции"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
     @SneakyThrows
     @Test
     @AllureId("657490")
     @DisplayName("C657490.CreateSignal.Позиция не найдена в master_portfolio.position, action = 'sell'")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657490() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 6;
         int version = 2;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio("CL", "L01+00000SPB", version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1133,43 +1054,42 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Not enough asset in the portfolio to decrease the position не равно",errorCode, is("0350-06-B25"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно актива в портфеле для уменьшения позиции"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
     @SneakyThrows
     @Test
     @AllureId("657523")
     @DisplayName("C657523.CreateSignal.Quantity позиции из запроса > master_portfolio_position.quantity, action = 'sell'")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657523() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 30;
         int version = 2;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1183,8 +1103,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Not enough asset in the portfolio to decrease the position не равно",errorCode, is("0350-06-B25"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно актива в портфеле для уменьшения позиции"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -1192,37 +1112,35 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("657577")
     @DisplayName("C657577.CreateSignal.Позиция не доступна для автоследования, tracking_allowed = false")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657577() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 30;
         int version = 2;
         String ticker = "MTS0620";
-        String tradingClearingAccount = "L01+00000SPB";
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        String tradingClearingAccount = "NDS000000001";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, false, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.BUY);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1236,8 +1154,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Position is not available for tracking не равно",errorCode, is("0350-06-B26"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -1245,35 +1163,33 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("658177")
     @DisplayName("C658177.CreateSignalНе совпадает валюта стратегии и позиции, значение currency из кэша != strategy.base_currency")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658177() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 30;
         int version = 2;
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, false, 1000);
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.BUY);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1287,8 +1203,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect currency не равно",errorCode, is("0350-06-B28"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -1296,9 +1212,11 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("658142")
     @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658142() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
@@ -1311,29 +1229,25 @@ public class CreateSignalErrorTest {
         String key = "BBG000BMX289";
         //отправляем событие в топик kafka social.event
         stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1347,8 +1261,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect position for strategy не равно",errorCode, is("0350-06-B27"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -1356,9 +1270,11 @@ public class CreateSignalErrorTest {
     @Test
     @AllureId("658142")
     @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658142_1() {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
@@ -1371,29 +1287,25 @@ public class CreateSignalErrorTest {
         String key = "BBG000BMX289";
         //отправляем событие в топик kafka social.event
         stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1407,8 +1319,8 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect position for strategy не равно",errorCode, is("0350-06-B27"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -1427,9 +1339,11 @@ public class CreateSignalErrorTest {
     @MethodSource("provideRiskLevelError")
     @AllureId("658178")
     @DisplayName("C658178.CreateSignal.Риск-профиль позиции превышает риск-профиль стратегии")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658178(String riskInst, StrategyRiskProfile strategyRiskProfile) {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
@@ -1442,28 +1356,25 @@ public class CreateSignalErrorTest {
         String key = "BBG001B17MV2";
         //отправляем событие в топик kafka social.event
         stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-        UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
-        contractId = findValidAccountWithSiebleId.get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
-            strategyId, StrategyCurrency.usd, strategyRiskProfile, StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        createMasterPortfolio(ticker, tradingClearingAccount, version, "12.0", "3556.78");
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, strategyRiskProfile,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "12");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = new CreateSignalRequest();
-        request.setAction(CreateSignalRequest.ActionEnum.SELL);
-        request.setContractId(contractId);
-        request.setPrice(price);
-        request.setQuantity(quantityRequest);
-        request.setStrategyId(strategyId);
-        request.setTicker(ticker);
-        request.setTradingClearingAccount(tradingClearingAccount);
-        request.setVersion(version);
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1477,40 +1388,12 @@ public class CreateSignalErrorTest {
         JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки Incorrect position for strategy не равно",errorCode, is("0350-06-B29"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
 
     //*** Методы для работы тестов ***
-
-    //метод находит подходящий siebel в сервисе счетов и создаем запись по нему в табл. tracking.client
-    UUID createClientWithStrategy(UUID investId, ClientStatusType clientStatusType, String money,
-                                  ru.qa.tinkoff.swagger.tracking.model.Currency currency,
-                                  ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile riskProfile) {
-        client = clientService.createClient(investId, clientStatusType, null);
-        //формируем тело запроса метода createStrategy
-        ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(currency);
-        request.setDescription("test strategy by autotest");
-        request.setRiskProfile(riskProfile);
-        request.setTitle("test strategy createSignal");
-        request.setBaseMoneyPositionQuantity(new BigDecimal(money));
-        // вызываем метод CreateStrategy
-        ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse expectedResponse = strategyApi.createStrategy()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse.class));
-        //достаем из response идентификатор стратегии
-        UUID strategyId = UUID.fromString(expectedResponse.getStrategy().getId().toString());
-        return strategyId;
-    }
-
 
     //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
@@ -1534,7 +1417,7 @@ public class CreateSignalErrorTest {
             createExPosition.setTradingClearingAccount(tradingClearingAccount);
             //вызываем метод createExchangePosition
             exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("android")
@@ -1546,57 +1429,20 @@ public class CreateSignalErrorTest {
         }
     }
 
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole,
-                                             ContractState contractState, UUID strategyId, StrategyCurrency strategyCurrency,
-                                             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) throws JsonProcessingException {
 
-        //создаем запись о клиенте в tracking.client
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
-        // создаем запись о договоре клиента в tracking.contract
-        contract = new Contract()
-            .setId(contractId)
-            .setClientId(client.getId())
-            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-
-        contract = contractService.saveContract(contract);
-        //создаем запись о стратегии клиента
-        strategy = new Strategy()
-            .setId(strategyId)
-            .setContract(contract)
-            .setTitle("test strategy by autotest")
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription("test strategy createSignal")
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setScore(1);
-        strategy = strategyService.saveStrategy(strategy);
-    }
-
-    void createMasterPortfolio(String ticker, String tradingClearingAccount, int version, String quantityPos, String money) {
-        //создаем портфель master в cassandra
-        //c позицией по бумаге
-        List<MasterPortfolio.Position> positionList = new ArrayList<>();
-        positionList.add(MasterPortfolio.Position.builder()
-            .ticker(ticker)
-            .tradingClearingAccount(tradingClearingAccount)
-            .quantity(new BigDecimal(quantityPos))
-            .build());
-        //с базовой валютой
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
-            .quantity(new BigDecimal(money))
-            .changedAt(date)
-            .build();
-        //insert запись в cassandra
-        masterPortfolioDao.insertIntoMasterPortfolio(contractId, strategyId, version, baseMoneyPosition, positionList);
+    public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, String contractId, BigDecimal price,
+                                                   int quantityRequest, UUID strategyId, String ticker,
+                                                   String tradingClearingAccount, int version) {
+        CreateSignalRequest request = new CreateSignalRequest();
+        request.setAction(actionEnum);
+        request.setContractId(contractId);
+        request.setPrice(price);
+        request.setQuantity(quantityRequest);
+        request.setStrategyId(strategyId);
+        request.setTicker(ticker);
+        request.setTradingClearingAccount(tradingClearingAccount);
+        request.setVersion(version);
+        return request;
     }
 
 }

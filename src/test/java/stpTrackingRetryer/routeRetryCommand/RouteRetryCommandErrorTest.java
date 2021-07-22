@@ -129,7 +129,7 @@ public class RouteRetryCommandErrorTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "NDS000000001";
     String classCode = "SPBXM";
 
     @AfterEach

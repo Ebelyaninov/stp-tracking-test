@@ -94,7 +94,7 @@ public class GetStrategiesTest {
     Contract contract;
     Strategy strategy;
     String SIEBEL_ID = "5-JDFC5N71";
-
+    String xApiKey = "x-api-key";
 
     @AfterEach
     void deleteClient() {
@@ -134,7 +134,7 @@ public class GetStrategiesTest {
     void C1041091(Integer limit) {
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .limitQuery(limit)
             .xTcsLoginHeader("tracking_admin")
@@ -179,7 +179,7 @@ public class GetStrategiesTest {
         String nickName = client.getSocialProfile() == null ? null : client.getSocialProfile().getNickname();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .limitQuery(1)
             .cursorQuery(position)
@@ -230,7 +230,7 @@ public class GetStrategiesTest {
         Integer position = strategys.get(size - 1).getPosition();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(position)
             .xTcsLoginHeader("tracking_admin")
@@ -270,7 +270,7 @@ public class GetStrategiesTest {
         int size = strategys.size();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(strategys.get(size - 2).getPosition())
             .limitQuery(1)
@@ -281,7 +281,7 @@ public class GetStrategiesTest {
         assertThat("hasNext не равно", responseExep.getHasNext(), is(false));
         //вызываем метод getStrategys
         GetStrategiesResponse responseEx = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(strategys.get(size - 3).getPosition())
             .limitQuery(1)
@@ -357,7 +357,7 @@ public class GetStrategiesTest {
     void C1041093(String name, String login) {
         //вызываем метод confirmMasterClient
         StrategyApi.GetStrategiesOper getStrategies = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
             getStrategies = getStrategies.xAppNameHeader(name);
@@ -390,7 +390,7 @@ public class GetStrategiesTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1041134() {
         strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader("api-key", "trading"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(401))

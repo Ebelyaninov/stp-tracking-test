@@ -25,12 +25,10 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -107,17 +105,12 @@ public class CreateStrategySuccessTest {
     @Autowired
     StpTrackingApiSteps steps;
 
-
     Client client;
     Contract contract;
     Strategy strategy;
-
-    Profile profile;
-
     MasterPortfolio masterPortfolio;
     MasterPortfolioPositionRetention masterPortfolioPositionRetention;
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
 
     @BeforeAll
     void conf() {
@@ -170,23 +163,16 @@ public class CreateStrategySuccessTest {
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
         feeRate.setResult(0.2);
-        //Получаем данные по Master клиенту через API сервиса счетов
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("15000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
@@ -226,22 +212,15 @@ public class CreateStrategySuccessTest {
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.03);
         feeRate.setResult(0.1);
-        //Получаем данные по Master клиенту через API сервиса счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         createClientWithContract(investId, ClientStatusType.registered, null, contractId, null, ContractState.untracked, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("10000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -291,23 +270,16 @@ public class CreateStrategySuccessTest {
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.05);
         feeRate.setResult(0.5);
-        //Получаем данные по Master-клиенту через API сервиса счетов
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("5000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId("days");
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         strategyId = expectedResponse.getStrategy().getId();
@@ -353,9 +325,9 @@ public class CreateStrategySuccessTest {
         feeRate.setManagement(0.04);
         feeRate.setResult(0.2);
         //Получаем данные по Master-клиенту через API сервиса счетов
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -422,23 +394,16 @@ public class CreateStrategySuccessTest {
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
         feeRate.setResult(0.2);
-        //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("7000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         strategyId = expectedResponse.getStrategy().getId();
@@ -482,23 +447,16 @@ public class CreateStrategySuccessTest {
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
         feeRate.setResult(0.2);
-        //Получаем данные по Master-клиенту через API сервиса счетов
-        GetBrokerAccountsResponse masterBrokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = masterBrokerAccount.getInvestId();
-        contractId = masterBrokerAccount.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело для запроса createStrategy
         BigDecimal baseMoney = new BigDecimal("15000.0");
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setTitle(title);
-        request.setDescription(description);
-        request.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
-        request.setPositionRetentionId(retentionForStrategy);
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, retentionForStrategy, feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
@@ -544,24 +502,17 @@ public class CreateStrategySuccessTest {
         feeRate.setManagement(0.04);
         feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = brokerAccount.getInvestId();
-        contractId = brokerAccount.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         BigDecimal baseMoney = new BigDecimal("12000.0");
         //Вычитываем из топика kafka: tracking.master.command все offset
         resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //Формируем тело запроса
-        CreateStrategyRequest request = new CreateStrategyRequest();
-        request.setContractId(contractId);
-        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
-        request.setDescription(description);
-        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
-        request.setTitle(title);
-        request.setBaseMoneyPositionQuantity(baseMoney);
-        request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         CreateStrategyResponse expectedResponse = createStrategy(SIEBEL_ID, request);
         //Достаем из response идентификатор стратегии
@@ -618,18 +569,6 @@ public class CreateStrategySuccessTest {
         contract = contractService.saveContract(contract);
     }
 
-    //Метод для получения инфо о клиенте через API - сервиса счетов
-    @Step("Получение инфо об аккаунте клиента через API сервиса счетов")
-    GetBrokerAccountsResponse getBrokerAccountByAccountPublicApi(String siebelId) {
-        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelId)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery("false")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        return resBrokerAccount;
-    }
 
     @Step("Создание стратегии, вызов метода createStrategy")
     CreateStrategyResponse createStrategy(String siebelId, CreateStrategyRequest request) {
@@ -713,5 +652,21 @@ public class CreateStrategySuccessTest {
         await().atMost(Duration.ofSeconds(30))
             .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
+    }
+
+    CreateStrategyRequest createStrategyRequest(Currency currency, String contractId, String description,
+                                                StrategyRiskProfile strategyRiskProfile, String title,
+                                                BigDecimal basemoney, String positionRetentionId,
+                                                StrategyFeeRate feeRate) {
+        CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
+        createStrategyRequest.setBaseCurrency(currency);
+        createStrategyRequest.setContractId(contractId);
+        createStrategyRequest.setDescription(description);
+        createStrategyRequest.setRiskProfile(strategyRiskProfile);
+        createStrategyRequest.setTitle(title);
+        createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
+        createStrategyRequest.setPositionRetentionId(positionRetentionId);
+        createStrategyRequest.setFeeRate(feeRate);
+        return createStrategyRequest;
     }
 }

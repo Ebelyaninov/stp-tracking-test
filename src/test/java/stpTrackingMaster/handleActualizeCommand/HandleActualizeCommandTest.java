@@ -107,7 +107,8 @@ public class HandleActualizeCommandTest {
     int version;
 
     String ticker = "XS0587031096";
-    String tradingClearingAccount = "L01+00000SPB";
+//    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "NDS000000001";
     UUID strategyId;
     @AfterEach
     void deleteClient() {
@@ -197,7 +198,8 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
+//        String tradingClearingAccountPos = "L01+00000SPB";
         String quantityPos = "1";
         int versionPos = version;
         int versionPortfolio = version;
@@ -285,7 +287,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version;
         int versionPortfolio = version;
@@ -375,7 +377,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -465,7 +467,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -557,7 +559,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -652,7 +654,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -696,18 +698,18 @@ public class HandleActualizeCommandTest {
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneyPortfolio));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is("10"));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(version));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
         assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is("12"));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("10"));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
     }
 
 
@@ -745,7 +747,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "L01+00000SPB";
+        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -777,18 +779,18 @@ public class HandleActualizeCommandTest {
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant(), is(date.toInstant()));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is("10"));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(version));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant(), is(date.toInstant()));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
         assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is("12"));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("10"));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
 
          masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
@@ -914,18 +916,18 @@ public class HandleActualizeCommandTest {
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is(lastChangeAction));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantity));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(version));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
         assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is(lastChangeAction));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is(quantity));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is(lastChangeAction));
     }
 
 
