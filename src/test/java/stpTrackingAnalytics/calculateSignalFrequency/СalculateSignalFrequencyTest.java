@@ -390,25 +390,25 @@ public class СalculateSignalFrequencyTest {
 
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "NDS000000001",
             "4.07", "4", 12);
-        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "NDS000000001",
             "90.18",  "6", 11);
-        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "NDS000000001",
             "3.98", "7", 12);
         createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
             "107.81",  "1", 12);
         createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
             "107.81",  "1", 12);
-        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "NDS000000001",
             "90.18",  "3", 11);
-        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "NDS000000001",
             "190.18",  "1", 12);
-        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "NDS000000001",
             "190.18",  "1", 12);
-        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "NDS000000001",
             "3.17", "4", 12);
-        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "NDS000000001",
             "3.09", "4", 12);
     }
 
@@ -416,9 +416,9 @@ public class СalculateSignalFrequencyTest {
 
 
     void createTestDateToMasterSignalRepeat(UUID strategyId) {
-        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "NDS000000001",
             "4.07", "4", 12);
-        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "NDS000000001",
             "90.18",  "6", 11);
 //        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
 //            "3.98", "7", 12);
@@ -426,15 +426,15 @@ public class СalculateSignalFrequencyTest {
 //            "107.81",  "1", 12);
 //        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
 //            "107.81",  "1", 12);
-        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "NDS000000001",
             "90.18",  "3", 11);
-        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "NDS000000001",
             "190.18",  "1", 12);
-        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "NDS000000001",
             "190.18",  "1", 12);
-        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "NDS000000001",
             "3.17", "4", 12);
-        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "NDS000000001",
             "3.09", "4", 12);
     }
 

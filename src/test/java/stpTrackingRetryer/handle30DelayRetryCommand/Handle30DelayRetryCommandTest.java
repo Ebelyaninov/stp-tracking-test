@@ -112,10 +112,10 @@ public class Handle30DelayRetryCommandTest {
     String contractIdMaster;
     String contractIdSlave = "2013919085";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-F25SJ7BD";
+    String SIEBEL_ID_MASTER = "5-EALGI0JN";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "NDS000000001";
     String classCode = "SPBXM";
 
 

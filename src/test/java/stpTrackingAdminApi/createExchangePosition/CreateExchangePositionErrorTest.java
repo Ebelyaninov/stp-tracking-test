@@ -62,6 +62,11 @@ public class CreateExchangePositionErrorTest {
             Arguments.of("trading-invest", null)
         );
     }
+    String xApiKey = "x-api-key";
+    String ticker = "FXGD";
+    String tradingClearingAccount = "NDS000000001";
+
+
 
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateExchangePosition")
@@ -70,8 +75,8 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520697(String name, String login)  {
-        String ticker = "FXGD";
-        String tradingClearingAccount = "L01+00002F00";
+//        String ticker = "FXGD";
+//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -79,7 +84,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
             //вызываем метод createExchangePosition
             ExchangePositionApi.CreateExchangePositionOper createExchangePosition = exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
                 .body(сreateExchangePositionRequest)
                 .respSpec(spec -> spec.expectStatusCode(400));
             if (name != null) {
@@ -96,12 +101,12 @@ public class CreateExchangePositionErrorTest {
 
     private static Stream<Arguments> provideStringsForBodyCreateExchangePosition() {
         return Stream.of(
-            Arguments.of(null, "L01+00002F00", ExchangePosition.ExchangeEnum.MOEX, true, 1, "additional_liquidity"),
+            Arguments.of(null, "NDS000000001", ExchangePosition.ExchangeEnum.MOEX, true, 1, "additional_liquidity"),
             Arguments.of("FXGD", null, ExchangePosition.ExchangeEnum.MOEX, true, 1, "additional_liquidity"),
-            Arguments.of("FXGD", "L01+00002F00", null, true, 1, "additional_liquidity"),
-            Arguments.of("FXGD", "L01+00002F00", ExchangePosition.ExchangeEnum.MOEX, null, 1, "additional_liquidity"),
-            Arguments.of("FXGD", "L01+00002F00", ExchangePosition.ExchangeEnum.MOEX, true, null, "additional_liquidity"),
-            Arguments.of("FXGD", "L01+00002F00", ExchangePosition.ExchangeEnum.MOEX, true, 1, null)
+            Arguments.of("FXGD", "NDS000000001", null, true, 1, "additional_liquidity"),
+            Arguments.of("FXGD", "NDS000000001", ExchangePosition.ExchangeEnum.MOEX, null, 1, "additional_liquidity"),
+            Arguments.of("FXGD", "NDS000000001", ExchangePosition.ExchangeEnum.MOEX, true, null, "additional_liquidity"),
+            Arguments.of("FXGD", "NDS000000001", ExchangePosition.ExchangeEnum.MOEX, true, 1, null)
         );
     }
 
@@ -117,7 +122,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, exchangeTest, trackingAllowed);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -138,7 +143,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520851()  {
         String ticker = "";
-        String tradingClearingAccount = "L01+00002F00";
+//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -146,7 +151,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
             //вызываем метод createExchangePosition
             exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("android")
@@ -167,7 +172,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520861()  {
         String ticker = "FXGDFXGDFXGDF";
-        String tradingClearingAccount = "L01+00002F00";
+//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -175,7 +180,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
        //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -195,7 +200,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520878()  {
-        String ticker = "FXGD";
+//        String ticker = "FXGD";
         String tradingClearingAccount = "";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -204,7 +209,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -224,7 +229,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520885()  {
-        String ticker = "FXGD";
+//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -233,7 +238,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -253,7 +258,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521188()  {
-        String ticker = "FXGD";
+//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -262,7 +267,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 0);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -282,7 +287,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521208() throws Exception {
-        String ticker = "FXGD";
+//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "";
@@ -291,7 +296,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -312,7 +317,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521225() {
         String ticker = "EUR_RUB__TOM";
-        String tradingClearingAccount = "MB9885503216";
+        String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
         String otcTicker = "";
@@ -322,7 +327,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -343,7 +348,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521238() {
         String ticker = "EUR_RUB__TOM";
-        String tradingClearingAccount = "MB9885503216";
+        String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
         String otcTicker = "CETSCETSCETSS";
@@ -353,7 +358,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -374,7 +379,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521243() {
         String ticker = "EUR_RUB__TOM";
-        String tradingClearingAccount = "MB9885503216";
+        String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
         String otcTicker = "EUR_RUB";
@@ -384,7 +389,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -405,7 +410,7 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521250() {
         String ticker = "EUR_RUB__TOM";
-        String tradingClearingAccount = "MB9885503216";
+        String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
         String otcTicker = "EUR_RUB";
@@ -415,7 +420,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -435,8 +440,8 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521257()  {
-        String ticker = "FXGD";
-        String tradingClearingAccount = "L01+00002F001";
+//        String ticker = "FXGD";
+//        String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -463,8 +468,8 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521266()  {
-        String ticker = "FXGD";
-        String tradingClearingAccount = "L01+00002F001";
+//        String ticker = "FXGD";
+//        String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -472,7 +477,7 @@ public class CreateExchangePositionErrorTest {
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "trading"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -492,8 +497,8 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521288() throws Exception {
-        String ticker = "FXGD";
-        String tradingClearingAccount = "L01+00002F001";
+//        String ticker = "FXGD";
+//        String tradingClearingAccount = "L01+00002F001";
         //формируем тело запроса
         List<OrderQuantityLimit> orderQuantityLimitList
             = new ArrayList<>();
@@ -514,7 +519,7 @@ public class CreateExchangePositionErrorTest {
         createExPosition.setDailyQuantityLimit(1000);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")

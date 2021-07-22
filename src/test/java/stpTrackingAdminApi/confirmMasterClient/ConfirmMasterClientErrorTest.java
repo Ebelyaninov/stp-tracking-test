@@ -59,7 +59,7 @@ public class ConfirmMasterClientErrorTest {
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     String SIEBEL_ID = "5-22C671TPV";
-
+    String xApiKey = "x-api-key";
     @Autowired
     BillingService billingService;
     @Autowired
@@ -91,7 +91,7 @@ public class ConfirmMasterClientErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .clientIdPath(investId)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -114,7 +114,7 @@ public class ConfirmMasterClientErrorTest {
     void C263126() {
         //вызываем метод confirmMasterClient с невалидным значением clientId (не UUID)
         clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -139,7 +139,7 @@ public class ConfirmMasterClientErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient со значением Login > 20 символов
         clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admintracking_admin1232422353456")
@@ -192,7 +192,7 @@ public class ConfirmMasterClientErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
         clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "trackidngc"))
+            .reqSpec(r->r.addHeader(xApiKey, "trackidngc"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -212,7 +212,7 @@ public class ConfirmMasterClientErrorTest {
         UUID invest_id = UUID.fromString("f45bfa77-3f63-4c1d-a7fb-8ee863333933");
         //вызываем метод confirmMasterClient с несуществующим значением clientId
         clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -232,7 +232,7 @@ public class ConfirmMasterClientErrorTest {
         UUID invest_id = UUID.fromString("f749bb39-df42-4469-94d3-5d503531d1b7");
         //вызываем метод confirmMasterClient
         clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")

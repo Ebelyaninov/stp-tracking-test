@@ -415,7 +415,7 @@ public class HandleActualizeCommandErrorTest {
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -836,7 +836,7 @@ public class HandleActualizeCommandErrorTest {
         String tradingClearingAccount = "L01+00000SPB";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -949,7 +949,7 @@ public class HandleActualizeCommandErrorTest {
         String tradingClearingAccount = "L01+00000SPB";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "L01+00000SPB";
+        String tradingClearingAccount2 = "NDS000000001";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();

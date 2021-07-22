@@ -60,7 +60,7 @@ import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
 public class UpdateExchangePositionTest {
     ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
-
+    String xApiKey = "x-api-key";
 
     @Autowired
     ExchangePositionService exchangePositionService;
@@ -105,7 +105,7 @@ public class UpdateExchangePositionTest {
             otcTickerNew, otcClassCodeNew, limit, period, dailyQuantityLimit, ExchangePosition.ExchangeEnum.SPB);
         //вызываем метод updateExchangePosition
         ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -176,7 +176,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true);
         ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -255,7 +255,7 @@ public class UpdateExchangePositionTest {
             limit, period, ExchangePosition.ExchangeEnum.SPB, dailyQuantityLimit, true);
         //вызываем метод updateExchangePosition
         ExchangePositionApi.UpdateExchangePositionOper updateExchangePosition = exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .body(updateExchangePositionBody)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -306,7 +306,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
             limit, period, exchangeTest, trackingAllowed);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -353,7 +353,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(ticker, tradingClearingAccountOld,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -401,7 +401,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParam(tickerOld, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -442,7 +442,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParamWithDayLimit(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, dailyQuantityLimit, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -483,7 +483,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParamWithDayLimit(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, dailyQuantityLimit, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -535,7 +535,7 @@ public class UpdateExchangePositionTest {
             otcTicker, otcClassCode, limit, period, dailyQuantityLimit, ExchangePosition.ExchangeEnum.SPB);
         //вызываем метод updateExchangePosition
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -587,7 +587,7 @@ public class UpdateExchangePositionTest {
             otcTicker, otcClassCode, limit, period, dailyQuantityLimit, ExchangePosition.ExchangeEnum.SPB);
         //вызываем метод updateExchangePosition
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -668,7 +668,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParamWithDayLimit(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, dailyQuantityLimit, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "trading"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -722,7 +722,7 @@ public class UpdateExchangePositionTest {
         updateExchangePosition.setTrackingAllowed(true);
         updateExchangePosition.setTradingClearingAccount(tradingClearingAccount);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -770,7 +770,7 @@ public class UpdateExchangePositionTest {
         UpdateExchangePositionRequest updateExchangePosition = createBodyRequestRequiredParamWithDayLimit(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, dailyQuantityLimit, true);
         exchangePositionApi.updateExchangePosition()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")

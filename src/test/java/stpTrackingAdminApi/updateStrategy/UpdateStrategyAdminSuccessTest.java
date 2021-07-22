@@ -81,6 +81,7 @@ public class UpdateStrategyAdminSuccessTest {
 
     Strategy strategy;
     String SIEBEL_ID = "4-1UBHYQ63";
+    String xApiKey = "x-api-key";
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -155,7 +156,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.resetOffsetToLate(TRACKING_EVENT);
 //        //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -215,7 +216,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -263,7 +264,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -311,7 +312,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setTitle(titleUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -360,7 +361,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -413,7 +414,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -467,7 +468,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -519,7 +520,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())

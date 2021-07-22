@@ -79,7 +79,7 @@ public class GetStrategyTest {
     StrategyService strategyService;
 
     String SIEBEL_ID = "1-1XHHA7S";
-
+    String xApiKey = "x-api-key";
 
     @AfterEach
     void deleteClient() {
@@ -126,7 +126,7 @@ public class GetStrategyTest {
         String profileId = clientDB.getSocialProfile().getId();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -164,7 +164,7 @@ public class GetStrategyTest {
         String profileId = clientDB.getSocialProfile().getId();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -199,7 +199,7 @@ public class GetStrategyTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
@@ -263,7 +263,7 @@ public class GetStrategyTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         //вызываем метод getStrategy
         strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "trading"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -297,7 +297,7 @@ public class GetStrategyTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyIdTest)
             .respSpec(spec -> spec.expectStatusCode(422))

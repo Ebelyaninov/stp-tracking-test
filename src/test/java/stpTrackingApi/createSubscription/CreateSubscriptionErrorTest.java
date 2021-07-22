@@ -7,6 +7,8 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,9 +87,24 @@ public class CreateSubscriptionErrorTest {
     String siebelIdSlaveNotBrokerOpen = "4-1ZCANCVZ";
     String siebelIdSlaveNotBroker = "5-GGI9D1AG";
 
+    Client clientSlave;
+    Contract contractSlave;
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
+            try {
+                contractService.deleteContract(contractSlave);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(clientSlave.getId());
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(clientSlave);
+            } catch (Exception e) {
+            }
             try {
                 trackingService.deleteStrategy(steps.strategyMaster);
             } catch (Exception e) {
@@ -113,7 +130,7 @@ public class CreateSubscriptionErrorTest {
 
         );
     }
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideRequiredParamCreateSubscription")
     @AllureId("534131")
@@ -125,23 +142,13 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        LocalDateTime dateCreateTr = null;
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -163,6 +170,11 @@ public class CreateSubscriptionErrorTest {
             createSubscription = createSubscription.contractIdQuery(contract);
         }
         createSubscription.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -174,7 +186,7 @@ public class CreateSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535054")
     @DisplayName("535054.CreateSubscription.Валидация обязательных параметров: x-tcs-siebel-id")
@@ -184,21 +196,11 @@ public class CreateSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -211,8 +213,12 @@ public class CreateSubscriptionErrorTest {
             .xPlatformHeader("ios")
             .contractIdQuery(contractIdSlave)
             .strategyIdPath(strategyId)
-            .xTcsSiebelIdHeader(siebelIdSlave)
             .respSpec(spec -> spec.expectStatusCode(401));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -226,11 +232,11 @@ public class CreateSubscriptionErrorTest {
 
     private static Stream<Arguments> provideParamSiebleCreateSubscription() {
         return Stream.of(
-            Arguments.of(""),
-            Arguments.of("5-3FRZQV8J12")
+            Arguments.of("")
+//            Arguments.of("5-3FRZQV8J12")
         );
     }
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideParamSiebleCreateSubscription")
     @AllureId("534145")
@@ -241,21 +247,11 @@ public class CreateSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -270,6 +266,11 @@ public class CreateSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(sieble)
             .respSpec(spec -> spec.expectStatusCode(400));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -288,7 +289,7 @@ public class CreateSubscriptionErrorTest {
             Arguments.of("20243752771")
         );
     }
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideParamContractCreateSubscription")
     @AllureId("534148")
@@ -299,21 +300,11 @@ public class CreateSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -328,6 +319,11 @@ public class CreateSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(siebelIdSlave)
             .respSpec(spec -> spec.expectStatusCode(400));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -339,7 +335,7 @@ public class CreateSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("534164")
     @DisplayName("C534164.CreateSubscription.Не существующие значение x-tcs-siebel-id")
@@ -350,34 +346,30 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
-        subscriptionApi.createSubscription()
+        SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .contractIdQuery(contractIdSlave)
             .strategyIdPath(strategyId)
-            .xTcsSiebelIdHeader(siebelIdSlave)
+            .xTcsSiebelIdHeader("2-1P4N1RM")
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -389,7 +381,7 @@ public class CreateSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("534170")
     @DisplayName("C534170.CreateSubscription.Тип Договора клиента != 'broker'")
@@ -399,13 +391,7 @@ public class CreateSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -426,8 +412,13 @@ public class CreateSubscriptionErrorTest {
             .xPlatformHeader("ios")
             .contractIdQuery(contractIdSlave)
             .strategyIdPath(strategyId)
-            .xTcsSiebelIdHeader(investIdSlaveNotBroker.toString())
+            .xTcsSiebelIdHeader(siebelIdSlaveNotBroker)
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlaveNotBroker);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -438,7 +429,7 @@ public class CreateSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
-
+    @SneakyThrows
     @Test
     @AllureId("534175")
     @DisplayName("C534175.CreateSubscription.Статус договора != 'opened'")
@@ -449,20 +440,11 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlaveNotBrokerOpen)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("closed")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlaveNotBrokerOpen = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -477,6 +459,11 @@ public class CreateSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(siebelIdSlaveNotBrokerOpen)
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlaveNotBrokerOpen);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -488,7 +475,7 @@ public class CreateSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("534183")
     @DisplayName("C534183.CreateSubscription.Не существующие значение contractId")
@@ -499,20 +486,11 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -527,6 +505,11 @@ public class CreateSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(siebelIdSlave)
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -539,6 +522,7 @@ public class CreateSubscriptionErrorTest {
     }
 
 
+    @SneakyThrows
     @Test
     @AllureId("534191")
     @DisplayName("C534191.CreateSubscription.Не существующие значение strategyId")
@@ -548,28 +532,20 @@ public class CreateSubscriptionErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
+
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
-        SubscriptionApi.CreateSubscriptionOper createSubscription = subscriptionApi.createSubscription()
+        SubscriptionApi.CreateSubscriptionOper createSubscription =  subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -577,10 +553,17 @@ public class CreateSubscriptionErrorTest {
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(UUID.fromString("88888f88-cd5e-4bb6-82be-d46e72886d88"))
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        contractSlave = contractService.getContract(contractIdSlave);
+        clientSlave = clientService.getClient(investIdSlave);
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
-        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(true));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
-        assertThat("запись по контракту не равно", contractOpt.isPresent(), is(false));
+        assertThat("запись по контракту не равно", contractOpt.isPresent(), is(true));
         Optional<Subscription> subscriptionOpt = subscriptionService.findSubcription(contractIdSlave);
         assertThat("запись по контракту не равно", subscriptionOpt.isPresent(), is(false));
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
@@ -589,6 +572,7 @@ public class CreateSubscriptionErrorTest {
     }
 
 
+    @SneakyThrows
     @Test
     @AllureId("534302")
     @DisplayName("C534302.CreateSubscription.Создание подписки на неактивную стратегию")
@@ -599,20 +583,11 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -627,10 +602,17 @@ public class CreateSubscriptionErrorTest {
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        contractSlave = contractService.getContract(contractIdSlave);
+        clientSlave = clientService.getClient(investIdSlave);
         Optional<Client> clientOpt = clientService.findClient(investIdSlave);
-        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(true));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
-        assertThat("запись по контракту не равно", contractOpt.isPresent(), is(false));
+        assertThat("запись по контракту не равно", contractOpt.isPresent(), is(true));
         Optional<Subscription> subscriptionOpt = subscriptionService.findSubcription(contractIdSlave);
         assertThat("запись по контракту не равно", subscriptionOpt.isPresent(), is(false));
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
@@ -638,6 +620,7 @@ public class CreateSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
     }
 
+    @SneakyThrows
     @Test
     @AllureId("639163")
     @DisplayName("C639163.CreateSubscription.Создание подписки на тот же договор, что и стратегия")
@@ -648,12 +631,7 @@ public class CreateSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -661,21 +639,24 @@ public class CreateSubscriptionErrorTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод CreateSubscription
-        subscriptionApi.createSubscription()
+        SubscriptionApi.CreateSubscriptionOper createSubscription =  subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdMaster)
             .contractIdQuery(contractIdMaster)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(422))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(createSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Subscription> subscriptionOpt = subscriptionService.findSubcription(siebelIdMaster);
         assertThat("запись по контракту не равно", subscriptionOpt.isPresent(), is(false));
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
-
     }
 
 }

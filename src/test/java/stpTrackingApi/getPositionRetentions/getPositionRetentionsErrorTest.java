@@ -7,6 +7,7 @@ import io.qameta.allure.Epic;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,14 +58,12 @@ public class getPositionRetentionsErrorTest {
             .xPlatformHeader("ios")
             .xAppVersionHeader("0.0.1")
             .respSpec(spec -> spec.expectStatusCode(401));
-        String responseBodyData = getPositionRetentions.execute(ResponseBodyData::asString);
-        step("Проверка тела ответа", () -> {
-            assertAll(
-                () -> assertThat("Код ошибки - errorCode совпадает с ожидаемым",
-                    responseBodyData.contains("0350-00-Z99"), is(true)),
-                () -> assertThat("Текст сообщения об ошибке - errorMessage совпадает с ожижаемым",
-                    responseBodyData.contains("Недостаточно прав"), is(true)));
-        });
+//        String responseBodyData = getPositionRetentions.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(getPositionRetentions.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
     }
 
 
@@ -96,14 +95,11 @@ public class getPositionRetentionsErrorTest {
         if (appVersion != null) {
             getPositionRetentions.xAppVersionHeader(appVersion);
         }
-        String responseBodyData = getPositionRetentions.execute(ResponseBodyData::asString);
-        step("Проверка тела ответа", () -> {
-            assertAll(
-                () -> assertThat("Код ошибки - errorCode совпадает с ожидаемым",
-                    responseBodyData.contains("0350-00-Z99"), is(true)),
-                () -> assertThat("Текст сообщения об ошибке - errorMessage совпадает с ожижаемым",
-                    responseBodyData.contains("Сервис временно недоступен"), is(true)));
-        });
+        JSONObject jsonObject = new JSONObject(getPositionRetentions.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -121,13 +117,10 @@ public class getPositionRetentionsErrorTest {
             .xPlatformHeader("ios")
             .xAppVersionHeader("0.0.1")
             .respSpec(spec -> spec.expectStatusCode(422));
-        String responseBodyData = getPositionRetentions.execute(ResponseBodyData::asString);
-        step("Проверка тела ответа", () -> {
-            assertAll(
-                () -> assertThat("Код ошибки - errorCode совпадает с ожидаемым",
-                    responseBodyData.contains("0350-12-B04"), is(true)),
-                () -> assertThat("Текст сообщения об ошибке - errorMessage совпадает с ожижаемым",
-                    responseBodyData.contains("Сервис временно недоступен"), is(true)));
-        });
+        JSONObject jsonObject = new JSONObject(getPositionRetentions.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 }

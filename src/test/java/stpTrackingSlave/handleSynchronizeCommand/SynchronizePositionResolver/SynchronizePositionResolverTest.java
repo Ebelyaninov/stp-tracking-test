@@ -175,10 +175,10 @@ public class SynchronizePositionResolverTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         String tickerShare1 = "ABBV";
-        String tradingClearingAccountShare1 = "L01+00000SPB";
+        String tradingClearingAccountShare1 = "NDS000000001";
         String classCodeShare1 = "SPBXM";
         String tickerShare2 = "QCOM";
-        String tradingClearingAccountShare2 = "L01+00000SPB";
+        String tradingClearingAccountShare2 = "NDS000000001";
         String classCodeShare2 = "SPBXM";
         BigDecimal lot = new BigDecimal("1");
         steps.createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
@@ -241,10 +241,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695626() {
         String tickerBond = "VTBperp";
-        String tradingClearingAccountBond = "L01+00000SPB";
+        String tradingClearingAccountBond = "NDS000000001";
         String classCodeBond = "SPBBND";
         String tickerShare = "QCOM";
-        String tradingClearingAccountShare = "L01+00000SPB";
+        String tradingClearingAccountShare = "NDS000000001";
         String classCodeShare = "SPBXM";
         BigDecimal lot = new BigDecimal("1");
         String title = "тест стратегия autotest update base currency";
@@ -310,10 +310,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695911() {
         String tickerShare1 = "ABBV";
-        String tradingClearingAccountShare1 = "L01+00000SPB";
+        String tradingClearingAccountShare1 = "NDS000000001";
         String classCodeShare1 = "SPBXM";
         String tickerShare2 = "QCOM";
-        String tradingClearingAccountShare2 = "L01+00000SPB";
+        String tradingClearingAccountShare2 = "NDS000000001";
         String classCodeShare2 = "SPBXM";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
@@ -407,10 +407,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695957() {
         String tickerBond1 = "XS0191754729";
-        String tradingClearingAccountBond1 = "L01+00000F00";
+        String tradingClearingAccountBond1 = "NDS000000001";
         String classCodeBond1 = "TQOD";
         String tickerBond2 = "VTBperp";
-        String tradingClearingAccountBond2 = "L01+00000SPB";
+        String tradingClearingAccountBond2 = "NDS000000001";
         String classCodeBond2 = "SPBBND";
         BigDecimal lot = new BigDecimal("1");
         String title = "тест стратегия autotest update base currency";
@@ -501,10 +501,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695978() {
         String tickerBond = "VTBperp";
-        String tradingClearingAccountBond = "L01+00000SPB";
+        String tradingClearingAccountBond = "NDS000000001";
         String classCodeBond = "SPBBND";
         String tickerShare = "QCOM";
-        String tradingClearingAccountShare = "L01+00000SPB";
+        String tradingClearingAccountShare = "NDS000000001";
         String classCodeShare = "SPBXM";
         BigDecimal lot = new BigDecimal("1");
         String title = "тест стратегия autotest update base currency";
@@ -570,10 +570,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695986() {
         String tickerBond1 = "XS0191754729";
-        String tradingClearingAccountBond1 = "L01+00000F00";
+        String tradingClearingAccountBond1 = "NDS000000001";
         String classCodeBond1 = "TQOD";
         String tickerBond2 = "VTBperp";
-        String tradingClearingAccountBond2 = "L01+00000SPB";
+        String tradingClearingAccountBond2 = "NDS000000001";
         String classCodeBond2 = "SPBBND";
         BigDecimal lot = new BigDecimal("1");
         String title = "тест стратегия autotest update base currency";
@@ -663,10 +663,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697301() {
         String tickerShare1 = "ABBV";
-        String tradingClearingAccountShare1 = "L01+00000SPB";
+        String tradingClearingAccountShare1 = "NDS000000001";
         String classCodeShare1 = "SPBXM";
         String tickerShare2 = "QCOM";
-        String tradingClearingAccountShare2 = "L01+00000SPB";
+        String tradingClearingAccountShare2 = "NDS000000001";
         String classCodeShare2 = "SPBXM";
         BigDecimal lot = new BigDecimal("1");
         String title = "тест стратегия autotest update base currency";
@@ -759,10 +759,10 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697225() {
         String tickerShare1 = "ABBV";
-        String tradingClearingAccountShare1 = "L01+00000SPB";
+        String tradingClearingAccountShare1 = "NDS000000001";
         String classCodeShare1 = "SPBXM";
         String tickerShare2 = "QCOM";
-        String tradingClearingAccountShare2 = "L01+00000SPB";
+        String tradingClearingAccountShare2 = "NDS000000001";
         String classCodeShare2 = "SPBXM";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
@@ -779,22 +779,6 @@ public class SynchronizePositionResolverTest {
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-//            .siebelIdPath(SIEBEL_ID_MASTER)
-//            .brokerTypeQuery("broker")
-//            .brokerStatusQuery("opened")
-//            .respSpec(spec -> spec.expectStatusCode(200))
-//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-//        UUID investIdMaster = resAccountMaster.getInvestId();
-//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//        //получаем данные по клиенту slave в БД сервиса счетов
-//        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-//            .siebelIdPath(SIEBEL_ID_SLAVE)
-//            .brokerTypeQuery("broker")
-//            .brokerStatusQuery("opened")
-//            .respSpec(spec -> spec.expectStatusCode(200))
-//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-//        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,

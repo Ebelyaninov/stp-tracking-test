@@ -100,6 +100,7 @@ public class UpdateStrategyAdminErrorTest {
 
 
     String SIEBEL_ID = "4-1UBHYQ63";
+    String xApiKey = "x-api-key";
 
     @AfterEach
     void deleteClient() {
@@ -159,7 +160,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .strategyIdPath(strategyId.toString())
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -207,7 +208,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -257,7 +258,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -307,7 +308,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -357,7 +358,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -406,7 +407,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -461,7 +462,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -557,7 +558,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "trackinaxcg"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trackinaxcg"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -600,7 +601,7 @@ public class UpdateStrategyAdminErrorTest {
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -650,7 +651,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -699,7 +700,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -752,7 +753,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setScore(scoresForUpdateStrategy);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -803,7 +804,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApi.updateStrategy()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

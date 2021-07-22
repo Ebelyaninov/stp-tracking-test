@@ -388,67 +388,67 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(91, 1, 2, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(91, 1, 2, strategyId, "NOK", "NDS000000001",
             "4.06", "2", 12);
-        createMasterSignal(90, 0, 3, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(90, 0, 3, strategyId, "ABBV", "NDS000000001",
             "90.18", "1", 12);
-        createMasterSignal(89, 7, 4, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(89, 7, 4, strategyId, "NOK", "NDS000000001",
             "4.06", "1", 11);
-        createMasterSignal(31, 1, 5, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(31, 1, 5, strategyId, "NOK", "NDS000000001",
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 6, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(30, 2, 6, strategyId, "ABBV", "NDS000000001",
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 7, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(29, 2, 7, strategyId, "NOK", "NDS000000001",
             "3.98", "7", 12);
         createMasterSignal(5, 4, 8, strategyId, "AAPL", "L01+00000SPB",
             "107.81", "1", 12);
         createMasterSignal(4, 2, 9, strategyId, "AAPL", "L01+00000SPB",
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 10, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(3, 1, 10, strategyId, "ABBV", "NDS000000001",
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 11, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2, 1, 11, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 12, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(1, 4, 12, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 13, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0, 2, 13, strategyId, "NOK", "NDS000000001",
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 14, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0, 1, 14, strategyId, "NOK", "NDS000000001",
             "3.09", "4", 12);
     }
 
 
     void createTestDateToMasterSignalRepeat(UUID strategyId) {
-        createMasterSignal(91, 1, 2, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(91, 1, 2, strategyId, "NOK", "NDS000000001",
             "4.06", "2", 12);
-        createMasterSignal(90, 0, 3, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(90, 0, 3, strategyId, "ABBV", "NDS000000001",
             "90.18", "1", 12);
-        createMasterSignal(89, 7, 4, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(89, 7, 4, strategyId, "NOK", "NDS000000001",
             "4.06", "1", 11);
-        createMasterSignal(31, 1, 5, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(31, 1, 5, strategyId, "NOK", "NDS000000001",
             "4.07", "4", 12);
         createMasterSignal(4, 2, 9, strategyId, "AAPL", "L01+00000SPB",
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 10, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(3, 1, 10, strategyId, "ABBV", "NDS000000001",
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 11, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2, 1, 11, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 12, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(1, 4, 12, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 13, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0, 2, 13, strategyId, "NOK", "NDS000000001",
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 14, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0, 1, 14, strategyId, "NOK", "NDS000000001",
             "3.09", "4", 12);
     }
 
 
     void createTestDateToMasterSignalNotPeriodTopPos(UUID strategyId) {
-        createMasterSignal(94, 1, 2, strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(94, 1, 2, strategyId, "NOK", "NDS000000001",
             "4.06", "2", 12);
-        createMasterSignal(93, 3, 3, strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(93, 3, 3, strategyId, "ABBV", "NDS000000001",
             "90.18", "1", 12);
-        createMasterSignal(2, 1, 4, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2, 1, 4, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 5, strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(1, 4, 5, strategyId, "XS0191754729", "NDS000000001",
             "190.18", "1", 12);
         createMasterSignal(0, 2, 6, strategyId, "NOK", "L01+00000SPB",
             "3.17", "4", 12);

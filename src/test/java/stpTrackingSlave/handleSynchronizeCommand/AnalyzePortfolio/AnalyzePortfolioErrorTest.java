@@ -193,7 +193,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "TEST", "L01+00000SPB", "2.0", date, 3,
+            "2.0", "TEST", "NDS000000001", "2.0", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -244,7 +244,7 @@ public class AnalyzePortfolioErrorTest {
         //создаем подписку для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("TEST", "L01+00000SPB",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("TEST", "NDS000000001",
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -285,7 +285,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "YNDX", "L01+00000F00", "2.0", date, 3,
+            "2.0", "YNDX", "NDS000000001", "2.0", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -336,7 +336,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("YNDX", "L01+00000F00",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("YNDX", "NDS000000001",
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -378,7 +378,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "XS0088543190", "L01+00002F00", "2.0", date, 2,
+            "2.0", "XS0088543190", "NDS000000001", "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -471,7 +471,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "BRJ1", "U800", "2.0", date, 2,
+            "2.0", "BRJ1", "NDS000000001", "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -522,7 +522,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("BRJ1", "U800",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("BRJ1", "NDS000000001",
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -562,7 +562,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "RU000A0JXU14", "L01+00000F00", "2.0", date, 2,
+            "2.0", "RU000A0JXU14", "L01+00002F00", "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -614,7 +614,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("RU000A0JXU14", "L01+00000F00",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("RU000A0JXU14", "L01+00002F00",
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -653,7 +653,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "SMG", "L01+00000SPB", "2.0", date, 2,
+            "2.0", "SMG", "NDS000000001", "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave

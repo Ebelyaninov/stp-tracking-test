@@ -46,7 +46,8 @@ public class StpTrackingAnalyticsSteps {
     public Strategy strategy;
 
     public String ticker1 = "SBER";
-    public String tradingClearingAccount1 = "L01+00000F00";
+    public String tradingClearingAccount1 = "NDS000000001";
+//    public String tradingClearingAccount1 = "L01+00000F00";
     public String quantity1 = "50";
     public String sector1 = "financial";
     public String type1 = "share";
@@ -55,7 +56,8 @@ public class StpTrackingAnalyticsSteps {
     public String instrumet1 = ticker1 + "_" + classCode1;
 
     public String ticker2 = "SU29009RMFS6";
-   public String tradingClearingAccount2 = "L01+00000F00";
+//   public String tradingClearingAccount2 = "L01+00000F00";
+    public String tradingClearingAccount2 = "NDS000000001";
    public String quantity2 = "3";
    public String classCode2 = "TQOB";
    public String sector2 = "government";
@@ -64,7 +66,8 @@ public class StpTrackingAnalyticsSteps {
    public String instrumet2 = ticker2 + "_" + classCode2;
     //
     public String ticker3 = "LKOH";
-    public String tradingClearingAccount3 = "L01+00000F00";
+    public String tradingClearingAccount3 = "NDS000000001";
+//    public String tradingClearingAccount3 = "L01+00000F00";
     public String quantity3 = "7";
     public String classCode3 = "TQBR";
     public String sector3 = "energy";
@@ -73,7 +76,8 @@ public class StpTrackingAnalyticsSteps {
     public String instrumet3 = ticker3 + "_" + classCode3;
 
     public String ticker4 = "SNGSP";
-    public String tradingClearingAccount4 = "L01+00000F00";
+    public String tradingClearingAccount4 = "NDS000000001";
+//    public String tradingClearingAccount4 = "L01+00000F00";
     public String quantity4 = "100";
     public String classCode4 = "TQBR";
     public String sector4 = "energy";
@@ -82,7 +86,8 @@ public class StpTrackingAnalyticsSteps {
     public String instrumet4 = ticker4 + "_" + classCode4;
 
     public String ticker5 = "TRNFP";
-    public String tradingClearingAccount5 = "L01+00000F00";
+    public String tradingClearingAccount5 = "NDS000000001";
+//    public String tradingClearingAccount5 = "L01+00000F00";
     public String quantity5 = "4";
     public String classCode5 = "TQBR";
     public String sector5 = "energy";
@@ -92,7 +97,8 @@ public class StpTrackingAnalyticsSteps {
 
 
     public String ticker6 = "ESGR";
-    public String tradingClearingAccount6 = "L01+00000F00";
+    public String tradingClearingAccount6 = "NDS000000001";
+//    public String tradingClearingAccount6 = "L01+00000F00";
     public String quantity6 = "5";
     public String classCode6 = "TQTF";
     public String sector6 = "other";
@@ -111,7 +117,8 @@ public class StpTrackingAnalyticsSteps {
 
 
     public String ticker8 = "YNDX";
-    public String tradingClearingAccount8 = "L01+00000F00";
+//    public String tradingClearingAccount8 = "L01+00000F00";
+    public String tradingClearingAccount8 = "NDS000000001";
     public String quantity8 = "3";
     public String classCode8 = "TQBR";
     public String sector8 = "telecom";

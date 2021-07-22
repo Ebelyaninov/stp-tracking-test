@@ -67,6 +67,8 @@ public class ConfirmMasterClientSuccessTest {
     String siebelIdNotBroker = "5-11FZVG5DZ";
     String siebelIdNotOpen = "5-EYC8YSQQ";
 
+    String xApiKey = "x-api-key";
+
     @Autowired
     BillingService billingService;
     @Autowired
@@ -80,6 +82,8 @@ public class ConfirmMasterClientSuccessTest {
             clientService.deleteClient(client);
         });
     }
+
+
 
     @Test
     @AllureId("259274")
@@ -99,7 +103,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster =  clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -138,7 +142,7 @@ public class ConfirmMasterClientSuccessTest {
         createClient(investId, ClientStatusType.registered, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster =  clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -180,7 +184,7 @@ public class ConfirmMasterClientSuccessTest {
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster =  clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -220,7 +224,7 @@ public class ConfirmMasterClientSuccessTest {
         createClient(investId, ClientStatusType.confirmed,socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -258,7 +262,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebelIdEmptyNick);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -298,7 +302,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdNullImage = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -339,7 +343,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -376,7 +380,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebelIdNotBroker);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -412,7 +416,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdNotOpen = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader("api-key", "tracking"))
+            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")

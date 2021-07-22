@@ -7,7 +7,9 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
 import org.hamcrest.core.IsNull;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,10 +77,7 @@ public class DeleteSubscriptionErrorTest {
 
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    Client clientMaster;
-    Contract contractMaster;
+
     Strategy strategyMaster;
     Client clientSlave;
     Contract contractSlave;
@@ -129,7 +128,7 @@ public class DeleteSubscriptionErrorTest {
         );
     }
 
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideRequiredParamDeleteSubscription")
     @AllureId("535364")
@@ -141,20 +140,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -192,6 +182,11 @@ public class DeleteSubscriptionErrorTest {
             deleteSubscription = deleteSubscription.contractIdQuery(contract);
         }
         deleteSubscription.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contract, SubscriptionStatus.active);
@@ -200,7 +195,7 @@ public class DeleteSubscriptionErrorTest {
         checkParam(count, strategyId);
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535364")
     @DisplayName("C535364.DeleteSubscription.Валидация обязательных параметров: contractId")
@@ -211,20 +206,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -258,6 +244,11 @@ public class DeleteSubscriptionErrorTest {
             deleteSubscription = deleteSubscription.contractIdQuery(contractIdSlave);
         }
         deleteSubscription.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
         contractSlave = contractService.getContract(contractIdSlave);
@@ -265,7 +256,7 @@ public class DeleteSubscriptionErrorTest {
         checkParam(count, strategyId);
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535365")
     @DisplayName("C535365.DeleteSubscription.Валидация обязательных параметров: x-tcs-siebel-id")
@@ -277,20 +268,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -320,7 +302,11 @@ public class DeleteSubscriptionErrorTest {
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(401));
         deleteSubscription.execute(ResponseBodyData::asString);
-
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
         contractSlave = contractService.getContract(contractIdSlave);
@@ -334,7 +320,7 @@ public class DeleteSubscriptionErrorTest {
             Arguments.of("5-1DJ2D8IIQ12")
         );
     }
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideParamSiebleDeleteSubscription")
     @AllureId("535366")
@@ -346,20 +332,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -381,15 +358,19 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebel)
             .contractIdQuery(contractIdSlave)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(400))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(400));
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
@@ -405,7 +386,7 @@ public class DeleteSubscriptionErrorTest {
             Arguments.of("20281258431")
         );
     }
-
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideParamContractDeleteSubscription")
     @AllureId("535368")
@@ -417,20 +398,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -452,15 +424,19 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdSlave)
             .contractIdQuery(contractNew)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(400))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(400));
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
@@ -469,7 +445,7 @@ public class DeleteSubscriptionErrorTest {
         checkParam(count, strategyId);
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535370")
     @DisplayName("C535370.DeleteSubscription.Не существующие значение x-tcs-siebel-id")
@@ -480,20 +456,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -515,15 +482,19 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader("5-1DJ2D8555")
             .contractIdQuery(contractIdSlave)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(422))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
@@ -532,7 +503,7 @@ public class DeleteSubscriptionErrorTest {
         checkParam(count, strategyId);
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535371")
     @DisplayName("C535371.DeleteSubscription.Не существующие значение contractId")
@@ -543,20 +514,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -578,15 +540,19 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdSlave)
             .contractIdQuery("3000348224")
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(422))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);
@@ -595,7 +561,7 @@ public class DeleteSubscriptionErrorTest {
         checkParam(count, strategyId);
     }
 
-
+    @SneakyThrows
     @Test
     @AllureId("535410")
     @DisplayName("C535410.DeleteSubscription.Договор не соответствует siebleId")
@@ -607,20 +573,11 @@ public class DeleteSubscriptionErrorTest {
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
@@ -641,15 +598,19 @@ public class DeleteSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
-        subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription =  subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdSlave)
             .contractIdQuery(contractIdOther)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(422))
-            .execute(ResponseBodyData::asString);
+            .respSpec(spec -> spec.expectStatusCode(422));
+        JSONObject jsonObject = new JSONObject(deleteSubscription.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         //проверяем, что количество подписок на стратегию не изменилось
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.findSubscriptionByContractIdAndStatus(contractIdSlave, SubscriptionStatus.active);

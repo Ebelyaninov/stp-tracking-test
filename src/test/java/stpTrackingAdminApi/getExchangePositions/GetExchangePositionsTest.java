@@ -83,6 +83,8 @@ public class GetExchangePositionsTest {
         );
     }
 
+    String xApiKey = "x-api-key";
+
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersGetExchangePosition")
     @AllureId("1041093")
@@ -91,7 +93,7 @@ public class GetExchangePositionsTest {
     @Description("Метод необходим для получения списка всех позиций, участвующих в автоследовании.")
     void C1041093(String name, String login) {
         ExchangePositionApi.GetExchangePositionsOper getExchangePositions = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
             getExchangePositions = getExchangePositions.xAppNameHeader(name);
@@ -125,7 +127,7 @@ public class GetExchangePositionsTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1045395() {
         exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "trading"))
+            .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -152,7 +154,7 @@ public class GetExchangePositionsTest {
     void C1045326(Integer limit) {
         //вызываем метод getExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .limitQuery(limit)
             .xTcsLoginHeader("tracking_admin")
@@ -178,7 +180,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePosition = exchangePositionService.getExchangePositionByPositionAndLimitmit(position, 1);
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(position)
             .limitQuery(1)
@@ -213,7 +215,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 3).getPosition())
             .limitQuery(1)
@@ -226,7 +228,7 @@ public class GetExchangePositionsTest {
         assertThat("hasNext не равно", true, is(responseExep.getHasNext()));
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseEx = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 2).getPosition())
             .limitQuery(1)
@@ -248,7 +250,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 1).getPosition())
             .limitQuery(1)

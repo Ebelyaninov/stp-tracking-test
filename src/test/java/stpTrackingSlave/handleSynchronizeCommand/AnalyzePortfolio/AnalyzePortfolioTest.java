@@ -348,7 +348,7 @@ public class AnalyzePortfolioTest {
         String description = "description test стратегия autotest update adjust base currency";
         String tickerMaster = "ABBV";
         String classCodeMaster = "SPBXM";
-        String tradingClearingAccountMaster = "L01+00000SPB";
+        String tradingClearingAccountMaster = "NDS000000001";
         steps.createDataToMarketData(tickerMaster, classCodeMaster, "90", "87", "90");
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         //получаем данные по клиенту master в api сервиса счетов
@@ -445,7 +445,7 @@ public class AnalyzePortfolioTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C688348() {
         String ticker = "VTBperp";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "NDS000000001";
         String classCode = "SPBBND";
         steps.createDataToMarketData(ticker, classCode, "108.2", "107.8", "108.8");
         String title = "тест стратегия autotest update base currency";

@@ -176,7 +176,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739012() {
         String ticker = "TECH";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "NDS000000001";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -235,7 +235,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739015() {
         String ticker = "WLH";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "NDS000000001";
         String classCode = "SPBXM";
         String title = "тест стратегия autotest update base currency";
         String description = "description test стратегия autotest update adjust base currency";
