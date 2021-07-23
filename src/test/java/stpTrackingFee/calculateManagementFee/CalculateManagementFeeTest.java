@@ -125,21 +125,24 @@ public class CalculateManagementFeeTest {
     String siebelIdSlave = "5-1P87U0B13";
 
     String ticker1 = "SBER";
-    String tradingClearingAccount1 = "L01+00000F00";
+    String tradingClearingAccount1 = "NDS000000001";
+//    String tradingClearingAccount1 = "L01+00000F00";
     String classCode1 = "TQBR";
     String instrumet1 = ticker1 + "_" + classCode1;
     String quantity1 = "20";
 
-    public String ticker2 = "SU29009RMFS6";
-    public String tradingClearingAccount2 = "L01+00000F00";
-    public String quantity2 = "5";
-    public String classCode2 = "TQOB";
-    public String instrumet2 = ticker2 + "_" + classCode2;
+    String ticker2 = "SU29009RMFS6";
+    String tradingClearingAccount2 = "NDS000000001";
+//    public String tradingClearingAccount2 = "L01+00000F00";
+    String quantity2 = "5";
+    String classCode2 = "TQOB";
+    String instrumet2 = ticker2 + "_" + classCode2;
     BigDecimal minPriceIncrement = new BigDecimal("0.001");
 
 
     String ticker3 = "YNDX";
-    String tradingClearingAccount3 = "L01+00000F00";
+    String tradingClearingAccount3 = "NDS000000001";
+//    String tradingClearingAccount3 = "L01+00000F00";
     String classCode3 = "TQBR";
     String instrumet3 = ticker3 + "_" + classCode3;
     String quantity3 = "2";
@@ -529,6 +532,9 @@ public class CalculateManagementFeeTest {
         byte[] strategyIdByteArray = feeCommand.getSubscription().getStrategy().getId().toByteArray();
         UUID guidFromByteArray = UtilsTest.getGuidFromByteArray(strategyIdByteArray);
         assertThat("subscription.strategy_id не равен", guidFromByteArray, is(strategyId));
+        double rateResultScale = Math.pow(10, -1 * feeCommand.getRate().getScale());
+        BigDecimal rateResult = BigDecimal.valueOf(feeCommand.getRate().getUnscaled()).multiply(BigDecimal.valueOf(rateResultScale));
+        assertThat("rate result не равен", rateResult, is(new BigDecimal("0.04")));
         assertThat("rate unscaled  не равен", feeCommand.getRate().getUnscaled(), is(4L));
         assertThat("rate scale не равен", feeCommand.getRate().getScale(), is(2));
         assertThat("currency не равен", feeCommand.getCurrency().toString(), is("RUB"));
@@ -727,10 +733,6 @@ public class CalculateManagementFeeTest {
     }
 
     List<SlavePortfolio.Position> twoSlavePositions(Date date) {
-//        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-//            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-//                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-//            .build();
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker1)
@@ -790,10 +792,6 @@ public class CalculateManagementFeeTest {
     }
 
     List<SlavePortfolio.Position> oneSlavePositions(Date date) {
-//        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-//            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-//                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-//            .build();
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker1)
@@ -948,14 +946,14 @@ public class CalculateManagementFeeTest {
             is(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toString()));
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
             is(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker1));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity1));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price1));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker2));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount2));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity2));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price2));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker2));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount2));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity2));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price2));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker1));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount1));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity1));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
     }
 
     void checkManagementFeeLastNoBond(long subscriptionId, Date cutDate) {
@@ -978,14 +976,14 @@ public class CalculateManagementFeeTest {
             is(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toString()));
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
             is(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker1));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity1));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price1));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker3));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount3));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity3));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price3));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker3));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount3));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity3));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price3));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker1));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount1));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity1));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
     }
 
     void createManagemetFee(long subscriptionId) {

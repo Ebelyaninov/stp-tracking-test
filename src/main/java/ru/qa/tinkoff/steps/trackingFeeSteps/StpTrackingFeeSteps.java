@@ -14,11 +14,14 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.ManagementFeeDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.ResultFeeDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 
@@ -54,15 +57,35 @@ public class StpTrackingFeeSteps {
     private final MasterPortfolioDao masterPortfolioDao;
     private final SlavePortfolioDao slavePortfolioDao;
     private final ManagementFeeDao managementFeeDao;
+    private final ResultFeeDao resultFeeDao;
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
         .ApiClient.Config.apiConfig()).prices();
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     public Client clientMaster;
     public Contract contractMaster;
     public Strategy strategyMaster;
     public Subscription subscription;
     public Contract contractSlave;
     public Client clientSlave;
+
+
+
+
+    public GetBrokerAccountsResponse getBrokerAccounts(String siebelIdMaster) {
+        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resAccount;
+    }
+
+
+
+
 
 
     //Создаем в БД tracking данные по ведущему (Master-клиент): client, contract, strategy
@@ -165,6 +188,21 @@ public class StpTrackingFeeSteps {
         return command;
     }
 
+    // создаем команду в топик кафка tracking.fee.command
+    public Tracking.ActivateFeeCommand createTrackingFeeCommandResult(long subscriptionId, OffsetDateTime createTime)    {
+        Tracking.ActivateFeeCommand command = Tracking.ActivateFeeCommand.newBuilder()
+            .setSubscription(Tracking.Subscription.newBuilder()
+                .setId(subscriptionId)
+                .build())
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(createTime.toEpochSecond())
+                .setNanos(createTime.getNano())
+                .build())
+            .setResult(Tracking.ActivateFeeCommand.Result.newBuilder())
+            .build();
+        return command;
+    }
+
 
    public void createMasterPortfolio(String contractIdMaster, UUID strategyId,
                                 int version,String money, List<MasterPortfolio.Position> positionList, Date date) {
@@ -178,18 +216,38 @@ public class StpTrackingFeeSteps {
         masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
+
+
+
     public void createSlavePortfolio(String contractIdSlave, UUID strategyId,
-                                     int version, int comparedToMasterVersion, String money, List<SlavePortfolio.Position> positionList, Date date) {
+                                     int version, int comparedToMasterVersion, String money,
+                                     List<SlavePortfolio.Position> positionList, Date date) {
         //создаем портфель master в cassandra
         //с базовой валютой
         SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
             .quantity(new BigDecimal(money))
             .changedAt(date)
+            .lastChangeAction((byte) 12)
             .build();
         //insert запись в cassandra
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version,
             comparedToMasterVersion, baseMoneyPosition, positionList, date);
     }
+
+
+
+    //базовая валюта с lastChangeAction
+    public SlavePortfolio.BaseMoneyPosition createBaseMoney( String money, Date date,byte lastChangeAction) {
+             SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .lastChangeAction(lastChangeAction)
+            .build();
+        return baseMoneyPosition;
+
+    }
+
+
 
     // получаем данные от ценах от MarketData
     public Map<String, BigDecimal> getPriceFromMarketAllDataWithDate(String ListInst, String type, String date, int size) {
@@ -251,6 +309,16 @@ public class StpTrackingFeeSteps {
         managementFeeDao.insertIntoManagementFee(contractIdSlave, strategyId, subscriptionId, version,
             settlementPeriodStartedAt,settlementPeriodEndedAt, context);
     }
+
+
+
+    public void createResultFee(String contractIdSlave, UUID strategyId, long subscriptionId,
+                                    int version, Date settlementPeriodStartedAt, Date settlementPeriodEndedAt,
+                                    Context context, BigDecimal highWaterMark) {
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, version,
+            settlementPeriodStartedAt,settlementPeriodEndedAt, context, highWaterMark);
+    }
+
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
