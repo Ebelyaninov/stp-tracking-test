@@ -46,6 +46,17 @@ public class SlavePortfolioDao {
     }
 
 
+    public SlavePortfolio getLatestSlavePortfolio(String contractId, UUID strategyId, Date start, Date end) {
+        String query = "select * from invest_tracking.changed_at_slave_portfolio " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and changed_at >= ? " +
+            "  and changed_at < ? " +
+            "order by changed_at desc, version desc, compared_to_master_version desc";
+        return cqlTemplate.queryForObject(query, slavePortfolioRowMapper, contractId, strategyId, start, end);
+    }
+
+
     @SneakyThrows
     public Optional<SlavePortfolio> findLatestSlavePortfolio(String contractId, UUID strategyId) {
         String query = "select * " +

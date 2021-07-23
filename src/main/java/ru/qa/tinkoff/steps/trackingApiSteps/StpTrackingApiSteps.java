@@ -40,9 +40,12 @@ import static org.awaitility.Awaitility.await;
 @RequiredArgsConstructor
 public class StpTrackingApiSteps {
 
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
-    @Autowired(required = false)
-    ByteArrayReceiverService kafkaReceiver;
+
+
+    private final ByteArrayReceiverService kafkaReceiver;
     private final ContractService contractService;
     private final TrackingService trackingService;
     private final ClientService clientService;
@@ -58,8 +61,7 @@ public class StpTrackingApiSteps {
     Client clientSlave;
     Contract contractSlave;
 
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
-        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -70,6 +72,10 @@ public class StpTrackingApiSteps {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         return resAccount;
     }
+
+
+
+
 
     //Метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
@@ -176,7 +182,7 @@ public class StpTrackingApiSteps {
                                   String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId) {
         //находим данные по клиенту в БД social
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+//        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
@@ -205,15 +211,9 @@ public class StpTrackingApiSteps {
     }
 
 
-    public UUID uuid(ByteString bytes) {
-        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
-        return new UUID(buff.getLong(), buff.getLong());
-    }
-
-
     //создаем портфель master в cassandra с позицией
     public  void createMasterPortfolio(String contractIdMaster, UUID strategyId, List<MasterPortfolio.Position> positionList,
-                                       int version, String money, Date date) {
+                                           int version, String money, Date date) {
         //базовая валюта
         MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
             .quantity(new BigDecimal(money))
@@ -221,8 +221,17 @@ public class StpTrackingApiSteps {
             .build();
         //insert запись в cassandra
         masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version,
-            baseMoneyPosition, date,  positionList);
+        baseMoneyPosition, date,  positionList);
     }
+
+
+    public UUID uuid(ByteString bytes) {
+        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
+        return new UUID(buff.getLong(), buff.getLong());
+    }
+
+
+
 
 
     public List<MasterPortfolio.Position> masterOnePositions(Date date, String ticker, String tradingClearingAccount,

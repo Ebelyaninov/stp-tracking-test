@@ -98,6 +98,8 @@ public class ActivateStrategySuccessTest {
     @Autowired
     StpTrackingAdminSteps steps;
 
+
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
