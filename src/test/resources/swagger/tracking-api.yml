@@ -209,20 +209,8 @@ paths:
       operationId: getSignals
       parameters:
         - $ref: '#/components/parameters/StrategyId'
-        - name: cursor
-          description: Идентификатор элемента, с которого начинать выдачу результатов при формировании ответа
-          in: query
-          required: false
-          schema:
-            type: string
-            minLength: 1
-        - name: limit
-          description: Ограничение "сверху" на количество возвращаемых элементов данных
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
       responses:
         200:
           description: OK
@@ -457,6 +445,55 @@ paths:
         500:
           $ref: '#/components/responses/Error'
 
+  /strategy/catalog:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getStrategiesCatalog
+      description: Возвращает каталог торговых стратегий
+      operationId: getStrategiesCatalog
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: tabId
+          description: Идентификатор вкладки для фильтрации
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TabId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStrategiesCatalogResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
 components:
 
   headers:
@@ -577,6 +614,24 @@ components:
         maximum: 1
       example: 1
 
+    Cursor:
+      name: cursor
+      description: Идентификатор элемента, с которого начинать выдачу результатов при формировании ответа
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+
+    Limit:
+      name: limit
+      description: Ограничение "сверху" на количество возвращаемых элементов данных
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+
   responses:
 
     Error:
@@ -665,7 +720,7 @@ components:
     NullableCurrency:
       description: Валюта
       type: string
-      enum: [rub, usd]
+      enum: [ rub, usd ]
       # TODO: наследовать?
       nullable: true
 
@@ -789,7 +844,7 @@ components:
         action:
           description: Действие, на которое направлен торговый сигнал (покупка/продажа)
           type: string
-          enum: [buy, sell]
+          enum: [ buy, sell ]
         quantity:
           description: Количество единиц актива
           type: integer
@@ -1136,6 +1191,142 @@ components:
           description: Тип актива
           type: string
           enum: [ bond, share, etf, sp, currency, futures ]
+
+    TabId:
+      description: Идентификатор вкладки
+      type: string
+      pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+      minLength: 1
+      example: currency-rub
+
+    GetStrategiesCatalogResponse:
+      type: object
+      required:
+        - nextCursor
+        - hasNext
+        - items
+      properties:
+        nextCursor:
+          description: Крайний возвращённый в текущем ответе идентификатор элемента, который необходимо использовать при следующем запросе
+          type: string
+          minLength: 1
+          nullable: true
+        hasNext:
+          description: Признак наличия элементов, не вошедших в текущий ответ
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogStrategy'
+
+    CatalogStrategy:
+      description: Торговая стратегия в каталоге
+      type: object
+      required:
+        - id
+        - title
+        - baseCurrency
+        - riskProfile
+        - score
+        - owner
+        - relativeYield
+        - portfolioValues
+        - characteristics
+      properties:
+        id:
+          description: Идентификатор стратегии
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        title:
+          description: Название стратегии
+          type: string
+          minLength: 1
+          example: Ракета
+        baseCurrency:
+          $ref: '#/components/schemas/Currency'
+        riskProfile:
+          $ref: '#/components/schemas/StrategyRiskProfile'
+        score:
+          description: Оценка стратегии
+          type: integer
+          minimum: 1
+          maximum: 5
+        owner:
+          $ref: '#/components/schemas/CatalogStrategyOwner'
+        relativeYield:
+          description: Относительная доходность стратегии за все время (в процентах)
+          type: number
+          format: double
+        portfolioValues:
+          description: Стоимости виртуального портфеля
+          type: array
+          items:
+            type: number
+            format: double
+            minimum: 0
+        characteristics:
+          description: Характеристики стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogStrategyCharacteristic'
+
+    CatalogStrategyOwner:
+      description: Владелец стратегии
+      type: object
+      required:
+        - socialProfile
+      properties:
+        socialProfile:
+          $ref: '#/components/schemas/CatalogSocialProfile'
+
+    CatalogSocialProfile:
+      description: Социальный профиль в Пульсе
+      type: object
+      required:
+        - id
+        - nickname
+      properties:
+        id:
+          description: Идентификатор профиля
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        nickname:
+          description: Никнейм профиля
+          type: string
+          minLength: 1
+          example: trader
+        image:
+          description: Идентификатор аватара профиля автора
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    CatalogStrategyCharacteristic:
+      description: Характеристика торговой стратегии в каталоге
+      type: object
+      required:
+        - id
+        - value
+        - subtitle
+      properties:
+        id:
+          description: Идентификатор характеристики
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tail-value
+          minLength: 1
+        value:
+          description: Значение характеристики
+          type: string
+          minLength: 1
+          example: 250 000 $
+        subtitle:
+          description: Подзаголовок характеристики
+          type: string
+          minLength: 1
+          example: в управлении
 
     ErrorResponse:
       description: Ответ с ошибкой

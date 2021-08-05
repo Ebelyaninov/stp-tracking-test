@@ -5,6 +5,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
@@ -16,11 +17,8 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import java.util.*;
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MasterPortfolioValueDao {
@@ -91,6 +89,21 @@ public class MasterPortfolioValueDao {
             .from("master_portfolio_value")
             .where(QueryBuilder.eq("strategy_id", strategyId));
         cqlTemplate.execute(delete);
+    }
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public void deleteMasterPortfolioValueByStrategyIds(List<UUID> ids) {
+        if (ids.isEmpty()) {
+            log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
+        }
+        for (int i = 0; i < ids.size(); i++) {
+            Delete.Where delete = QueryBuilder.delete()
+                .from("master_portfolio_value")
+                .where(QueryBuilder.eq("strategy_id", ids.get(i)));
+            cqlTemplate.execute(delete);
+        }
+
     }
 
     @Step("Добавляем запись в master_portfolio_value")

@@ -149,7 +149,9 @@ tasks.compileJava {
         "generateTrackingCacheApi",
         "generateTrackingSlaveCacheApi",
         "generateFiregApi",
-        "generateMDApi")
+        "generateMDApi",
+        "generateSocialTrackingStrategy"
+    )
 }
 
 
@@ -342,6 +344,30 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
     apiPackage.set("$openApiPackage.MD.api")
     invokerPackage.set("$openApiPackage.MD.invoker")
     modelPackage.set("$openApiPackage.MD.model")
+    library.set("rest-assured")
+    generateModelDocumentation.set(false)
+    generateApiDocumentation.set(false)
+    configOptions.set(
+        mapOf(
+            "dateLibrary" to "java8",
+            "serializationLibrary" to "jackson"
+        )
+    )
+}
+
+tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateSocialTrackingStrategy") {
+    val openApiPackage = "ru.qa.tinkoff.swagger"
+    val path = "$buildDir/generated/sources/swagger"
+
+    inputSpec.set("$projectDir/src/test/resources/swagger/tracking-strategy-v1.yml")
+    outputDir.set(path)
+
+    generateApiTests.set(false)
+    skipValidateSpec.set(true)
+    generatorName.set("java")
+    apiPackage.set("$openApiPackage.tracking_socialTrackingStrategy.api")
+    invokerPackage.set("$openApiPackage.tracking_socialTrackingStrategy.invoker")
+    modelPackage.set("$openApiPackage.tracking_socialTrackingStrategy.model")
     library.set("rest-assured")
     generateModelDocumentation.set(false)
     generateApiDocumentation.set(false)
