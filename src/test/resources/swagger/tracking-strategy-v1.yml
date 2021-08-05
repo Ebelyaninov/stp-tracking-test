@@ -1,0 +1,393 @@
+openapi: 3.0.3
+
+info:
+  title: Tinkoff Investments Tracking strategy API
+  description: Tracking strategy API
+  contact:
+    name: Asya Tsvaeva
+    email: a.tsvaeva@tinkoff.ru
+  version: 1.0.0
+
+servers:
+  - url: https://invest-qa.tinkoff.ru/tracking/social-tracking-strategy/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
+
+tags:
+  - name: strategy
+    description: Торговая стратегия
+
+paths:
+
+  /strategy/{strategyId}/lite:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+      - $ref: '#/components/parameters/StrategyId'
+
+    get:
+      tags:
+        - strategy
+      summary: getLiteStrategy
+      description: Возвращает облегченные данные торговой стратегии {strategyId}
+      operationId: getLiteStrategy
+      security:
+        - apiKey: []
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLiteStrategyResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/lite:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getLiteStrategies
+      description: Возвращает облегченные данные списка торговых стратегий
+      operationId: getLiteStrategies
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLiteStrategiesResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+components:
+
+  securitySchemes:
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+
+  headers:
+
+    XTraceId:
+      description: Идентификатор ответа
+      schema:
+        type: string
+        minLength: 1
+      required: true
+
+    XServerTime:
+      description: Метка времени формирования ответа
+      schema:
+        type: string
+        format: date-time
+      required: true
+
+  parameters:
+
+    ApplicationName:
+      description: Название вызывающего приложения
+      name: x-app-name
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: investing
+
+    ApplicationVersion:
+      description: Версия вызывающего приложения
+      name: x-app-version
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      example: 5.0.0
+
+    Platform:
+      description: 'Платформа: "ios", "android", другое'
+      name: x-platform
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      example: android
+
+    DeviceId:
+      description: Идентификатор устройства
+      name: x-device-id
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+
+    B3TraceId:
+      description: Общий идентификатор трассировки
+      name: x-b3-traceid
+      in: header
+      required: false
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{16}$|^[a-f0-9]{32}$'
+      example: 5b23a9529c0f48bc5b23a9529c0f48bc
+
+    B3SpanId:
+      description: Позиция текущей операции в общем дереве трассировки
+      name: x-b3-spanid
+      in: header
+      required: false
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{16}$'
+      example: a2fb4a1d1a96d312
+
+    B3ParentSpanId:
+      description: Позиция родительской операции в общем дереве трассировки
+      name: x-b3-parentspanid
+      in: header
+      required: false
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{16}$'
+      example: a2fb4a1d1a96d312
+
+    B3Sampled:
+      description: Сэмплинг
+      name: x-b3-sampled
+      in: header
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 1
+      example: 1
+
+    StrategyId:
+      description: Идентификатор торговой стратегии
+      name: strategyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+  responses:
+
+    Error:
+      description: Error
+      headers:
+        x-trace-id:
+          $ref: '#/components/headers/XTraceId'
+        x-server-time:
+          $ref: '#/components/headers/XServerTime'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    GetLiteStrategyResponse:
+      allOf:
+        - $ref: '#/components/schemas/LiteStrategy'
+
+    LiteStrategy:
+      type: object
+      required:
+        - id
+        - title
+        - baseCurrency
+        - riskProfile
+        - score
+        - owner
+        - relativeYield
+        - portfolioValues
+        - characteristics
+      properties:
+        id:
+          description: Идентификатор стратегии
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        title:
+          description: Название стратегии
+          type: string
+          minLength: 1
+          example: Ракета
+        baseCurrency:
+          $ref: '#/components/schemas/Currency'
+        riskProfile:
+          $ref: '#/components/schemas/StrategyRiskProfile'
+        score:
+          description: Оценка стратегии
+          type: integer
+          minimum: 1
+          maximum: 5
+        owner:
+          $ref: '#/components/schemas/StrategyOwner'
+        relativeYield:
+          description: Относительная доходность стратегии за все время (в процентах)
+          type: number
+          format: double
+        portfolioValues:
+          description: Стоимости виртуального портфеля
+          type: array
+          items:
+            type: number
+            format: double
+            minimum: 0
+        characteristics:
+          description: Характеристики стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyCharacteristic'
+
+    Currency:
+      description: Валюта
+      type: string
+      enum: [rub, usd]
+
+    StrategyRiskProfile:
+      description: Риск-профиль стратегии
+      type: string
+      enum: [conservative, moderate, aggressive]
+
+    StrategyOwner:
+      description: Владелец стратегии
+      type: object
+      required:
+        - socialProfile
+      properties:
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfile'
+
+    SocialProfile:
+      description: Социальный профиль в Пульсе
+      type: object
+      required:
+        - id
+        - nickname
+      properties:
+        id:
+          description: Идентификатор профиля
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        nickname:
+          description: Никнейм профиля
+          type: string
+          minLength: 1
+          example: trader
+        image:
+          description: Идентификатор аватара профиля автора
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    StrategyCharacteristic:
+      type: object
+      required:
+        - id
+        - value
+        - subtitle
+      properties:
+        id:
+          description: Идентификатор характеристики
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tail-value
+          minLength: 1
+        value:
+          description: Значение характеристики
+          type: string
+          minLength: 1
+          example: 250 000 $
+        subtitle:
+          description: Подзаголовок характеристики
+          type: string
+          minLength: 1
+          example: в управлении
+
+    GetLiteStrategiesResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LiteStrategy'
+
+    ErrorResponse:
+      description: Ответ с ошибкой
+      type: object
+      required:
+        - errorId
+        - errorCode
+        - errorMessage
+      properties:
+        errorId:
+          description: Уникальный идентификатор ошибки
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: 02d55cabb05b44f0
+        errorCode:
+          description: Служебный код ошибки
+          type: string
+          minLength: 1
+          maxLength: 12
+          example: 0344-01-Z99
+        errorMessage:
+          description: Служебное описание ошибки
+          type: string
+          minLength: 1
+          example: Сервис временно недоступен
