@@ -26,6 +26,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
@@ -67,7 +68,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    KafkaAutoConfiguration.class
 })
 
 public class CreateStrategyErrorTest {
@@ -442,7 +444,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C271533() throws JSONException {
-        String title = "Тест стратегия CreateStrategy Autotest 009";
+        String title = "CreateStrategy Autotest 009";
         String description = "New test стратегия Autotest 009";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -482,7 +484,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266604(ClientStatusType clientStatusType) throws JSONException {
-        String title = "Тест стратегия CreateStrategy Autotest 010";
+        String title = "CreateStrategy Autotest 010";
         String description = "New test стратегия Autotest 010";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -525,7 +527,7 @@ public class CreateStrategyErrorTest {
         List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
         UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebelId.get(0).getId();
-        String title = "Тест стратегия CreateStrategy Autotest 011";
+        String title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -570,7 +572,7 @@ public class CreateStrategyErrorTest {
         List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotOpenAccountBySiebelId(siebelIdNotOpen);
         UUID investIdNotOpen = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
         String contractId = findValidAccountWithSiebelId.get(0).getId();
-        String title = "Тест стратегия CreateStrategy Autotest 012";
+        String title = "CreateStrategy Autotest 012";
         String description = "New test стратегия Autotest 012";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -609,7 +611,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266607() {
-        String title = "Тест стратегия CreateStrategy Autotest 013";
+        String title = "CreateStrategy Autotest 013";
         String description = "New test стратегия Autotest 013";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -744,7 +746,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C931443() {
-        String title = "Тест стратегия CreateStrategy Autotest 016";
+        String title = "CreateStrategy Autotest 016";
         String description = "New test стратегия Autotest 016";
         String positionRetentionId = "years";
         StrategyFeeRate feeRate = new StrategyFeeRate();

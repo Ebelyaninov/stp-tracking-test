@@ -157,7 +157,7 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "Тест стратегия Autotest 001 " + dateNow;
+        String title = "Autotest 001" + dateNow;
         String description = "New test стратегия Autotest 001 " + dateNow;
         String positionRetentionId = "days";
         StrategyFeeRate feeRate = new StrategyFeeRate();
@@ -206,7 +206,7 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "Тест стратегия Autotest 002 " + dateNow;
+        String title = "Autotest 002" + dateNow;
         String description = "New test стратегия Autotest 002 " + dateNow;
         String positionRetentionId = "days";
         StrategyFeeRate feeRate = new StrategyFeeRate();
@@ -265,7 +265,7 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "Тест стратегия Autotest 003 " + dateNow;
+        String title = "Autotest 003" + dateNow;
         String description = "New test стратегия Autotest 003 " + dateNow;
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.05);
@@ -319,7 +319,7 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "Тест стратегия Autotest 004 " + dateNow;
+        String title = "Autotest 004" + dateNow;
         String positionRetentionId = "days";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -348,36 +348,12 @@ public class CreateStrategySuccessTest {
             .xDeviceIdHeader("new")
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .body(request)
-            .respSpec(spec -> spec.expectStatusCode(200))
+            .respSpec(spec -> spec.expectStatusCode(400))
             //.execute(response -> response.as(CreateStrategyResponse.class));
             .execute(response -> response);
-        //Достаем из response идентификатор стратегии
-        strategyId = UUID.fromString(expectedResponse.getBody().asString().substring(19, 55));
-        //Проверяем мета-данные response, x-trace-id не пустое значение, x-server-time текущее время до минут
-        assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
-        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
-        //Находим в БД автоследования созданный контракт и Проверяем его поля
-        contract = contractService.getContract(contractId);
-        checkParamContract(contractId, investId, "untracked");
-        //Находим в БД автоследования стратегию и Проверяем ее поля
-        strategy = strategyService.getStrategy(strategyId);
-        assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
-        assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
-        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is(IsNull.nullValue()));
-        assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
-        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(StrategyRiskProfile.CONSERVATIVE.toString()));
-        assertThat("кол-во подписок на договоре не равно", strategy.getSlavesCount(), is(0));
-        //Находим запись о портфеле мастера в Cassandra
-        await().atMost(FIVE_SECONDS).until(() ->
-            masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
-        checkParamMasterPortfolio(1, baseMoney);
-        //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
-        await().atMost(FIVE_SECONDS).until(() ->
-            masterPortfolioPositionRetention =
-                masterPortfolioPositionRetentionDao.getMasterPortfolioPositionRetention(strategyId), notNullValue());
-        checkParamMasterPortfolioPositionRetention(positionRetentionId);
+
+        assertThat("номера стратегии не равно", expectedResponse.getBody().jsonPath().get("errorCode"), is("Error"));
+        assertThat("номера стратегии не равно", expectedResponse.getBody().jsonPath().get("errorMessage"), is("Сервис временно недоступен"));
     }
 
 
@@ -387,8 +363,8 @@ public class CreateStrategySuccessTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441790() {
-        String title = "  Тест стратегия Autotest 005  ";
-        String titleNew = "Тест стратегия Autotest 005";
+        String title = "  Autotest 005  ";
+        String titleNew = "Autotest 005";
         String description = "  New test стратегия Autotest 005  ";
         String positionRetentionId = "days";
         StrategyFeeRate feeRate = new StrategyFeeRate();
@@ -442,7 +418,7 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "Тест стратегия Autotest 006 " + dateNow;
+        String title = "Autotest 006" + dateNow;
         String description = "New test стратегия Autotest 006 " + dateNow;
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -487,7 +463,7 @@ public class CreateStrategySuccessTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C615712() throws Exception {
         String SIEBEL_ID = "5-20IBIUPTE";
-        String title = "Тест стратегия Autotest 007 - INITIALIZE";
+        String title = "Тест стратегия 007";
         String description = "Тew test стратегия Autotest 007 - INITIALIZE";
         String positionRetentionId = "days";
         Tracking.PortfolioCommand portfolioCommand = null;

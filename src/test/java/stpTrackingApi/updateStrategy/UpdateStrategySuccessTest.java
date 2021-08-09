@@ -223,7 +223,7 @@ public class UpdateStrategySuccessTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
         UUID strategyId = UUID.randomUUID();
-        String title = "  Тест стратегия автотестов 01    ";
+        String title = "  Тест стратегия 01    ";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -259,7 +259,7 @@ public class UpdateStrategySuccessTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов 01"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия 01"));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
         assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
