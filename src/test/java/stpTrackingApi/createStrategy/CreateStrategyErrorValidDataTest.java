@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -41,6 +42,8 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,7 +62,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    KafkaAutoConfiguration.class
 })
 public class CreateStrategyErrorValidDataTest {
     @Autowired
@@ -85,19 +89,25 @@ public class CreateStrategyErrorValidDataTest {
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
-            сontractService.deleteContract(contract);
-            clientService.deleteClient(client);
+            try {
+                сontractService.deleteContract(contract);
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(client);
+            } catch (Exception e) {
+            }
         });
     }
 
     @SneakyThrows
     @Test
     @AllureId("435867")
-    @DisplayName("C435867.CreateStrategy.Валидация запроса: title > 50 символов")
+    @DisplayName("C435867.CreateStrategy.Валидация запроса: title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C435867() {
-        String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        String title = "общий, недетализированный план.";
         String description = "new test стратегия autotest CreateStrategy007";
         StrategyFeeRate feeRate = new StrategyFeeRate();
         feeRate.setManagement(0.04);
@@ -119,21 +129,56 @@ public class CreateStrategyErrorValidDataTest {
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios 8.1")
             .body(request)
-            .respSpec(spec -> spec.expectStatusCode(500));
+            .respSpec(spec -> spec.expectStatusCode(422));
         createStrategy.execute(ResponseBodyData::asString);
         JSONObject jsonObject = new JSONObject(createStrategy.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-        //Находим в БД автоследования созданный контракт и Проверяем его поля
-        contract = сontractService.getContract(contractId);
-        assertThat("номера договоров не равно", contract.getId(), is(contractId));
-        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
-        assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));
-        assertThat("стратегия не равно null", (contract.getStrategyId()), is(nullValue()));
-        Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
-        assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Некорректное название для стратегии"));
+    }
+
+    @Test
+    @AllureId("1138040")
+    @DisplayName("С1138040.CreateStrategy. Валидация запроса: отсутствие параметра description")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод создания стратегии на договоре ведущего")
+    void C1138040() {
+
+        String title = "Autotest 004";
+        String positionRetentionId = "days";
+        StrategyFeeRate feeRate = new StrategyFeeRate();
+        feeRate.setManagement(0.04);
+        feeRate.setResult(0.2);
+        //Находим investId клиента через API сервиса счетов
+        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
+        UUID investId = brokerAccount.getInvestId();
+        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
+        //Создаем клиента в табл. client
+        createClient(investId, ClientStatusType.registered, null);
+        //Формируем тело запроса
+        BigDecimal baseMoney = new BigDecimal("3000.0");
+        CreateStrategyRequest request = new CreateStrategyRequest();
+        request.setContractId(contractId);
+        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB);
+        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE);
+        request.setTitle(title);
+        request.setBaseMoneyPositionQuantity(baseMoney);
+        request.setPositionRetentionId(positionRetentionId);
+        request.setFeeRate(feeRate);
+        //Вызываем метод CreateStrategy
+        Response expectedResponse = strategyApi.createStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response);
+
+        assertThat("номера стратегии не равно", expectedResponse.getBody().jsonPath().get("errorCode"), is("Error"));
+        assertThat("номера стратегии не равно", expectedResponse.getBody().jsonPath().get("errorMessage"), is("Сервис временно недоступен"));
     }
 
     @SneakyThrows
