@@ -113,7 +113,7 @@ public class GetStrategiesCatalogTest {
 
 
     String siebelIdMaster1 = "1-7XOAYPX";
-    String siebelIdMaster2 = "5-3EWMDJD8";
+    String siebelIdMaster2 = "5-234PFFTBK";
     String siebelIdMaster3 = "4-1OQ8F0QG";
     String xApiKey = "x-api-key";
     String key = "stp-tracking";
@@ -330,7 +330,6 @@ public class GetStrategiesCatalogTest {
                 contractIds.add(contractId);
                 clientIds.add(investId);
             }
-
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
             GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
                 .xAppNameHeader("invest")

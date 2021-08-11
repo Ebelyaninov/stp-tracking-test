@@ -818,6 +818,118 @@ public class CalculateMasterPortfolioRateTest {
     }
 
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("966227")
+    @DisplayName("C966227.CalculateMasterPortfolioRat.Расчет долей виртуального портфеля")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
+    void C966227___111() {
+
+        String tickerShare = "SBER";
+        String tradingClearingAccountShare = "NDS000000001";
+        String quantityShare = "30";
+
+        String tickerEtf = "FXDE";
+        String tradingClearingAccountEtf = "NDS000000001";
+        String quantityEtf = "5";
+
+        String tickerBond = "SU29009RMFS6";
+        String tradingClearingAccountBond = "NDS000000001";
+        String quantityBond = "7";
+
+        String tickerMoney = "USD000UTSTOM";
+        String tradingClearingAccountMoney = "MB9885503216";
+        String quantityMoney = "2000";
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        String baseMoney = "16551.10";
+        BigDecimal minPriceIncrement = new BigDecimal("0.001");
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_MASTER)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позициями в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(tickerShare)
+            .tradingClearingAccount(tradingClearingAccountShare)
+            .quantity(new BigDecimal(quantityShare))
+            .changedAt(date)
+            .lastChangeDetectedVersion(7)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(tickerEtf)
+            .tradingClearingAccount(tradingClearingAccountEtf)
+            .quantity(new BigDecimal(quantityEtf))
+            .changedAt(date)
+            .lastChangeDetectedVersion(7)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(tickerBond)
+            .tradingClearingAccount(tradingClearingAccountBond)
+            .quantity(new BigDecimal(quantityBond))
+            .changedAt(date)
+            .lastChangeDetectedVersion(7)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(tickerMoney)
+            .tradingClearingAccount(tradingClearingAccountMoney)
+            .quantity(new BigDecimal(quantityMoney))
+            .changedAt(date)
+            .lastChangeDetectedVersion(7)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+
+        MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal("6259.17"))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, 7, baseMoneyPosition, date, positionList);
+
+        createMasterPortfolios();
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_RATE, strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+
+        //Проверяем параметры
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+    }
+
+
+
+
+
 //методы для работы тестов*******************************************************************************
 
     Map<PositionDateFromFireg, BigDecimal> getPositionsMap(Map<String, BigDecimal> pricesPos, String nominal,

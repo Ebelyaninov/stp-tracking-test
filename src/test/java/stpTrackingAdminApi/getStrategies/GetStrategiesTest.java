@@ -71,8 +71,8 @@ import static org.hamcrest.Matchers.nullValue;
 })
 public class GetStrategiesTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     @Autowired
     BillingService billingService;
@@ -118,9 +118,7 @@ public class GetStrategiesTest {
         return Stream.of(
             Arguments.of(1),
             Arguments.of(2),
-            Arguments.of(5),
-            Arguments.of(12)
-
+            Arguments.of(5)
         );
     }
 
@@ -157,13 +155,7 @@ public class GetStrategiesTest {
         UUID strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
@@ -212,13 +204,7 @@ public class GetStrategiesTest {
         UUID strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
@@ -253,13 +239,7 @@ public class GetStrategiesTest {
         UUID strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active

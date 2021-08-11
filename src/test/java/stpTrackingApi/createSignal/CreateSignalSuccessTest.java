@@ -111,8 +111,7 @@ public class CreateSignalSuccessTest {
     String contractIdMaster;
     int versionNew;
     String ticker = "XS0587031096";
-//    String tradingClearingAccount = "L01+00000SPB";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String SIEBEL_ID = "1-1P424JS";
 
     @AfterEach

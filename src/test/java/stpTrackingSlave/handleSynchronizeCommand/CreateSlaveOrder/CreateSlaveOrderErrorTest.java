@@ -182,7 +182,7 @@ public class CreateSlaveOrderErrorTest {
         String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
         contractIdSlave = "2047111824";
         String ticker = "BANEP";
-        String tradingClearingAccount = "NDS000000001";
+        String tradingClearingAccount = "L01+00002F00";
         String classCode = "TQBR";
         steps.createDataToMarketData(ticker, classCode, "1356.5", "1356.5", "1356.5");
         String title = "тест стратегия autotest";
@@ -246,7 +246,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2015430701";
         String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
         String ticker = "ABBV";
-        String tradingClearingAccount = "NDS000000001";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBXM";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "90", "90", "87");
@@ -306,7 +306,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2015430701";
         String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
         String ticker = "ABBV";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBXM";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "101.82", "100.82");
@@ -367,7 +367,7 @@ public class CreateSlaveOrderErrorTest {
         String SIEBEL_ID_SLAVE = "5-N5UZCQZJ";
         contractIdSlave = "2055557934";
         String ticker = "RETA";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBXM";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "90", "90");
@@ -426,7 +426,7 @@ public class CreateSlaveOrderErrorTest {
         String SIEBEL_ID_SLAVE = "5-18C9NQC0R";
         contractIdSlave = "2006508531";
         String ticker = "ABBV";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBXM";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "90", "90", "87");

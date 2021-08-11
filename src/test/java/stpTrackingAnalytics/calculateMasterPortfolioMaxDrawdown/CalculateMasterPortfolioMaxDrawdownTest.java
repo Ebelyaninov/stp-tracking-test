@@ -136,6 +136,10 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
                 masterPortfolioMaxDrawdownDao.deleteMasterPortfolioMaxDrawdownByStrategyId(strategyId);
             } catch (Exception e) {
             }
+            try {
+                masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
 
         });
     }

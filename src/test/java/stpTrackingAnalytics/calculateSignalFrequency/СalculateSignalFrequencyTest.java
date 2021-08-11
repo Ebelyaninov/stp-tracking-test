@@ -81,6 +81,18 @@ public class СalculateSignalFrequencyTest {
 
 
 
+    final String tickerNok = "NOK";
+    final String tradingClearingAccountNok = "TKCBM_TCAB";
+
+    final String tickerGazprom = "XS0191754729";
+    final String tradingClearingAccountGazprom = "L01+00002F00";
+
+    final String tickerAbbV = "ABBV";
+    final String tradingClearingAccountAbbV = "TKCBM_TCAB";
+
+    final String tickerApple = "AAPL";
+    final String tradingClearingAccountApple = "TKCBM_TCAB";
+
 
     @AfterEach
     void deleteClient() {
@@ -226,11 +238,11 @@ public class СalculateSignalFrequencyTest {
         assertThat("частота создания сигналов по стратегии не равно", signalFrequency.getCount(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
 
-        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(29 , 2, 4,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.98", "7", 12);
-        createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(5 , 4, 5,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
-        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(4 , 2, 6,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
 
 
@@ -255,19 +267,19 @@ public class СalculateSignalFrequencyTest {
         strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
-        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(31 , 1, 2,   strategyId, tickerNok, tradingClearingAccountNok,
             "4.07", "4", 12);
-        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(30 , 2, 3,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "6", 11);
-        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(29 , 2, 4,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.98", "7", 12);
-        createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(5 , 4, 5,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
-        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(4 , 2, 6,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
-        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(3 , 1, 7,   strategyId, tickerAbbV, tradingClearingAccountApple,
             "90.18",  "3", 11);
-        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "L01+00000F00",
+        createMasterSignal(2 , 1, 8,   strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18",  "1", 12);
         Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
@@ -297,11 +309,11 @@ public class СalculateSignalFrequencyTest {
         assertThat("частота создания сигналов не равно", signalFrequency.getCount(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //добавляем еще сигналы
-        createMasterSignal(1 , 1, 9,   strategyId, "ABBV", "L01+00000SPB",
+        createMasterSignal(1 , 1, 9,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "2", 12);
-        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 2, 10,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.17", "4", 12);
-        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "L01+00000SPB",
+        createMasterSignal(0 , 1, 11,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.09", "4", 12);
         Thread.sleep(3000);
         //отправляем событие в топик kafka tracking.analytics.command повторно
@@ -390,25 +402,25 @@ public class СalculateSignalFrequencyTest {
 
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(31 , 1, 2,   strategyId, tickerNok, tradingClearingAccountNok,
             "4.07", "4", 12);
-        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "NDS000000001",
+        createMasterSignal(30 , 2, 3,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "6", 11);
-        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(29 , 2, 4,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.98", "7", 12);
-        createMasterSignal(5 , 4, 5,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(5 , 4, 5,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
-        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
+        createMasterSignal(4 , 2, 6,   strategyId, tickerApple, tradingClearingAccountApple,
             "107.81",  "1", 12);
-        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "NDS000000001",
+        createMasterSignal(3 , 1, 7,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "3", 11);
-        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "NDS000000001",
+        createMasterSignal(2 , 1, 8,   strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18",  "1", 12);
-        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "NDS000000001",
+        createMasterSignal(1 , 4, 9,   strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18",  "1", 12);
-        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(0 , 2, 10,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.17", "4", 12);
-        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(0 , 1, 11,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.09", "4", 12);
     }
 
@@ -416,9 +428,9 @@ public class СalculateSignalFrequencyTest {
 
 
     void createTestDateToMasterSignalRepeat(UUID strategyId) {
-        createMasterSignal(31 , 1, 2,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(31 , 1, 2,   strategyId, tickerNok, tradingClearingAccountNok,
             "4.07", "4", 12);
-        createMasterSignal(30 , 2, 3,   strategyId, "ABBV", "NDS000000001",
+        createMasterSignal(30 , 2, 3,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "6", 11);
 //        createMasterSignal(29 , 2, 4,   strategyId, "NOK", "L01+00000SPB",
 //            "3.98", "7", 12);
@@ -426,15 +438,15 @@ public class СalculateSignalFrequencyTest {
 //            "107.81",  "1", 12);
 //        createMasterSignal(4 , 2, 6,   strategyId, "AAPL", "L01+00000SPB",
 //            "107.81",  "1", 12);
-        createMasterSignal(3 , 1, 7,   strategyId, "ABBV", "NDS000000001",
+        createMasterSignal(3 , 1, 7,   strategyId, tickerAbbV, tradingClearingAccountAbbV,
             "90.18",  "3", 11);
-        createMasterSignal(2 , 1, 8,   strategyId, "XS0191754729", "NDS000000001",
+        createMasterSignal(2 , 1, 8,   strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18",  "1", 12);
-        createMasterSignal(1 , 4, 9,   strategyId, "XS0191754729", "NDS000000001",
+        createMasterSignal(1 , 4, 9,   strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18",  "1", 12);
-        createMasterSignal(0 , 2, 10,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(0 , 2, 10,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.17", "4", 12);
-        createMasterSignal(0 , 1, 11,   strategyId, "NOK", "NDS000000001",
+        createMasterSignal(0 , 1, 11,   strategyId, tickerNok, tradingClearingAccountNok,
             "3.09", "4", 12);
     }
 

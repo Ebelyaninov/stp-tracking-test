@@ -140,7 +140,9 @@ public class HandleActualizeCommandErrorTest {
     String contractIdMaster;
     String ticker = "AAPL";
     String classCode = "SPBXM";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
+
+
     String contractIdSlave;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
@@ -233,20 +235,79 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C731507() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту master в api сервиса счетов
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-//        //формируем команду на актуализацию для slave
+//        //формируем команду на актуализацию для Master
 //        //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdMaster, 2,
+            OffsetDateTime.now(), Tracking.Portfolio.Action.ADJUST, false);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdMaster, command);
+        //получаем портфель slave
+        Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdMaster, strategyId);
+        assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("731508")
+    @DisplayName("C731508.HandleActualizeCommand.Статус договора state = 'tracked' И blocked = true")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C731508() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
+        String description = "description test стратегия autotest update adjust base currency";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку на стратегию для slave
+        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        contract = contractService.getContract(contractIdSlave);
+        contract.setBlocked(true);
+        contractService.saveContract(contract);
+        //создаем событие
+        OffsetDateTime now = OffsetDateTime.now();
+        Tracking.Event event = Tracking.Event.newBuilder()
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setAction(Tracking.Event.Action.UPDATED)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .setContract(Tracking.Contract.newBuilder()
+                .setId(contractIdSlave)
+                .setState(Tracking.Contract.State.TRACKED)
+                .setBlocked(true)
+                .build())
+            .build();
+        log.info("Команда в tracking.event:  {}", event);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = event.toByteArray();
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
+//        //формируем команду на актуализацию для slave
+//        //передаем только базовую валюту
+        Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2,
             OffsetDateTime.now(), Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
@@ -262,7 +323,8 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1052282() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -355,7 +417,8 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1052370() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -411,11 +474,12 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1052844() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "NDS000000001";
+        String tradingClearingAccount2 = "TKCBM_TCAB";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -469,7 +533,8 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля." +
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, параметр delayed_correction != true")
     void C1055673() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -544,8 +609,9 @@ public class HandleActualizeCommandErrorTest {
     void C1057852() {
         String SIEBEL_ID_SLAVE = "1-1IE1IUG";
         String ticker = "YNDX";
-        String tradingClearingAccount ="Y02+00001F00";
-        String title = "тест стратегия autotest update base currency";
+        String tradingClearingAccount ="L01+00002F00";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -623,7 +689,8 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C731545() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -670,7 +737,8 @@ public class HandleActualizeCommandErrorTest {
     void C748477() {
         String ticker = "PTCTT";
         String tradingClearingAccount = "L01+00000SPB";
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -724,11 +792,12 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C742690() {
         String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         String ticker = "AAPL";
         String classCode = "SPBXM";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         BigDecimal lot = new BigDecimal("1");
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
@@ -829,14 +898,15 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C857703() {
         String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         String ticker = "AAPL";
         String classCode = "SPBXM";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "NDS000000001";
+        String tradingClearingAccount2 = "TKCBM_TCAB";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         steps.createDataToMarketData(ticker2, classCode2, "90", "90", "87");
@@ -942,14 +1012,15 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C857730() {
         String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         String ticker = "AAPL";
         String classCode = "SPBXM";
-        String tradingClearingAccount = "L01+00000SPB";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String ticker2 = "ABBV";
         String classCode2 = "SPBXM";
-        String tradingClearingAccount2 = "NDS000000001";
+        String tradingClearingAccount2 = "TKCBM_TCAB";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();

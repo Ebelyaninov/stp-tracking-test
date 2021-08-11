@@ -31,6 +31,7 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
@@ -83,6 +84,9 @@ public class CreateStrategyErrorTest {
     StrategyService strategyService;
     @Autowired
     ProfileService profileService;
+    @Autowired
+    StpTrackingApiSteps steps;
+
     Client client;
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     String SIEBEL_ID = "1-5RLRHAS";

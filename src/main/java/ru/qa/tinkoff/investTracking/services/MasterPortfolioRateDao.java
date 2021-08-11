@@ -7,12 +7,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioRate;
 
 import ru.qa.tinkoff.investTracking.rowmapper.LongOnlyValueMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioRateRowMapper;
 
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,5 +61,20 @@ public class MasterPortfolioRateDao {
         }
         return Optional.of(result.get(0));
 
+    }
+
+
+    @Step("Добавляем запись в master_portfolio_rate")
+    @SneakyThrows
+    public void insertIntoMasterPortfolioRate(MasterPortfolioRate masterPortfolioRate) {
+        String query = "insert into invest_tracking.master_portfolio_rate (strategy_id, cut, companies, sectors, types) " +
+            "values (?, ?, ?, ?, ?)";
+        LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(), ZoneId.systemDefault());
+        Timestamp timestamp = Timestamp.valueOf(ldt);
+        cqlTemplate.execute(query, masterPortfolioRate.getStrategyId(),
+            timestamp,
+            masterPortfolioRate.getCompanyToRateMap(),
+            masterPortfolioRate.getSectorToRateMap(),
+            masterPortfolioRate.getTypeToRateMap());
     }
 }

@@ -114,7 +114,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
     String ticker = "AAPL";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
 
 
@@ -176,8 +176,9 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739012() {
         String ticker = "TECH";
-        String tradingClearingAccount = "NDS000000001";
-        String title = "тест стратегия autotest update base currency";
+        String tradingClearingAccount = "L01+00002F00";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -235,9 +236,10 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739015() {
         String ticker = "WLH";
-        String tradingClearingAccount = "NDS000000001";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBXM";
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "108.09", "107.79");
@@ -297,7 +299,8 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739006() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -343,7 +346,8 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739008() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

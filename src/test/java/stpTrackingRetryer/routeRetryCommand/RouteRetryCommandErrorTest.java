@@ -129,7 +129,7 @@ public class RouteRetryCommandErrorTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
 
     @AfterEach
@@ -190,7 +190,8 @@ public class RouteRetryCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C783337() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -259,7 +260,8 @@ public class RouteRetryCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C783369() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -356,7 +358,8 @@ public class RouteRetryCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C783363() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

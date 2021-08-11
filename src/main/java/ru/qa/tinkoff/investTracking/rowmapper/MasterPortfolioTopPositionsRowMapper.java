@@ -6,6 +6,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 import org.springframework.data.cassandra.core.cql.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
+import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.TopPosition;
 
 import java.util.List;
@@ -20,7 +21,9 @@ public class MasterPortfolioTopPositionsRowMapper implements RowMapper<MasterPor
         return MasterPortfolioTopPositions.builder()
             .strategyId(row.getUUID("strategy_id"))
             .cut(row.get("cut", java.util.Date.class))
-            .positions(positionsFromUdtValues(row.getList("positions", UDTValue.class)))
+            .positions(row.getList("positions", MasterPortfolioTopPositions.TopPositions.class))
+//            .baseMoneyPosition(row.get("base_money_position", SlavePortfolio.BaseMoneyPosition.class))
+//            .positions(positionsFromUdtValues(row.getList("positions", UDTValue.class)))
             .build();
     }
 

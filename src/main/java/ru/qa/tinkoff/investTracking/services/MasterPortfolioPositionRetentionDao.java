@@ -7,10 +7,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioPositionRetentionRowMapper;
 
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.UUID;
 
@@ -48,5 +52,16 @@ public class MasterPortfolioPositionRetentionDao {
             .from("master_portfolio_position_retention")
             .where(QueryBuilder.eq("strategy_id", strategy));
         cqlTemplate.execute(delete);
+    }
+
+    @Step("Добавляем запись в master_portfolio_position_retention")
+    @SneakyThrows
+    public void insertIntoMasterPortfolioPositionRetention(MasterPortfolioPositionRetention masterPortfolioPositionRetention) {
+        String query = "insert into invest_tracking.master_portfolio_position_retention (strategy_id, cut, value) " +
+            "values (?, ?, ?)";
+        LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioPositionRetention.getCut().toInstant(), ZoneId.systemDefault());
+        Timestamp timestamp = Timestamp.valueOf(ldt);
+        cqlTemplate.execute(query, masterPortfolioPositionRetention.getStrategyId(), timestamp,
+            masterPortfolioPositionRetention.getValue());
     }
 }

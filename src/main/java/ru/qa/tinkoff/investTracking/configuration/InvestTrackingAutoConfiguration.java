@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.cassandra.config.AbstractCqlTemplateConfiguration;
 import org.springframework.data.cassandra.config.ClusterBuilderConfigurer;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 
 @Configuration
@@ -78,6 +79,7 @@ public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfigur
         mappingManager.udtCodec(MasterPortfolio.BaseMoneyPosition.class);
         mappingManager.udtCodec(SlavePortfolio.Position.class);
         mappingManager.udtCodec(SlavePortfolio.BaseMoneyPosition.class);
+        mappingManager.udtCodec(MasterPortfolioTopPositions.TopPositions.class);
         return mappingManager;
     }
 

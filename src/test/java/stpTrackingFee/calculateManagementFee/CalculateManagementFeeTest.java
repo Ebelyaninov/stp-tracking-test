@@ -125,14 +125,14 @@ public class CalculateManagementFeeTest {
     String siebelIdSlave = "5-1P87U0B13";
 
     String ticker1 = "SBER";
-    String tradingClearingAccount1 = "NDS000000001";
+    String tradingClearingAccount1 = "L01+00002F00";
 //    String tradingClearingAccount1 = "L01+00000F00";
     String classCode1 = "TQBR";
     String instrumet1 = ticker1 + "_" + classCode1;
     String quantity1 = "20";
 
     String ticker2 = "SU29009RMFS6";
-    String tradingClearingAccount2 = "NDS000000001";
+    String tradingClearingAccount2 = "L01+00002F00";
 //    public String tradingClearingAccount2 = "L01+00000F00";
     String quantity2 = "5";
     String classCode2 = "TQOB";
@@ -141,7 +141,7 @@ public class CalculateManagementFeeTest {
 
 
     String ticker3 = "YNDX";
-    String tradingClearingAccount3 = "NDS000000001";
+    String tradingClearingAccount3 = "L01+00002F00";
 //    String tradingClearingAccount3 = "L01+00000F00";
     String classCode3 = "TQBR";
     String instrumet3 = ticker3 + "_" + classCode3;

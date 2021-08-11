@@ -7,9 +7,13 @@ import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.rowmapper.LongOnlyValueMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioMaxDrawdownRowMapper;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Component
@@ -35,5 +39,16 @@ public class MasterPortfolioMaxDrawdownDao {
             .from("master_portfolio_max_drawdown")
             .where(QueryBuilder.eq("strategy_id", strategyId));
         cqlTemplate.execute(delete);
+    }
+
+    @Step("Добавляем запись в master_portfolio_max_drawdown")
+    @SneakyThrows
+    public void insertIntoMasterPortfolioMaxDrawdown(MasterPortfolioMaxDrawdown masterPortfolioMaxDrawdown) {
+        String query = "insert into invest_tracking.master_portfolio_max_drawdown (strategy_id, cut, value) " +
+            "values (?, ?, ?)";
+        LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioMaxDrawdown.getCut().toInstant(), ZoneId.systemDefault());
+        Timestamp timestamp = Timestamp.valueOf(ldt);
+        cqlTemplate.execute(query, masterPortfolioMaxDrawdown.getStrategyId(), timestamp,
+            masterPortfolioMaxDrawdown.getValue());
     }
 }
