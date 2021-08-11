@@ -108,7 +108,7 @@ public class StpTrackingSlaveSteps {
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
-        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
 
         strategy = new Strategy()
@@ -168,7 +168,7 @@ public class StpTrackingSlaveSteps {
         String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
     }
 
-    String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
+  public   String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
 
         Response res = pricesApi.mdInstrumentPrices()
             .instrumentIdPath(instrumentId)
@@ -223,6 +223,57 @@ public class StpTrackingSlaveSteps {
                 Map<String, Object> keyMap = e.get("key");
                 Map<String, Object> valueMap = e.get("value");
                 if ((ticker.equals(keyMap.get("ticker"))) & (type.equals(keyMap.get("priceType")))) {
+                    price = valueMap.get("price").toString();
+                    break;
+                }
+            }
+
+        }
+
+        return price;
+    }
+
+
+    public String getPriceFromExchangePositionPriceCacheAll(String ticker, String type, String tradingClearingAccount) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache по певой ноде
+        Response resCacheNodeZero = cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+
+        ArrayList<Map<String, Map<String, Object>>> lastPriceMapListPodsZero = resCacheNodeZero.getBody().jsonPath().get();
+        for (Map<String, Map<String, Object>> e : lastPriceMapListPodsZero) {
+            Map<String, Object> keyMap = e.get("key");
+            Map<String, Object> valueMap = e.get("value");
+            if ((ticker.equals(keyMap.get("ticker"))) & (type.equals(keyMap.get("priceType")))
+                & (tradingClearingAccount.equals(keyMap.get("tradingClearingAccount")))) {
+                price = valueMap.get("price").toString();
+                break;
+            }
+        }
+        if ("".equals(price)) {
+            Response resCacheNodeOne = cacheApi.getAllEntities()
+                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader("magic-number", "1"))
+                .cacheNamePath("exchangePositionPriceCache")
+                .xAppNameHeader("tracking")
+                .xAppVersionHeader("4.5.6")
+                .xPlatformHeader("ios")
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response);
+
+            ArrayList<Map<String, Map<String, Object>>> lastPriceMapList = resCacheNodeOne.getBody().jsonPath().get();
+            for (Map<String, Map<String, Object>> e : lastPriceMapList) {
+                Map<String, Object> keyMap = e.get("key");
+                Map<String, Object> valueMap = e.get("value");
+                if ((ticker.equals(keyMap.get("ticker"))) & (type.equals(keyMap.get("priceType")))
+                    & (tradingClearingAccount.equals(keyMap.get("tradingClearingAccount")))) {
                     price = valueMap.get("price").toString();
                     break;
                 }

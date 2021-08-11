@@ -117,6 +117,26 @@ public class AnalyzePortfolioErrorTest {
     String SIEBEL_ID_SLAVE = "4-1O6RYOAP";
 
 
+
+
+    final String tickerMinfin = "XS0088543190";
+    final String tradingClearingAccountMinfin = "L01+00002F00";
+
+    final String tickerMinfinRU = "RU000A0JXU14";
+    final String tradingClearingAccountMinfinRU = "L01+00002F00";
+
+    final String tickerINFN = "INFN";
+    final String tradingClearingAccountINFN = "NDS000000001";
+
+    final String tickerApple = "AAPL";
+    final String tradingClearingAccountApple = "TKCBM_TCAB";
+
+    final String tickerYandex = "YNDX";
+    final String tradingClearingAccountYandex = "L01+00002F00";
+
+    final String tickerBRJ1 = "BRJ1";
+    final String tradingClearingAccountBRJ1 = "TB00";
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -176,7 +196,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C681110() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -192,7 +213,7 @@ public class AnalyzePortfolioErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
             "2.0", "TEST", "NDS000000001", "2.0", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
@@ -221,7 +242,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C875206() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -238,7 +260,7 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -267,7 +289,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C682320() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -284,8 +307,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "YNDX", "NDS000000001", "2.0", date, 3,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
+            "2.0", tickerYandex, tradingClearingAccountYandex, "2.0", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -312,7 +335,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872438() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -329,14 +353,14 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("YNDX", "NDS000000001",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerYandex, tradingClearingAccountYandex,
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -360,7 +384,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872622() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -377,8 +402,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "XS0088543190", "NDS000000001", "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
+            "2.0", tradingClearingAccountMinfin, tradingClearingAccountMinfin, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -408,7 +433,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872630() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -425,14 +451,14 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("XS0088543190", "L01+00002F00",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfin, tradingClearingAccountMinfin,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -453,7 +479,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872642() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -470,8 +497,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "BRJ1", "NDS000000001", "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
+            "2.0", tradingClearingAccountBRJ1, tradingClearingAccountBRJ1, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -498,7 +525,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872663() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -515,14 +543,14 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("BRJ1", "NDS000000001",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerBRJ1, tradingClearingAccountBRJ1,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -544,7 +572,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C874591() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -561,8 +590,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "RU000A0JXU14", "L01+00002F00", "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
+            "2.0", tradingClearingAccountMinfinRU, tradingClearingAccountMinfinRU, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -590,7 +619,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C874637() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -607,14 +637,14 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos("AAPL", "L01+00000SPB",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("RU000A0JXU14", "L01+00002F00",
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfinRU, tradingClearingAccountMinfinRU,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -635,7 +665,8 @@ public class AnalyzePortfolioErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C682333() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -652,8 +683,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos("AAPL", "L01+00000SPB",
-            "2.0", "SMG", "NDS000000001", "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
+            "2.0", tickerINFN, tradingClearingAccountINFN, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave

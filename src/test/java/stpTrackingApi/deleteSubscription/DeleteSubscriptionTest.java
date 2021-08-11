@@ -2,6 +2,7 @@ package stpTrackingApi.deleteSubscription;
 
 
 import com.google.protobuf.StringValue;
+import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -44,10 +45,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,8 +54,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("deleteSubscription - Удаление подписки на торговую стратегию")
@@ -321,4 +318,9 @@ public class DeleteSubscriptionTest {
         assertThat("Тип комиссии не равен", commandeRes.getResult(), is(notNullValue()));
         assertThat("дата создания команды не равна", dateCreateRs, is(time));
     }
+
+
+
+
+
 }

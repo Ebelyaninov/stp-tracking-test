@@ -862,6 +862,7 @@ components:
       type: object
       required:
         - values
+        - relativeYield
       properties:
         interval:
           description: Интервал времени, содержащий отобранные точки
@@ -885,6 +886,10 @@ components:
             type: number
             format: double
             minimum: 0
+        relativeYield:
+          description: Относительная доходность виртуального портфеля за выбранный промежуток
+          type: number
+          format: double
 
     GetStrategyResponse:
       type: object

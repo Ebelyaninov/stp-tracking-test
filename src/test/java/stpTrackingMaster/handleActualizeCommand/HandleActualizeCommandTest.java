@@ -108,7 +108,7 @@ public class HandleActualizeCommandTest {
 
     String ticker = "XS0587031096";
 //    String tradingClearingAccount = "L01+00000SPB";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
     UUID strategyId;
     @AfterEach
     void deleteClient() {
@@ -747,7 +747,7 @@ public class HandleActualizeCommandTest {
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
         String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
+        String tradingClearingAccountPos = "TKCBM_TCAB";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;

@@ -104,7 +104,7 @@ public class HandleRetrySynchronizationCommandTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-VNLJW7PZ";
     String ticker = "AAPL";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
 
 
@@ -167,12 +167,13 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739018() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
+//        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -223,7 +224,7 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "bid"));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "bid",tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.subtract(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -244,7 +245,8 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739019() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -311,7 +313,7 @@ public class HandleRetrySynchronizationCommandTest {
         if(lotsMax.compareTo(lots) > 0) {
             lotsNew = lots;
         }
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "ask"));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -329,7 +331,8 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739020() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -410,7 +413,8 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C738183() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -462,7 +466,7 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "ask"));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask",tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));

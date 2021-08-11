@@ -1,5 +1,6 @@
 package stpTrackingSlave.handleSynchronizeCommand.AnalyzePortfolio;
 
+import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -58,8 +59,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 
 @Slf4j
@@ -115,7 +115,7 @@ public class AnalyzePortfolioTest {
     Client clientSlave;
     String contractIdMaster;
     String ticker = "AAPL";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
     String contractIdSlave;
     UUID strategyId;
@@ -181,7 +181,8 @@ public class AnalyzePortfolioTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C681845() {
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -226,7 +227,7 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
         //получаем портфель slave
         checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -261,7 +262,8 @@ public class AnalyzePortfolioTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C683302() {
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -308,7 +310,7 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -344,11 +346,12 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C684579() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         String tickerMaster = "ABBV";
         String classCodeMaster = "SPBXM";
-        String tradingClearingAccountMaster = "NDS000000001";
+        String tradingClearingAccountMaster = "TKCBM_TCAB";
         steps.createDataToMarketData(tickerMaster, classCodeMaster, "90", "87", "90");
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         //получаем данные по клиенту master в api сервиса счетов
@@ -396,8 +399,8 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now().minusDays(1);
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(tickerMaster, "last"));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(tickerMaster, "last", tradingClearingAccountMaster));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -445,10 +448,11 @@ public class AnalyzePortfolioTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C688348() {
         String ticker = "VTBperp";
-        String tradingClearingAccount = "NDS000000001";
+        String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBBND";
         steps.createDataToMarketData(ticker, classCode, "108.2", "107.8", "108.8");
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -496,7 +500,7 @@ public class AnalyzePortfolioTest {
         BigDecimal minPriceIncrement = new BigDecimal("0.01");
         BigDecimal aciValue = new BigDecimal("0");
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
+        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
         //расчитываетм price
         BigDecimal priceBefore = getprice.multiply(currentNominal)
             .scaleByPowerOfTen(-2);
@@ -530,6 +534,14 @@ public class AnalyzePortfolioTest {
             price, slavePositionRate, masterPositionRate, quantityDiff);
         assertThat("ChangedAt позиции в портфеле slave не равен", slavePortfolio.getPositions().get(0).getChangedAt(), is(nullValue()));
     }
+
+
+
+
+
+
+
+
 
 
     // методы для работы тестов*************************************************************************

@@ -106,10 +106,8 @@ public class CreateSignalErrorTest {
 
     String contractId;
     UUID strategyId;
-
-//    String tradingClearingAccount = "L01+00000SPB";
     String ticker = "XS0587031096";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
 
     String SIEBEL_ID = "1-3W70RM8";
     String contractIdMaster = "2041774643";
@@ -174,6 +172,11 @@ public class CreateSignalErrorTest {
             createSignal = createSignal.xPlatformHeader(appPlatform);
         }
         createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
 
@@ -215,7 +218,6 @@ public class CreateSignalErrorTest {
     private static Stream<Arguments> provideStringsForBodyCreateSignal() {
         return Stream.of(
             Arguments.of(null, "2000356465", new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, null, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", null, 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), null, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), 4, null, "XS0587031096", "L01+00000SPB", 1),
@@ -705,7 +707,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Виртуальный портфель устарел"));
     }
 
 
@@ -800,7 +802,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Торговая площадка не работает"));
     }
 
 
@@ -958,7 +960,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Необходимо указать целое число лотов"));
     }
 
     @SneakyThrows
@@ -1006,7 +1008,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно денег в портфеле для увеличения позиции"));
     }
 
 
@@ -1020,7 +1022,7 @@ public class CreateSignalErrorTest {
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 6;
+        int quantityRequest = 16;
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1055,7 +1057,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно актива в портфеле для уменьшения позиции"));
     }
 
 
@@ -1104,7 +1106,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно актива в портфеле для уменьшения позиции"));
     }
 
 
@@ -1204,7 +1206,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
 
@@ -1262,7 +1264,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
 
@@ -1320,7 +1322,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
 
@@ -1389,7 +1391,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
 

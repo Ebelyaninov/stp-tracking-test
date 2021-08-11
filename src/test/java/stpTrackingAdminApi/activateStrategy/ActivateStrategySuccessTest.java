@@ -72,15 +72,17 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     StpTrackingAdminStepsConfiguration.class
 })
 public class ActivateStrategySuccessTest {
+
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
 
     Client client;
-    Contract contract;
     Strategy strategy;
     String SIEBEL_ID = "5-55RUONV5";
     String xApiKey = "x-api-key";
+    String key= "tracking";
+
+
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -124,18 +126,13 @@ public class ActivateStrategySuccessTest {
     @DisplayName("C457274.ActivateStrategy. Успешная активация стратегии")
     @Description("Метод для администратора для активации (публикации) стратегии.")
     void C457274() throws Exception {
-        String title = "Тест стратегия Autotest 001 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Тест стратегия Autotest 001 - Описание";
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
@@ -147,7 +144,7 @@ public class ActivateStrategySuccessTest {
         steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -173,67 +170,19 @@ public class ActivateStrategySuccessTest {
     }
 
 
-    @Test
-    @AllureId("457273")
-    @DisplayName("C457273.ActivateStrategy. Активируем стратегию с description is null")
-    @Description("Метод для администратора для перевода активации (публикации) стратегии.")
-    void C457273() {
-        String title = "Тест стратегия Autotest 002 - Заголовок";
-        String description = null;
-        Integer score = 5;
-        UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
-        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
-        //Вызываем метод activateStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsLoginHeader("tracking_admin")
-            .strategyIdPath(strategyId.toString())
-            .respSpec(spec -> spec.expectStatusCode(500))
-            .execute(response -> response);
-        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
-        assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
-        //Находим в БД автоследования стратегию и проверяем ее поля
-        strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "draft",
-            StrategyRiskProfile.CONSERVATIVE, score);
-    }
-
 
     @Test
     @AllureId("457351")
     @DisplayName("C457351.ActivateStrategy. Успешный ответ при повторной активации")
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457351() throws Exception {
-        String title = "Тест стратегия Autotest 003 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Тест стратегия Autotest 003 - Описание";
         Integer score = 5;
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .isBlockedQuery(false)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
@@ -245,7 +194,7 @@ public class ActivateStrategySuccessTest {
         steps.resetOffsetToLate(TRACKING_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

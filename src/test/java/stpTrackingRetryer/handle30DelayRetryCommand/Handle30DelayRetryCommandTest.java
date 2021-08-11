@@ -115,7 +115,7 @@ public class Handle30DelayRetryCommandTest {
     String SIEBEL_ID_MASTER = "5-EALGI0JN";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
 
 
@@ -177,7 +177,8 @@ public class Handle30DelayRetryCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C777640() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

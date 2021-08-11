@@ -111,7 +111,7 @@ public class HandleActualizeCommandErrorTest {
     int version;
     String ticker = "XS0587031096";
 //    String tradingClearingAccount = "L01+00000SPB";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
 
     UUID strategyId;
     String contractIdSlave;
@@ -345,7 +345,7 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719222() {
         String siebelIdMaster = "1-51Q76AT";
-        String siebelIdSlave = "5-1AC5OMAJ0";
+        String siebelIdSlave = "5-15K4XJRSO";
         String title = "тест стратегия autotest";
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();

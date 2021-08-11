@@ -118,7 +118,7 @@ public class RouteRetryCommandTest {
     String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
 
 
@@ -180,7 +180,8 @@ public class RouteRetryCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C782994() {
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -251,11 +252,11 @@ public class RouteRetryCommandTest {
 
     private static Stream<Arguments> provideStringsForAllExchange() {
         return Stream.of(
-            Arguments.of("SPB", "ABBV", "NDS000000001", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
-            Arguments.of("MOEX_PLUS", "FXRB", "NDS000000001", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
-            Arguments.of("MOEX", "YNDX", "NDS000000001", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
-            Arguments.of("SPB_MORNING", "INTC", "NDS000000001", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
-            Arguments.of("FX", "USD000UTSTOM", "MB0253214128", TRACKING_FX_RETRYER_COMMAND, "74.2575")
+            Arguments.of("SPB", "ABBV", "TKCBM_TCAB", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
+            Arguments.of("MOEX_PLUS", "FXRB", "L01+00002F00", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
+            Arguments.of("MOEX", "YNDX", "L01+00002F00", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
+            Arguments.of("SPB_MORNING", "INTC", "TKCBM_TCAB", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
+            Arguments.of("FX", "USD000UTSTOM", "MB9885503216", TRACKING_FX_RETRYER_COMMAND, "74.2575")
         );
     }
 
@@ -269,7 +270,8 @@ public class RouteRetryCommandTest {
     void C783279(String exchange, String ticker, String tradingClearingAccount, Topics topic, String price) {
         //вычитываем из топика кафка все offset
         resetOffsetToLate(topic);
-        String title = "тест стратегия autotest update base currency";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

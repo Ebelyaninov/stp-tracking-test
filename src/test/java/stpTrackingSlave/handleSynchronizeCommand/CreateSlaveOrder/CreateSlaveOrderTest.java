@@ -112,7 +112,7 @@ public class CreateSlaveOrderTest {
     String contractIdMaster;
     String contractIdSlave = "2000050605";
     String ticker = "AAPL";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
     BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
@@ -179,8 +179,15 @@ public class CreateSlaveOrderTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C668233() {
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
-        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
-        String title = "тест стратегия autotest";
+//       steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
+//        String last = steps.getPriceFromMarketData(ticker + "_" + classCode, "last", "107.97");
+        String ask = steps.getPriceFromMarketData(ticker + "_" + classCode, "ask", "108.17");
+//        String bid = steps.getPriceFromMarketData(ticker + "_" + classCode, "bid", "108.06");
+//        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "101.82", last);
+        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", "101.18", ask);
+//        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", "101.81", bid);
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -226,7 +233,7 @@ public class CreateSlaveOrderTest {
         BigDecimal rateDiff = masterPositionRate.subtract(slavePositionRate);
         BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 4, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "ask"));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -246,7 +253,8 @@ public class CreateSlaveOrderTest {
     void C705781() {
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
         steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -309,7 +317,7 @@ public class CreateSlaveOrderTest {
         return Stream.of(
 //            Arguments.of("KMX", "L01+00000SPB", "SPBXM", "104.3", "104.3", "99.71",  new BigDecimal("1"), new BigDecimal("0.01"),
 //                new BigDecimal("6"), StrategyCurrency.usd)
-            Arguments.of("AAPL", "L01+00000SPB", "SPBXM", "107.57", "107.52", "108.66",  new BigDecimal("1"), new BigDecimal("0.01"),
+            Arguments.of("AAPL", "TKCBM_TCAB", "SPBXM", "107.57", "107.52", "108.66",  new BigDecimal("1"), new BigDecimal("0.01"),
                 "6", StrategyCurrency.usd)
         );
     }
@@ -324,7 +332,8 @@ public class CreateSlaveOrderTest {
     void C878566(String tickerPos, String tradingClearingAccountPos, String classCodePos, String last,
                  String ask, String bid, BigDecimal lot,  BigDecimal minPriceIncrement, String quantity, StrategyCurrency strategyCurrency) {
         steps.createDataToMarketData(tickerPos, classCodePos, last, ask, bid);
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
