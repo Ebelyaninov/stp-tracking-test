@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.2.0
+  version: 1.3.0
 
 servers:
   - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
@@ -26,6 +26,8 @@ tags:
     description: Торговый сигнал
   - name: analytics
     description: Аналитика
+  - name: client
+    description: Клиент
 
 paths:
 
@@ -106,6 +108,132 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateStrategyResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/title/check:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    post:
+      tags:
+        - strategy
+      summary: checkStrategyTitle
+      description: Проверяет доступность {title} для использования в качестве названия стратегии
+      operationId: checkStrategyTitle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckStrategyTitleRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckStrategyTitleResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /master/strategy:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getMasterStrategies
+      description: Возвращает список всех стратегий ведущего
+      operationId: getMasterStrategies
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMasterStrategiesResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /master/strategy/{strategyId}/portfolio:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getMasterPortfolio
+      description: Возвращает виртуальный портфель ведущего
+      operationId: getMasterPortfolio
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMasterPortfolioResponse'
         400:
           $ref: '#/components/responses/Error'
         401:
@@ -494,6 +622,88 @@ paths:
         500:
           $ref: '#/components/responses/Error'
 
+  /master/strategy/{strategyId}/analytics:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - analytics
+      summary: getMasterStrategyAnalytics
+      description: Возвращает аналитические показатели по стратегии ведущего
+      operationId: getMasterStrategyAnalytics
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMasterStrategyAnalyticsResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /client:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - client
+      summary: getAuthorizedClient
+      description: Возвращает данные авторизованного пользователя относительно его участия в автоследовании
+      operationId: getAuthorizedClient
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAuthorizedClientResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
 components:
 
   headers:
@@ -679,8 +889,10 @@ components:
       required:
         - contractId
         - title
+        - description
         - baseCurrency
         - riskProfile
+        - description
         - baseMoneyPositionQuantity
         - positionRetentionId
         - feeRate
@@ -688,10 +900,7 @@ components:
         contractId:
           $ref: '#/components/schemas/ContractId'
         title:
-          description: Название стратегии
-          type: string
-          minLength: 1
-          example: Ракета
+          $ref: '#/components/schemas/StrategyTitle'
         baseCurrency:
           $ref: '#/components/schemas/Currency'
         riskProfile:
@@ -711,6 +920,19 @@ components:
           $ref: '#/components/schemas/PositionRetentionId'
         feeRate:
           $ref: '#/components/schemas/StrategyFeeRate'
+
+    StrategyTitle:
+      description: Название стратегии
+      type: string
+      minLength: 1
+      example: Ракета
+
+    NullableStrategyTitle:
+      description: Название стратегии
+      type: string
+      minLength: 1
+      nullable: true
+      example: Ракета
 
     Currency:
       description: Валюта
@@ -789,11 +1011,7 @@ components:
       type: object
       properties:
         title:
-          description: Название стратегии
-          type: string
-          minLength: 1
-          nullable: true
-          example: Ракета
+          $ref: '#/components/schemas/NullableStrategyTitle'
         baseCurrency:
           $ref: '#/components/schemas/NullableCurrency'
         riskProfile:
@@ -808,7 +1026,6 @@ components:
     CreateSignalRequest:
       type: object
       required:
-        - contractId
         - strategyId
         - version
         - ticker
@@ -817,8 +1034,6 @@ components:
         - quantity
         - price
       properties:
-        contractId:
-          $ref: '#/components/schemas/ContractId'
         strategyId:
           description: Идентификатор торговой стратегии
           type: string
@@ -904,7 +1119,7 @@ components:
         - characteristics
         - topPositions
         - portfolioRate
-        - isLead
+        - subscription
       properties:
         id:
           description: Идентификатор стратегии
@@ -958,9 +1173,8 @@ components:
             $ref: '#/components/schemas/TopPosition'
         portfolioRate:
           $ref: '#/components/schemas/PortfolioRate'
-        isLead:
-          description: Признак наличия подписки авторизованного пользователя на стратегию
-          type: boolean
+        subscription:
+          $ref: '#/components/schemas/StrategySubscription'
 
     StrategyOwner:
       description: Владелец стратегии
@@ -987,14 +1201,23 @@ components:
       description: Характеристика стратегии
       type: object
       required:
+        - id
+        # TODO: deprecated
         - title
         - value
       properties:
+        id:
+          description: Идентификатор характеристики
+          type: string
+          minLength: 1
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tail-value
         title:
           description: Наименование характеристики (для отображения)
           type: string
           minLength: 1
           example: Рекомендуемая сумма
+          deprecated: true
         value:
           description: Значение характеристики
           type: string
@@ -1005,29 +1228,17 @@ components:
           type: string
           minLength: 1
           example: Сумма, необходимая для максимально точного следования за стратегией
+          deprecated: true
 
     TopPosition:
       description: Позиция из топа виртуального портфеля
       type: object
       required:
-        - ticker
-        - briefName
+        - exchangePosition
         - signalsCount
       properties:
-        ticker:
-          description: Тикер
-          type: string
-          minLength: 1
-          maxLength: 12
-          example: TCS
-        briefName:
-          description: Короткое наименование инструмента
-          type: string
-          example: TCS Group (Tinkoff Bank holder)
-        image:
-          description: Имя файла-изображения инструмента
-          type: string
-          example: US87238U2033.png
+        exchangePosition:
+          $ref: '#/components/schemas/ExchangePosition'
         signalsCount:
           description: Количество сигналов
           type: integer
@@ -1073,6 +1284,18 @@ components:
           type: number
           minimum: 0
           maximum: 100
+
+    StrategySubscription:
+      description: Подписка ведомого на стратегию
+      type: object
+      required:
+        - isLead
+      properties:
+        isLead:
+          description: Признак наличия подписки авторизованного пользователя на стратегию
+          type: boolean
+        contractId:
+          $ref: '#/components/schemas/ContractId'
 
     GetPositionRetentionsResponse:
       type: object
@@ -1332,6 +1555,237 @@ components:
           type: string
           minLength: 1
           example: в управлении
+
+    GetMasterStrategiesResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterStrategy'
+
+    MasterStrategy:
+      type: object
+      required:
+        - id
+        - title
+        - status
+      properties:
+        id:
+          description: Идентификатор торговой стратегии
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+        title:
+          $ref: '#/components/schemas/StrategyTitle'
+        status:
+          description: Статус стратегии
+          type: string
+          enum: [ draft, active ]
+
+    CheckStrategyTitleRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          $ref: '#/components/schemas/StrategyTitle'
+
+    CheckStrategyTitleResponse:
+      type: object
+      required:
+        - isAvailable
+      properties:
+        isAvailable:
+          description: Признак доступного названия для стратегии
+          type: boolean
+
+    GetAuthorizedClientResponse:
+      type: object
+      required:
+        - master
+      properties:
+        master:
+          $ref: '#/components/schemas/MasterClient'
+
+    MasterClient:
+      description: Ведущий
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: Статус клиента в роли ведущего
+          type: string
+          enum: [ none, confirmed, registered ]
+
+    GetMasterStrategyAnalyticsResponse:
+      type: object
+      required:
+        - tail
+        - portfolio
+        - yield
+        - dailyYield
+        - relativeYield
+        - relativeDailyYield
+      properties:
+        tail:
+          description: Хвост торговой стратегии
+          type: object
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              description: Объем хвоста
+              type: number
+              format: decimal
+              minimum: 0
+            currency:
+              $ref: '#/components/schemas/Currency'
+        portfolio:
+          description: Виртуальный портфель
+          type: object
+          required:
+            - value
+            - baseMoneyPositionQuantity
+            - currency
+          properties:
+            value:
+              description: Стоимость виртуального портфеля
+              type: number
+              format: decimal
+              minimum: 0
+              exclusiveMinimum: true
+            baseMoneyPositionQuantity:
+              description: Объем позиции в базовой валюте
+              type: number
+              format: decimal
+              minimum: 0
+            currency:
+              $ref: '#/components/schemas/Currency'
+        yield:
+          description: Абсолютная доходность виртуального портфеля за все время
+          type: object
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              description: Значение
+              type: number
+              format: decimal
+            currency:
+              $ref: '#/components/schemas/Currency'
+        dailyYield:
+          description: Абсолютная доходность виртуального портфеля за день
+          type: object
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              description: Значение
+              type: number
+              format: decimal
+            currency:
+              $ref: '#/components/schemas/Currency'
+        relativeYield:
+          description: Относительная доходность виртуального портфеля за все время
+          type: number
+          format: decimal
+        relativeDailyYield:
+          description: Относительная доходность виртуального портфеля за день
+          type: number
+          format: decimal
+
+    GetMasterPortfolioResponse:
+      type: object
+      required:
+        - version
+        - positions
+        - baseMoneyPosition
+      properties:
+        version:
+          $ref: '#/components/schemas/MasterPortfolioVersion'
+        positions:
+          description: Позиции виртуального портфеля
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterPortfolioPosition'
+        baseMoneyPosition:
+          $ref: '#/components/schemas/MasterPortfolioBaseMoneyPosition'
+
+    MasterPortfolioVersion:
+      description: Версия виртуального портфеля
+      type: integer
+      format: int32
+      minimum: 0
+
+    MasterPortfolioPosition:
+      description: Позиция в виртуальном портфеле
+      type: object
+      required:
+        - exchangePosition
+        - quantity
+        - lastPrice
+        - value
+        - rate
+      properties:
+        exchangePosition:
+          $ref: '#/components/schemas/ExchangePosition'
+        quantity:
+          description: Количество единиц актива
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+        lastPrice:
+          $ref: '#/components/schemas/Price'
+        value:
+          description: Текущая стоимость позиции
+          type: object
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              description: Значение
+              type: number
+              format: decimal
+              minimum: 0
+              exclusiveMinimum: true
+            currency:
+              $ref: '#/components/schemas/Currency'
+        rate:
+          $ref: '#/components/schemas/MasterPositionRate'
+
+    MasterPortfolioBaseMoneyPosition:
+      description: Денежная позиция в виртуальном портфеле в базовой валюте
+      type: object
+      required:
+        - currency
+        - quantity
+        - rate
+      properties:
+        currency:
+          $ref: '#/components/schemas/Currency'
+        quantity:
+          description: Количество единиц актива
+          type: number
+          format: decimal
+          minimum: 0
+        rate:
+          $ref: '#/components/schemas/MasterPositionRate'
+
+    MasterPositionRate:
+      description: Доля позиции от всего портфеля (в процентах)
+      type: number
+      format: decimal
+      minimum: 0
+      maximum: 100
 
     ErrorResponse:
       description: Ответ с ошибкой
