@@ -239,7 +239,7 @@ public class CreateSignalErrorTest {
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(action);
-        request.setContractId(contractIdTest);
+        //request.setContractId(contractIdTest);
         request.setPrice(price);
         request.setQuantity(quantityRequest);
         request.setStrategyId(strategyIdTest);
@@ -1437,7 +1437,7 @@ public class CreateSignalErrorTest {
                                                    String tradingClearingAccount, int version) {
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(actionEnum);
-        request.setContractId(contractId);
+        //request.setContractId(contractId);
         request.setPrice(price);
         request.setQuantity(quantityRequest);
         request.setStrategyId(strategyId);

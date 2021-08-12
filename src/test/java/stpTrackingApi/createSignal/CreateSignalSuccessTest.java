@@ -476,7 +476,7 @@ public class CreateSignalSuccessTest {
                                                    String tradingClearingAccount, int version) {
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(actionEnum);
-        request.setContractId(contractIdMaster);
+//        request.setContractId(contractIdMaster);
         request.setPrice(price);
         request.setQuantity(quantityRequest);
         request.setStrategyId(strategyId);
