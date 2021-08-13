@@ -269,6 +269,99 @@ public class StpTrackingApiSteps {
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
+    @SneakyThrows
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public Client createClientWithProfile(String SIEBLE_ID, UUID investId) {
+//        //находим данные по клиенту в БД social
+        String image = "";
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        if (profile.getImage() == null) {
+            image = "";
+        } else {
+            image = profile.getImage().toString();
+        }
+        //создаем запись о клиенте в tracking.client
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
+            .setId(profile.getId().toString())
+            .setNickname(profile.getNickname())
+            .setImage(image));
+        return clientMaster;
+
+    }
+
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
+    @SneakyThrows
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createContractAndStrategy(Client clientMaster, String contractId, ContractRole contractRole, ContractState contractState,
+                                                               UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                                               ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
+
+        // создаем запись о договоре клиента в tracking.contract
+        contractMaster = new Contract()
+            .setId(contractId)
+            .setClientId(clientMaster.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractMaster = contractService.saveContract(contractMaster);
+        //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("result", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
+        strategyMaster = new Strategy()
+            .setId(strategyId)
+            .setContract(contractMaster)
+            .setTitle(title)
+            .setBaseCurrency(strategyCurrency)
+            .setRiskProfile(strategyRiskProfile)
+            .setDescription(description)
+            .setStatus(strategyStatus)
+            .setSlavesCount(slaveCount)
+            .setActivationTime(date)
+            .setScore(score)
+            .setFeeRate(feeRateProperties);
+        strategyMaster = trackingService.saveStrategy(strategyMaster);
+    }
+
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
+    @SneakyThrows
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createContractAndStrategyDraft(Client clientMaster, String contractId, ContractRole contractRole, ContractState contractState,
+                                          UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                          ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                          StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+
+        // создаем запись о договоре клиента в tracking.contract
+        contractMaster = new Contract()
+            .setId(contractId)
+            .setClientId(clientMaster.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractMaster = contractService.saveContract(contractMaster);
+        //создаем запись о стратегии клиента
+        strategyMaster = new Strategy()
+            .setId(strategyId)
+            .setContract(contractMaster)
+            .setTitle(title)
+            .setBaseCurrency(strategyCurrency)
+            .setRiskProfile(strategyRiskProfile)
+            .setDescription(description)
+            .setStatus(strategyStatus)
+            .setSlavesCount(slaveCount)
+            .setActivationTime(date);
+
+        strategyMaster = trackingService.saveStrategy(strategyMaster);
+    }
+
+
 
 
 
