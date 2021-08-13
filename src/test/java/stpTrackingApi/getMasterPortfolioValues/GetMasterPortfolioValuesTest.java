@@ -105,17 +105,11 @@ public class GetMasterPortfolioValuesTest {
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
 
-    Client clientMaster;
-    Contract contractMaster;
-    Strategy strategyMaster;
-    Client clientSlave;
-    Contract contractSlave;
-    Subscription subscription;
+    AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
     Strategy strategy;
-
-    AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
     String siebelIdMaster = "1-BABKO0G";
     String siebelIdSlave = "5-RGHKKZA6";
     UUID strategyId;

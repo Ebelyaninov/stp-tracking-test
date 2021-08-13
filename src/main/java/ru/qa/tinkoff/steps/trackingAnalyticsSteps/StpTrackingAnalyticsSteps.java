@@ -152,7 +152,7 @@ public class StpTrackingAnalyticsSteps {
         contractMaster = contractService.saveContract(contractMaster);
         //создаем запись о стратегии клиента
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
-        feeRateProperties.put("range", new BigDecimal("0.2"));
+        feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
         strategy = new Strategy()
             .setId(strategyId)
