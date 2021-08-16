@@ -51,4 +51,9 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     @Modifying(clearAutomatically = true)
     void deleteStrategiesByIdIn(Collection<UUID> ids);
 
+    @Query(nativeQuery = true, value = "select * from strategy where lower(title) = " +
+        "lower(:title)")
+    Strategy findStrategysByLowerTitle(
+        @Param(value = "title") String title);
+
 }

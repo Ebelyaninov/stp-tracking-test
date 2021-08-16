@@ -116,6 +116,7 @@ public class UpdateStrategyErrorTest {
         );
     }
 
+
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersUpdateStrategy")
     @AllureId("542528")
@@ -410,13 +411,13 @@ public class UpdateStrategyErrorTest {
 
 
     @Test
-    @AllureId("542534")
-    @DisplayName("C542534.UpdateStrategy.Обновление стратегии значение title > 50 символов")
+    @AllureId("1187384")
+    @DisplayName("C1187384.UpdateStrategy.Обновление стратегии значение title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
-    void C542534() {
+    void C1187384() {
         UUID strategyId = UUID.randomUUID();
-        String title = "общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        String title = "общий, недетализированный план.";
         String description = "Тестовая стратегия для автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -446,6 +447,54 @@ public class UpdateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response);
         assertThat("номера стратегии не равно", updateStrategy.getBody().jsonPath().get("errorMessage"), is("Некорректное название для стратегии"));
+        strategy = strategyService.getStrategy(strategyId);
+        assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
+        assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
+        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
+    }
+
+
+    @Test
+    @AllureId("1187385")
+    @DisplayName("C1187385.UpdateStrategy.Обновление стратегии значение title < 1 символов")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
+    void C1187385() {
+        UUID strategyId = UUID.randomUUID();
+        String title = "";
+        String description = "Тестовая стратегия для автотестов 01";
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем клиента со стратегией в статусе неактивная
+        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
+            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        //формируем тело запроса
+        ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
+        request.setTitle(title);
+        request.setDescription(description);
+        // вызываем метод updateStrategy()
+        Response updateStrategy = strategyApi.updateStrategy()
+            .strategyIdPath(strategyId)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response);
+        assertThat("номера стратегии не равно", updateStrategy.getBody().jsonPath().get("errorMessage"), is("Сервис временно недоступен"));
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
