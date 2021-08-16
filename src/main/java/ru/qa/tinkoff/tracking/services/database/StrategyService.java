@@ -148,7 +148,14 @@ public class StrategyService {
         return strategy;
     }
 
-
+    @Step("Поиск стратегий по lower(title)")
+    @SneakyThrows
+    public Strategy getStrategyByLowerTitle (String title) {
+        Strategy strategy = strategyRepository.findStrategysByLowerTitle(title);
+        log.info("Successfully find strategys {}");
+        Allure.addAttachment("По title приведенный к нижнему регистру найденные стратегии", "application/json", objectMapper.writeValueAsString(strategy));
+        return strategy;
+    }
 
 
 }

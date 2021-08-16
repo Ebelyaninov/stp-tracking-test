@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -360,6 +361,9 @@ public class CreateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
+        assertThat("errorCode != Error", expectedResponse.getBody().jsonPath().get("errorCode"), equalTo("Error"));
+        assertThat("errorMessage != Сервис временно недоступен", expectedResponse.getBody().jsonPath().get("errorMessage"), equalTo("Сервис временно недоступен"));
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют

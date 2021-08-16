@@ -102,11 +102,11 @@ public class CreateStrategyErrorValidDataTest {
 
     @SneakyThrows
     @Test
-    @AllureId("435867")
-    @DisplayName("C435867.CreateStrategy.Валидация запроса: title > 30 символов")
+    @AllureId("1185005")
+    @DisplayName("С1185005.CreateStrategy.Валидация запроса: title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
-    void C435867() {
+    void С1185005() {
         String title = "общий, недетализированный план.";
         String description = "new test стратегия autotest CreateStrategy007";
         StrategyFeeRate feeRate = new StrategyFeeRate();
