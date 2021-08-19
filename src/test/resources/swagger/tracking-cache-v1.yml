@@ -8,17 +8,15 @@ info:
     email: an.v.belyaev@tinkoff.ru
   version: 1.0.0
 
-
-servers:
-  - url:  http://tracking-consumer-spy.dev2.k8s.tcsbank.ru/tracking/consumer-spy/cache/v1/
-    description: тестовый стенд
-  - url: http://trading.tinkoff.local
-    description: боевой стенд
-
-
 tags:
   - name: cache
     description: Кэш
+
+servers:
+  - url:  http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/cache/v1/
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
 
 paths:
 
@@ -36,7 +34,7 @@ paths:
       summary: getAllEntities
       description: Возвращает содержимое кэша
       security:
-        - apiKey: []
+        - apiKey: [ ]
       operationId: getAllEntities
       parameters:
         - in: path
@@ -170,11 +168,11 @@ components:
         key:
           description: Ключ
           type: object
-          example: {"ticker":"CPB","tradingClearingAccount":"L01+00000SPB"}
+          example: { "ticker": "CPB","tradingClearingAccount": "L01+00000SPB" }
         value:
           description: Значение
           type: object
-          example: {"type":"share","riskProfile":"AGGRESSIVE","currency":"usd","updatedAt":1605175339.283597000}
+          example: { "type": "share","riskProfile": "AGGRESSIVE","currency": "usd","updatedAt": 1605175339.283597000 }
 
     ErrorResponse:
       description: Ответ с ошибкой
