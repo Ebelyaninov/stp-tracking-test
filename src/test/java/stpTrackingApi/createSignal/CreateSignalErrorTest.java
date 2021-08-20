@@ -153,7 +153,7 @@ public class CreateSignalErrorTest {
         int quantityRequest = 4;
         int version = 1;
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId,
             ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
@@ -195,7 +195,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId,
             ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
@@ -217,13 +217,13 @@ public class CreateSignalErrorTest {
 
     private static Stream<Arguments> provideStringsForBodyCreateSignal() {
         return Stream.of(
-            Arguments.of(null, "2000356465", new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", null, 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), null, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), 4, null, "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), 4, UUID.randomUUID(), null, "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", null, 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", null)
+            Arguments.of(null,  new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
+//            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", null, 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), null, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, null, "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), null, "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", null, 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", null)
         );
     }
 
@@ -234,12 +234,11 @@ public class CreateSignalErrorTest {
     @DisplayName("C656034.CreateSignal.Валидация запроса: contractId, strategyId, version, ticker, tradingClearingAccount, action, quantity, price")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C656034(CreateSignalRequest.ActionEnum action, String contractIdTest, BigDecimal price, Integer quantityRequest,
+    void C656034(CreateSignalRequest.ActionEnum action, BigDecimal price, Integer quantityRequest,
                  UUID strategyIdTest, String ticker, String tradingClearingAccount, Integer version) {
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(action);
-        //request.setContractId(contractIdTest);
         request.setPrice(price);
         request.setQuantity(quantityRequest);
         request.setStrategyId(strategyIdTest);
@@ -287,7 +286,7 @@ public class CreateSignalErrorTest {
         contractId = findValidAccountWithSiebleId.get(0).getId();
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -305,46 +304,6 @@ public class CreateSignalErrorTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
-
-
-    private static Stream<Arguments> provideStringsForContractIdCreateSignal() {
-        return Stream.of(
-            Arguments.of(""),
-            Arguments.of("20003564654353"));
-    }
-
-    @SneakyThrows
-    @ParameterizedTest
-    @MethodSource("provideStringsForContractIdCreateSignal")
-    @AllureId("656238")
-    @DisplayName("C656238.CreateSignal.Валидация запроса: параметр contractId, количество символов > 10 и < 1")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C656238(String contract) {
-        BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
-        int version = 1;
-        strategyId = UUID.randomUUID();
-        //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contract,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
-        // вызываем метод CreateSignal
-        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(400));
-        createSignal.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-    }
-
 
 
     private static Stream<Arguments> provideStringsForTickerCreateSignal() {
@@ -367,7 +326,7 @@ public class CreateSignalErrorTest {
         //находим данные ведущего в БД сервиса счетов
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -405,7 +364,7 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -445,7 +404,7 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -476,7 +435,7 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -509,7 +468,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         String contractOther = contractService.findOneContract().get().getId();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractOther,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -528,67 +487,6 @@ public class CreateSignalErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
-    @SneakyThrows
-    @Test
-    @AllureId("656513")
-    @DisplayName("C656513.CreateSignal.Не существующее значение contractId")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C656513() {
-        BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
-        int version = 1;
-        strategyId = UUID.randomUUID();
-        //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, "1000356465",
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
-        // вызываем метод CreateSignal
-        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        createSignal.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-    }
-
-    @SneakyThrows
-    @Test
-    @AllureId("656553")
-    @DisplayName("C656553.CreateSignal.Стратегия strategyId не соответствует договору")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C656553() {
-        BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
-        int version = 1;
-        UUID strategyOther = strategyService.findOneContract().get().getId();
-        //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
-            price, quantityRequest, strategyOther, ticker, tradingClearingAccount, version);
-        // вызываем метод CreateSignal
-        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        createSignal.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-    }
 
 
     @SneakyThrows
@@ -603,7 +501,7 @@ public class CreateSignalErrorTest {
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -644,7 +542,7 @@ public class CreateSignalErrorTest {
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -691,7 +589,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 3, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -738,7 +636,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, "GMKN1022", "NDS000000001", version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -786,7 +684,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -835,7 +733,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -885,7 +783,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -918,8 +816,8 @@ public class CreateSignalErrorTest {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
-        String ticker = "KO";
-        String tradingClearingAccount = "L01+00000SPB";
+        String ticker = "XS0424860947";
+        String tradingClearingAccount = "L01+00002F00";
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
         //отправляем событие в fireg.instrument
@@ -944,7 +842,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -992,7 +890,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1041,7 +939,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1090,7 +988,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1141,7 +1039,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, false, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1190,7 +1088,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1248,7 +1146,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1306,7 +1204,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1375,7 +1273,7 @@ public class CreateSignalErrorTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, contractIdMaster,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
@@ -1432,12 +1330,11 @@ public class CreateSignalErrorTest {
     }
 
 
-    public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, String contractId, BigDecimal price,
+    public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, BigDecimal price,
                                                    int quantityRequest, UUID strategyId, String ticker,
                                                    String tradingClearingAccount, int version) {
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(actionEnum);
-        //request.setContractId(contractId);
         request.setPrice(price);
         request.setQuantity(quantityRequest);
         request.setStrategyId(strategyId);
