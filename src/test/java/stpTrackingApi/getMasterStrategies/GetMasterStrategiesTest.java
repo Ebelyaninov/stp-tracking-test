@@ -93,7 +93,7 @@ public class GetMasterStrategiesTest {
 
     String contractIdMaster1;
     String contractIdMaster2;
-    String SIEBEL_ID_MASTER = "5-227G1PKDH";
+    String SIEBEL_ID_MASTER = "1-BABKO0G";
     UUID strategyId1;
     UUID strategyId2;
     Strategy strategy1;
@@ -135,6 +135,7 @@ public class GetMasterStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1184813() {
+        String SIEBEL_ID_MASTER = "5-JSZXGLRT";
         Random ran = new Random();
         int x = ran.nextInt(6) + 5;
         String title1 = "autotest1 " + String.valueOf(x);

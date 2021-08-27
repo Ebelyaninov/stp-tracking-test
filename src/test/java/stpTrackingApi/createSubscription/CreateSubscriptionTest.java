@@ -32,10 +32,7 @@ import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -51,7 +48,7 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("createSubscription - Создание подписки на торговую стратегию")
@@ -90,9 +87,12 @@ public class CreateSubscriptionTest {
     Contract contractSlave;
     Subscription subscription;
 
+
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     String siebelIdMaster = "1-BABKO0G";
     String siebelIdSlave = "5-RGHKKZA6";
+    String contractIdSlave;
+
 
     @AfterEach
     void deleteClient() {
@@ -125,6 +125,10 @@ public class CreateSubscriptionTest {
                 clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -144,13 +148,13 @@ public class CreateSubscriptionTest {
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -162,7 +166,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -202,7 +206,7 @@ public class CreateSubscriptionTest {
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -210,7 +214,7 @@ public class CreateSubscriptionTest {
         //создаем запись о ведомом в client
         steps.createClient(siebelIdSlave, investIdSlave, ClientStatusType.none);
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -222,7 +226,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -262,7 +266,7 @@ public class CreateSubscriptionTest {
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -270,7 +274,7 @@ public class CreateSubscriptionTest {
         //создаем запись о ведомом в client c договором
         steps.createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, contractIdSlave, null, ContractState.untracked, null);
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -282,7 +286,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -322,7 +326,7 @@ public class CreateSubscriptionTest {
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -360,6 +364,59 @@ public class CreateSubscriptionTest {
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategy.get(0).getId())
             .respSpec(spec -> spec.expectStatusCode(422));
+    }
+
+    @Test
+    @AllureId("1219610")
+    @DisplayName("C1219610.CreateSubscription.Отправка события в топик tracking.contract.event после cоздания подписки")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод создания подписки на торговую стратегию ведомым.")
+    void C1219610() throws Exception {
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        UUID strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,  contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.master.command:  {}", event);
+        LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        contractSlave = contractService.getContract(contractIdSlave);
+        clientSlave = clientService.getClient(investIdSlave);
+        strategyMaster = strategyService.getStrategy(strategyId);
+        //проверяем, данные в сообщении
+        assertThat("тип события не равен", event.getAction().toString(), is("UPDATED"));
+        assertThat("ID договора не равен", event.getContract().getId(), is(contractIdSlave));
+        assertThat("contract.state не равен", event.getContract().getState().toString(), is("TRACKED"));
+        assertThat("contract.blocked не равен", event.getContract().getBlocked(), is(false));
     }
 
 

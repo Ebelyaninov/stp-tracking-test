@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.steps.trackingSlaveSteps;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -25,8 +26,10 @@ import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
+
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
+
+import ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -46,11 +49,15 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Service
@@ -70,8 +77,15 @@ public class StpTrackingSlaveSteps {
 
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
-    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
+
+
+//        CacheApi cacheApi    = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
+
+    ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi cacheApi = ru.qa.tinkoff.swagger
+        .trackingSlaveCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger
+            .trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
+
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
         api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -164,6 +178,7 @@ public class StpTrackingSlaveSteps {
     public void createDataToMarketData(String ticker, String classCode, String lastPrice, String askPrice, String bidPrice) {
         //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
         String last = getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
+//        createEventTrackingTestMdPricesInStream(String instrumentId, String type, String oldPrice, String newPrice)
         String ask = getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
         String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
     }
@@ -182,6 +197,36 @@ public class StpTrackingSlaveSteps {
         if (price == null) {
             price = priceForTest;
         }
+        return price;
+    }
+
+
+    public String getPriceFromExchangePositionPriceCacheWithSiebel(String ticker, String tradingClearingAccount, String type, String siebelId) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> prices = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount)
+                        && keys.get("priceType").equals(type);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<Double, Object>) prices.get(0).getValue();
+        price = values.get("price").toString();
         return price;
     }
 
@@ -495,11 +540,11 @@ public class StpTrackingSlaveSteps {
     public void createEventInTrackingEvent(String contractIdSlave)  {
         //создаем событие
         Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
-        log.info("Команда в tracking.event:  {}", event);
+        log.info("Команда в tracking.contract.event:  {}", event);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
+        kafkaSender.send(Topics.TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
     }
 
 
@@ -513,7 +558,7 @@ public class StpTrackingSlaveSteps {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
+        kafkaSender.send(Topics.TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
     }
 
     Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId, boolean blocked) {
@@ -605,6 +650,73 @@ public class StpTrackingSlaveSteps {
                 .setAction(action).build())
             .build();
         return position;
+    }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd);
+//            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+
+    public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
+        String aciValue = "";
+        String nominal = "";
+        String minPriceIncrement = "";
+        List<String> dateBond = new ArrayList<>();
+        //получаем содержимое кеша exchangePositionCache
+        String price = "";
+
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> position = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount);
+
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<String, Object>) position.get(0).getValue();
+        aciValue = values.get("aciValue").toString();
+        nominal = values.get("currentNominal").toString();
+        minPriceIncrement =values.get("minPriceIncrement").toString();
+        dateBond.add(aciValue);
+        dateBond.add(nominal);
+        dateBond.add(minPriceIncrement);
+        return dateBond;
     }
 
 

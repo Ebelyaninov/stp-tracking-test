@@ -107,7 +107,6 @@ public class HandleActualizeCommandTest {
     int version;
 
     String ticker = "XS0587031096";
-//    String tradingClearingAccount = "L01+00000SPB";
     String tradingClearingAccount = "TKCBM_TCAB";
     UUID strategyId;
     @AfterEach
@@ -165,7 +164,8 @@ public class HandleActualizeCommandTest {
     void C662315() {
         String siebelIdMaster = "1-51Q76AT";
         String siebelIdSlave = "5-RE91G9E4";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -187,6 +187,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -213,8 +214,12 @@ public class HandleActualizeCommandTest {
         BigDecimal price = new BigDecimal("256");
         BigDecimal quantity = new BigDecimal("2");
         createMasterSignal(strategyId, version, action, date, price, quantity, null, ticker, tradingClearingAccount);
+//        //создаем подписку на стратегию
+//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -261,7 +266,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C726667() {
         String siebelIdMaster = "1-51Q76AT";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -343,7 +349,8 @@ public class HandleActualizeCommandTest {
     void C662388() {
         String siebelIdMaster = "1-DC5C5KJ";
         String siebelIdSlave = "5-7T71HO5B";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -366,6 +373,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -386,8 +394,12 @@ public class HandleActualizeCommandTest {
         Date date = Date.from(utc.toInstant());
         createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
+//        //создаем подписку на стратегию
+//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -433,7 +445,8 @@ public class HandleActualizeCommandTest {
     void C719882() {
         String siebelIdMaster = "1-DC5C5KJ";
         String siebelIdSlave = "5-14D9VHBMH";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -456,6 +469,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -476,8 +490,12 @@ public class HandleActualizeCommandTest {
         Date date = Date.from(utc.toInstant());
         createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
+//        //создаем подписку на стратегию
+//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -525,7 +543,8 @@ public class HandleActualizeCommandTest {
     void C720132() {
         String siebelIdMaster = "1-DC5C5KJ";
         String siebelIdSlave = "5-14DCU08B1";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -548,6 +567,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -573,8 +593,12 @@ public class HandleActualizeCommandTest {
         BigDecimal price = new BigDecimal("256");
         BigDecimal quantity = new BigDecimal("2");
         createMasterSignal(strategyId, version, action, date, price, quantity, null, ticker, tradingClearingAccount);
+//        //создаем подписку на стратегию
+//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -621,7 +645,8 @@ public class HandleActualizeCommandTest {
     void C663357() {
         String siebelIdMaster = "1-F6L0ULT";
         String siebelIdSlave = "5-14DCU08B1";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -643,6 +668,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -663,8 +689,12 @@ public class HandleActualizeCommandTest {
         Date date = Date.from(utc.toInstant());
         createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
+//        //создаем подписку на стратегию
+//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -721,7 +751,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663495() {
         String siebelIdMaster = "1-BABKO0G";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -811,8 +842,10 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C666901() {
         String siebelIdMaster = "1-1VAEYWG";
-        String siebelIdSlave = "5-5Y3SGW2V";
-        String title = "тест стратегия autotest";
+//        String siebelIdSlave = "5-5Y3SGW2V";
+        String siebelIdSlave = "5-14DCU08B1";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -834,6 +867,7 @@ public class HandleActualizeCommandTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
@@ -851,7 +885,9 @@ public class HandleActualizeCommandTest {
         createMasterPortfolioWithPosition(ticker, tradingClearingAccount, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему

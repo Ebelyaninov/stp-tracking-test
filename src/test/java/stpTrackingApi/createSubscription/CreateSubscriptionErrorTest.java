@@ -85,7 +85,7 @@ public class CreateSubscriptionErrorTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Strategy strategyMaster;
     String siebelIdMaster = "1-5RLRHAS";
-    String siebelIdSlave = "1-1P4N1RM";
+    String siebelIdSlave = "5-7ECGV169";
     String siebelIdSlaveNotBrokerOpen = "4-1ZCANCVZ";
     String siebelIdSlaveNotBroker = "5-GGI9D1AG";
 

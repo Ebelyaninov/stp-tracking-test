@@ -200,6 +200,7 @@ public class AnalyzePortfolioTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -217,7 +218,10 @@ public class AnalyzePortfolioTest {
             "2.0", date, 2, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "12259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для slave в cassandra c пустой позицией по бумаге
         String baseMoneySlave = "3657.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -227,7 +231,9 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker,  tradingClearingAccount,"last", SIEBEL_ID_SLAVE));
+        //получаем портфель slave
         //получаем портфель slave
         checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -261,7 +267,7 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C683302() {
-        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
+//        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
@@ -281,6 +287,7 @@ public class AnalyzePortfolioTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -298,7 +305,11 @@ public class AnalyzePortfolioTest {
             "3.0", date, 3, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9154.4", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
         //создаем портфель для ведомого
         String baseMoneySl = "4893.36";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -310,7 +321,8 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker,  tradingClearingAccount,"last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -370,6 +382,7 @@ public class AnalyzePortfolioTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -387,7 +400,12 @@ public class AnalyzePortfolioTest {
             "3.0", date, 3, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "4873.36", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+
         //создаем портфель для slave
         String baseMoneySl = "5364.78";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -399,8 +417,10 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now().minusDays(1);
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(tickerMaster, "last", tradingClearingAccountMaster));
+//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker,  tradingClearingAccount,"last", SIEBEL_ID_SLAVE ));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(tickerMaster,  tradingClearingAccountMaster,"last", SIEBEL_ID_SLAVE ));
+//        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(tickerMaster, "last", tradingClearingAccountMaster));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -450,7 +470,11 @@ public class AnalyzePortfolioTest {
         String ticker = "VTBperp";
         String tradingClearingAccount = "TKCBM_TCAB";
         String classCode = "SPBBND";
-        steps.createDataToMarketData(ticker, classCode, "108.2", "107.8", "108.8");
+        List<String>  list = steps.getPriceFromExchangePositionCache(ticker, tradingClearingAccount, SIEBEL_ID_MASTER);
+        String aci = list.get(0);
+        String nominal = list.get(1);
+        String minPrIncrement = list.get(2);
+//        steps.createDataToMarketData(ticker, classCode, "108.2", "107.8", "108.8");
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
@@ -470,6 +494,7 @@ public class AnalyzePortfolioTest {
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -487,7 +512,11 @@ public class AnalyzePortfolioTest {
             "2.0", date, 3, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "12259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для slave
         String baseMoneySlave = "3657.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -496,11 +525,12 @@ public class AnalyzePortfolioTest {
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
-        BigDecimal currentNominal = new BigDecimal("1000");
-        BigDecimal minPriceIncrement = new BigDecimal("0.01");
-        BigDecimal aciValue = new BigDecimal("0");
+        BigDecimal currentNominal = new BigDecimal(nominal);
+        BigDecimal minPriceIncrement = new BigDecimal(minPrIncrement);
+        BigDecimal aciValue = new BigDecimal(aci);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+//        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
+        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker,  tradingClearingAccount,"last", SIEBEL_ID_SLAVE ));
         //расчитываетм price
         BigDecimal priceBefore = getprice.multiply(currentNominal)
             .scaleByPowerOfTen(-2);
@@ -549,11 +579,11 @@ public class AnalyzePortfolioTest {
     void createEventInTrackingEvent(String contractIdSlave) {
         //создаем событие
         Tracking.Event event = steps.createEventUpdateAfterSubscriptionSlave(contractIdSlave);
-        log.info("Команда в tracking.event:  {}", event);
+        log.info("Команда в tracking.contract.event:  {}", event);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send(TRACKING_EVENT, contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
     }
 
     //метод отправляет команду с operation = 'SYNCHRONIZE'.

@@ -1,6 +1,8 @@
 package ru.qa.tinkoff.steps.trackingApiSteps;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
@@ -24,6 +27,7 @@ import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
@@ -36,11 +40,15 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
 
@@ -54,8 +62,14 @@ public class StpTrackingApiSteps {
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
 
+//    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
+
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ApiClient.Config.apiConfig()).cache();
 
+
+//    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
 
     private final ByteArrayReceiverService kafkaReceiver;
     private final ContractService contractService;
@@ -67,6 +81,7 @@ public class StpTrackingApiSteps {
     public Client clientMaster;
     public Contract contractMaster;
     public Strategy strategyMaster;
+    private final StringToByteSenderService kafkaSender;
 
 
     Profile profile;
@@ -74,7 +89,93 @@ public class StpTrackingApiSteps {
     Contract contractSlave;
 
 
-    public GetBrokerAccountsResponse getBrokerAccounts(String SIEBEL_ID) {
+
+    public String ticker1 = "SBER";
+    public String tradingClearingAccount1 = "NDS000000001";
+    //    public String tradingClearingAccount1 = "L01+00000F00";
+    public String quantity1 = "50";
+    public String sector1 = "financial";
+    public String type1 = "share";
+    public String company1 = "Сбер Банк";
+    public String classCode1 = "TQBR";
+    public String instrumet1 = ticker1 + "_" + classCode1;
+
+    public String ticker2 = "SU29009RMFS6";
+    //   public String tradingClearingAccount2 = "L01+00000F00";
+    public String tradingClearingAccount2 = "NDS000000001";
+    public String quantity2 = "3";
+    public String classCode2 = "TQOB";
+    public String sector2 = "government";
+    public String type2 = "bond";
+    public String company2 = "ОФЗ";
+    public String instrumet2 = ticker2 + "_" + classCode2;
+    //
+    public String ticker3 = "LKOH";
+    public String tradingClearingAccount3 = "NDS000000001";
+    //    public String tradingClearingAccount3 = "L01+00000F00";
+    public String quantity3 = "7";
+    public String classCode3 = "TQBR";
+    public String sector3 = "energy";
+    public String type3 = "share";
+    public String company3 = "Лукойл";
+    public String instrumet3 = ticker3 + "_" + classCode3;
+
+    public String ticker4 = "SNGSP";
+    public String tradingClearingAccount4 = "NDS000000001";
+    //    public String tradingClearingAccount4 = "L01+00000F00";
+    public String quantity4 = "100";
+    public String classCode4 = "TQBR";
+    public String sector4 = "energy";
+    public String type4 = "share";
+    public String company4 = "Сургутнефтегаз";
+    public String instrumet4 = ticker4 + "_" + classCode4;
+
+    public String ticker5 = "TRNFP";
+    public String tradingClearingAccount5 = "NDS000000001";
+    //    public String tradingClearingAccount5 = "L01+00000F00";
+    public String quantity5 = "4";
+    public String classCode5 = "TQBR";
+    public String sector5 = "energy";
+    public String type5 = "share";
+    public String company5 = "Транснефть";
+    public String instrumet5 = ticker5 + "_" + classCode5;
+
+
+    public String ticker6 = "ESGR";
+    public String tradingClearingAccount6 = "NDS000000001";
+    //    public String tradingClearingAccount6 = "L01+00000F00";
+    public String quantity6 = "5";
+    public String classCode6 = "TQTF";
+    public String sector6 = "other";
+    public String type6 = "etf";
+    public String company6 = "РСХБ Управление Активами";
+    public String instrumet6 = ticker6 + "_" + classCode6;
+
+    public String ticker7 = "USD000UTSTOM";
+    public String tradingClearingAccount7 = "MB9885503216";
+    public String quantity7 = "1000";
+    public String classCode7 = "CETS";
+    public String sector7 = "money";
+    public String type7 = "money";
+    public String company7 = "Денежные средства";
+    public String instrumet7 = ticker7 + "_" + classCode7;
+
+
+    public String ticker8 = "YNDX";
+    //    public String tradingClearingAccount8 = "L01+00000F00";
+    public String tradingClearingAccount8 = "NDS000000001";
+    public String quantity8 = "3";
+    public String classCode8 = "TQBR";
+    public String sector8 = "telecom";
+    public String type8 = "share";
+    public String company8= "Яндекс";
+    public String instrumet8 = ticker8 + "_" + classCode8;
+
+
+
+
+
+    public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
@@ -499,13 +600,6 @@ public class StpTrackingApiSteps {
         return dateBond;
     }
 
-    // создаем портфель ведущего с позициями в кассандре
-    public void createMasterPortfolioWithOutPosition(int days, int version, String money, String contractIdMaster, UUID strategyId) {
-        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
-        OffsetDateTime timeChangedAt = OffsetDateTime.now().minusDays(days);
-        Date changedAt = Date.from(timeChangedAt.toInstant());
-        createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMaster, version, money, changedAt);
-    }
 
     //создаем портфель master в cassandra
     public void createMasterPortfolioWithChangedAt(String contractIdMaster, UUID strategyId, List<MasterPortfolio.Position> positionList, int version, String money, Date date) {
@@ -637,4 +731,73 @@ public class StpTrackingApiSteps {
         return positionAction;
     }
 
+
+
+
+    // создаем портфель ведущего с позициями в кассандре
+    @Step("Создать договор и стратегию в бд автоследования для ведущего клиента {client}")
+    @SneakyThrows
+    public void createMasterPortfolioOnePosition(int days, int version, String money, String contractIdMaster, UUID strategyId) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(days);
+        Date date = Date.from(utc.toInstant());
+    }
+
+
+
+    // создаем портфель ведущего с позициями в кассандре
+    public void createMasterPortfolioWithOutPosition(int days, int version, String money, String contractIdMaster, UUID strategyId) {
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        OffsetDateTime timeChangedAt = OffsetDateTime.now().minusDays(days);
+        Date changedAt = Date.from(timeChangedAt.toInstant());
+        createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMaster, version, money, changedAt);
+    }
+
+
+
+
+    public String getPriceFromMarketData(String instrumentId, String type) {
+        Response res = pricesApi.mdInstrumentPrices()
+            .instrumentIdPath(instrumentId)
+            .requestIdQuery("111")
+            .systemCodeQuery("111")
+            .typesQuery(type)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String price = res.getBody().jsonPath().getString("prices.price_value[0]");
+        return price;
+    }
+
+    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
+    public void createEventInTrackingContractEvent(String contractIdSlave) {
+        //создаем событие
+        Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
+        log.info("Команда в tracking.contract.event:  {}", event);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = event.toByteArray();
+        //отправляем событие в топик kafka tracking.event
+        kafkaSender.send(TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
+    }
+
+    // создаем команду в топик кафка tracking.master.command
+    Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
+        OffsetDateTime now = OffsetDateTime.now();
+        Tracking.Event event = Tracking.Event.newBuilder()
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setAction(Tracking.Event.Action.UPDATED)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .setContract(Tracking.Contract.newBuilder()
+                .setId(contractId)
+                .setState(Tracking.Contract.State.TRACKED)
+                .setBlocked(false)
+                .build())
+            .build();
+        return event;
+    }
 }

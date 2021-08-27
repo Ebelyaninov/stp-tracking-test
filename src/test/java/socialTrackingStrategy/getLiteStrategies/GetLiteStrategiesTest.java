@@ -250,7 +250,8 @@ public class GetLiteStrategiesTest {
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1140313() throws JsonProcessingException, InterruptedException {
 
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
 
@@ -339,7 +340,7 @@ public class GetLiteStrategiesTest {
         assertThat("value recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getValue(),
             is(recommendedBaseMoney));
         assertThat("subtitle recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getSubtitle(),
-            is("начальная сумма"));
+            is("советуем вложить"));
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("2" + "\u00A0" + "000"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
@@ -394,7 +395,8 @@ public class GetLiteStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1140349() throws JsonProcessingException, InterruptedException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -430,7 +432,8 @@ public class GetLiteStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1140352() throws JsonProcessingException, InterruptedException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

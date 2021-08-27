@@ -133,7 +133,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482567.UpdateStrategy.Валидация запроса: обязательные параметры (x-app-name, x-tcs-login")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482567(String name, String login) {
-        String title = "Стратегия Autotest 101 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 101 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 101 - Обновленный Заголовок";
@@ -183,7 +184,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482599.UpdateStrategy. Валидация запроса: strategyId не в формате UUID")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482599() {
-        String title = "Стратегия Autotest 102 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 102 - Описание";
         String titleUpdate = "Стратегия Autotest 102 - Обновленный Заголовок";
         String descriptionUpdate = "Стратегия Autotest 102 - Обновленное Описание";
@@ -231,7 +233,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482609.UpdateStrategy.Валидация запроса: x-tcs-login > 20 символов")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482609() {
-        String title = "Стратегия Autotest 103 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 103 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 103 - Обновленный Заголовок";
@@ -281,7 +284,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482619.UpdateStrategy.Валидация запроса: параметр title < 1 символа")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482619() {
-        String title = "Стратегия Autotest 104 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 104 - Описание";
         Integer score = 1;
         String titleUpdate = "";
@@ -331,7 +335,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482621.UpdateStrategy.Валидация запроса: параметр title > 50 символов")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482621() {
-        String title = "Стратегия Autotest 105 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 105 - Описание";
         Integer score = 1;
         String titleUpdate = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
@@ -381,7 +386,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482635.UpdateStrategy.Валидация запроса: параметр description < 1 символа")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482635() {
-        String title = "Стратегия Autotest 106 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 106 - Описание";
         Integer score = 1;
         String titleUpdate = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
@@ -430,7 +436,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482649.UpdateStrategy.Валидация запроса: параметр description > 500 символов")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482649() {
-        String title = "Стратегия Autotest 107 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 107 - Описание";
         String titleUpdate = "Стратегия Autotest 107 - Обновленый Заголовок";
         String descriptionUpdate = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план," +
@@ -485,7 +492,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482680.UpdateStrategy.Авторизация: не передан apiKey")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482680() {
-        String title = "Стратегия Autotest 108 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 108 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 108 - Обновленный Заголовок";
@@ -531,7 +539,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482690.UpdateStrategy.Авторизация: передано неверное значение apiKey")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482690() {
-        String title = "Стратегия Autotest 109 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 109 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 109 - Обновленный Заголовок";
@@ -578,7 +587,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482702.UpdateStrategy. Не переданы атрибуты: title, description, score")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482702() {
-        String title = "Стратегия Autotest 110 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 110 - Описание";
         Integer score = 1;
         //Создаем клиента в tracking: client, contract, strategy
@@ -624,7 +634,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482703.UpdateStrategy. Параметр title = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482703() {
-        String title = "Стратегия Autotest 111 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 111 - Описание";
         Integer score = 1;
         String titleUpdate = null;
@@ -674,7 +685,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C482704.UpdateStrategy. Параметр strategyId не существующее значение")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482704() {
-        String title = "Стратегия Autotest 112 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 112 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 112 - Обновленный Заголовок";
@@ -726,7 +738,8 @@ public class UpdateStrategyAdminErrorTest {
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C839748(Integer scoresForUpdateStrategy) {
         parameter("score", scoresForUpdateStrategy);
-        String title = "Стратегия Autotest 113 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 113 - Описание";
         Integer score = 3;
         String titleUpdate = "Стратегия Autotest 113 - Обновленный Заголовок";
@@ -776,7 +789,8 @@ public class UpdateStrategyAdminErrorTest {
     @DisplayName("C839768.UpdateStrategy. Проверка ограничений для активированной стратегии, score != null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C839768() {
-        String title = "Стратегия Autotest 114 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 114 - Описание";
         Integer score = 1;
         String titleUpdate = "Стратегия Autotest 114 - Обновленный Заголовок";

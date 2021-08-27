@@ -56,6 +56,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
@@ -136,12 +137,11 @@ public class ActivateStrategySuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -156,7 +156,7 @@ public class ActivateStrategySuccessTest {
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -186,12 +186,11 @@ public class ActivateStrategySuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         //Вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -206,7 +205,7 @@ public class ActivateStrategySuccessTest {
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));

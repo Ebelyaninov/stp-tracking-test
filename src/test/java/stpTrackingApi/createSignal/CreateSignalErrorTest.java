@@ -759,7 +759,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656524() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -811,7 +812,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657204() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
@@ -868,7 +870,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657314() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("1000.0");
         int quantityRequest = 6;
@@ -917,7 +920,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657490() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 16;
@@ -966,7 +970,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657523() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 30;
@@ -1015,13 +1020,14 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657577() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 30;
+        int quantityRequest = 3;
         int version = 2;
         String ticker = "MTS0620";
-        String tradingClearingAccount = "NDS000000001";
+        String tradingClearingAccount = "TKCBM_TCAB";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1055,7 +1061,7 @@ public class CreateSignalErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
     }
 
 
@@ -1066,7 +1072,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658177() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 30;
@@ -1115,7 +1122,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658142() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
@@ -1173,7 +1181,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658142_1() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
@@ -1242,7 +1251,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658178(String riskInst, StrategyRiskProfile strategyRiskProfile) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;

@@ -22,9 +22,12 @@ import java.util.UUID;
 )
 public class Subscription {
     @Id
-    BigInteger id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    Long id;
 
-//    @OneToOne(optional = false, cascade = CascadeType.ALL)
+
+    //    @OneToOne(optional = false, cascade = CascadeType.ALL)
     @Column(name = "slave_contract_id")
     String slaveContractId;
 

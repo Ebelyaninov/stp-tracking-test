@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 
 import javax.transaction.Transactional;
 import java.util.Collection;
@@ -26,5 +27,7 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     @Transactional
     @Modifying(clearAutomatically = true)
     void deleteClientsByIdIn(Collection<UUID> ids);
+
+    Client findByIdAndMasterStatus(UUID id, ClientStatusType masterStatus);
 
 }

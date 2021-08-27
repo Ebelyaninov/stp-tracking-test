@@ -62,10 +62,10 @@ public class ConfirmMasterClientSuccessTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
     String SIEBEL_ID = "5-HVN32EX9";
-    String siebelIdEmptyNick = "1-1WF4BU0";
+    String siebelIdEmptyNick = "1-9X6NHTJ";
     String siebelIdNullImage = "5-421S5P27";
     String siebelIdNotBroker = "5-11FZVG5DZ";
-    String siebelIdNotOpen = "5-EYC8YSQQ";
+    String siebelIdNotOpen = "5-3SWTP8DX";
 
     String xApiKey = "x-api-key";
 

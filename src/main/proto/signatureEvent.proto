@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.signature.event;
+
+import "google/protobuf/timestamp.proto";
+
+message Event {
+bytes id = 1;
+Type type = 2;
+google.protobuf.Timestamp created_at = 3;
+
+oneof domain {
+Account account = 4;
+}
+
+enum Type {
+TRACKING_LEADING = 0;
+TEST = 1;
+}
+}
+
+message Account {
+bytes id = 1;
+}

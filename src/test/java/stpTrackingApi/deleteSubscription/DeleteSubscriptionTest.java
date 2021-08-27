@@ -89,16 +89,12 @@ public class DeleteSubscriptionTest {
     StpTrackingApiSteps steps;
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-//    Client clientMaster;
-//    Contract contractMaster;
+
     Strategy strategyMaster;
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-//    Profile profile;
-    String siebelIdMaster = "1-1P4N1RM";
+    String siebelIdMaster = "1-3Z0IR7O";
     String siebelIdSlave = "5-7ECGV169";
 
     @AfterEach
@@ -132,7 +128,6 @@ public class DeleteSubscriptionTest {
                 clientService.deleteClient(steps.clientMaster);
             } catch (Exception e) {
             }
-
         });
     }
 
@@ -183,7 +178,7 @@ public class DeleteSubscriptionTest {
         clientSlave = clientService.getClient(investIdSlave);
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
         subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -194,7 +189,7 @@ public class DeleteSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -310,17 +305,86 @@ public class DeleteSubscriptionTest {
         LocalDateTime dateCreateRs = Instant.ofEpochSecond(commandeRes.getCreatedAt().getSeconds())
             .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
         assertThat("ключ команды не равен", keyMan, is(contractIdSlave));
-        assertThat("ID подписки не равен", commandeMan.getSubscription().getId(), is(subscription.getId().longValue()));
+        assertThat("ID подписки не равен", commandeMan.getSubscription().getId(), is(subscription.getId()));
         assertThat("Тип комиссии не равен", commandeMan.getManagement(), is(notNullValue()));
         assertThat("дата создания команды не равна", dateCreateMan, is(time));
         assertThat("ключ команды не равен", keyRes, is(contractIdSlave));
-        assertThat("ID подписки не равен", commandeRes.getSubscription().getId(), is(subscription.getId().longValue()));
+        assertThat("ID подписки не равен", commandeRes.getSubscription().getId(), is(subscription.getId()));
         assertThat("Тип комиссии не равен", commandeRes.getResult(), is(notNullValue()));
         assertThat("дата создания команды не равна", dateCreateRs, is(time));
     }
 
 
-
-
-
+    @Test
+    @AllureId("1219549")
+    @DisplayName("C1219549.DeleteSubscription.Отправка события в топик tracking.contract.event после удаления подписки")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод создания подписки на торговую стратегию ведомым.")
+    void C1219549() throws Exception {
+        //создаем данные для стратегии
+        String title = "тест стратегия autotest";
+        String description = "new test стратегия autotest";
+        UUID strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //вызываем метод CreateSubscription
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
+        strategyMaster = strategyService.getStrategy(strategyId);
+        assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
+        //находим подписку и проверяем по ней данные
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        //находим запись по контракту ведомого и проверяем значения
+        contractSlave = contractService.getContract(contractIdSlave);
+        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+        assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
+        assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
+        clientSlave = clientService.getClient(investIdSlave);
+        assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+        //вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        subscriptionApi.deleteSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.contract.event:  {}", event);
+        LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
+            .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
+        //проверяем, данные в сообщении
+        assertThat("тип события не равен", event.getAction().toString(), is("UPDATED"));
+        assertThat("ID договора не равен", event.getContract().getId(), is(contractIdSlave));
+        assertThat("contract.state не равен", event.getContract().getState().toString(), is("UNTRACKED"));
+        assertThat("contract.blocked не равен", event.getContract().getBlocked(), is(false));
+    }
 }
