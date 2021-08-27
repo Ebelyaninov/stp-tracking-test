@@ -121,4 +121,13 @@ public class ClientService {
         clientRepository.deleteClientsByIdIn(ids);
         log.info("Successfully deleted clients {}", ids);
     }
+
+    @Step("Поиск клиента по id")
+    @SneakyThrows
+    public Client getClientByIdAndMasterStatusAndReturnIfFound (UUID clientId, ClientStatusType masterStatus) {
+        Client client = clientRepository.findByIdAndMasterStatus (clientId, masterStatus);
+        log.info("Successfully find contract {}", clientId);
+        Allure.addAttachment("Найденный клиент", "application/json", objectMapper.writeValueAsString(clientId));
+        return client;
+    }
 }

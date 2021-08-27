@@ -141,8 +141,6 @@ public class HandleActualizeCommandErrorTest {
     String ticker = "AAPL";
     String classCode = "SPBXM";
     String tradingClearingAccount = "TKCBM_TCAB";
-
-
     String contractIdSlave;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
@@ -304,7 +302,7 @@ public class HandleActualizeCommandErrorTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
-        kafkaSender.send(Topics.TRACKING_EVENT, contractIdSlave, eventBytes);
+        kafkaSender.send(TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
 //        //формируем команду на актуализацию для slave
 //        //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2,
@@ -346,7 +344,7 @@ public class HandleActualizeCommandErrorTest {
         //создаем подписку на стратегию для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //формируем команду на актуализацию для slave  где у позиции и баз. валюты разный action
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 7000, contractIdSlave,
             2, steps.createPosInCommand(ticker, tradingClearingAccount, 2,
@@ -356,7 +354,7 @@ public class HandleActualizeCommandErrorTest {
         Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -385,7 +383,7 @@ public class HandleActualizeCommandErrorTest {
         strategyId = UUID.randomUUID();
         steps.createClientWithContract(investIdSlave, contractIdSlave,null, ContractState.tracked, strategyId);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave,
             2, OffsetDateTime.now(),Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
@@ -393,7 +391,7 @@ public class HandleActualizeCommandErrorTest {
         Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -445,13 +443,13 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000,
             contractIdSlave, 2, OffsetDateTime.now(),Tracking.Portfolio.Action.ADJUST, false);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
         Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -576,10 +574,10 @@ public class HandleActualizeCommandErrorTest {
             versionMiddle, steps.createPosInCommand(ticker, tradingClearingAccount, 5,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -659,11 +657,11 @@ public class HandleActualizeCommandErrorTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2,  588486, contractIdSlave,
             versionMiddle+2,   OffsetDateTime.now(), Tracking.Portfolio.Action.ADJUST, true);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
 
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -706,7 +704,7 @@ public class HandleActualizeCommandErrorTest {
         //создаем подписку на стратегию для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //формируем команду на актуализацию для slave
         //передаем только базовую валюту
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000, contractIdSlave, 2,
@@ -716,7 +714,7 @@ public class HandleActualizeCommandErrorTest {
         Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -760,7 +758,7 @@ public class HandleActualizeCommandErrorTest {
         //создаем подписку на стратегию для slave
         steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //формируем команду на актуализацию для slave
         //передаем только базовую валюту
         OffsetDateTime time = OffsetDateTime.now();
@@ -771,7 +769,7 @@ public class HandleActualizeCommandErrorTest {
         Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -866,7 +864,7 @@ public class HandleActualizeCommandErrorTest {
             .build();
         log.info("Команда в tracking.slave.command:  {}", command);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         await().atMost(FIVE_SECONDS).until(() ->
@@ -877,7 +875,7 @@ public class HandleActualizeCommandErrorTest {
         slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
         assertThat("найдена запись в masterPortfolio", slaveOrder.getState().toString(), is("0"));
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -987,10 +985,10 @@ public class HandleActualizeCommandErrorTest {
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(10));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(10));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -1087,11 +1085,11 @@ public class HandleActualizeCommandErrorTest {
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(10));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(10));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));

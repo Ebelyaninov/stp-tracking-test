@@ -105,7 +105,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536608() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -142,7 +143,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536280() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -180,7 +182,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536612() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -213,7 +216,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536613() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -244,7 +248,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536614() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -277,7 +282,8 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536615() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         UUID strategyIdTest = UUID.randomUUID();

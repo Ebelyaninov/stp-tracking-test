@@ -60,7 +60,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 public class ActivateStrategyErrorTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
     static final String SIEBEL_ID = "5-55RUONV5";
     String xApiKey = "x-api-key";
     String key = "tracking";

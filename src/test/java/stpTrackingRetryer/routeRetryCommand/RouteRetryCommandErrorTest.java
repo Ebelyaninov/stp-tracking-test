@@ -1,6 +1,7 @@
 package stpTrackingRetryer.routeRetryCommand;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
@@ -191,7 +192,7 @@ public class RouteRetryCommandErrorTest {
     @Description("Операция для отправки отложенной команды в топик назначения по истечении временной задержки, равной 30 секундам.")
     void C783337() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -204,6 +205,13 @@ public class RouteRetryCommandErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -225,8 +233,10 @@ public class RouteRetryCommandErrorTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "6259.17", positionListMaster);
-        //создаем запись о ведомом в client
-        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         positionListSl.add(SlavePortfolio.Position.builder()
@@ -276,6 +286,13 @@ public class RouteRetryCommandErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -297,8 +314,11 @@ public class RouteRetryCommandErrorTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "6259.17", positionListMaster);
-        //создаем запись о ведомом в client
-        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        //создаем запись о ведомом в client
+//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         positionListSl.add(SlavePortfolio.Position.builder()
@@ -374,6 +394,13 @@ public class RouteRetryCommandErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -395,8 +422,11 @@ public class RouteRetryCommandErrorTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "6259.17", positionListMaster);
-        //создаем запись о ведомом в client
-        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        //создаем запись о ведомом в client
+//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         positionListSl.add(SlavePortfolio.Position.builder()
@@ -662,6 +692,32 @@ public class RouteRetryCommandErrorTest {
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", lastPrice, last);
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", askPrice, ask);
         createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", bidPrice, bid);
+    }
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd);
+//            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
     }
 
 }

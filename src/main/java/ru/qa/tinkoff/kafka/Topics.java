@@ -27,6 +27,9 @@ public enum Topics {
     MIOF_POSITIONS_RAW("miof.positions.raw"),
     TRACKING_CONTRACT_EVENT("tracking.contract.event"),
     TRACKING_FEE_CALCULATE_COMMAND("tracking.fee.calculate.command"),
+    ORIGINATION_SIGNATURE_NOTIFICATION("origination.signature.notification.raw"),
+    TRACKING_STRATEGY_EVENT("tracking.strategy.event"),
+    TRACKING_SUBSCRIPTION_COMMAND("tracking.subscription.event"),
     ;
     private final String name;
 }

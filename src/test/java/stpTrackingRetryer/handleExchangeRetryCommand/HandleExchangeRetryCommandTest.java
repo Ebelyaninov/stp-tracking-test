@@ -1,5 +1,6 @@
 package stpTrackingRetryer.handleExchangeRetryCommand;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
@@ -215,6 +216,13 @@ public class HandleExchangeRetryCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         createClientWithContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master,
@@ -236,8 +244,12 @@ public class HandleExchangeRetryCommandTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "6259.17", positionListMaster);
-        //создаем запись о ведомом в client
-        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        //создаем запись о ведомом в client
+//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         positionListSl.add(SlavePortfolio.Position.builder()
@@ -419,6 +431,33 @@ public class HandleExchangeRetryCommandTest {
         //insert запись в cassandra
         slavePortfolioDao.insertIntoSlavePortfolio(contractIdSlave, strategyId, version, comparedToMasterVersion,
             baseMoneyPosition, positionList);
+    }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd);
+//            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
     }
 
 }

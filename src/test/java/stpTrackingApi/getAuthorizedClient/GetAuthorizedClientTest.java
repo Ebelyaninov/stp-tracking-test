@@ -63,7 +63,7 @@ public class GetAuthorizedClientTest {
     @Autowired
     StpTrackingApiSteps steps;
 
-    String SIEBEL_ID = "5-LFCI8UPV";
+    String SIEBEL_ID = "5-192WBUXCI";
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     String contractId;
     Client client;

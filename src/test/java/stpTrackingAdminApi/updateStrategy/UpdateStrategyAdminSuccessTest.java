@@ -59,6 +59,7 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
@@ -123,10 +124,11 @@ public class UpdateStrategyAdminSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482510() throws InvalidProtocolBufferException {
-        String title = "Стратегия Autotest 001 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 001 - Описание";
         Integer score = 1;
-        String titleUpdate = "Стратегия Autotest 001 - Обновленный Заголовок";
+        String titleUpdate = "New Autotest " +String.valueOf(randomNumber);
         String descriptionUpdate = "Стратегия Autotest 001 - Обновленное Описание";
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
@@ -153,7 +155,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoreUpdate);
         //Вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
 //        //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -167,7 +169,7 @@ public class UpdateStrategyAdminSuccessTest {
         checkParamResponse(responseUpdateStrategy, strategyId, "active", titleUpdate, "rub", "conservative",
             descriptionUpdate, scoreUpdate, profile);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -187,9 +189,10 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C482511.UpdateStrategy. Успешное обновление стратегии админом, статус 'draft'")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482511() {
-        String title = "Стратегия Autotest 002 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 002 - Описание";
-        String titleUpdate = "тратегия Autotest 002 - Обновленный Заголовок";
+        String titleUpdate = "New Autotest " +String.valueOf(randomNumber);
         String descriptionUpdate = "Стратегия Autotest 002 - Обновленное Описание";
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
@@ -238,7 +241,8 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C482513.UpdateStrategy. Успешное обновление стратегии админом, только description")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482513() {
-        String title = "Стратегия Autotest 003 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 003 - Описание";
         String descriptionUpdate = "Стратегия Autotest 003 - Обновленное Описание";
         UUID strategyId = UUID.randomUUID();
@@ -286,9 +290,10 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C482514.UpdateStrategy. Успешное обновление стратегии админом, только title")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482514() {
-        String title = "Стратегия Autotest 004 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 004 - Описание";
-        String titleUpdate = "тратегия Autotest 004 - Обновленный Заголовок";
+        String titleUpdate = "New Autotest " +String.valueOf(randomNumber);
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
         Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
@@ -334,7 +339,8 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C838783.UpdateStrategy. Успешное обновление стратегии админом, только score")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C838783() {
-        String title = "Стратегия Autotest 005 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 005 - Описание";
         Integer score = 1;
         Integer scoreUpdate = 5;
@@ -380,14 +386,15 @@ public class UpdateStrategyAdminSuccessTest {
     @Test
     @AllureId("482516")
     @Subfeature("Успешные сценарии")
-    @DisplayName("C482516.UpdateStrategy. Успешное обновление title & score стратегии, description = null")
+    @DisplayName("C482516.UpdateStrategy. Успешное обновление title & score стратегии, description")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C482516() {
-        String title = "Стратегия Autotest 006 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 006 - Описание";
         Integer score = 1;
-        String titleUpdate = "Стратегия Autotest 006 - Обновленный Заголовок";
-        String descriptionUpdate = null;
+        String titleUpdate ="New Autotest" +String.valueOf(randomNumber);
+        String descriptionUpdate = "New Стратегия Autotest 006 - Описание";;
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
@@ -436,10 +443,11 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C839319.UpdateStrategy. Успешное обновление title & description стратегии, score = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C839319() {
-        String title = "Стратегия Autotest 007 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 007 - Описание";
         Integer score = 1;
-        String titleUpdate = "Стратегия Autotest 007 - Обновленный Заголовок";
+        String titleUpdate = "New Autotest " +String.valueOf(randomNumber);
         String descriptionUpdate = "Стратегия Autotest 007 - Обновленное Описание";
         Integer scoreUpdate = null;
 
@@ -491,10 +499,11 @@ public class UpdateStrategyAdminSuccessTest {
     @DisplayName("C839399.UpdateStrategy.Успешное обновление стратегии description & score = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C839399() {
-        String title = "Стратегия Autotest 008 - Заголовок";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Стратегия Autotest 008 - Описание";
         Integer score = 1;
-        String descriptionUpdate = null;
+        String descriptionUpdate ="New Стратегия Autotest 008 - Описание";
         Integer scoreUpdate = null;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social

@@ -160,7 +160,8 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983303(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
 //        String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
@@ -236,7 +237,8 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983084(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -313,7 +315,8 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983216(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -371,7 +374,8 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C980851(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов

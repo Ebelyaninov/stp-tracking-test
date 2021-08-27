@@ -180,7 +180,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1122179() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -225,7 +226,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1132109() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -278,7 +280,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1132257() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -340,7 +343,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1133268(StrategyCurrency strategyCurrency, String symbol) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -389,7 +393,7 @@ public class GetLiteStrategyTest {
         assertThat("value recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getValue(),
             is(recommendedBaseMoney));
         assertThat("subtitle recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getSubtitle(),
-            is("начальная сумма"));
+            is("советуем вложить"));
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("2" + "\u00A0" + "000"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
@@ -403,7 +407,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1133646() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -469,7 +474,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1122201() throws JSONException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -502,7 +508,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1122199() throws JSONException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -535,7 +542,8 @@ public class GetLiteStrategyTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1122180() throws JSONException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

@@ -59,6 +59,7 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 
 @Slf4j
@@ -125,8 +126,8 @@ public class AnalyzePortfolioErrorTest {
     final String tickerMinfinRU = "RU000A0JXU14";
     final String tradingClearingAccountMinfinRU = "L01+00002F00";
 
-    final String tickerINFN = "INFN";
-    final String tradingClearingAccountINFN = "NDS000000001";
+    final String tickerINFN = "VTBH";
+    final String tradingClearingAccountINFN = "L01+00002F00";
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
@@ -205,6 +206,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -218,7 +220,14 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -229,6 +238,7 @@ public class AnalyzePortfolioErrorTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+
         //проверяем что после анализа в портфеле slave позиция с правильной валютой
         checkParam(baseMoneySlave, utc);
     }
@@ -251,6 +261,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -264,7 +275,12 @@ public class AnalyzePortfolioErrorTest {
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("TEST", "NDS000000001",
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
@@ -298,6 +314,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -312,7 +329,12 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
@@ -344,6 +366,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -357,7 +380,12 @@ public class AnalyzePortfolioErrorTest {
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerYandex, tradingClearingAccountYandex,
@@ -393,6 +421,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -407,7 +436,11 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
@@ -442,6 +475,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -455,7 +489,10 @@ public class AnalyzePortfolioErrorTest {
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfin, tradingClearingAccountMinfin,
@@ -488,6 +525,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -502,7 +540,11 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
@@ -534,6 +576,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -547,7 +590,11 @@ public class AnalyzePortfolioErrorTest {
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerBRJ1, tradingClearingAccountBRJ1,
@@ -581,6 +628,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -595,7 +643,12 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
@@ -628,6 +681,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -641,7 +695,12 @@ public class AnalyzePortfolioErrorTest {
             "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+
+
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfinRU, tradingClearingAccountMinfinRU,
@@ -674,6 +733,7 @@ public class AnalyzePortfolioErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -688,7 +748,10 @@ public class AnalyzePortfolioErrorTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
-        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
@@ -696,11 +759,11 @@ public class AnalyzePortfolioErrorTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
             baseMoneySlave, date, positionListSl);
         //вычитываем все события из tracking.event
-        steps.resetOffsetToLate(TRACKING_EVENT);
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -722,6 +785,10 @@ public class AnalyzePortfolioErrorTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
 
     }
+
+
+
+
 
 
     // методы для работы тестов*************************************************************************

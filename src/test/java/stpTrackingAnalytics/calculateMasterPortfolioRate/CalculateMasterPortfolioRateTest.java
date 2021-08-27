@@ -157,7 +157,8 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C966227(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
@@ -240,7 +241,8 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978635(Tracking.AnalyticsCommand.Operation operation) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "77545.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
@@ -343,7 +345,8 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на" +
         " заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978760() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
@@ -450,7 +453,8 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля" +
         " на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978790() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
@@ -628,7 +632,8 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля " +
         "на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978840() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -669,7 +674,8 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978841() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String ticker8 = "TEST";
         String tradingClearingAccount8 = "L01+00000F00";
@@ -747,7 +753,8 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978843() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String ticker8 = "FXITTEST";
         String tradingClearingAccount8 = "L01+00002F00";
@@ -842,7 +849,8 @@ public class CalculateMasterPortfolioRateTest {
         String tickerMoney = "USD000UTSTOM";
         String tradingClearingAccountMoney = "MB9885503216";
         String quantityMoney = "2000";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");

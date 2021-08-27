@@ -140,7 +140,8 @@ public class HandleInitializeCommandTest {
     @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
     void C640032() {
         strategyId = UUID.randomUUID();
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -188,7 +189,8 @@ public class HandleInitializeCommandTest {
     @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
     void C639963() {
         strategyId = UUID.randomUUID();
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()

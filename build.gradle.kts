@@ -148,6 +148,7 @@ tasks.compileJava {
         "generateMiofApi",
         "generateTrackingCacheApi",
         "generateTrackingSlaveCacheApi",
+        "generateTrackingApiCacheApi",
         "generateFiregApi",
         "generateMDApi",
         "generateSocialTrackingStrategy"
@@ -376,6 +377,30 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
             "dateLibrary" to "java8",
             "serializationLibrary" to "jackson"
         )
+    )
+}
+
+tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTrackingApiCacheApi") {
+    val openApiPackage = "ru.qa.tinkoff.swagger"
+    val path = "$buildDir/generated/sources/swagger"
+
+    inputSpec.set("$projectDir/src/test/resources/swagger/tracking-cache-api-v1.yml")
+    outputDir.set(path)
+
+    generateApiTests.set(false)
+    skipValidateSpec.set(true)
+    generatorName.set("java")
+    apiPackage.set("$openApiPackage.trackingApiCache.api")
+    invokerPackage.set("$openApiPackage.trackingApiCache.invoker")
+    modelPackage.set("$openApiPackage.trackingApiCache.model")
+    library.set("rest-assured")
+    generateModelDocumentation.set(false)
+    generateApiDocumentation.set(false)
+    configOptions.set(
+            mapOf(
+                    "dateLibrary" to "java8",
+                    "serializationLibrary" to "jackson"
+            )
     )
 }
 

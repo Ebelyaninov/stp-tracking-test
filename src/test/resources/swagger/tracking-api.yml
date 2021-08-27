@@ -1383,7 +1383,7 @@ components:
       type: object
       required:
         - value
-        - сurrency
+        - currency
       properties:
         value:
           description: Значение цены за единицу актива
@@ -1391,7 +1391,7 @@ components:
           format: decimal
           minimum: 0
           exclusiveMinimum: true
-        сurrency:
+        currency:
           $ref: '#/components/schemas/Currency'
 
     ExchangePosition:
