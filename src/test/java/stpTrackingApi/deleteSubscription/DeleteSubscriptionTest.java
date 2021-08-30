@@ -178,7 +178,7 @@ public class DeleteSubscriptionTest {
         clientSlave = clientService.getClient(investIdSlave);
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -189,7 +189,7 @@ public class DeleteSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));

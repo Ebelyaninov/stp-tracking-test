@@ -154,7 +154,7 @@ public class CreateSubscriptionTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -166,7 +166,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -214,7 +214,7 @@ public class CreateSubscriptionTest {
         //создаем запись о ведомом в client
         steps.createClient(siebelIdSlave, investIdSlave, ClientStatusType.none);
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -226,7 +226,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -274,7 +274,7 @@ public class CreateSubscriptionTest {
         //создаем запись о ведомом в client c договором
         steps.createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, contractIdSlave, null, ContractState.untracked, null);
         //вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_COMMAND);
+        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")
@@ -286,7 +286,7 @@ public class CreateSubscriptionTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
