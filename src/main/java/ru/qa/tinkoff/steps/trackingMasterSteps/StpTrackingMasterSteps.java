@@ -266,7 +266,7 @@ public class StpTrackingMasterSteps {
 
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus, Boolean blocked,java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
@@ -285,8 +285,8 @@ public class StpTrackingMasterSteps {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd);
-//            .setBlocked(blocked);
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

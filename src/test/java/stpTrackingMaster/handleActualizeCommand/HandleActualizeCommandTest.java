@@ -219,7 +219,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -399,7 +399,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -495,7 +495,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -598,7 +598,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -694,7 +694,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -887,7 +887,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -936,6 +936,131 @@ public class HandleActualizeCommandTest {
         assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("Состояние сигнала  не равно", masterSignal.getState().toString(), is("1"));
     }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1244154")
+    @DisplayName("C1244154. Игнорируем заблокированные подписки")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C1244154() {
+        String siebelIdMaster = "5-9Y8PIEMC";
+        String siebelIdSlaveActive = "1-BYSD5T8";
+        String siebelIdSlaveBlocked = "1-7J4CQZD";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        version = 3;
+        BigDecimal baseMoney = new BigDecimal("4985.0");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slaveActiveSubscription в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveActive = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlaveActive)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlaveActiveSubscription = resAccountSlaveActive.getInvestId();
+        String contractIdSlaveActiveSubscription = resAccountSlaveActive.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slaveBlockedSubscription в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveBlockedSubscription = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlaveBlocked)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getInvestId();
+        String contractIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        // создаем   портфель ведущего  в кассандре c позицией
+        String tickerPos = "MTS0620";
+        String tradingClearingAccountPos = "NDS000000001";
+        String quantityPos = "1";
+        int versionPos = version - 1;
+        int versionPortfolio = version - 1;
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+            baseMoneyPortfolio, date);
+        //создаем  активную подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlaveActiveSubscription, contractIdSlaveActiveSubscription, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+        //Создаем заблокированную подписку
+        steps.createSubcription(UUID.randomUUID(), contractIdSlaveBlockedSubscription, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, true, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        //формируем команду на актуализацию по ведущему
+        Tracking.Decimal price = Tracking.Decimal.newBuilder()
+            .setUnscaled(256).build();
+        Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
+            .setUnscaled(2).build();
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
+            10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, price,
+            quantityS, ticker, tradingClearingAccount);
+        log.info("Команда в tracking.master.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        String keyMaster = contractIdMaster;
+        //вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        //Проверяем, что получили 1 событие
+        assertThat("Получили больше 1 события", messages.size(), equalTo(1));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        String key = message.getKey();
+        log.info("Команда в tracking.slave.command:  {}", portfolioCommand);
+        Instant createAt = Instant.ofEpochSecond(portfolioCommand.getCreatedAt().getSeconds(), portfolioCommand.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        checkParamCommand(portfolioCommand, contractIdSlaveActiveSubscription, "SYNCHRONIZE", key);
+        // проверяем портфель мастера
+        checkParamMasterPortfolio (baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date,versionPos,
+            "12", "10");
+        //Удаляем данные
+        try {
+            subscriptionService.deleteSubscription(subscriptionService.getSubscriptionByContract(contractIdSlaveActiveSubscription));
+            subscriptionService.deleteSubscription(subscriptionService.getSubscriptionByContract(contractIdSlaveBlockedSubscription));
+        } catch (Exception e) {
+        }
+        try {
+            contractService.deleteContract(contractService.getContract(contractIdSlaveActiveSubscription));
+            contractService.deleteContract(contractService.getContract(contractIdSlaveBlockedSubscription));
+        } catch (Exception e) {
+        }
+        try {
+            clientService.deleteClient(clientService.getClient(investIdSlaveActiveSubscription));
+            clientService.deleteClient(clientService.getClient(investIdSlaveBlockedSubscription));
+        } catch (Exception e) {
+        }
+    }
+
+
 
 
     /////////***методы для работы тестов**************************************************************************
