@@ -44,4 +44,6 @@ public class Subscription {
     @Column(name = "end_time")
     Timestamp endTime;
 
+    @Column(name = "blocked")
+    Boolean blocked;
 }
