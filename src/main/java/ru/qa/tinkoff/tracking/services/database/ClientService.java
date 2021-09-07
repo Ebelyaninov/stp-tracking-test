@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.repositories.ClientRepository;
 
@@ -87,6 +88,20 @@ public class ClientService {
             .setId(investId)
             .setMasterStatus(clientStatusType)
             .setSocialProfile(socialProfile));
+        log.info("Successfully created client {}", client.toString());
+        Allure.addAttachment("Клиент", "application/json", objectMapper.writeValueAsString(client));
+        return client;
+    }
+
+
+    @Step("Создание клиента для автоследования")
+    @SneakyThrows
+    public Client createClient1(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile, ClientRiskProfile clientRiskProfile) {
+        Client client = clientRepository.save(new Client()
+            .setId(investId)
+            .setMasterStatus(clientStatusType)
+            .setSocialProfile(socialProfile)
+            .setRiskProfile(clientRiskProfile));
         log.info("Successfully created client {}", client.toString());
         Allure.addAttachment("Клиент", "application/json", objectMapper.writeValueAsString(client));
         return client;

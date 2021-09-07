@@ -26,6 +26,8 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 
+import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
+import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -38,11 +40,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Service
@@ -64,6 +70,8 @@ public class StpTrackingFeeSteps {
         .ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.Config.apiConfig()).cache();
+
     public Client clientMaster;
     public Contract contractMaster;
     public Strategy strategyMaster;
@@ -270,6 +278,40 @@ public class StpTrackingFeeSteps {
     }
 
 
+    public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
+        String aciValue = "";
+        String nominal = "";
+        List<String> dateBond = new ArrayList<>();
+        //получаем содержимое кеша exchangePositionCache
+        List<Entity> resCacheExchangePosition = cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> position = resCacheExchangePosition.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<String, Object>) position.get(0).getValue();
+        aciValue = values.get("aciValue").toString();
+        nominal = values.get("nominal").toString();
+        dateBond.add(aciValue);
+        dateBond.add(nominal);
+        return dateBond;
+    }
+
+
 
 
 
@@ -373,7 +415,7 @@ public class StpTrackingFeeSteps {
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
         // создаем запись о договоре клиента в tracking.contract
@@ -391,8 +433,8 @@ public class StpTrackingFeeSteps {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd);
-//            .setBlocked(blocked);
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

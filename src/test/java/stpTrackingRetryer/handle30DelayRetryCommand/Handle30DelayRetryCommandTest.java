@@ -113,7 +113,7 @@ public class Handle30DelayRetryCommandTest {
     String contractIdMaster;
     String contractIdSlave = "2013919085";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-EALGI0JN";
+    String SIEBEL_ID_MASTER = "5-5CNFBO6Z";
     String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
     String tradingClearingAccount = "TKCBM_TCAB";
@@ -223,7 +223,7 @@ public class Handle30DelayRetryCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
        createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null, false);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
         positionListSl.add(SlavePortfolio.Position.builder()
@@ -397,7 +397,7 @@ public class Handle30DelayRetryCommandTest {
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
         // создаем запись о договоре клиента в tracking.contract
@@ -415,8 +415,8 @@ public class Handle30DelayRetryCommandTest {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd);
-//            .setBlocked(blocked);
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

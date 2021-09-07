@@ -1,6 +1,7 @@
 package ru.qa.tinkoff.steps.trackingSlaveSteps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -20,6 +21,7 @@ import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
@@ -44,6 +46,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -73,7 +76,7 @@ public class StpTrackingSlaveSteps {
     private final MasterPortfolioDao masterPortfolioDao;
     private final SlavePortfolioDao slavePortfolioDao;
     private final StringSenderService stringSenderService;
-
+    private final ByteToByteSenderService kafkaByteSender;
 
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
@@ -178,13 +181,19 @@ public class StpTrackingSlaveSteps {
     public void createDataToMarketData(String ticker, String classCode, String lastPrice, String askPrice, String bidPrice) {
         //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
         String last = getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
-//        createEventTrackingTestMdPricesInStream(String instrumentId, String type, String oldPrice, String newPrice)
         String ask = getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
         String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
     }
 
-  public   String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
 
+    public void getPriceFromMarketDataSave(String ticker, String classCode, String typePrice, String lastPrice) {
+        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
+        String priceNew = getPriceFromMarketData(ticker + "_" + classCode, typePrice, lastPrice);
+        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, typePrice, lastPrice, priceNew);
+    }
+
+
+  public   String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
         Response res = pricesApi.mdInstrumentPrices()
             .instrumentIdPath(instrumentId)
             .requestIdQuery("111")
@@ -548,6 +557,39 @@ public class StpTrackingSlaveSteps {
     }
 
 
+    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
+    public void createEventInSubscriptionEvent(String contractIdSlave, UUID strategyId, long subscriptionId)  {
+        //создаем событие
+        ByteString strategyIdByte = byteString(strategyId);
+
+        OffsetDateTime now = OffsetDateTime.now();
+        Tracking.Event event = Tracking.Event.newBuilder()
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setAction(Tracking.Event.Action.UPDATED)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .setSubscription(Tracking.Subscription.newBuilder()
+
+                .setStrategy(Tracking.Strategy.newBuilder()
+                    .setId(strategyIdByte)
+                    .build())
+                .setContractId(contractIdSlave)
+                .setId(subscriptionId)
+                .build())
+            .build();
+        byte[] bytes = event.toByteArray();
+        log.info("Команда в tracking.subscription.event:  {}", event);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = event.toByteArray();
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaByteSender.send(Topics.TRACKING_SUBSCRIPTION_EVENT, strategyIdByte.toByteArray(), eventBytes);
+
+
+    }
+
+
 
 
     //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
@@ -651,11 +693,10 @@ public class StpTrackingSlaveSteps {
             .build();
         return position;
     }
-
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+                                  java.sql.Timestamp dateEnd,Boolean blocked ) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
         // создаем запись о договоре клиента в tracking.contract
@@ -673,11 +714,64 @@ public class StpTrackingSlaveSteps {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd);
-//            .setBlocked(blocked);
-        subscription = subscriptionService.saveSubscription(subscription);
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
 
+        subscription = subscriptionService.saveSubscription(subscription);
     }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionWithBlocked(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+//    //метод создает клиента, договор и стратегию в БД автоследования
+//    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+//                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+//                                  java.sql.Timestamp dateEnd) throws JsonProcessingException {
+//        //создаем запись о клиенте в tracking.client
+//        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+//        // создаем запись о договоре клиента в tracking.contract
+//        contractSlave = new Contract()
+//            .setId(contractId)
+//            .setClientId(clientSlave.getId())
+//            .setRole(contractRole)
+//            .setState(contractState)
+//            .setStrategyId(strategyId)
+//            .setBlocked(false);
+//        contractSlave = contractService.saveContract(contractSlave);
+//        //создаем запись подписке клиента
+//        subscription = new Subscription()
+//            .setSlaveContractId(contractId)
+//            .setStrategyId(strategyId)
+//            .setStartTime(dateStart)
+//            .setStatus(subscriptionStatus)
+//            .setEndTime(dateEnd);
+////            .setBlocked(blocked);
+//        subscription = subscriptionService.saveSubscription(subscription);
+//
+//    }
 
 
     public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
@@ -718,6 +812,20 @@ public class StpTrackingSlaveSteps {
         dateBond.add(minPriceIncrement);
         return dateBond;
     }
+
+
+    public byte[] bytes(UUID uuid) {
+        return ByteBuffer.allocate(16)
+            .putLong(uuid.getMostSignificantBits())
+            .putLong(uuid.getLeastSignificantBits())
+            .array();
+    }
+
+
+    public ByteString byteString(UUID uuid) {
+        return ByteString.copyFrom(bytes(uuid));
+    }
+
 
 
 

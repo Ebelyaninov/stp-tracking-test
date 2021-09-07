@@ -115,11 +115,11 @@ public class SubscriptionService {
     }
 
 
-    @Step("Сохранение стратегии")
+    @Step("Сохранение подписки")
     public Subscription saveSubscription (Subscription subscription) throws JsonProcessingException {
         Subscription saved = subscriptionRepository.save(subscription);
         log.info("Successfully saved subscription {}", saved);
-        Allure.addAttachment("Стратегия", "application/json", objectMapper.writeValueAsString(saved));
+        Allure.addAttachment("Подписка", "application/json", objectMapper.writeValueAsString(saved));
         return saved;
     }
 

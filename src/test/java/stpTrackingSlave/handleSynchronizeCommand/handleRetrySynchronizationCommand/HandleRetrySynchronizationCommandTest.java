@@ -1,4 +1,5 @@
 package stpTrackingSlave.handleSynchronizeCommand.handleRetrySynchronizationCommand;
+
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -7,16 +8,12 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
@@ -24,32 +21,33 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.tinkoff.trading.tracking.Tracking;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
@@ -70,8 +68,6 @@ public class HandleRetrySynchronizationCommandTest {
     StringToByteSenderService kafkaSender;
     @Autowired
     StringSenderService kafkaStringSender;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -99,13 +95,31 @@ public class HandleRetrySynchronizationCommandTest {
     SlaveOrder slaveOrder;
     Client clientSlave;
     String contractIdMaster;
+    Subscription subscription;
     String contractIdSlave = "2050306204";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "4-1V1UVPX8";
+    long subscriptionId;
+    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
+    //    String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "5-1NIRKRJIH";
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
+
+    public String value;
+
+    @BeforeEach
+    public void getDateBond() {
+        if (value == null) {
+            step("Получаем данные по prices и отправляем события в tracking.test.md.prices.int.stream", () -> {
+                steps.getPriceFromMarketDataSave(ticker, classCode, "last", "107.97");
+                steps.getPriceFromMarketDataSave(ticker, classCode, "ask", "107.97");
+                steps.getPriceFromMarketDataSave(ticker, classCode, "bid", "107.97");
+
+                value = "1";
+            });
+        }
+    }
 
 
     @AfterEach
@@ -155,9 +169,12 @@ public class HandleRetrySynchronizationCommandTest {
                 steps.createEventInTrackingEvent(contractIdSlave);
             } catch (Exception e) {
             }
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
+            } catch (Exception e) {
+            }
         });
     }
-
 
 
     @SneakyThrows
@@ -168,12 +185,11 @@ public class HandleRetrySynchronizationCommandTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739018() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-//        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -192,10 +208,12 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
-
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель для slave в cassandra c поизицией
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -214,9 +232,7 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        //получаем значение price из кеша exchangePositionPriceCache
-//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
-        BigDecimal price =slavePortfolio.getPositions().get(0).getPrice();
+        BigDecimal price = new BigDecimal(steps. getPriceFromExchangePositionPriceCacheWithSiebel(ticker,tradingClearingAccount, "last", SIEBEL_ID_SLAVE));
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
@@ -231,18 +247,16 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "bid",tradingClearingAccount));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "bid", tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.subtract(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем, что выставилась новая заявка
         await().atMost(TEN_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("2")), notNullValue());
-        checkOrderParameters(2, "1", "2", lot, lots, priceOrder,  ticker,  tradingClearingAccount,
-             classCode);
+        checkOrderParameters(2, "1", "2", lot, lots, priceOrder, ticker, tradingClearingAccount,
+            classCode);
     }
-
-
 
 
     @SneakyThrows
@@ -253,12 +267,12 @@ public class HandleRetrySynchronizationCommandTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739019() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
+        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -277,9 +291,12 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель для slave
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -298,9 +315,8 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        //получаем значение price из кеша exchangePositionPriceCache
-//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
-        BigDecimal price =slavePortfolio.getPositions().get(0).getPrice();
+//        BigDecimal price = slavePortfolio.getPositions().get(0).getPrice();
+        BigDecimal price = new BigDecimal(steps. getPriceFromExchangePositionPriceCacheWithSiebel(ticker,tradingClearingAccount, "last", SIEBEL_ID_SLAVE));
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
@@ -318,12 +334,12 @@ public class HandleRetrySynchronizationCommandTest {
         BigDecimal lotsMax = slavePortfolio.getBaseMoneyPosition().getQuantity()
             .divide(slavePortfolio.getPositions().get(0).getPrice()
                 .add((slavePortfolio.getPositions().get(0).getPrice().multiply(new BigDecimal("0.002")))
-                    .multiply(lot)), 0 , BigDecimal.ROUND_HALF_UP);
+                    .multiply(lot)), 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsNew = BigDecimal.ZERO;
-        if(lotsMax.compareTo(lots) < 0) {
+        if (lotsMax.compareTo(lots) < 0) {
             lotsNew = lotsMax;
         }
-        if(lotsMax.compareTo(lots) > 0) {
+        if (lotsMax.compareTo(lots) > 0) {
             lotsNew = lots;
         }
         BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
@@ -333,7 +349,7 @@ public class HandleRetrySynchronizationCommandTest {
         //проверяем, что выставилась новая заявка
         await().atMost(TEN_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("2")), notNullValue());
-        checkOrderParameters(2, "0", "2", lot, lotsNew, priceOrder,  ticker,  tradingClearingAccount,
+        checkOrderParameters(2, "0", "2", lot, lotsNew, priceOrder, ticker, tradingClearingAccount,
             classCode);
     }
 
@@ -345,12 +361,12 @@ public class HandleRetrySynchronizationCommandTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739020() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
+        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -369,10 +385,13 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-       // создаем портфель для slave с позицией
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        // создаем портфель для slave с позицией
         String baseMoneySl = "6551.1";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
             "5", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0717"),
@@ -390,9 +409,7 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        //получаем значение price из кеша exchangePositionPriceCache
-//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
-        BigDecimal price =slavePortfolio.getPositions().get(0).getPrice();
+        BigDecimal price = new BigDecimal(steps. getPriceFromExchangePositionPriceCacheWithSiebel(ticker,tradingClearingAccount, "last", SIEBEL_ID_SLAVE));
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
@@ -423,8 +440,6 @@ public class HandleRetrySynchronizationCommandTest {
     }
 
 
-
-
     @SneakyThrows
     @Test
     @AllureId("738183")
@@ -433,12 +448,12 @@ public class HandleRetrySynchronizationCommandTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C738183() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode,"108.09", "107.79", "107.72");
+        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -457,10 +472,13 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-       //создаем портфель для slave c позицией
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave c позицией
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
             "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
@@ -474,9 +492,8 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        //получаем значение price из кеша exchangePositionPriceCache
-//        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "last"));
-        BigDecimal price =slavePortfolio.getPositions().get(0).getPrice();
+//        BigDecimal price = slavePortfolio.getPositions().get(0).getPrice();
+        BigDecimal price = new BigDecimal(steps. getPriceFromExchangePositionPriceCacheWithSiebel(ticker,tradingClearingAccount, "last", SIEBEL_ID_SLAVE));
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
@@ -491,7 +508,7 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask",tradingClearingAccount));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -499,16 +516,14 @@ public class HandleRetrySynchronizationCommandTest {
         await().atMost(TEN_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("1")), notNullValue());
         assertThat("Version заявки не равно", slaveOrder.getVersion(), is(2));
-        checkOrderParameters(2, "0", "1", lot, lots, priceOrder,  ticker,  tradingClearingAccount,
+        checkOrderParameters(2, "0", "1", lot, lots, priceOrder, ticker, tradingClearingAccount,
             classCode);
     }
 
 
-
-
 //методы для тестов*************************************************************************************
 
-public void checkPositionParameters(int pos, String ticker, String tradingClearingAccount, String quantityPos,
+    public void checkPositionParameters(int pos, String ticker, String tradingClearingAccount, String quantityPos,
                                         Integer synchronizedToMasterVersion, BigDecimal price, BigDecimal slavePositionRate,
                                         BigDecimal masterPositionRate, BigDecimal quantityDiff) {
         assertThat("ticker бумаги позиции в портфеле slave не равна", slavePortfolio.getPositions().get(pos).getTicker(), is(ticker));
@@ -542,7 +557,7 @@ public void checkPositionParameters(int pos, String ticker, String tradingCleari
     }
 
 
-    public void checkOrderParameters(int version, String action, String attemptsCount,  BigDecimal lot, BigDecimal lots,
+    public void checkOrderParameters(int version, String action, String attemptsCount, BigDecimal lot, BigDecimal lots,
                                      BigDecimal priceOrder, String ticker, String tradingClearingAccount,
                                      String classCode) {
         assertThat("Version заявки не равно", slaveOrder.getVersion(), is(version));

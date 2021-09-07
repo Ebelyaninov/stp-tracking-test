@@ -741,15 +741,6 @@ public class GetMasterPortfolioTest {
         //получаем значение prices из кеш ExchangePositionPrice
         String price2 = steps.getPriceFromExchangePositionPriceCache(ticker2, tradingClearingAccount2, "last", SIEBEL_ID_MASTER);
         String price3 = steps.getPriceFromExchangePositionPriceCache(ticker3, tradingClearingAccount3, "last", SIEBEL_ID_MASTER);
-//        // получаем данные для расчета по облигациям
-//        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-//            .instrumentIdPath(ticker2)
-//            .idKindQuery("ticker")
-//            .classCodeQuery(classCode2)
-//            .respSpec(spec -> spec.expectStatusCode(200))
-//            .execute(response -> response);
-//        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-//        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position

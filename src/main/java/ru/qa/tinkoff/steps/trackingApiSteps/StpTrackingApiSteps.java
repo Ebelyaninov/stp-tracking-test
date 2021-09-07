@@ -3,6 +3,8 @@ package ru.qa.tinkoff.steps.trackingApiSteps;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
+import com.vladmihalcea.hibernate.type.range.Range;
+import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,9 @@ import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
+import ru.qa.tinkoff.tracking.entities.*;
 import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
@@ -76,6 +80,8 @@ public class StpTrackingApiSteps {
     private final TrackingService trackingService;
     private final ClientService clientService;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
+    private final SubscriptionBlockService subscriptionBlockService;
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
     public Client clientMaster;
@@ -84,9 +90,14 @@ public class StpTrackingApiSteps {
     private final StringToByteSenderService kafkaSender;
 
 
+    public Client clientSlave;
+    public Contract contractSlave;
+    public Subscription subscription;
+    public SubscriptionBlock subscriptionBlock;
     Profile profile;
-    Client clientSlave;
-    Contract contractSlave;
+//    Client clientSlave;
+//    Contract contractSlave;
+//    Subscription subscription;
 
 
 
@@ -235,6 +246,60 @@ public class StpTrackingApiSteps {
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
+
+
+
+
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
+    @SneakyThrows
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createClientWintContractAndStrategy11(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                                    UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                                    ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+        //находим данные по клиенту в БД social
+        String image = "";
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        if (profile.getImage() == null) {
+            image = "";
+        }
+        else {
+            image = profile.getImage().toString();
+        }
+        //создаем запись о клиенте в tracking.client
+        clientMaster = clientService.createClient1(investId, ClientStatusType.registered, new SocialProfile()
+            .setId(profile.getId().toString())
+            .setNickname(profile.getNickname())
+            .setImage(image), riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractMaster = new Contract()
+            .setId(contractId)
+            .setClientId(clientMaster.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractMaster = contractService.saveContract(contractMaster);
+        //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("result", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
+        strategyMaster = new Strategy()
+            .setId(strategyId)
+            .setContract(contractMaster)
+            .setTitle(title)
+            .setBaseCurrency(strategyCurrency)
+            .setRiskProfile(strategyRiskProfile)
+            .setDescription(description)
+            .setStatus(strategyStatus)
+            .setSlavesCount(slaveCount)
+            .setActivationTime(date)
+            .setScore(1)
+            .setFeeRate(feeRateProperties);
+        strategyMaster = trackingService.saveStrategy(strategyMaster);
+    }
+
     //Метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
@@ -292,7 +357,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategyWithProfile(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                                                UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                                ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, int score) {
+                                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
 //        //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -800,4 +865,99 @@ public class StpTrackingApiSteps {
             .build();
         return event;
     }
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcription(UUID investId, ClientRiskProfile clientRiskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient1(investId, ClientStatusType.none, null, clientRiskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionNotClient(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(investId)
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+
+//    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
+//    public void createEventInTrackingContractEvent(String contractIdSlave)  {
+//        //создаем событие
+//        Tracking.Event event = createEventUpdateAfterSubscriptionSlave(contractIdSlave);
+//        log.info("Команда в tracking.event:  {}", event);
+//        //кодируем событие по protobuf схеме и переводим в byteArray
+//        byte[] eventBytes = event.toByteArray();
+//        //отправляем событие в топик kafka tracking.slave.command
+//        kafkaSender.send(Topics.TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
+//    }
+
+//    // создаем команду в топик кафка tracking.event
+//    public Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
+//        OffsetDateTime now = OffsetDateTime.now();
+//        Tracking.Event event = Tracking.Event.newBuilder()
+//            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+//            .setAction(Tracking.Event.Action.UPDATED)
+//            .setCreatedAt(Timestamp.newBuilder()
+//                .setSeconds(now.toEpochSecond())
+//                .setNanos(now.getNano())
+//                .build())
+//            .setContract(Tracking.Contract.newBuilder()
+//                .setId(contractId)
+//                .setState(Tracking.Contract.State.UNTRACKED)
+//                .setBlocked(false)
+//                .build())
+//            .build();
+//        return event;
+//    }
+
+//    public void createSubcriptionBlock(long SubscriptionId, SubscriptionBlockReason subscriptionBlockReason, Range range) throws JsonProcessingException {
+//        subscriptionBlock = new SubscriptionBlock()
+//            .setSubscriptionId(SubscriptionId)
+//            .setReason(subscriptionBlockReason)
+//            .setPeriod(range);
+//        subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionBlock);
+
+//    }
+
 }

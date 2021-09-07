@@ -71,8 +71,7 @@ public class MasterPortfolioRateDao {
             "values (?, ?, ?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query, masterPortfolioRate.getStrategyId(),
-            timestamp,
+        cqlTemplate.execute(query, masterPortfolioRate.getStrategyId(), timestamp,
             masterPortfolioRate.getCompanyToRateMap(),
             masterPortfolioRate.getSectorToRateMap(),
             masterPortfolioRate.getTypeToRateMap());
