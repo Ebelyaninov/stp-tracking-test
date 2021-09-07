@@ -14,10 +14,7 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.repositories.ClientRepository;
-import ru.qa.tinkoff.tracking.repositories.ContractRepository;
-import ru.qa.tinkoff.tracking.repositories.StrategyRepository;
-import ru.qa.tinkoff.tracking.repositories.SubscriptionRepository;
+import ru.qa.tinkoff.tracking.repositories.*;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.UUID;
@@ -30,17 +27,20 @@ public class TrackingService {
     final ContractRepository contractRepository;
     final StrategyRepository strategyRepository;
     final SubscriptionRepository subscriptionRepository;
+    final SubscriptionBlockRepository subscriptionBlockRepository;
     final ObjectMapper objectMapper;
 
     public TrackingService(ClientRepository clientRepository,
                            ContractRepository contractRepository,
                            StrategyRepository strategyRepository,
                            SubscriptionRepository subscriptionRepository,
+                           SubscriptionBlockRepository subscriptionBlockRepository,
                            ObjectMapper objectMapper) {
         this.clientRepository = clientRepository;
         this.contractRepository = contractRepository;
         this.strategyRepository = strategyRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.subscriptionBlockRepository = subscriptionBlockRepository;
         this.objectMapper = objectMapper;
     }
 

@@ -249,4 +249,36 @@ public class ActivateStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
     }
+
+
+    @Test
+    @AllureId("1253905")
+    @DisplayName("C1253905.ActivateStrategy.Нет записи MasterPortfolio в базе Cassandra")
+    @Description("Метод для администратора для перевода активации (публикации) стратегии.")
+    void C1253905() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "New Test Strategy 103 Autotest - Описание";
+        Integer score = 1;
+        UUID strategyId = UUID.randomUUID();
+        //Получаем данные по клиенту в API-сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //Создаем в БД tracking данные: client, contract, strategy в статусе draft
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, score);
+
+        //Вызываем метод activateStrategy без api-key
+        Response responseActiveStrategy = strategyApi.activateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+    }
 }

@@ -369,7 +369,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @ParameterizedTest
     @MethodSource("provideAnalyticsCommand")
     @AllureId("980851")
-    @DisplayName("C980851.CalculateMasterPortfolioMaxDrawdown.ППересчет максимальной просадки master-портфеля," +
+    @DisplayName("C980851.CalculateMasterPortfolioMaxDrawdown.Пересчет максимальной просадки master-портфеля," +
         " определяем логику расчета в зависимости от параметра operation")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")

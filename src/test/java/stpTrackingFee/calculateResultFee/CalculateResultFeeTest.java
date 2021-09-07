@@ -10,10 +10,7 @@ import io.restassured.response.Response;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -136,7 +133,6 @@ public class CalculateResultFeeTest {
 
 
 
-
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -221,7 +217,8 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null);
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -294,7 +291,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()));
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -365,7 +362,8 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -433,7 +431,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()));
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -515,7 +513,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()));
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -601,7 +599,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()));
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -645,7 +643,8 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -948,6 +947,7 @@ public class CalculateResultFeeTest {
             .execute(response -> response);
         String aciValue = resp.getBody().jsonPath().getString("[0].value");
         String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
@@ -990,6 +990,7 @@ public class CalculateResultFeeTest {
         // получаем данные для расчета по облигациям
         DateTimeFormatter fmtFireg =  DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutDate);
+
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
             .instrumentIdPath(ticker2)
             .idKindQuery("ticker")
@@ -1000,6 +1001,10 @@ public class CalculateResultFeeTest {
             .execute(response -> response);
         String aciValue = resp.getBody().jsonPath().getString("[0].value");
         String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+
+
+
+
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
@@ -1187,9 +1192,5 @@ public class CalculateResultFeeTest {
             .build());
         return positionList;
     }
-
-
-
-
 
 }
