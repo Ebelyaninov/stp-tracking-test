@@ -139,7 +139,8 @@ public class DeleteSubscriptionTest {
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C535360() throws Exception {
         //создаем данные для стратегии
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -229,7 +230,8 @@ public class DeleteSubscriptionTest {
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C1051655() throws Exception {
         //создаем данные для стратегии
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -324,7 +326,8 @@ public class DeleteSubscriptionTest {
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C1219549() throws Exception {
         //создаем данные для стратегии
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов

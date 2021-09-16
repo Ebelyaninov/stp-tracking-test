@@ -8,7 +8,6 @@ import ru.qa.tinkoff.PostgreSQLEnumType;
 import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 
 import javax.persistence.*;
-import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -35,13 +34,17 @@ public class Subscription {
     UUID strategyId;
 
     @Column(name = "start_time")
+//    LocalDateTime startTime;
     Timestamp startTime;
+
+
 
     @Type( type = "pgsql_enum" )
     @Enumerated(EnumType.STRING)
     SubscriptionStatus status;
 
     @Column(name = "end_time")
+//    LocalDateTime endTime;
     Timestamp endTime;
 
     @Column(name = "blocked")

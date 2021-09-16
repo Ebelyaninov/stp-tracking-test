@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Repeat;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -108,18 +109,8 @@ public class HandleRetrySynchronizationCommandTest {
 
     public String value;
 
-    @BeforeEach
-    public void getDateBond() {
-        if (value == null) {
-            step("Получаем данные по prices и отправляем события в tracking.test.md.prices.int.stream", () -> {
-                steps.getPriceFromMarketDataSave(ticker, classCode, "last", "107.97");
-                steps.getPriceFromMarketDataSave(ticker, classCode, "ask", "107.97");
-                steps.getPriceFromMarketDataSave(ticker, classCode, "bid", "107.97");
 
-                value = "1";
-            });
-        }
-    }
+
 
 
     @AfterEach
@@ -247,8 +238,8 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "bid", tradingClearingAccount));
-        BigDecimal priceOrder = priceAsk.subtract(priceAsk.multiply(new BigDecimal("0.002")))
+        BigDecimal priceBid = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker, tradingClearingAccount, "bid", SIEBEL_ID_SLAVE));
+        BigDecimal priceOrder = priceBid.subtract(priceBid.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем, что выставилась новая заявка
@@ -315,7 +306,6 @@ public class HandleRetrySynchronizationCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-//        BigDecimal price = slavePortfolio.getPositions().get(0).getPrice();
         BigDecimal price = new BigDecimal(steps. getPriceFromExchangePositionPriceCacheWithSiebel(ticker,tradingClearingAccount, "last", SIEBEL_ID_SLAVE));
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
@@ -342,7 +332,7 @@ public class HandleRetrySynchronizationCommandTest {
         if (lotsMax.compareTo(lots) > 0) {
             lotsNew = lots;
         }
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker, tradingClearingAccount, "ask", SIEBEL_ID_SLAVE));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -366,7 +356,6 @@ public class HandleRetrySynchronizationCommandTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -453,7 +442,6 @@ public class HandleRetrySynchronizationCommandTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -508,7 +496,7 @@ public class HandleRetrySynchronizationCommandTest {
             quantityDiff);
         // рассчитываем значение
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "ask", tradingClearingAccount));
+        BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker, tradingClearingAccount, "ask", SIEBEL_ID_SLAVE));
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
@@ -519,6 +507,8 @@ public class HandleRetrySynchronizationCommandTest {
         checkOrderParameters(2, "0", "1", lot, lots, priceOrder, ticker, tradingClearingAccount,
             classCode);
     }
+
+
 
 
 //методы для тестов*************************************************************************************

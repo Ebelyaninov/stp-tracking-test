@@ -216,6 +216,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -746,6 +747,33 @@ public class StpTrackingSlaveSteps {
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionDraftWithBlocked(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                             java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+
 //    //метод создает клиента, договор и стратегию в БД автоследования
 //    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
 //                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
@@ -811,6 +839,36 @@ public class StpTrackingSlaveSteps {
         dateBond.add(nominal);
         dateBond.add(minPriceIncrement);
         return dateBond;
+    }
+
+
+    public String getDateFromOrderCacheCacheWithSiebel(String ticker, String tradingClearingAccount, String type, String siebelId) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> prices = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount)
+                        && keys.get("priceType").equals(type);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<Double, Object>) prices.get(0).getValue();
+        price = values.get("price").toString();
+        return price;
     }
 
 

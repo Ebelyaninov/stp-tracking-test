@@ -265,9 +265,9 @@ public class HandleRetrySynchronizationCommandErrorTest {
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
         //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
-        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "108.09", "107.79");
-        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", "107.09", "108.56");
-        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", "108.11", "108.32");
+//        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "last", "108.09", "107.79");
+//        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "ask", "107.09", "108.56");
+//        steps.createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, "bid", "108.11", "108.32");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов

@@ -25,6 +25,7 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
@@ -111,7 +112,7 @@ public class CreateSlaveOrderErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
-
+    Subscription subscription;
     SlaveOrder slaveOrder;
     Client clientSlave;
     String contractIdMaster;
@@ -119,6 +120,7 @@ public class CreateSlaveOrderErrorTest {
     Contract contract;
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
     UUID strategyId;
+    long subscriptionId;
 
 
     @AfterEach
@@ -168,6 +170,10 @@ public class CreateSlaveOrderErrorTest {
                 steps.createEventInTrackingEvent(contractIdSlave);
             } catch (Exception e) {
             }
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -209,27 +215,19 @@ public class CreateSlaveOrderErrorTest {
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
             "2", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "26551.10", masterPos);
-
-//        createMasterPortfolio (date,ticker,tradingClearingAccount, "2", 4,
-//            4, "26551.10", contractIdMaster, strategyId);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-
-
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "27000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "7", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
-
-
-//        createSlavePortfolio (date, ticker,tradingClearingAccount,"7",2, 3,
-//            "27000.0", contractIdSlave, strategyId);
         //вычитываем из топика кафка tracking.delay.command все offset
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
@@ -290,8 +288,9 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
@@ -359,8 +358,9 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
@@ -425,7 +425,9 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);

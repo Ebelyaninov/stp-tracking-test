@@ -18,6 +18,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -53,8 +54,8 @@ import static org.hamcrest.Matchers.is;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
-    TrackingApiClientAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
+    KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
 })
 public class GetUntrackedContactsWithStrategyTest {

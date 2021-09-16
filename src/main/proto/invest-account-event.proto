@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.account.event;
+
+import "google/protobuf/timestamp.proto";
+
+message Event {
+    bytes id = 1;
+    Action action = 2;
+    google.protobuf.Timestamp created_at = 3;
+
+    BrokerAccount broker_account = 4;
+
+    enum Action {
+        CREATED = 0;
+        UPDATED = 1;
+        DELETED = 2;
+        CLOSED = 3;
+    }
+}
+
+message BrokerAccount {
+    string id = 1; // идентификатор договора
+    Type type = 2; // тип договора
+    Status status = 3; // статус договра
+    google.protobuf.Timestamp opened_at = 4; // дата открытия
+    google.protobuf.Timestamp closed_at = 5; // дата закрытия
+    InvestAccount invest_account = 6; // Инвестиционный счёт
+    repeated ClientCode client_code = 7; // Список биржевых кодов
+    optional Tracking tracking = 8; // Автоследование, если message отсутсвует, то
+
+    enum Type {
+        BROKER = 0; // брокерский договор
+        IIS = 1; // ИИС
+        INVEST_BOX = 2; // инвест копилка
+    }
+
+    enum Status {
+        NEW = 0; // новый договор (ещё не зарегестрированный на бирже)
+        OPENED = 1; // договор открыт во всех основных системах и готов к использованию
+        CLOSED = 2; // договор закрыт
+    }
+}
+
+message ClientCode {
+    string id = 1; // биржевой код
+    string section = 2; // секция на бирже
+    ExchangeCode exchange_code = 3; // биржа
+
+    enum ExchangeCode {
+        MOEX = 0; // Московская биржа
+        SPB = 1; // Сантк-Петербургская биржа
+    }
+}
+
+message InvestAccount {
+    bytes id = 1; // инвестиционный идентификатор
+    string siebel_id = 2; // идентификатор контакта в сибеле
+}
+
+message Tracking {
+    optional bytes strategy_id = 1; // идентификатор стратегии, если стратегия не определена, то поле будет отсутсвовать
+}
+

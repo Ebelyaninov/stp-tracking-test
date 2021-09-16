@@ -18,6 +18,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -46,6 +49,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,19 +74,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAdminStepsConfiguration.class
+    StpTrackingAdminStepsConfiguration.class,
+    InvestTrackingAutoConfiguration.class
 })
 public class ActivateStrategySuccessTest {
 
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
-
-    Client client;
-    Strategy strategy;
-    String SIEBEL_ID = "5-55RUONV5";
-    String xApiKey = "x-api-key";
-    String key= "tracking";
-
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -100,6 +97,21 @@ public class ActivateStrategySuccessTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    MasterPortfolioDao masterPortfolioDao;
+
+
+
+    Client client;
+    Strategy strategy;
+    String SIEBEL_ID = "5-55RUONV5";
+    String xApiKey = "x-api-key";
+    String key= "tracking";
+    MasterPortfolio masterPortfolio;
+    String contractId;
+    UUID strategyId;
+
+
 
 
 
@@ -118,6 +130,10 @@ public class ActivateStrategySuccessTest {
                 clientService.deleteClient(steps.client);
             } catch (Exception e) {
             }
+            try {
+                masterPortfolioDao.deleteMasterPortfolio(contractId, strategyId);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -131,15 +147,18 @@ public class ActivateStrategySuccessTest {
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Тест стратегия Autotest 001 - Описание";
         Integer score = 5;
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = new ArrayList<>();
+        steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
@@ -180,15 +199,18 @@ public class ActivateStrategySuccessTest {
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "Тест стратегия Autotest 003 - Описание";
         Integer score = 5;
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = new ArrayList<>();
+        steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy

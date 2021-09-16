@@ -46,6 +46,7 @@ import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -68,7 +69,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-//    BillingDatabaseAutoConfiguration.class,
+    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -111,8 +112,12 @@ public class CreateSignalSuccessTest {
     UUID strategyId;
     String contractIdMaster;
     int versionNew;
+
     String ticker = "XS0587031096";
     String tradingClearingAccount = "TKCBM_TCAB";
+
+
+
     String SIEBEL_ID = "1-1P424JS";
 
     @AfterEach
@@ -148,7 +153,8 @@ public class CreateSignalSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C653779() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         double money = 1500.0;
         BigDecimal price = new BigDecimal("10.0");
@@ -219,7 +225,8 @@ public class CreateSignalSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C659115() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         double money = 3500.0;
         BigDecimal price = new BigDecimal("10.0");
@@ -285,7 +292,8 @@ public class CreateSignalSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C659236() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         double money = 3500.0;
         BigDecimal price = new BigDecimal("10.0");
@@ -347,12 +355,11 @@ public class CreateSignalSuccessTest {
 
     private static Stream<Arguments> provideRiskLevelOk() {
         return Stream.of(
-            Arguments.of("0", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive),
-            Arguments.of("1", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive),
-            Arguments.of("1", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.moderate),
-            Arguments.of("2", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive),
-            Arguments.of("2", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.moderate),
-            Arguments.of("2", ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative)
+            Arguments.of("LEVI", "TKCBM_TCAB", "26.3", StrategyRiskProfile.aggressive),
+            Arguments.of("LEVI", "TKCBM_TCAB", "26.3", StrategyRiskProfile.moderate),
+            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.aggressive),
+            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.moderate),
+            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.conservative)
         );
     }
 
@@ -363,29 +370,24 @@ public class CreateSignalSuccessTest {
     @DisplayName("C660682.CreateSignal.Риск-профиль позиции не превышает риск-профиль стратегии")
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C660682(String riskInst, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile) {
-        String title = "тест стратегия autotest";
+    void C660682(String ticker, String tradingClearingAccount, String price, StrategyRiskProfile strategyRiskProfile) {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
-        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
         versionNew = version + 1;
-        String ticker = "W";
-        String tradingClearingAccount = "TKCBM_TCAB";
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
-        //отправляем событие в fireg.instrument
-        String event = KafkaModelFiregInstrumentWayfairWithRiskEvent.getKafkaTemplate(LocalDateTime.now(), riskInst);
-        String key = "BBG001B17MV2";
-        //отправляем событие в топик kafka fireg.instrument
-        kafkaSender.send(FIREG_INSTRUMENT, key, event);
         //находим данные ведущего в БД сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, strategyRiskProfile, StrategyStatus.active, 0, LocalDateTime.now());
+            strategyId, title, description, StrategyCurrency.usd, strategyRiskProfile,
+            StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -395,7 +397,7 @@ public class CreateSignalSuccessTest {
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, new BigDecimal(price), quantityRequest, strategyId,
             ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()

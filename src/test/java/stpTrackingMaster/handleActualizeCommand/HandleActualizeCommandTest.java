@@ -108,6 +108,10 @@ public class HandleActualizeCommandTest {
 
     String ticker = "XS0587031096";
     String tradingClearingAccount = "TKCBM_TCAB";
+
+    String tickerPos = "MTS0620";
+    String tradingClearingAccountPos = "TKCBM_TCAB";
+
     UUID strategyId;
     @AfterEach
     void deleteClient() {
@@ -148,10 +152,10 @@ public class HandleActualizeCommandTest {
                 masterSignalDao.deleteMasterSignal(strategyId, version);
             } catch (Exception e) {
             }
-            try {
-                steps.createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                steps.createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 
@@ -198,9 +202,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
-//        String tradingClearingAccountPos = "L01+00000SPB";
         String quantityPos = "1";
         int versionPos = version;
         int versionPortfolio = version;
@@ -292,8 +293,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version;
         int versionPortfolio = version;
@@ -384,8 +383,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -480,8 +477,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -578,8 +573,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -679,8 +672,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -777,8 +768,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "TKCBM_TCAB";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -842,7 +831,6 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C666901() {
         String siebelIdMaster = "1-1VAEYWG";
-//        String siebelIdSlave = "5-5Y3SGW2V";
         String siebelIdSlave = "5-14DCU08B1";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
@@ -944,8 +932,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1244154() {
-        String siebelIdMaster = "5-9Y8PIEMC";
-        String siebelIdSlaveActive = "1-BYSD5T8";
+        String siebelIdMaster = "1-BABKO0G";
+        String siebelIdSlaveActive = "1-BU57GIO";
         String siebelIdSlaveBlocked = "1-7J4CQZD";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
@@ -991,8 +979,6 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String tickerPos = "MTS0620";
-        String tradingClearingAccountPos = "NDS000000001";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;

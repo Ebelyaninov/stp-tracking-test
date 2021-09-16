@@ -500,7 +500,6 @@ public class CreateStrategySuccessTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         key = portfolioCommand.getContractId();
-
         log.info("Команда в tracking.master.command: {}", portfolioCommand);
         //Проверяем команду на первичную инициализацию портфеля мастера
         long unscaled = 120000;

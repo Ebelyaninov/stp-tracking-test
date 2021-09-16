@@ -348,7 +348,7 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719222() {
         String siebelIdMaster = "1-51Q76AT";
-        String siebelIdSlave = "5-15K4XJRSO";
+        String siebelIdSlave = "1-BU57GIO";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";

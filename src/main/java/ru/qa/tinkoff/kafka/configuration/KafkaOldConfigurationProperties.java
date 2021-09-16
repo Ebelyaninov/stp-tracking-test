@@ -8,9 +8,9 @@ import javax.validation.constraints.NotBlank;
 
 @Data
 @Validated
-@ConfigurationProperties(prefix = "app.kafka")
-public class KafkaConfigurationProperties {
+@ConfigurationProperties(prefix = "app.kafka-old")
 
+public class KafkaOldConfigurationProperties {
     @NotBlank
     private String servers;
     @NotBlank
@@ -19,4 +19,3 @@ public class KafkaConfigurationProperties {
     private String password;
 
 }
-

@@ -5,7 +5,10 @@ import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.entities.Profile;
@@ -27,10 +30,9 @@ import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
 import static org.awaitility.Awaitility.await;
 
@@ -44,6 +46,8 @@ public class StpTrackingAdminSteps {
     private final ByteArrayReceiverService kafkaReceiver;
     private final ProfileService profileService;
     private final ExchangePositionService exchangePositionService;
+    @Autowired(required = false)
+    private final MasterPortfolioDao masterPortfolioDao;
     public Client client;
     public Contract contract;
     public Strategy strategy;
@@ -169,6 +173,20 @@ public class StpTrackingAdminSteps {
             .setOtcTicker(otcTicker)
             .setOtcClassCode(otcClassCode);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
+    }
+
+    public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,
+                                      String money, List<MasterPortfolio.Position> positionList) {
+        //создаем портфель master в cassandra
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //с базовой валютой
+        MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .build();
+        //insert запись в cassandra
+        masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
     }
 
 }

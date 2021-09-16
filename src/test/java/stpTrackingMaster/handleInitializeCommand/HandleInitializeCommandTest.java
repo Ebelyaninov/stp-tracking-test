@@ -106,7 +106,7 @@ public class HandleInitializeCommandTest {
     MasterPortfolio masterPortfolio;
     String contractId;
     UUID strategyId;
-    String SIEBEL_ID = "5-EDMRXI6R";
+    String SIEBEL_ID = "5-2G2O9XVOR";
 
 
     @AfterEach

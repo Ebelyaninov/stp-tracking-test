@@ -176,10 +176,10 @@ public class CalculateResultFeeTest {
                 resultFeeDao.deleteResultFee(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-            try {
-                steps.createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                steps.createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 
@@ -242,6 +242,7 @@ public class CalculateResultFeeTest {
         BigDecimal highWaterMarkSecondPeriod = adjustValueSecondPeriod.max(valuePortfolioSecondPeriod);
         BigDecimal highWaterMarkThirdPeriodBefore = highWaterMarkSecondPeriod;
         BigDecimal highWaterMarkThirdPeriod = highWaterMarkThirdPeriodBefore.max(valuePortfolioThirdPeriod);
+        checkComparedToMasterFeeVersion(4, subscriptionId);
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioOnePeriod));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkFirstPeriod));
@@ -300,18 +301,20 @@ public class CalculateResultFeeTest {
         //обавляем еще пару версий за текущий месяц
         List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(ticker1,
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
+            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTen = steps.createBaseMoney("31051.38",
-            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()), (byte) 12);
+
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 10,
-            3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
+            3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()));
+
         List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(ticker1,
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
+            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEleven = steps.createBaseMoney("34051.38",
-            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 4);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 11,
-            3, baseMoneyVersionEleven, positionSlaveListVersionEleven, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
+            3, baseMoneyVersionEleven, positionSlaveListVersionEleven, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()));
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Расчитываем стоимость порфеля на конец расчетного периода
@@ -442,14 +445,16 @@ public class CalculateResultFeeTest {
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
             ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTen = steps.createBaseMoney("31051.38",
-            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()), (byte) 12);
+
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 10,
             3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
+
         List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(ticker1,
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
             ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEleven = steps.createBaseMoney("34051.38",
-            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 4);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 11,
             3, baseMoneyVersionEleven, positionSlaveListVersionEleven, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
         //добавляем записи в result_fee
@@ -1191,6 +1196,15 @@ public class CalculateResultFeeTest {
             .changedAt(date)
             .build());
         return positionList;
+    }
+
+    void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
+            if (resultFee.getVersion() != version) {
+                Thread.sleep(5000);
+            }
+        }
     }
 
 }

@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.UUID;
 
 @Getter
@@ -22,4 +24,5 @@ public class SlaveOrder {
     private final String ticker;
     private final String tradingClearingAccount;
     private final BigDecimal filledQuantity;
+    private final Date createAt;
 }

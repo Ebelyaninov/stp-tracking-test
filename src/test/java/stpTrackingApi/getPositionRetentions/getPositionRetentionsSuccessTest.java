@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @Slf4j
-@Epic("5885")
-@Feature("")
+@Epic("getPositionRetentions - Получение списка возможных значений времени удержания позиции")
+@Feature("TAP-11072")
 @Subfeature("Успешные сценарии")
 @Service("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
