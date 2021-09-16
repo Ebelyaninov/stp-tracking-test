@@ -163,10 +163,10 @@ public class Handle30DelayRetryCommandTest {
                 slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-            try {
-                createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 

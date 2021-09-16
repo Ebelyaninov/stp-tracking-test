@@ -187,10 +187,10 @@ public class CalculateManagementFeeTest {
                 managementFeeDao.deleteManagementFee(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-            try {
-                steps.createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                steps.createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 
@@ -840,12 +840,13 @@ public class CalculateManagementFeeTest {
     }
 
 
-    void checkManagementFeeOne(long subscriptionId) {
+    void checkManagementFeeOne(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(2).atStartOfDay();
         Date cutDate = Date.from(endPerid.toInstant(ZoneOffset.UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal basemoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         log.info("valuePortfolio:  {}", basemoney);
+        checkComparedToMasterFeeVersion(1, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(basemoney));
@@ -857,7 +858,7 @@ public class CalculateManagementFeeTest {
             is(0));
     }
 
-    void checkManagementFeeTwo(long subscriptionId) {
+    void checkManagementFeeTwo(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(1).atStartOfDay();
         Date cutDate = Date.from(endPerid.toInstant(ZoneOffset.UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
@@ -880,8 +881,10 @@ public class CalculateManagementFeeTest {
         }
         BigDecimal valuePortfolio = valuePos1.add(basemoney);
         log.info("valuePortfolio:  {}", valuePortfolio);
+        checkComparedToMasterFeeVersion(2, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
+
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
@@ -895,7 +898,7 @@ public class CalculateManagementFeeTest {
     }
 
 
-    void checkManagementFeeLast(long subscriptionId) {
+    void checkManagementFeeLast(long subscriptionId) throws InterruptedException {
         LocalDateTime today = LocalDate.now().atStartOfDay();
         Date cutDate = Date.from(today.toInstant(ZoneOffset.UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
@@ -941,6 +944,7 @@ public class CalculateManagementFeeTest {
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(baseMoney);
         log.info("valuePortfolio:  {}", valuePortfolio);
+        checkComparedToMasterFeeVersion(3, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
@@ -959,7 +963,7 @@ public class CalculateManagementFeeTest {
         assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
     }
 
-    void checkManagementFeeLastNoBond(long subscriptionId, Date cutDate) {
+    void checkManagementFeeLastNoBond(long subscriptionId, Date cutDate) throws InterruptedException {
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal baseMoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -971,6 +975,7 @@ public class CalculateManagementFeeTest {
             quantity1, quantity3, baseMoney);
         BigDecimal price1 = steps.getPrice(pricesPos, instrumet1);
         BigDecimal price3 = steps.getPrice(pricesPos, instrumet3);
+        checkComparedToMasterFeeVersion(3, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
@@ -1013,5 +1018,14 @@ public class CalculateManagementFeeTest {
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
             Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)),
             Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithPos);
+    }
+
+    void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, version);
+            if (managementFee.getVersion() != version) {
+                Thread.sleep(5000);
+            }
+        }
     }
 }

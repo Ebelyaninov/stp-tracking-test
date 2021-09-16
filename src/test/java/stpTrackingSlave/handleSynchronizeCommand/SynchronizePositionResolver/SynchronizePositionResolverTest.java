@@ -128,25 +128,6 @@ public class SynchronizePositionResolverTest {
 
     public String value;
 
-    @BeforeEach
-    public void getDateBond() {
-        if (value == null) {
-            step("Получаем данные по prices и отправляем события в tracking.test.md.prices.int.stream", () -> {
-                steps.getPriceFromMarketDataSave(tickerShareABBV, classCodeShareABBV, "last", "266");
-                steps.getPriceFromMarketDataSave(tickerShareABBV, classCodeShareABBV, "ask", "269");
-                steps.getPriceFromMarketDataSave(tickerShareABBV, classCodeShareABBV, "bid", "268.95");
-                steps.getPriceFromMarketDataSave(tickerShareQCOM, classCodeShareQCOM, "last", "54.58");
-                steps.getPriceFromMarketDataSave(tickerShareQCOM, classCodeShareQCOM, "ask", "54.74");
-                steps.getPriceFromMarketDataSave(tickerShareQCOM, classCodeShareQCOM, "bid", "54.58");
-                steps.getPriceFromMarketDataSave(tickerBond, classCodeBond, "last", "103.75");
-                steps.getPriceFromMarketDataSave(tickerBond, classCodeBond, "ask", "96");
-                steps.getPriceFromMarketDataSave(tickerBond, classCodeBond, "bid", "94.5");
-
-                value = "1";
-            });
-        }
-    }
-
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -457,8 +438,8 @@ public class SynchronizePositionResolverTest {
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        steps.createDataToMarketData(tickerBond1, classCodeBond1, "88.3425", "92.9398", "87.3427");
-        steps.createDataToMarketData(tickerBond2, classCodeBond2, "104.15", "96", "94.5");
+//        steps.createDataToMarketData(tickerBond1, classCodeBond1, "88.3425", "92.9398", "87.3427");
+//        steps.createDataToMarketData(tickerBond2, classCodeBond2, "104.15", "96", "94.5");
         steps.createEventTrackingTestMdPricesInStream(tickerBond2 + "_" + classCodeBond2, "bid", "101.81", "100.81");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -556,9 +537,6 @@ public class SynchronizePositionResolverTest {
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        steps.createDataToMarketData(tickerBond, classCodeBond, "107.2", "108.2", "105.2");
-        steps.createDataToMarketData(tickerShare, classCodeShare, "55.05", "55.08", "54.82");
-        steps.createEventTrackingTestMdPricesInStream(tickerBond + "_" + classCodeBond, "ask", "101.18", "100.18");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -629,8 +607,6 @@ public class SynchronizePositionResolverTest {
         String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        steps.createDataToMarketData(tickerBond1, classCodeBond1, "88.3425", "92.9398", "87.3427");
-        steps.createDataToMarketData(tickerBond2, classCodeBond2, "107.2", "108.2", "105.2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -824,8 +800,8 @@ public class SynchronizePositionResolverTest {
         BigDecimal priceAdditional = new BigDecimal("0.002");
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
-        steps.createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
-        steps.createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
+//        steps.createDataToMarketData(tickerShare1, classCodeShare1, "90", "90", "87");
+//        steps.createDataToMarketData(tickerShare2, classCodeShare2, "55.05", "55.08", "54.82");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();

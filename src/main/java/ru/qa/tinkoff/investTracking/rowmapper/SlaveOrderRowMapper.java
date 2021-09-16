@@ -7,6 +7,8 @@ import org.springframework.data.cassandra.core.cql.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 
+import java.sql.Timestamp;
+
 @Component
 @RequiredArgsConstructor
 public class SlaveOrderRowMapper implements RowMapper<SlaveOrder> {
@@ -26,6 +28,7 @@ public class SlaveOrderRowMapper implements RowMapper<SlaveOrder> {
             .ticker(row.getString("ticker"))
             .tradingClearingAccount(row.getString("trading_clearing_account"))
             .filledQuantity(row.getDecimal("filled_quantity"))
+            .createAt((row.get("created_at", java.util.Date.class)))
             .build();
     }
 

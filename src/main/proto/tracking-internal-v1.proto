@@ -3,7 +3,7 @@ option java_multiple_files = true;
 option java_package = "ru.tinkoff.trading.tracking.internal";
 package trading_tracking;
 
-import "google/protobuf/timestamp.proto";
+//import "google/protobuf/timestamp.proto";
 
 //  title: Tinkoff Investments Tracking internal gRPC API
 //  description: Tracking internal gRPC API

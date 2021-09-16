@@ -527,7 +527,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657123() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -569,7 +570,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657138() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -616,7 +618,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657144() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -662,7 +665,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657162() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -711,7 +715,8 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657198() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 4;
@@ -822,11 +827,6 @@ public class CreateSignalErrorTest {
         String tradingClearingAccount = "L01+00002F00";
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
-        //отправляем событие в fireg.instrument
-        String event = KafkaModelFiregInstrumentCocaColaEvent.getKafkaTemplate(LocalDateTime.now(), "2");
-        String key = "BBG000BMX289";
-        //отправляем событие в топик kafka social.event
-        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1115,131 +1115,136 @@ public class CreateSignalErrorTest {
     }
 
 
-    @SneakyThrows
-    @Test
-    @AllureId("658142")
-    @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C658142() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
-        BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 3;
-        int version = 4;
-        String ticker = "KO";
-        String tradingClearingAccount = "L01+00000SPB";
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
-        log.info("Получаем локальное время: {}", now);
-        //отправляем событие в fireg.instrument
-        String event = KafkaModelFiregInstrumentCoCaNoType.getKafkaTemplate(LocalDateTime.now());
-        String key = "BBG000BMX289";
-        //отправляем событие в топик kafka social.event
-        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.randomUUID();
-        //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "12");
-        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
-        //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
-        // вызываем метод CreateSignal
-        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        createSignal.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
-    }
-
-
-    @SneakyThrows
-    @Test
-    @AllureId("658142")
-    @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C658142_1() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
-        BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 3;
-        int version = 4;
-        String ticker = "KO";
-        String tradingClearingAccount = "L01+00000SPB";
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
-        log.info("Получаем локальное время: {}", now);
-        //отправляем событие в fireg.instrument
-        String event = KafkaModelFiregInstrumentCoCaNoCurr.getKafkaTemplate(LocalDateTime.now());
-        String key = "BBG000BMX289";
-        //отправляем событие в топик kafka social.event
-        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.randomUUID();
-        //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "12");
-        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
-        //формируем тело запроса метода CreateSignal
-        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
-        // вызываем метод CreateSignal
-        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xDeviceIdHeader("new")
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        createSignal.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
-    }
+//    @SneakyThrows
+//    @Test
+//    @AllureId("658142")
+//    @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
+//    @Subfeature("Альтернативные сценарии")
+//    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+//    void C658142() {
+//        int randomNumber = 0 + (int) (Math.random() * 100);
+//        String title = "Autotest" +String.valueOf(randomNumber);
+//        String description = "new test стратегия autotest";
+//        BigDecimal price = new BigDecimal("10.0");
+//        int quantityRequest = 3;
+//        int version = 4;
+//        String ticker = "KO";
+//        String tradingClearingAccount = "L01+00000SPB";
+//        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+//        log.info("Получаем локальное время: {}", now);
+//        //отправляем событие в fireg.instrument
+//        String event = KafkaModelFiregInstrumentCoCaNoType.getKafkaTemplate(LocalDateTime.now());
+//        String key = "BBG000BMX289";
+//        //отправляем событие в топик kafka social.event
+//        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
+//        //получаем данные по клиенту master в api сервиса счетов
+//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+//        UUID investIdMaster = resAccountMaster.getInvestId();
+//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+//        strategyId = UUID.randomUUID();
+//        //создаем в БД tracking стратегию на ведущего
+//        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+//            StrategyStatus.active, 0, LocalDateTime.now());
+//        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+//        Date date = Date.from(utc.toInstant());
+//        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+//            "12");
+//        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
+//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+//        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+//        //формируем тело запроса метода CreateSignal
+//        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
+//            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+//        // вызываем метод CreateSignal
+//        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
+//            .xAppNameHeader("invest")
+//            .xAppVersionHeader("4.5.6")
+//            .xPlatformHeader("ios")
+//            .xDeviceIdHeader("new")
+//            .xTcsSiebelIdHeader(SIEBEL_ID)
+//            .body(request)
+//            .respSpec(spec -> spec.expectStatusCode(422));
+//        createSignal.execute(ResponseBodyData::asString);
+//        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+//        String errorCode = jsonObject.getString("errorCode");
+//        String errorMessage = jsonObject.getString("errorMessage");
+//        assertThat("код ошибки не равно", errorCode, is("Error"));
+//        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+//    }
+//
+//
+//    @SneakyThrows
+//    @Test
+//    @AllureId("658142")
+//    @DisplayName("C658142.CreateSignal.У позиции отсутствует один из необходимых параметров (type, currency) в exchangePositionCache")
+//    @Subfeature("Альтернативные сценарии")
+//    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+//    void C658142_1() {
+//        int randomNumber = 0 + (int) (Math.random() * 100);
+//        String title = "Autotest" +String.valueOf(randomNumber);
+//        String description = "new test стратегия autotest";
+//        BigDecimal price = new BigDecimal("10.0");
+//        int quantityRequest = 3;
+//        int version = 4;
+//        String ticker = "KO";
+//        String tradingClearingAccount = "L01+00000SPB";
+//        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+//        log.info("Получаем локальное время: {}", now);
+//        //отправляем событие в fireg.instrument
+//        String event = KafkaModelFiregInstrumentCoCaNoCurr.getKafkaTemplate(LocalDateTime.now());
+//        String key = "BBG000BMX289";
+//        //отправляем событие в топик kafka social.event
+//        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
+//        //получаем данные по клиенту master в api сервиса счетов
+//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+//        UUID investIdMaster = resAccountMaster.getInvestId();
+//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+//        strategyId = UUID.randomUUID();
+//        //создаем в БД tracking стратегию на ведущего
+//        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+//            StrategyStatus.active, 0, LocalDateTime.now());
+//        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+//        Date date = Date.from(utc.toInstant());
+//        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+//            "12");
+//        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
+//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+//        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+//        //формируем тело запроса метода CreateSignal
+//        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
+//            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+//        // вызываем метод CreateSignal
+//        SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
+//            .xAppNameHeader("invest")
+//            .xAppVersionHeader("4.5.6")
+//            .xPlatformHeader("ios")
+//            .xDeviceIdHeader("new")
+//            .xTcsSiebelIdHeader(SIEBEL_ID)
+//            .body(request)
+//            .respSpec(spec -> spec.expectStatusCode(422));
+//        createSignal.execute(ResponseBodyData::asString);
+//        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+//        String errorCode = jsonObject.getString("errorCode");
+//        String errorMessage = jsonObject.getString("errorMessage");
+//        assertThat("код ошибки не равно", errorCode, is("Error"));
+//        assertThat("Сообщение об ошибке не равно", errorMessage, is("Данный сигнал недоступен"));
+//    }
 
 
 
 
     private static Stream<Arguments> provideRiskLevelError() {
         return Stream.of(
-            Arguments.of("0", StrategyRiskProfile.conservative),
-            Arguments.of("0", StrategyRiskProfile.moderate),
-            Arguments.of("1", StrategyRiskProfile.conservative)
+//            Arguments.of("0", StrategyRiskProfile.conservative),
+//            Arguments.of("0", StrategyRiskProfile.moderate),
+//            Arguments.of("1", StrategyRiskProfile.conservative)
+//            XS0587031096
+            Arguments.of("LEVI", "TKCBM_TCAB", "26.3", StrategyRiskProfile.conservative),
+            Arguments.of("XS0587031096", "TKCBM_TCAB", "97.7", StrategyRiskProfile.conservative),
+            Arguments.of("XS0587031096", "TKCBM_TCAB", "97.7", StrategyRiskProfile.moderate)
+
         );
     }
 
@@ -1250,22 +1255,14 @@ public class CreateSignalErrorTest {
     @DisplayName("C658178.CreateSignal.Риск-профиль позиции превышает риск-профиль стратегии")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C658178(String riskInst, StrategyRiskProfile strategyRiskProfile) {
+    void C658178(String ticker, String tradingClearingAccount, String price, StrategyRiskProfile strategyRiskProfile) {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
-        BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
-        String ticker = "W";
-        String tradingClearingAccount = "TKCBM_TCAB";
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
-        //отправляем событие в fireg.instrument
-        String event = KafkaModelFiregInstrumentWayfairWithRiskEvent.getKafkaTemplate(LocalDateTime.now(), riskInst);
-        String key = "BBG001B17MV2";
-        //отправляем событие в топик kafka social.event
-        stringSenderService.send(Topics.FIREG_INSTRUMENT, key, event);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1284,7 +1281,7 @@ public class CreateSignalErrorTest {
         getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            new BigDecimal(price), quantityRequest, strategyId, ticker, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")

@@ -145,7 +145,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113203() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -179,7 +180,7 @@ public class GetMasterPortfolioValuesTest {
            .subtract(new BigDecimal("1"))
            .multiply(new BigDecimal("100"))
            .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Количество подписчиков на стратегию не равно", expecResponse.getRelativeYield(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
     }
 
 
@@ -190,7 +191,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113428() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -220,7 +222,7 @@ public class GetMasterPortfolioValuesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Количество подписчиков на стратегию не равно", expecResponse.getRelativeYield(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
     }
 
 
@@ -230,7 +232,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113429() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -255,7 +258,7 @@ public class GetMasterPortfolioValuesTest {
         //вызываем метод GetMasterPortfolioValues
         GetMasterPortfolioValuesResponse expecResponse =getMasterPortfolioValuesLimitFrom(dateTs, 3);
         double relativeYield = 0.0;
-        assertThat("Количество подписчиков на стратегию не равно", expecResponse.getRelativeYield(), is(relativeYield));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield));
     }
 
 
@@ -265,7 +268,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113918() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -294,7 +298,7 @@ public class GetMasterPortfolioValuesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Количество подписчиков на стратегию не равно", expecResponse.getRelativeYield(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
     }
 
 
@@ -305,7 +309,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C981546() throws JsonProcessingException {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -335,7 +340,7 @@ public class GetMasterPortfolioValuesTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetMasterPortfolioValuesResponse.class));
         double relativeYield = 0.0;
-        assertThat("relativeYield не равно", expecResponse.getRelativeYield(), is(relativeYield));
+        assertThat("relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield));
         assertThat("Количество values не равно", expecResponse.getValues().size(), is(1));
     }
 
@@ -436,7 +441,8 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C996507() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -462,10 +468,6 @@ public class GetMasterPortfolioValuesTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
-
-
-
-
 
 
 

@@ -4,7 +4,6 @@ spring:
     hibernate:
       cache:
         use_second_level_cache: false
-
       ddl-auto: none
 logging:
   level:
@@ -13,15 +12,31 @@ logging:
         SQL: DEBUG
 app:
   kafka:
+    servers: >-
+      vm-kafka-acl01t.ds.strp.tinkoff.cloud:9093,vm-kafka-acl02t.ds.strp.tinkoff.cloud:9093,
+      vm-kafka-acl03t.ds.strp.tinkoff.cloud:9093,vm-kafka-acl04t.ds.strp.tinkoff.cloud:9093,
+      vm-kafka-acl05t.ds.strp.tinkoff.cloud:9093,vm-kafka-acl06t.ds.strp.tinkoff.cloud:9093,
+      vm-kafka-acl07t.ds.strp.tinkoff.cloud:9093
+    #    servers: vm-kafka-stp01t.tcsbank.ru:9092,vm-kafka-stp02t.tcsbank.ru:9092,vm-kafka-stp03t.tcsbank.ru:9092
+    schema-registry-url: http://vm-kafka-aclt-sr01.ds.strp.tinkoff.cloud:8081,http://vm-kafka-aclt-sr02.ds.strp.tinkoff.cloud:8081
+    #    schema-registry-url: http://vm-kafka-stp01t.tcsbank.ru:8081
+    key-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+    value-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+    value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+    login: tracking
+    password: j6I^@3*+21#,
+
+  kafka-old:
     servers: vm-kafka-stp01t.tcsbank.ru:9092,vm-kafka-stp02t.tcsbank.ru:9092,vm-kafka-stp03t.tcsbank.ru:9092
     schema-registry-url: http://vm-kafka-stp01t.tcsbank.ru:8081
     key-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
     value-deserializer: "org.apache.kafka.common.serialization.ByteArrayDeserializer"
     value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+
   datasource:
     billing:
-#      url: jdbc:postgresql://db-account.trading.local:5432/account
-#      url: jdbc:postgresql://db-account.ds.trading.local:5432/account
+      #      url: jdbc:postgresql://db-account.trading.local:5432/account
+      #      url: jdbc:postgresql://db-account.ds.trading.local:5432/account
       url: jdbc:postgresql://pg-invest-account-qa.ds.invest.cloud:5432/account
       username: account_reader
       password: account_reader
@@ -29,7 +44,7 @@ app:
       configuration:
         maximum-pool-size: 4
     tracking:
-     #url: jdbc:postgresql://db-tracking.trading.local:5940/tracking
+      #url: jdbc:postgresql://db-tracking.trading.local:5940/tracking
       url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5940/tracking
       username: tracking
       password: tracking

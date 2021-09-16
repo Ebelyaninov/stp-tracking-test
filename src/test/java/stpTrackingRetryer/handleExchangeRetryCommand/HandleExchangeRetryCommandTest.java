@@ -175,10 +175,10 @@ public class HandleExchangeRetryCommandTest {
                 slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-            try {
-                createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 

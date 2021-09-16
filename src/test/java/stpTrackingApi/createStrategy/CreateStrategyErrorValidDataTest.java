@@ -84,7 +84,7 @@ public class CreateStrategyErrorValidDataTest {
     Client client;
     Contract contract;
     Profile profile;
-    String SIEBEL_ID = "5-RGHKKZA6";
+    String SIEBEL_ID = "1-5RLRHAS";
 
     @AfterEach
     void deleteClient() {

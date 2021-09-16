@@ -11,7 +11,7 @@ plugins {
     id("org.springframework.boot") version springBootVersion
     id("org.openapi.generator") version "4.3.1"
     id("io.qameta.allure") version "2.8.1"
-    id("com.google.protobuf") version "0.8.13"
+    id("com.google.protobuf") version "0.8.17"
 }
 
 repositories {
@@ -410,7 +410,7 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 protobuf {
     protoc {
         // The artifact spec for the Protobuf Compiler
-        artifact = "com.google.protobuf:protoc:3.13.0"
+        artifact = "com.google.protobuf:protoc:3.15.0"
     }
     plugins {
         // Optional: an artifact spec for a protoc plugin, with "grpc" as

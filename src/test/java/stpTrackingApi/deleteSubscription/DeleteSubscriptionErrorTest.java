@@ -140,7 +140,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535364(String name, String version, String platform, String contract) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -206,7 +207,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535364_1()  {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -268,7 +270,8 @@ public class DeleteSubscriptionErrorTest {
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535365() {
         //находим в активных подписках договор и стратегию
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -332,7 +335,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535366(String siebel) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -398,7 +402,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535368(String contractNew) {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -460,7 +465,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535370() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -521,7 +527,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535371() {
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -583,7 +590,8 @@ public class DeleteSubscriptionErrorTest {
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C535410() {
         String contractIdOther = "2020038119";
-        String title = "тест стратегия autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -645,7 +653,8 @@ public class DeleteSubscriptionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C1218741() {
-        String title = "autotest";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов

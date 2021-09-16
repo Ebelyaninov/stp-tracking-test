@@ -166,10 +166,10 @@ public class RouteRetryCommandTest {
                 slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-            try {
-                createEventInTrackingEvent(contractIdSlave);
-            } catch (Exception e) {
-            }
+//            try {
+//                createEventInTrackingEvent(contractIdSlave);
+//            } catch (Exception e) {
+//            }
         });
     }
 
@@ -223,9 +223,6 @@ public class RouteRetryCommandTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "6259.17", positionListMaster);
-//        //создаем запись о ведомом в client
-//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -325,9 +322,6 @@ public class RouteRetryCommandTest {
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         createMasterPortfolio(3, "16259.17", positionListMaster);
-//        //создаем запись о ведомом в client
-//        createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -555,8 +549,8 @@ public class RouteRetryCommandTest {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd);
-//            .setBlocked(blocked);
+            .setEndTime(dateEnd)
+            .setBlocked(false);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

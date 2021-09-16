@@ -36,6 +36,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
@@ -112,6 +113,7 @@ public class AnalyzePortfolioTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
+    Subscription subscription;
     Client clientSlave;
     String contractIdMaster;
     String ticker = "AAPL";
@@ -121,7 +123,7 @@ public class AnalyzePortfolioTest {
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-KHGHC74O";
     String SIEBEL_ID_SLAVE = "4-1O6RYOAP";
-
+    long subscriptionId;
 
     @AfterEach
     void deleteClient() {
@@ -168,6 +170,10 @@ public class AnalyzePortfolioTest {
             }
             try {
                 createEventInTrackingEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
             } catch (Exception e) {
             }
         });
@@ -221,7 +227,9 @@ public class AnalyzePortfolioTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель для slave в cassandra c пустой позицией по бумаге
         String baseMoneySlave = "3657.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -294,6 +302,9 @@ public class AnalyzePortfolioTest {
         steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель ведущего с позицией в кассандре
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -364,8 +375,6 @@ public class AnalyzePortfolioTest {
         String tickerMaster = "ABBV";
         String classCodeMaster = "SPBXM";
         String tradingClearingAccountMaster = "TKCBM_TCAB";
-        steps.createDataToMarketData(tickerMaster, classCodeMaster, "90", "87", "90");
-        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID_MASTER)
@@ -403,9 +412,9 @@ public class AnalyzePortfolioTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
-
-
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель для slave
         String baseMoneySl = "5364.78";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -419,7 +428,7 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
 //        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(ticker, "last", tradingClearingAccount));
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker,  tradingClearingAccount,"last", SIEBEL_ID_SLAVE ));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(tickerMaster,  tradingClearingAccountMaster,"last", SIEBEL_ID_SLAVE ));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(tickerMaster,  tradingClearingAccountMaster,"last", SIEBEL_ID_SLAVE));
 //        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(tickerMaster, "last", tradingClearingAccountMaster));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
@@ -474,7 +483,6 @@ public class AnalyzePortfolioTest {
         String aci = list.get(0);
         String nominal = list.get(1);
         String minPrIncrement = list.get(2);
-//        steps.createDataToMarketData(ticker, classCode, "108.2", "107.8", "108.8");
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "description test стратегия autotest update adjust base currency";
@@ -516,7 +524,9 @@ public class AnalyzePortfolioTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель для slave
         String baseMoneySlave = "3657.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();

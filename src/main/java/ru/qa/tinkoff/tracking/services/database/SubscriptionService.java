@@ -94,8 +94,6 @@ public class SubscriptionService {
 
 
 
-
-
     @Step("Поиск подписок по strategyId")
     @SneakyThrows
     public List<Subscription> getSubscriptionByStrategy (UUID strategyId) {

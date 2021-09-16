@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.testing.risk.notification.event;
+
+import "google/protobuf/timestamp.proto";
+
+message Event {
+    bytes id = 1;
+    Type type = 2;
+    google.protobuf.Timestamp created_at = 3;
+
+    bytes invest_id = 4;
+
+    enum Type {
+        CONSERVATIVE = 0;
+        MODERATE = 1;
+        AGGRESSIVE = 2;
+    }
+}

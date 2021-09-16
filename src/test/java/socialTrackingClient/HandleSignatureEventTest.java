@@ -12,7 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
+import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
@@ -51,7 +53,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    KafkaOldConfiguration.class
 
 })
 
@@ -69,7 +72,8 @@ public class HandleSignatureEventTest {
     ContractService contractService;
     @Autowired
     ByteToByteSenderService kafkaSender;
-
+    @Autowired
+    OldKafkaService oldKafkaService;
 
     String SIEBEL_ID = "1-1LGJ72C";
     String contractId;
@@ -112,7 +116,8 @@ public class HandleSignatureEventTest {
         //Формируем и отправляем событие событие в топик origination.signature.notification.raw
         byte[] eventBytes = createMessageForHandleSignatureEvent(TRACKING_LEADING, investId, time).toByteArray();
         byte[] keyBytes = createMessageForHandleSignatureEvent(TRACKING_LEADING, investId, time).getId().toByteArray();
-        kafkaSender.send(ORIGINATION_SIGNATURE_NOTIFICATION, keyBytes, eventBytes);
+//        kafkaSender.send(ORIGINATION_SIGNATURE_NOTIFICATION, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_SIGNATURE_NOTIFICATION, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> clientService.getClient(investId).getMasterStatus().equals(ClientStatusType.registered));
         Client getDataFromClient = clientService.getClient(investId);

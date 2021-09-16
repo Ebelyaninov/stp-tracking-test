@@ -30,6 +30,9 @@ public enum Topics {
     ORIGINATION_SIGNATURE_NOTIFICATION("origination.signature.notification.raw"),
     TRACKING_SUBSCRIPTION_EVENT("tracking.subscription.event"),
     TRACKING_STRATEGY_EVENT("tracking.strategy.event"),
+    ACCOUNT_REGISTRATION_EVENT("account.registration.event"),
+
+
     ;
     private final String name;
 }
