@@ -83,6 +83,16 @@ public class StrategyService {
     }
 
 
+    @Step("Поиск стратегий по статусу и не пустому значению Description")
+    @SneakyThrows
+    public List<Strategy> getStrategyByStatusWithProfile(StrategyStatus status) {
+//        List<Strategy> strategy = strategyRepository
+//            .findStrategyByStatusWithProfile(status);
+        log.info("Successfully find strategy {}");
+        Allure.addAttachment("Найденная стратегия по статусу", "application/json",objectMapper.writeValueAsString(status));
+        return null;
+    }
+
     @Step("Удаление стратегии")
     @SneakyThrows
     public void deleteStrategy(Strategy strategy) {

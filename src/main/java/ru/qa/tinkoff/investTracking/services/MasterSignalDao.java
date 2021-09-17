@@ -40,7 +40,41 @@ public class MasterSignalDao {
     }
 
 
-    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @Step("Поиск сигналов в cassandra strategyId")
+    @SneakyThrows
+    public List<MasterSignal>  getAllMasterSignal(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_signal " +
+            "where strategy_id = ? " +
+            "order by version desc";
+        return cqlTemplate.query(query, masterSignalRowMapper, strategyId);
+    }
+
+    @Step("Поиск сигналов по курсору в cassandra strategyId")
+    @SneakyThrows
+    public List<MasterSignal>  getMasterSignalWithCursor(UUID strategyId, int cursor) {
+        String query = "select * " +
+            "from invest_tracking.master_signal " +
+            "where strategy_id = ? " +
+            "and version < ? " +
+            "order by version desc";
+        return cqlTemplate.query(query, masterSignalRowMapper, strategyId, cursor);
+    }
+
+    @Step("Поиск сигналов по курсору и лимиту в cassandra strategyId")
+    @SneakyThrows
+    public List<MasterSignal>  getMasterSignalWithCursorAndLimit(UUID strategyId, int cursor, int limit) {
+        String query = "select * " +
+            "from invest_tracking.master_signal " +
+            "where strategy_id = ? " +
+            "and version < ? " +
+            "order by version desc limit ?";
+        return cqlTemplate.query(query, masterSignalRowMapper, strategyId, cursor, limit);
+    }
+
+
+
+    @Step("Поиск сигналов в cassandra по contractId и strategyId")
     @SneakyThrows
     public Integer countCreatedAtMasterSignal(UUID strategyId, Date createdAt) {
         var query = "select count(*) from invest_tracking.created_at_master_signal " +
@@ -62,7 +96,7 @@ public class MasterSignalDao {
     }
 
 
-    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @Step("Поиск сигналов в cassandra по contractId и strategyId")
     @SneakyThrows
     public void  insertIntoMasterSignal(MasterSignal masterSignal) {
         String query = "insert into invest_tracking.master_signal (strategy_id, version, ticker," +
@@ -83,7 +117,7 @@ public class MasterSignalDao {
         );
     }
 
-    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @Step("Поиск сигналов в cassandra по contractId и strategyId")
     @SneakyThrows
     public boolean updateStateMasterSignal(UUID strategyId, int commandVersion, byte state) {
         String query = "update invest_tracking.master_signal set state = ? " +

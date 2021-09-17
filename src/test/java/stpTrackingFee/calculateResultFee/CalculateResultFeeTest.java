@@ -1199,6 +1199,7 @@ public class CalculateResultFeeTest {
     }
 
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
+        Thread.sleep(3000);
         for (int i = 0; i < 5; i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
             if (resultFee.getVersion() != version) {

@@ -13,6 +13,8 @@ public class MasterSignalRowMapper implements RowMapper<MasterSignal> {
     @Override
     public MasterSignal mapRow(Row row, int i) throws DriverException {
         return MasterSignal.builder()
+            .strategyId(row.getUUID("strategy_id"))
+            .version(row.getInt("version"))
             .state(row.get("state", Byte.class))
             .ticker(row.getString("ticker"))
             .tradingClearingAccount(row.getString("trading_clearing_account"))

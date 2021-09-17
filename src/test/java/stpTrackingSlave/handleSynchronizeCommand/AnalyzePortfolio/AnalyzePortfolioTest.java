@@ -116,9 +116,15 @@ public class AnalyzePortfolioTest {
     Subscription subscription;
     Client clientSlave;
     String contractIdMaster;
+
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
+
+    String tickerShareABBV = "ABBV";
+    String tradingClearingAccountShareABBV = "TKCBM_TCAB";
+    String classCodeShareABBV = "SPBXM";
+
     String contractIdSlave;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-KHGHC74O";
@@ -268,6 +274,8 @@ public class AnalyzePortfolioTest {
     }
 
 
+
+
     @SneakyThrows
     @Test
     @AllureId("683302")
@@ -360,6 +368,7 @@ public class AnalyzePortfolioTest {
             price, slavePositionRate, rateDiff, quantityDiff);
         assertThat("ChangedAt позиции в портфеле slave не равен", slavePortfolio.getPositions().get(0).getChangedAt().toInstant(), is(date.toInstant()));
     }
+
 
 
     @SneakyThrows

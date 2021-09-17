@@ -52,6 +52,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -77,7 +78,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     StpTrackingApiStepsConfiguration.class
 })
 public class CreateSignalSuccessTest {
-
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -116,6 +116,9 @@ public class CreateSignalSuccessTest {
     String ticker = "XS0587031096";
     String tradingClearingAccount = "TKCBM_TCAB";
 
+    String tickerBond = "ALFAperp";
+    String tradingClearingAccountBond = "TKCBM_TCAB";
+    String instrumentBond = "ALFAperp_SPBBND";
 
 
     String SIEBEL_ID = "1-1P424JS";
@@ -214,7 +217,8 @@ public class CreateSignalSuccessTest {
         // проверяем значения в полученной команде
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
-            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price, quantityRequest);
+            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, ticker, tradingClearingAccount);
     }
 
 
@@ -281,7 +285,8 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         // проверяем значения в полученной команде
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
-            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price, quantityRequest);
+            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, ticker, tradingClearingAccount);
     }
 
 
@@ -349,7 +354,8 @@ public class CreateSignalSuccessTest {
         // проверяем параметры полученной команды
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
-            quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price, quantityRequest);
+            quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, ticker, tradingClearingAccount);
     }
 
 
@@ -413,6 +419,86 @@ public class CreateSignalSuccessTest {
     }
 
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("1312630")
+    @DisplayName("C1312630.CreateSignal.Создание торгового сигнала для bond")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1312630() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        double money = 1500.0;
+        int quantityRequest = 3;
+        int version = 1;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        getExchangePosition(tickerBond, tradingClearingAccountBond, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrumentBond, "last"));
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            tickerBond, tradingClearingAccountBond, version);
+        // вызываем метод CreateSignal
+        signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        List<String> dateBond = steps.getPriceFromExchangePositionCache(tickerBond, tradingClearingAccountBond, SIEBEL_ID);
+        String aciValue = dateBond.get(0);
+        BigDecimal priceBond = price.add(new BigDecimal(aciValue));
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMon = money - (priceBond.multiply(new BigDecimal(quantityRequest))).floatValue();
+        BigDecimal quantityReqBaseMoney = new BigDecimal(Double.toString(quantityReqBaseMon));
+        quantityReqBaseMoney = quantityReqBaseMoney.setScale(2, RoundingMode.HALF_UP);
+        double quantityCommandBaseMon = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        BigDecimal quantityCommandBaseMoney = new BigDecimal(Double.toString(quantityCommandBaseMon));
+        quantityCommandBaseMoney = quantityCommandBaseMoney.setScale(2, RoundingMode.HALF_UP);
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommandBond(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, priceBond,
+            quantityRequest, tickerBond, tradingClearingAccountBond);
+    }
+
+
+
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
@@ -451,7 +537,7 @@ public class CreateSignalSuccessTest {
 
     void assertCommand(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
                        double quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, double quantityReqBaseMoney, BigDecimal price,
-                       int quantityRequest) {
+                       int quantityRequest, String ticker, String tradingClearingAccount) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -473,6 +559,37 @@ public class CreateSignalSuccessTest {
             * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
         assertThat("значение quantity  не равен", quaSignalPositionCommand, is(Double.valueOf(quantityRequest)));
     }
+
+
+    void assertCommandBond(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
+                       BigDecimal quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, BigDecimal quantityReqBaseMoney, BigDecimal price,
+                       int quantityRequest, String ticker, String tradingClearingAccount) {
+        assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
+        assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
+//        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
+        assertThat("ключ команды по актуализации мастера  не равен", key, is(contractIdMaster));
+        assertThat("номер версии  мастера  не равен", portfolioCommand.getPortfolio().getVersion(), is(version + 1));
+        assertThat("ticker бумаги  не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(ticker));
+        assertThat("tradingClearingAccount бумаги  не равен", portfolioCommand.getPortfolio().getPosition(0).
+            getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("quantity позиции не равен", quantityPositionCommand, is(quantityPosition));
+        assertThat("action  не равен", portfolioCommand.getPortfolio().getPosition(0).
+            getAction().getActionValue(), is(actionValue));
+        assertThat("значение action  не равен", portfolioCommand.getPortfolio().getPosition(0).
+            getAction().getAction().toString(), is(action));
+        assertThat("quantity базовой валюты  не равен", quantityCommandBaseMoney, is(quantityReqBaseMoney));
+        double pricePositionCom = portfolioCommand.getSignal().getPrice().getUnscaled()
+            * Math.pow(10, -1 * portfolioCommand.getSignal().getPrice().getScale());
+        BigDecimal pricePositionCommand = new BigDecimal(Double.toString(pricePositionCom));
+        pricePositionCommand = pricePositionCommand.setScale(2, RoundingMode.HALF_UP);
+        price = price.setScale(2, RoundingMode.HALF_UP);
+        assertThat("значение price  не равен", pricePositionCommand, is(price));
+        double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
+        assertThat("значение quantity  не равен", quaSignalPositionCommand, is(Double.valueOf(quantityRequest)));
+    }
+
+
 
     public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, BigDecimal price,
                                                    int quantityRequest, UUID strategyId, String ticker,

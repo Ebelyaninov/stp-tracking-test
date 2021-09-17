@@ -1021,6 +1021,7 @@ public class CalculateManagementFeeTest {
     }
 
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
+        Thread.sleep(3000);
         for (int i = 0; i < 5; i++) {
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, version);
             if (managementFee.getVersion() != version) {

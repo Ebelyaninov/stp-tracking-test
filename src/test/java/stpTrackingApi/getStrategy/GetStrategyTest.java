@@ -852,12 +852,22 @@ public class GetStrategyTest {
     }
 
 
-    @Test
+    private static Stream<Arguments> provideParamCurrency() {
+        return Stream.of(
+            Arguments.of(StrategyCurrency.rub, "₽", 5000),
+            Arguments.of(StrategyCurrency.usd, "$", 100)
+
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideParamCurrency")
     @AllureId("946709")
     @DisplayName("C946709.GetStrategy.Определяем характеристики стратегии: recommended-base-money-position-quantity")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
-    void C946709() throws JsonProcessingException, InterruptedException {
+    void C946709(StrategyCurrency strategyCurrency, String symbol, int multiplicity) throws JsonProcessingException, InterruptedException {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -870,7 +880,7 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
@@ -899,9 +909,9 @@ public class GetStrategyTest {
         //расчитываем значение recommendedBaseMoney
         BigDecimal recommendedBaseMoneyPositionQuantity = new BigDecimal("982684.75")
             .add(new BigDecimal("982684.75").multiply(new BigDecimal("0.05")));
-        recommendedBaseMoneyPositionQuantity = roundDecimal(recommendedBaseMoneyPositionQuantity);
+        recommendedBaseMoneyPositionQuantity = roundDecimal(recommendedBaseMoneyPositionQuantity, multiplicity);
         String str = String.format("%,d", recommendedBaseMoneyPositionQuantity.intValue());
-        String rubbleSymbol = "₽";
+        String rubbleSymbol = symbol;
         String recommendedBaseMoney = str.replace(",", " ") + " " + rubbleSymbol;
         //проверяем полученные данные с расчетами
         checkCharacteristics (characteristic, "recommended-base-money-position-quantity", "Рекомендуемая сумма", recommendedBaseMoney);
@@ -1196,6 +1206,7 @@ public class GetStrategyTest {
 
     private static Stream<Arguments> provideMaxDrawdown() {
         return Stream.of(
+            Arguments.of("0"),
             Arguments.of("5"),
             Arguments.of("74"),
             Arguments.of("100")
@@ -1414,63 +1425,24 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         List<PortfolioRateSection> portfolioRateTypes = getStrategy.getPortfolioRate().getTypes();
-        for (int i = 0; i < portfolioRateTypes.size(); i++) {
-            if(portfolioRateTypes.get(i).getTitle().equals("Облигации")){
-                assertThat("% Облигации не равно", portfolioRateTypes.get(i).getPercent().toString(), is("0.42"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("ETF")){
-                assertThat("% ETF не равно", portfolioRateTypes.get(i).getPercent().toString(), is("0.93"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Валюта")){
-                assertThat("% Валюта не равно", portfolioRateTypes.get(i).getPercent().toString(), is("10.82"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Акции")){
-                assertThat("% Акции не равно", portfolioRateTypes.get(i).getPercent().toString(), is("87.83"));
-            }
-        }
-        List<PortfolioRateSection> portfolioRateSectors = getStrategy.getPortfolioRate().getTypes();
-        for (int i = 0; i < portfolioRateSectors.size(); i++) {
-            if(portfolioRateTypes.get(i).getTitle().equals("Энергетика")){
-                assertThat("% Энергетика не равно", portfolioRateSectors.get(i).getPercent().toString(), is("86.03"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Финансовый сектор")){
-                assertThat("% Финансовый сектор не равно", portfolioRateSectors.get(i).getPercent().toString(), is("1.85"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Государственные бумаги")){
-                assertThat("% Государственные бумаги не равно", portfolioRateSectors.get(i).getPercent().toString(), is("0.40"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Денежные средства")){
-                assertThat("% Денежные средства не равно", portfolioRateSectors.get(i).getPercent().toString(), is("10.82"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Другое")){
-                assertThat("% Другое средства не равно", portfolioRateSectors.get(i).getPercent().toString(), is("0.90"));
-            }
-        }
-
-        List<PortfolioRateSection> portfolioRateCompanies = getStrategy.getPortfolioRate().getTypes();
-        for (int i = 0; i < portfolioRateCompanies.size(); i++) {
-            if(portfolioRateTypes.get(i).getTitle().equals("Денежные средства")){
-                assertThat("% Денежные средства не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("10.82"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Лукойл")){
-                assertThat("% Лукойл не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("5.98"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("ОФЗ")){
-                assertThat("% ОФЗ не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("0.40"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("РСХБ Управление Активами")){
-                assertThat("% РСХБ Управление Активами не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("0.93"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Сбер Банк")){
-                assertThat("% Сбер Банк не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("1.85"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Сургутнефтегаз")){
-                assertThat("% Сургутнефтегаз не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("0.57"));
-            }
-            if(portfolioRateTypes.get(i).getTitle().equals("Транснефть")){
-                assertThat("% Транснефть не равно", portfolioRateCompanies.get(i).getPercent().toString(), is("79.48"));
-            }
-        }
+        assertThat("% Акции не равно", portfolioRateTypes.get(0).getPercent().toString(), is("87.83"));
+        assertThat("% Валюта не равно", portfolioRateTypes.get(1).getPercent().toString(), is("10.82"));
+        assertThat("% ETF не равно", portfolioRateTypes.get(2).getPercent().toString(), is("0.93"));
+        assertThat("% Облигации не равно", portfolioRateTypes.get(3).getPercent().toString(), is("0.42"));
+        List<PortfolioRateSection> portfolioRateSectors = getStrategy.getPortfolioRate().getSectors();
+        assertThat("% Энергетика не равно", portfolioRateSectors.get(0).getPercent().toString(), is("86.03"));
+        assertThat("% Денежные средства не равно", portfolioRateSectors.get(1).getPercent().toString(), is("10.82"));
+        assertThat("% Финансовый сектор не равно", portfolioRateSectors.get(2).getPercent().toString(), is("1.85"));
+        assertThat("% Другое средства не равно", portfolioRateSectors.get(3).getPercent().toString(), is("0.90"));
+        assertThat("% Государственные бумаги не равно", portfolioRateSectors.get(4).getPercent().toString(), is("0.40"));
+        List<PortfolioRateSection> portfolioRateCompanies = getStrategy.getPortfolioRate().getCompanies();
+        assertThat("% Транснефть не равно", portfolioRateCompanies.get(0).getPercent().toString(), is("79.48"));
+        assertThat("% Денежные средства не равно", portfolioRateCompanies.get(1).getPercent().toString(), is("10.82"));
+        assertThat("% Лукойл не равно", portfolioRateCompanies.get(2).getPercent().toString(), is("5.98"));
+        assertThat("% Сбер Банк не равно", portfolioRateCompanies.get(3).getPercent().toString(), is("1.85"));
+        assertThat("% РСХБ Управление Активами не равно", portfolioRateCompanies.get(4).getPercent().toString(), is("0.93"));
+        assertThat("% Сургутнефтегаз не равно", portfolioRateCompanies.get(5).getPercent().toString(), is("0.57"));
+        assertThat("% ОФЗ не равно", portfolioRateCompanies.get(6).getPercent().toString(), is("0.40"));
     }
 
 
@@ -1653,26 +1625,15 @@ public class GetStrategyTest {
 
 
 
-
-
-
-
-
-
-
-
-
-
-    BigDecimal roundDecimal(BigDecimal recommendedBaseMoneyPositionQuantity) {
+    BigDecimal roundDecimal(BigDecimal recommendedBaseMoneyPositionQuantity, int multiplicity) {
         BigInteger integer = recommendedBaseMoneyPositionQuantity.setScale(0, RoundingMode.UP).toBigInteger();
-        BigInteger mod = integer.mod(BigInteger.valueOf(5000));
+        BigInteger mod = integer.mod(BigInteger.valueOf(multiplicity));
         if (mod.compareTo(BigInteger.ZERO) == 0) {
             return new BigDecimal(integer);
         }
         return new BigDecimal(
-            integer.add(BigInteger.valueOf(5000)).subtract(mod));
+            integer.add(BigInteger.valueOf(multiplicity)).subtract(mod));
     }
-
 
 
 
