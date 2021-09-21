@@ -20,7 +20,7 @@ import java.util.UUID;
 @Data
 @Accessors(chain = true)
 @Table(name = "strategy", schema = "tracking")
-@Entity
+@Entity(name = "strategy")
 @TypeDef(
     name = "pgsql_enum",
     typeClass = PostgreSQLEnumType.class
@@ -63,7 +63,7 @@ public class Strategy {
     @Column(name = "score")
     Integer score;
 
-    @Type( type = "jsonb" )
+    @Type(type = "jsonb")
     @Column(name = "fee_rate", columnDefinition = "jsonb")
     Map<String, BigDecimal> feeRate;
 

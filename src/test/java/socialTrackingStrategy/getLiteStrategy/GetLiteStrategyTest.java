@@ -270,7 +270,7 @@ public class GetLiteStrategyTest {
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("0"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
-            is("подписчиков"));
+            is("подписаны"));
     }
 
 
@@ -329,8 +329,8 @@ public class GetLiteStrategyTest {
 
     private static Stream<Arguments> provideParamCurrency() {
         return Stream.of(
-            Arguments.of(StrategyCurrency.rub, "₽"),
-            Arguments.of(StrategyCurrency.usd, "$")
+            Arguments.of(StrategyCurrency.rub, "₽", 5000),
+            Arguments.of(StrategyCurrency.usd, "$", 100)
 
         );
     }
@@ -342,7 +342,7 @@ public class GetLiteStrategyTest {
     @DisplayName("C1133268.GetLiteStrategy.Характеристики стратегии")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
-    void C1133268(StrategyCurrency strategyCurrency, String symbol) {
+    void C1133268(StrategyCurrency strategyCurrency, String symbol, int multiplicity) {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -368,8 +368,9 @@ public class GetLiteStrategyTest {
         //считаем recommended-base-money-position-quantity
         BigDecimal recommendedBaseMoneyPositionQuantity = new BigDecimal("109268.75")
             .add(new BigDecimal("109268.75").multiply(new BigDecimal("0.05")));
-        recommendedBaseMoneyPositionQuantity = roundDecimal(recommendedBaseMoneyPositionQuantity);
+        recommendedBaseMoneyPositionQuantity = roundDecimal(recommendedBaseMoneyPositionQuantity, multiplicity);
         String str = String.format("%,d", recommendedBaseMoneyPositionQuantity.intValue());
+
         String rubbleSymbol = symbol;
         String recommendedBaseMoney = str.replace(",", " ") + " " + rubbleSymbol;
         //вызываем метод getLiteStrategy
@@ -397,7 +398,7 @@ public class GetLiteStrategyTest {
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("2" + "\u00A0" + "000"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
-            is("подписчиков"));
+            is("подписаны"));
     }
 
 
@@ -665,14 +666,14 @@ public class GetLiteStrategyTest {
             "70.8425", "2000", 12);
     }
 
-    BigDecimal roundDecimal(BigDecimal recommendedBaseMoneyPositionQuantity) {
+    BigDecimal roundDecimal(BigDecimal recommendedBaseMoneyPositionQuantity, int multiplicity) {
         BigInteger integer = recommendedBaseMoneyPositionQuantity.setScale(0, RoundingMode.UP).toBigInteger();
-        BigInteger mod = integer.mod(BigInteger.valueOf(5000));
+        BigInteger mod = integer.mod(BigInteger.valueOf(multiplicity));
         if (mod.compareTo(BigInteger.ZERO) == 0) {
             return new BigDecimal(integer);
         }
         return new BigDecimal(
-            integer.add(BigInteger.valueOf(5000)).subtract(mod));
+            integer.add(BigInteger.valueOf(multiplicity)).subtract(mod));
     }
 
     void createPortfolioValuesDate(LocalDateTime from, Date date) {

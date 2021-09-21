@@ -66,14 +66,11 @@ public class StpTrackingApiSteps {
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
 
-//    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
+
 
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ApiClient.Config.apiConfig()).cache();
 
 
-//    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
 
     private final ByteArrayReceiverService kafkaReceiver;
     private final ContractService contractService;
@@ -878,6 +875,33 @@ public class StpTrackingApiSteps {
             .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionDraftOrInActive(UUID investId, ClientRiskProfile clientRiskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient1(investId, ClientStatusType.none, null, clientRiskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
         //создаем запись подписке клиента

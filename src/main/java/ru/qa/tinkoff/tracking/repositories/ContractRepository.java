@@ -7,9 +7,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 
 import javax.transaction.Transactional;
 import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, String> {
@@ -27,6 +29,5 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
     @Transactional
     @Modifying(clearAutomatically = true)
     void deleteContractsByIdIn(Collection<String> ids);
-
 
 }

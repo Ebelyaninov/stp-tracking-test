@@ -4,15 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.repositories.ContractRepository;
+import ru.qa.tinkoff.tracking.repositories.StrategyRepository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,17 +25,12 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class ContractService {
 
     final ContractRepository contractRepository;
+    final StrategyRepository strategyRepository;
     final ObjectMapper objectMapper;
-
-
-    public ContractService(ContractRepository contractRepository,
-                           ObjectMapper objectMapper) {
-        this.contractRepository = contractRepository;
-        this.objectMapper = objectMapper;
-    }
 
     @Step("Поиск контракта по id")
     @SneakyThrows
@@ -116,7 +115,13 @@ public class ContractService {
     }
 
 
-
-
+    @Step("Поиск стратегий по статусу и не пустому значению Profile")
+    @SneakyThrows
+    public List<Strategy> getStrategyByStatusWithProfile(StrategyStatus status) {
+        List<Strategy> strategyByStatusNative = strategyRepository.findStrategyByStatusNative(status.name());
+        log.info("Successfully find strategy {}", status);
+        Allure.addAttachment("Найденная стратегия по статусу", "application/json", objectMapper.writeValueAsString(status));
+       return strategyByStatusNative;
+    }
 
 }

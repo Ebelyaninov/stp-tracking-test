@@ -179,7 +179,7 @@ public class GetLiteStrategiesTest {
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
-        List<Strategy> strategysFromDB = strategyService.getStrategyByStatus(StrategyStatus.active);
+        List<Strategy> strategysFromDB = contractService.getStrategyByStatusWithProfile(StrategyStatus.active);
         //записываем stratedyId в множества и сравниваем их
         Set<UUID> listStrategyIdsFromApi = new HashSet<>();
         Set<String>  listStrategyTitleFromApi = new HashSet<>();
@@ -198,6 +198,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyBaseCurrencyFromDB = new HashSet<>();
         Set<String> listStrategyRiskProfileFromDB = new HashSet<>();
         Set<Integer> listStrategyScoreFromDB = new HashSet<>();
+
         for (int i = 0; i < strategysFromDB.size(); i++) {
             listStrategyIdsFromDB.add(strategysFromDB.get(i).getId());
             listStrategyTitleFromDB.add(strategysFromDB.get(i).getTitle());
@@ -239,7 +240,7 @@ public class GetLiteStrategiesTest {
         }
         assertThat("socialProfile owner стратегии не совпадают", liteStrategy.get(0).getOwner().getSocialProfile().getId().toString(), is(client.getSocialProfile().getId()));
         assertThat("nickname owner стратегии не совпадают", liteStrategy.get(0).getOwner().getSocialProfile().getNickname(), is(client.getSocialProfile().getNickname()));
-        assertThat("image owner стратегии не совпадают", liteStrategy.get(0).getOwner().getSocialProfile().getImage(), is(client.getSocialProfile().getImage()));
+        assertThat("image owner стратегии не совпадают", liteStrategy.get(0).getOwner().getSocialProfile().getImage().toString(), is(client.getSocialProfile().getImage().toString()));
     }
 
 
@@ -249,12 +250,10 @@ public class GetLiteStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1140313() throws JsonProcessingException, InterruptedException {
-
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
-
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
@@ -344,7 +343,7 @@ public class GetLiteStrategiesTest {
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("2" + "\u00A0" + "000"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
-            is("подписчиков"));
+            is("подписаны"));
         assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues(), is(portfolioValuesPoints));
         assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield.doubleValue()));
     }
