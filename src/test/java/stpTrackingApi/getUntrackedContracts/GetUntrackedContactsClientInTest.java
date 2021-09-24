@@ -81,7 +81,7 @@ public class GetUntrackedContactsClientInTest {
         List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
         UUID investId = findValidAccountWithSiebleId.get(0).getInvestAccount().getId();
         //создаем клиета в БД автоследования в tracking.client
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
+        client = clientService.createClient(investId, ClientStatusType.registered, null, null);
         //отфильтровываем список договоров клиентов
         List<String> contractIdsDB = new ArrayList<>();
         for (int i = 0; i < findValidAccountWithSiebleId.size(); i++) {

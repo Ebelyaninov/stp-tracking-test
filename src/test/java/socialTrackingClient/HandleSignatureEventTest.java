@@ -46,6 +46,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Epic("handleSignatureEvent Обработка событий о подписании договора управляющего")
 @Feature("TAP-6569")
 @DisplayName("social-tracking-client")
+@Owner("ext.ebelyaninov")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     BillingDatabaseAutoConfiguration.class,
@@ -127,7 +128,7 @@ public class HandleSignatureEventTest {
     //*** Методы для работы тестов ***
     //Метод для создания записи  в табл. tracking.client
     void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(investId, clientStatusType, socialProfile);
+        client = clientService.createClient(investId, clientStatusType, socialProfile, null);
     }
 
     //Метод для создания события по схеме signature-event.proto

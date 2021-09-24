@@ -560,7 +560,7 @@ public class RouteRetryCommandErrorTest {
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, null);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -694,7 +694,7 @@ public class RouteRetryCommandErrorTest {
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd ) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, null);
         // создаем запись о договоре клиента в tracking.contract
         contractSlave = new Contract()
             .setId(contractId)

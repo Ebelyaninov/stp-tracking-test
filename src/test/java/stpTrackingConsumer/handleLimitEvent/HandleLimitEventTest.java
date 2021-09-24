@@ -218,7 +218,7 @@ public class HandleLimitEventTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         String clientCodeSlave = "MMV128813156";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -234,7 +234,7 @@ public class HandleLimitEventTest {
         String baseMoney = Double.toString(middleQuantityBaseMoney);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -293,7 +293,7 @@ public class HandleLimitEventTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         String clientCodeSlave = "UMA676513176";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -325,7 +325,7 @@ public class HandleLimitEventTest {
 //        await().atMost(FIVE_SECONDS).until(() ->
 //            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
 //        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -388,7 +388,7 @@ public class HandleLimitEventTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         String clientCodeSlave = "LMA779872317";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -413,7 +413,7 @@ public class HandleLimitEventTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //создаем список позиций в портфеле slave
@@ -485,7 +485,7 @@ public class HandleLimitEventTest {
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
@@ -493,7 +493,7 @@ public class HandleLimitEventTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         steps.deleteSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
@@ -534,7 +534,7 @@ public class HandleLimitEventTest {
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
@@ -542,7 +542,7 @@ public class HandleLimitEventTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // вычитываем из топика кафка tracking.slave.command tracking.contract.event все offset
@@ -584,7 +584,7 @@ public class HandleLimitEventTest {
         double middleQuantityBaseMoney = steps.getBaseMoneyFromMiddle(clientPositionsBefore, "RUB");
         String baseMoney = Double.toString(middleQuantityBaseMoney);
         //создаем записи в client и contract для slave
-        steps.createContract(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createContract(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId);
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         steps.createSlavePortfolio(contractIdSlave, strategyId, versionMiddle, 1, baseMoney,
@@ -632,7 +632,7 @@ public class HandleLimitEventTest {
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
@@ -640,7 +640,7 @@ public class HandleLimitEventTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
        //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // вычитываем из топика кафка tracking.contract.event все offset

@@ -167,7 +167,7 @@ public class GetStrategiesCatalogTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
@@ -208,7 +208,7 @@ public class GetStrategiesCatalogTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
@@ -243,7 +243,7 @@ public class GetStrategiesCatalogTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster1, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
@@ -318,7 +318,7 @@ public class GetStrategiesCatalogTest {
                 String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
                 try {
                     //создаем стратегию на договор
-                    steps.createClientWintContractAndStrategyWithProfile(siebelIds.get(i), investId, contractId, null, ContractState.untracked,
+                    steps.createClientWintContractAndStrategyWithProfile(siebelIds.get(i), investId, null, contractId, null, ContractState.untracked,
                         strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
                         StrategyStatus.active, slaveCount, LocalDateTime.now(), score);
                 } catch (Exception e) {
@@ -438,7 +438,7 @@ public class GetStrategiesCatalogTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
@@ -500,7 +500,7 @@ public class GetStrategiesCatalogTest {
                 String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
                 try {
                     //создаем стратегию
-                    steps.createClientWintContractAndStrategyWithProfile(siebelId, investId, contractId, null, ContractState.untracked,
+                    steps.createClientWintContractAndStrategyWithProfile(siebelId, investId, null, contractId, null, ContractState.untracked,
                         strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
                         StrategyStatus.active, slaveCount, LocalDateTime.now(), 1);
                     //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии

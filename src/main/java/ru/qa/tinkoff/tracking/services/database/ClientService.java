@@ -83,11 +83,12 @@ public class ClientService {
 
     @Step("Создание клиента для автоследования")
     @SneakyThrows
-    public Client createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
+    public Client createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile, ClientRiskProfile riskProfile) {
         Client client = clientRepository.save(new Client()
             .setId(investId)
             .setMasterStatus(clientStatusType)
-            .setSocialProfile(socialProfile));
+            .setSocialProfile(socialProfile)
+            .setRiskProfile(riskProfile));
         log.info("Successfully created client {}", client.toString());
         Allure.addAttachment("Клиент", "application/json", objectMapper.writeValueAsString(client));
         return client;

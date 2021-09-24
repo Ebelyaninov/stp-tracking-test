@@ -263,7 +263,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05");
         //создаем запись в кассандре
@@ -307,7 +307,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -368,7 +368,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null);
         //создаем запись  протфеле в кассандре
@@ -459,7 +459,7 @@ public class GetStrategyTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 1, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -594,7 +594,7 @@ public class GetStrategyTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05");
         //создаем запись  протфеле в кассандре
@@ -649,7 +649,7 @@ public class GetStrategyTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05");
         //создаем запись  протфеле в кассандре
@@ -703,7 +703,7 @@ public class GetStrategyTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05");
         //создаем запись  протфеле в кассандре
@@ -768,7 +768,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
-        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score);
         GetStrategyResponse getStrategy = strategyApi.getStrategy()
@@ -804,7 +804,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -879,7 +879,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -936,7 +936,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -997,7 +997,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1055,7 +1055,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, countSlaves, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1116,7 +1116,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1173,7 +1173,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1232,7 +1232,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1296,7 +1296,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1354,7 +1354,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1402,7 +1402,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1465,7 +1465,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1521,7 +1521,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
         //изменяем время активации стратегии
@@ -1581,7 +1581,7 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0,null, "0.3", "0.05");
 //        //изменяем время активации стратегии

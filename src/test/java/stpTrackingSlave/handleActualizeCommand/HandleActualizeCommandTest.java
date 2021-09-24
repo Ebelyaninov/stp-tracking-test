@@ -206,7 +206,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -218,7 +218,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -284,7 +284,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -296,7 +296,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //формируем команду на актуализацию для slave
@@ -361,7 +361,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -373,7 +373,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //формируем команду на актуализацию для slave
@@ -435,7 +435,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -447,7 +447,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
@@ -498,7 +498,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -510,7 +510,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
@@ -565,7 +565,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -577,7 +577,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
@@ -641,7 +641,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster,
             null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, StrategyRiskProfile.aggressive, StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -653,7 +653,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // создаем портфель slave с позицией в кассандре
@@ -733,7 +733,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster,
             null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, StrategyRiskProfile.aggressive, StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -745,7 +745,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // создаем портфель slave с позицией в кассандре
@@ -868,7 +868,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster,
             null, ContractState.untracked, strategyId, title, description,
             StrategyCurrency.usd, StrategyRiskProfile.aggressive, StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -880,7 +880,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // создаем портфель slave с позицией в кассандре
@@ -942,7 +942,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -954,7 +954,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         String baseMoneySl = "7000.0";
@@ -1029,7 +1029,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster,null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster,null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -1041,7 +1041,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // создаем портфель slave с позицией в кассандре
@@ -1115,7 +1115,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -1128,7 +1128,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         String baseMoneySl = "7000.0";
@@ -1194,7 +1194,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -1207,7 +1207,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         String baseMoneySl = "7000.0";
@@ -1277,7 +1277,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1289,7 +1289,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         String baseMoneySl = "7000.0";
@@ -1350,7 +1350,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster,null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster,null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //получаем текущую дату
@@ -1362,7 +1362,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         // создаем портфель slave с позицией в кассандре
@@ -1429,7 +1429,7 @@ public class HandleActualizeCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1446,7 +1446,7 @@ public class HandleActualizeCommandTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6192.9", masterPosTwo);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true);
             String baseMoneySl = "7000.0";

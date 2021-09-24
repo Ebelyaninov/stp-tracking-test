@@ -94,7 +94,7 @@ dependencies {
 
     // protobuf
     implementation("io.grpc:grpc-all:1.31.1")
-    implementation("com.google.protobuf:protobuf-java:3.13.0")
+    implementation("com.google.protobuf:protobuf-java:3.15.0")
 
     // cassandra
     implementation("org.springframework.data:spring-data-cassandra:2.2.9.RELEASE")
@@ -151,7 +151,8 @@ tasks.compileJava {
         "generateTrackingApiCacheApi",
         "generateFiregApi",
         "generateMDApi",
-        "generateSocialTrackingStrategy"
+        "generateSocialTrackingStrategy"//,
+        //"generateTradingApi"
     )
 }
 
@@ -403,6 +404,31 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
             )
     )
 }
+
+
+//tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTradingApi") {
+//    val openApiPackage = "ru.qa.tinkoff.swagger"
+//    val path = "$buildDir/generated/sources/swagger"
+//
+//    inputSpec.set("$projectDir/src/test/resources/swagger/trading-api.yml")
+//    outputDir.set(path)
+//
+//    generateApiTests.set(false)
+//    skipValidateSpec.set(true)
+//    generatorName.set("java")
+//    apiPackage.set("$openApiPackage.trading.api")
+//    invokerPackage.set("$openApiPackage.trading.invoker")
+//    modelPackage.set("$openApiPackage.trading.model")
+//    library.set("rest-assured")
+//    generateModelDocumentation.set(false)
+//    generateApiDocumentation.set(false)
+//    configOptions.set(
+//        mapOf(
+//            "dateLibrary" to "java8",
+//            "serializationLibrary" to "jackson"
+//        )
+//    )
+//}
 
 
 

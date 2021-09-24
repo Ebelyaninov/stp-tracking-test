@@ -216,7 +216,7 @@ public class AnalyzePortfolioTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель мастера с позицией в кассандре
@@ -232,7 +232,7 @@ public class AnalyzePortfolioTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
@@ -307,7 +307,7 @@ public class AnalyzePortfolioTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -326,7 +326,7 @@ public class AnalyzePortfolioTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
 //        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
 
         //создаем портфель для ведомого
@@ -404,7 +404,7 @@ public class AnalyzePortfolioTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -419,11 +419,11 @@ public class AnalyzePortfolioTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "4873.36", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        //получаем идентификатор подписки
-        subscriptionId = subscription.getId();
+        steps.createSubcription(investIdSlave,  contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+//        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
+
+
         //создаем портфель для slave
         String baseMoneySl = "5364.78";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
@@ -515,7 +515,7 @@ public class AnalyzePortfolioTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, ContractRole.master, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -532,7 +532,7 @@ public class AnalyzePortfolioTest {
 
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();

@@ -237,7 +237,7 @@ public class CreateStrategyErrorValidDataTest {
     // *** Методы для работы тестов ***
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
     void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(investId, clientStatusType, socialProfile);
+        client = clientService.createClient(investId, clientStatusType, socialProfile, null);
     }
 
     //Метод для получения инфо о клиенте через API - сервиса счетов

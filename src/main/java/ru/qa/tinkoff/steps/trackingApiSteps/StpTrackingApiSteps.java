@@ -198,7 +198,7 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
@@ -214,7 +214,7 @@ public class StpTrackingApiSteps {
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(image));
+            .setImage(image), riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -301,7 +301,7 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategyFee(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategyFee(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                        UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                        ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                        StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management) {
@@ -317,7 +317,7 @@ public class StpTrackingApiSteps {
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(image));
+            .setImage(image), riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -351,7 +351,7 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategyWithProfile(String SIEBLE_ID, UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategyWithProfile(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                                UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                                ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                                StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
@@ -367,7 +367,7 @@ public class StpTrackingApiSteps {
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(image));
+            .setImage(image), riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -401,13 +401,13 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategyWithOutProfile(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategyWithOutProfile(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                                   UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                                   ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                                   StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management) {
 
 
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -453,7 +453,7 @@ public class StpTrackingApiSteps {
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(image));
+            .setImage(image), null);
         return clientMaster;
 
     }
@@ -530,24 +530,24 @@ public class StpTrackingApiSteps {
 
 
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
-    public void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
-        clientMaster = clientService.createClient(investId, clientStatusType, socialProfile);
+    public void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile, ClientRiskProfile riskProfile) {
+        clientMaster = clientService.createClient(investId, clientStatusType, socialProfile, riskProfile);
     }
 
 
     //метод создает клиента
-    public void createClient(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType) {
+    public void createClient(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType, ClientRiskProfile riskProfile) {
         //находим данные по клиенту в БД social
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
+            .setImage(profile.getImage().toString()), riskProfile);
     }
 
     //метод создает клиента c договором
-    public void createClientWithContract(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType,
+    public void createClientWithContract(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType, ClientRiskProfile riskProfile,
                                          String contractId, ContractRole contractRole, ContractState contractState,
                                          UUID strategyId) {
         //находим данные по клиенту в БД social
@@ -556,7 +556,7 @@ public class StpTrackingApiSteps {
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
+            .setImage(profile.getImage().toString()), riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractSlave = new Contract()
             .setId(contractId)

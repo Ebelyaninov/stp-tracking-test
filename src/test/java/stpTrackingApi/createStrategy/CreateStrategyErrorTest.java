@@ -626,7 +626,7 @@ public class CreateStrategyErrorTest {
         feeRate.setResult(0.2);
         //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
         List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
-        client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null);
+        client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null, null);
         //Вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
@@ -993,7 +993,7 @@ public class CreateStrategyErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resBrokerAccount.getInvestId();
         String contractId = resBrokerAccount.getBrokerAccounts().get(0).getId();
-        client = clientService.createClient(investId, clientIdStatusType, null);
+        client = clientService.createClient(investId, clientIdStatusType, null, null);
         return contractId;
     }
 
@@ -1003,7 +1003,7 @@ public class CreateStrategyErrorTest {
         //Находим данные по клиенту в БД social
         //profile = profileService.getProfileBySiebelId(SIEBEL_ID);
         //createClient(investId, ClientStatusType.registered, null);
-        client = clientService.createClient(investId, clientIdStatusType, null);
+        client = clientService.createClient(investId, clientIdStatusType, null, null);
     }
 
 

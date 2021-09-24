@@ -7,17 +7,18 @@ import io.qameta.allure.Step;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.SubscriptionBlock;
 import ru.qa.tinkoff.tracking.entities.enums.SubscriptionBlockReason;
 import ru.qa.tinkoff.tracking.repositories.SubscriptionBlockRepository;
 
+import java.math.BigInteger;
 import java.util.Optional;
+import static ru.qa.tinkoff.utils.AllureUtils.addJsonAttachment;
 
 @Slf4j
 @Service
 public class SubscriptionBlockService {
-    final SubscriptionBlockRepository subscriptionBlockRepository;
+    private final SubscriptionBlockRepository subscriptionBlockRepository;
     final ObjectMapper objectMapper;
 
     public SubscriptionBlockService(SubscriptionBlockRepository subscriptionBlockRepository,
@@ -57,5 +58,18 @@ public class SubscriptionBlockService {
         subscriptionBlockRepository.delete(subscriptionBlock);
         log.info("Successfully deleted subscription {}", subscriptionBlock.toString());
     }
+
+
+    @Step("Поиск записи в subscription_block по id подписки")
+    @SneakyThrows
+    public SubscriptionBlock deleteSubscriptionBlockBySubscriptionId (Long subscriptionId) {
+        log.info("Получен запрос на удаление записи в subscription_block по id подписки: {} ", subscriptionId);
+        SubscriptionBlock subscriptionBlock = subscriptionBlockRepository.findBySubscriptionId(subscriptionId);
+        subscriptionBlockRepository.delete(subscriptionBlock);
+        log.info("По subscriptionId: {} найдены записи: {}", subscriptionId, subscriptionBlock);
+        addJsonAttachment("Найденные записи: ", subscriptionBlock);
+        return subscriptionBlock;
+    }
+
 
 }

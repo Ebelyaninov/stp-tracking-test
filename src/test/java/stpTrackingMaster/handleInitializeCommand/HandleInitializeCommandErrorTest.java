@@ -139,7 +139,7 @@ public class HandleInitializeCommandErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе активная
-        steps.createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем событие для топика kafka tracking.master.command

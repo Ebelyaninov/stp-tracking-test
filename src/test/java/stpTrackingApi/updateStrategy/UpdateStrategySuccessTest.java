@@ -273,7 +273,7 @@ public class UpdateStrategySuccessTest {
     void createClientWintContractAndStrategyMulti(UUID investId, ClientStatusType сlientStatusType, SocialProfile socialProfile, String contractId, UUID strategyId, ContractRole contractRole,
                                                   ContractState contractState, StrategyCurrency strategyCurrency,
                                                   StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus, LocalDateTime date) {
-        client = clientService.createClient(investId, сlientStatusType, socialProfile);
+        client = clientService.createClient(investId, сlientStatusType, socialProfile, null);
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())

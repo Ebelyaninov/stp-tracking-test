@@ -216,7 +216,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -303,7 +303,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -364,7 +364,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -410,7 +410,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -619,7 +619,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -659,7 +659,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем тело запроса метода getMasterPortfolio
@@ -700,7 +700,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
@@ -791,7 +791,7 @@ public class GetMasterPortfolioTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами

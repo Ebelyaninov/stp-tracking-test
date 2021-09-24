@@ -76,7 +76,7 @@ public class StpTrackingAdminSteps {
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
         //создаем запись о клиенте в tracking.client
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile, null);
         // создаем запись о договоре клиента в tracking.contract
         contract = new Contract()
             .setId(contractId)
@@ -127,12 +127,12 @@ public class StpTrackingAdminSteps {
 
     //Метод создает клиента, договор и стратегию в БД автоследования
     public void createClientWithContractAndStrategy(Client client, Contract contract, Strategy strategy, UUID investId,
-                                                    SocialProfile socialProfile, String contractId, ContractRole contractRole,
+                                                    SocialProfile socialProfile, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole,
                                                     ContractState contractState, UUID strategyId, String title, String description,
                                                     StrategyCurrency strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
 
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile, riskProfile);
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())

@@ -135,12 +135,12 @@ public class StpTrackingAnalyticsSteps {
 
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWithContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWithContractAndStrategy(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                              StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)

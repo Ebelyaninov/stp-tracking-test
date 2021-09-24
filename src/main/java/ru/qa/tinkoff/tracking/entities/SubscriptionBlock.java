@@ -43,8 +43,6 @@ public class SubscriptionBlock {
     @Column(name = "reason")
     SubscriptionBlockReason reason;
 
-
-
     @Type(type = "daterange")
     @Column(name = "period")
     private Range period;

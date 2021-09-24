@@ -539,7 +539,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //формируем тело запроса метода CreateSignal
@@ -582,7 +582,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -630,7 +630,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -679,7 +679,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -729,7 +729,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -778,7 +778,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -833,7 +833,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -882,7 +882,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -932,7 +932,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -982,7 +982,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -1034,7 +1034,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -1084,7 +1084,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -1269,7 +1269,7 @@ public class CreateSignalErrorTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, strategyRiskProfile,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

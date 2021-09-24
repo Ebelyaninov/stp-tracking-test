@@ -36,4 +36,5 @@ public interface SubscriptionBlockRepository extends JpaRepository<SubscriptionB
                               @Param("reason") String reason,
                               @Param("period") String period);
 
+    SubscriptionBlock  findBySubscriptionId (Long subscriptionId);
 }

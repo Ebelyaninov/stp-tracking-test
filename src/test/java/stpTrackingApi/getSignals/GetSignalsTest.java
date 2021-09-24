@@ -168,7 +168,7 @@ public class GetSignalsTest {
             UUID investIdMaster = resAccountMaster.getInvestId();
             contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
             //создаем в БД tracking данные: client, contract, strategy в статусе active
-            steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
+            steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
                 strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
                 StrategyStatus.active, 0, LocalDateTime.now().minusDays(32), 1);
     }

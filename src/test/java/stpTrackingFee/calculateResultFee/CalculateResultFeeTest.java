@@ -206,7 +206,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
@@ -216,7 +216,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -278,7 +278,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -290,7 +290,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -353,7 +353,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
@@ -364,9 +364,8 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -420,7 +419,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -432,7 +431,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -504,7 +503,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -516,7 +515,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(5);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -590,7 +589,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -602,7 +601,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -637,7 +636,7 @@ public class CalculateResultFeeTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -647,7 +646,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);

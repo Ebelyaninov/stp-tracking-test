@@ -212,7 +212,7 @@ public class HandleActualizeCommandErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
@@ -257,7 +257,7 @@ public class HandleActualizeCommandErrorTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего  в кассандре
@@ -312,7 +312,7 @@ public class HandleActualizeCommandErrorTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего  в кассандре
@@ -376,7 +376,7 @@ public class HandleActualizeCommandErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего  в кассандре
@@ -385,7 +385,7 @@ public class HandleActualizeCommandErrorTest {
         createMasterPortfolio(version, "5000.0", "5.0", date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -444,7 +444,7 @@ public class HandleActualizeCommandErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
@@ -469,7 +469,7 @@ public class HandleActualizeCommandErrorTest {
         createMasterSignal(strategyId, version, action, date, price, quantity, null, "AAPL", "L01+00000SPB");
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -533,7 +533,7 @@ public class HandleActualizeCommandErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
@@ -559,7 +559,7 @@ public class HandleActualizeCommandErrorTest {
         createMasterSignal(strategyId, version, action, date, price, quantity, state, ticker, tradingClearingAccount);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);

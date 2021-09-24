@@ -207,7 +207,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createEventInTrackingEventWithBlock(contractIdSlave, false);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -216,7 +216,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -280,7 +280,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -289,7 +289,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -348,7 +348,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createEventInTrackingEventWithBlock(contractIdSlave, false);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -357,7 +357,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -403,7 +403,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createEventInTrackingEventWithBlock(contractIdSlave, false);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -413,7 +413,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         //создаем подписку slave
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -460,7 +460,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -473,7 +473,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);

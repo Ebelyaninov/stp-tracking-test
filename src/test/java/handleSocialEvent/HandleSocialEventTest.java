@@ -438,7 +438,7 @@ public class HandleSocialEventTest {
         client = clientService.createClient(investId, сlientStatusType, new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString()));
+            .setImage(profile.getImage().toString()), null);
         return investId;
     }
 

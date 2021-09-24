@@ -49,4 +49,5 @@ public class Subscription {
 
     @Column(name = "blocked")
     Boolean blocked;
+
 }

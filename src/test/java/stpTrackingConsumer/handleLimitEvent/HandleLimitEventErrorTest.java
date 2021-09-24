@@ -210,7 +210,7 @@ public class HandleLimitEventErrorTest {
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
-        steps.createClientWithContractAndStrategy(investIdMaster, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
@@ -218,7 +218,7 @@ public class HandleLimitEventErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
