@@ -153,7 +153,7 @@ public class HandleInitializeCommandTest {
         UUID investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        steps.createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null);
         //формируем событие для топика kafka tracking.master.command
@@ -201,7 +201,7 @@ public class HandleInitializeCommandTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.createClientWithContractAndStrategy(investId, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

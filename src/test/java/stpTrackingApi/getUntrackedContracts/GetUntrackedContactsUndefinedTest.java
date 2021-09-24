@@ -129,7 +129,7 @@ public class GetUntrackedContactsUndefinedTest {
                                   ContractRole contractRole, ContractState contractState) {
         UUID strategyId = null;
         validBrokerAccount = billingService.getFirstValid();
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile, null);
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())

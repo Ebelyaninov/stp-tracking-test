@@ -115,7 +115,7 @@ public class GetUntrackedContactsWithStrategyTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
 
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
+        client = clientService.createClient(investId, ClientStatusType.registered, null, null);
         //для каждого брокерского договора создаем записи в БД tracking.contract и tracking.strategy
         for (int i = 0; i < resAccountMaster.getBrokerAccounts().size(); i++) {
             UUID strategyId = UUID.randomUUID();
@@ -258,7 +258,7 @@ public class GetUntrackedContactsWithStrategyTest {
                                                   StrategyCurrency strategyCurrency, StrategyRiskProfile strategyRiskProfile,
                                                   StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         UUID strategyId = UUID.randomUUID();
-        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile);
+        client = clientService.createClient(investId, ClientStatusType.registered, socialProfile, null);
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())

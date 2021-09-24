@@ -107,12 +107,12 @@ public class StpTrackingSlaveSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategy(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategy(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
         //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null);
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -144,10 +144,10 @@ public class StpTrackingSlaveSteps {
         strategy = trackingService.saveStrategy(strategy);
     }
 
-    public void createClientWithContract(UUID investId, String contractId,ContractRole contractRole, ContractState contractState,
+    public void createClientWithContract(UUID investId, ClientRiskProfile riskProfile, String contractId,ContractRole contractRole, ContractState contractState,
                                          UUID strategyId) {
         //создаем запись о клиенте в tracking.client
-        client = clientService.createClient(investId, ClientStatusType.registered, null);
+        client = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contract = new Contract()
             .setId(contractId)
@@ -696,10 +696,10 @@ public class StpTrackingSlaveSteps {
     }
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  ClientRiskProfile riskProfile, UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd,Boolean blocked ) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractSlave = new Contract()
             .setId(contractId)
@@ -722,11 +722,11 @@ public class StpTrackingSlaveSteps {
     }
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createSubcriptionWithBlocked(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createSubcriptionWithBlocked(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractSlave = new Contract()
             .setId(contractId)
@@ -735,6 +735,9 @@ public class StpTrackingSlaveSteps {
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
+        if (contractState == ContractState.untracked){
+            contractSlave.setStrategyId(null);
+        }
         contractSlave = contractService.saveContract(contractSlave);
         //создаем запись подписке клиента
         subscription = new Subscription()
@@ -748,11 +751,11 @@ public class StpTrackingSlaveSteps {
     }
 
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createSubcriptionDraftWithBlocked(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createSubcriptionDraftWithBlocked(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                              java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null);
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractSlave = new Contract()
             .setId(contractId)

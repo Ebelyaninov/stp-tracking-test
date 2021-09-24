@@ -31,8 +31,6 @@ public enum Topics {
     TRACKING_SUBSCRIPTION_EVENT("tracking.subscription.event"),
     TRACKING_STRATEGY_EVENT("tracking.strategy.event"),
     ACCOUNT_REGISTRATION_EVENT("account.registration.event"),
-
-
     ;
     private final String name;
 }

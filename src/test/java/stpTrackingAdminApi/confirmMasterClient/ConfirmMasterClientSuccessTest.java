@@ -440,6 +440,6 @@ public class ConfirmMasterClientSuccessTest {
 
     //метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void createClient(UUID clientId, ClientStatusType сlientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(clientId, сlientStatusType, socialProfile);
+        client = clientService.createClient(clientId, сlientStatusType, socialProfile, null);
     }
 }

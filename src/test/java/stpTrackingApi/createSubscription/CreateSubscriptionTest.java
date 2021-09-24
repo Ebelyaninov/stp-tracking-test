@@ -217,7 +217,7 @@ public class CreateSubscriptionTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем запись о ведомом в client
-        steps.createClient(siebelIdSlave, investIdSlave, ClientStatusType.none);
+        steps.createClient(siebelIdSlave, investIdSlave, ClientStatusType.none, null);
         //вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         //вызываем метод CreateSubscription
@@ -277,7 +277,7 @@ public class CreateSubscriptionTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем запись о ведомом в client c договором
-        steps.createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, contractIdSlave, null, ContractState.untracked, null);
+        steps.createClientWithContract(siebelIdSlave, investIdSlave, ClientStatusType.none, null,contractIdSlave, null, ContractState.untracked, null);
         //вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         //вызываем метод CreateSubscription
@@ -389,7 +389,7 @@ public class CreateSubscriptionTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,  contractIdMaster, null, ContractState.untracked,
+        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,  null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now());
         //вычитываем из топика кафка tracking.event все offset

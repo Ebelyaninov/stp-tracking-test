@@ -12,7 +12,7 @@ import ru.qa.tinkoff.PostgreSQLEnumType;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -51,8 +51,7 @@ public class Client {
     @Column(name = "social_profile", columnDefinition = "jsonb")
     SocialProfile socialProfile;
 
-
-    @Type( type = "pgsql_enum" )
+    @Type(type = "pgsql_enum")
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_profile")
     ClientRiskProfile riskProfile;

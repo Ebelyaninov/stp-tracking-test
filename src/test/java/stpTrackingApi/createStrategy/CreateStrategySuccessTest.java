@@ -527,13 +527,13 @@ public class CreateStrategySuccessTest {
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
     void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(investId, clientStatusType, socialProfile);
+        client = clientService.createClient(investId, clientStatusType, socialProfile, null);
     }
 
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client и tracking.contract
     void createClientWithContract(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile, String contractId,
                                   ContractRole contractRole, ContractState contractState, UUID strategyId) {
-        client = clientService.createClient(investId, clientStatusType, socialProfile);
+        client = clientService.createClient(investId, clientStatusType, socialProfile, null);
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())

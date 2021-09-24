@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.*;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("checkStrategyTitle - Проверка доступности названия для стратегии")
 @Feature("TAP-10732")
+@Owner("ext.ebelyaninov")
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
@@ -217,7 +218,7 @@ public class СheckStrategyTitleTest {
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
     void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
-        client = clientService.createClient(investId, clientStatusType, socialProfile);
+        client = clientService.createClient(investId, clientStatusType, socialProfile, null);
     }
 
     @Step("Вызов метода CheckStrategyTitle")
