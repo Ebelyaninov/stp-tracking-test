@@ -1,0 +1,1200 @@
+swagger: '2.0'
+info:
+  description: API тарифного модуля по расчету комиссии
+  version: 1.15.0
+  title: Tariff module API
+  contact:
+    email: v.klapatnyuk@tinkoff.ru
+securityDefinitions:
+  api-key:
+    type: apiKey
+    in: header
+    name: api-key
+tags:
+  - name: tariff
+    description: Методы тарифного модуля
+schemes:
+  - http
+paths:
+  /changeTariff:
+    post:
+      tags:
+        - tariff
+      summary: Изменяет тариф клиента
+      description: >-
+        Метод изменяет тариф клиента, завершая текущий расчетный период и
+        начиная новый
+      operationId: changeTariff
+      produces:
+        - application/json
+      parameters:
+        - name: trackingId
+          in: query
+          type: string
+          required: true
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: siebelAgrNum
+          in: query
+          type: string
+          required: true
+          description: Siebel идентификатор договора
+        - name: siebelTariffId
+          in: query
+          type: string
+          required: true
+          description: Идентификатор тарифа в Siebel
+        - name: investId
+          in: query
+          type: string
+          format: uuid
+          required: false
+          description: Инвестиционный идентификатор клиента
+        - name: ignoreSubscription
+          in: query
+          type: boolean
+          required: false
+          description: Признак необходимости проверки наличия подписки
+      responses:
+        '200':
+          description: Тариф изменен
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '404':
+          description: Договор или тариф не найдеы
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /calculateMarginFee:
+    post:
+      tags:
+        - tariff
+      summary: Расчет комиссии за перенос непокрытой позиции
+      description: Расчтывает комиссию за перенос непокрытой комисии и сохраняет её в БД
+      operationId: calculateMarginFee
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: systemCode
+          in: query
+          type: string
+          required: false
+          description: Идентификатор системы
+        - name: data
+          in: body
+          description: Данные запроса
+          required: true
+          schema:
+            $ref: '#/definitions/CalculateMarginFeeRequestType'
+      responses:
+        '200':
+          description: Предварительная комиссия
+          schema:
+            $ref: '#/definitions/CalculateMarginFeeResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /preCalculateFee:
+    post:
+      tags:
+        - tariff
+      summary: Предварительный расчет комиссий поручения
+      description: >-
+        Рассчитывает и возвращает предварительные значения брокерской и сервисной
+        комиссий
+      operationId: preCalculateFee
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: data
+          in: body
+          description: Данные запроса
+          required: true
+          schema:
+            $ref: '#/definitions/PreCalculateFeeRequestType'
+      responses:
+        '200':
+          description: Предварительная комиссия
+          schema:
+            $ref: '#/definitions/PreCalculateFeeResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /calculateBrokerFee:
+    post:
+      tags:
+        - tariff
+      summary: Расчет брокерской комиссии по сделке
+      description: Расчитывает и возвращает брокерскую комиссию по сделке
+      operationId: calculateBrokerFee
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: data
+          in: body
+          description: Данные запроса
+          required: true
+          schema:
+            $ref: '#/definitions/CalculateBrokerFeeRequestType'
+      responses:
+        '200':
+          description: Комиссия по сделке
+          schema:
+            $ref: '#/definitions/CalculateBrokerFeeResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '422':
+          description: Биржевая комиссия не найдена
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /checkDates:
+    post:
+      tags:
+        - tariff
+      summary: Проверка дат расчетного периода
+      description: Проверка дат расчетного периода
+      operationId: checkDates
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: data
+          in: body
+          description: Данные запроса
+          required: true
+          schema:
+            $ref: '#/definitions/CheckTariffPeriodRequestType'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CheckTariffPeriodResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+
+  # TODO: deprecated
+  '/tariffId/{clientCode}':
+    get:
+      tags:
+        - tariff
+      summary: getTariffId
+      description: Возвращает текущий тариф клиента
+      operationId: getTariffId
+      deprecated: true
+      produces:
+        - application/json
+      parameters:
+        - name: clientCode
+          in: path
+          type: string
+          description: Биржевой код клиента
+          required: true
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+      responses:
+        '200':
+          description: Ok
+          schema:
+            $ref: '#/definitions/TariffIdResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+
+  /tariff/contract/{contractId}:
+    get:
+      tags:
+        - tariff
+      summary: getTariff
+      description: Возвращает текущий тариф клиента по номеру договора {contractId}
+      operationId: getTariff
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/ApplicationName'
+        - $ref: '#/parameters/B3TraceId'
+        - $ref: '#/parameters/B3SpanId'
+        - $ref: '#/parameters/B3ParentSpanId'
+        - $ref: '#/parameters/B3Sampled'
+        - name: contractId
+          in: path
+          type: string
+          description: Номер договора
+          required: true
+          minLength: 1
+          maxLength: 10
+      responses:
+        200:
+          description: Ok
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/TariffResponseType'
+        400:
+          description: Client error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+        422:
+          description: Client error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+        500:
+          description: Server error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+
+  /mainTariff/{investId}:
+    get:
+      tags:
+        - tariff
+      summary: getMainTariff
+      description: Возвращает тариф основного договора клиента по инвестиционному номеру клиента {investId}
+      operationId: getMainTariff
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/ApplicationName'
+        - $ref: '#/parameters/B3TraceId'
+        - $ref: '#/parameters/B3SpanId'
+        - $ref: '#/parameters/B3ParentSpanId'
+        - $ref: '#/parameters/B3Sampled'
+        - name: investId
+          in: path
+          type: string
+          format: uuid
+          description: Инвестиционный идентификатор клиента
+          required: true
+      responses:
+        200:
+          description: Ok
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/MainTariffResponseType'
+        400:
+          description: Client error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+        401:
+          description: Client error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+        422:
+          description: Client error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+        500:
+          description: Server error
+          headers:
+            x-trace-id:
+              description: Идентификатор ответа
+              type: string
+              minLength: 1
+            x-server-time:
+              description: Метка времени формирования ответа
+              type: string
+              format: date-time
+          schema:
+            $ref: '#/definitions/V3ErrorResponse'
+
+  /calculateServiceFee:
+    get:
+      tags:
+        - tariff
+      description: Расчитывает сервисную комиссию по указанных параметров
+      summary: Расчет сервисной комиссии
+      operationId: calculateServiceFee
+      produces:
+        - application/json
+      parameters:
+        - name: clientCode
+          in: query
+          required: true
+          type: string
+          description: Биржевой номер брокерского договора
+        - name: tradeDateTime
+          in: query
+          type: string
+          format: date-time
+          required: true
+          description: Дата и время поручения/сделки
+        - name: currency
+          in: query
+          required: false
+          type: string
+          description: Валюта поручения/сделки (для ценнобумажных поручений)
+        - name: operation
+          in: query
+          type: string
+          enum:
+            - sell
+            - buy
+          required: false
+          description: Тип операции (покупка или продажа) (для валютных поручений)
+        - name: seccode
+          in: query
+          type: string
+          required: false
+          description: Биржевой код бумаги. Код инструмента (для валютных поручений)
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CalculateServiceFeeResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /calculateOtcFee:
+    get:
+      tags:
+        - tariff
+      summary: Расчитывает комиссию по внебиржевой сделке
+      description: Расмчитвает и возвращает комиссию по внебиржевой сделке
+      operationId: calculateOtcFee
+      produces:
+        - application/json
+      parameters:
+        - name: clientCode
+          in: query
+          required: true
+          type: string
+          description: Биржевой номер брокерского договора
+        - name: tradeDateTime
+          in: query
+          type: string
+          format: date-time
+          required: true
+          description: Дата и время совершения сделки
+        - name: amount
+          in: query
+          type: number
+          required: true
+          description: Сумма сделки
+        - name: currency
+          in: query
+          required: true
+          type: string
+          description: Валюта сделки
+        - name: seccode
+          in: query
+          type: string
+          required: true
+          description: Биржевой код бумаги. Код инструмента
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+        - name: operation
+          description: Тип операции (покупка или продажа)
+          in: query
+          type: string
+          enum:
+            - sell
+            - buy
+          required: false
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CalculateOtcFeeResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /calculateMaxAmount:
+    get:
+      tags:
+        - tariff
+      summary: >-
+        Расчет максимально возможного числа лотов и суммы поручения с учетом
+        комиссии (Лимитные заявки)
+      description: >-
+        Расчитывает максимально возможное число лотов и сумму поручения с учетом
+        комиссии (Лимитные заявки)
+      operationId: calculateMaxAmount
+      produces:
+        - application/json
+      parameters:
+        # TODO: deprecated
+        - name: clientCode
+          description: Биржевой номер брокерского договора (deprecated)
+          in: query
+          required: false
+          type: string
+        - name: contractId
+          description: Номер договора
+          in: query
+          # TODO: required: true
+          required: false
+          type: string
+          minLength: 1
+          maxLength: 10
+        - name: orderDateTime
+          in: query
+          type: string
+          format: date-time
+          required: false
+          description: Дата и время поручения
+        - name: amount
+          in: query
+          type: number
+          required: true
+          description: Максимальная сумма
+        - name: price
+          in: query
+          type: number
+          required: true
+          description: Цена за лот
+        - name: currency
+          in: query
+          required: true
+          type: string
+          description: Валюта поручения
+        - name: operation
+          type: string
+          enum:
+            - sell
+            - buy
+          in: query
+          required: false
+          description: Тип операции (покупка или продажа) (для валютных поручений)
+        - name: secCode
+          type: string
+          in: query
+          required: true
+          description: Биржевой код бумаги. Код инструмента
+        - name: classCode
+          type: string
+          in: query
+          required: true
+          description: Код класса инструментов
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CalculateMaxAmountResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+  /calculateMaxMarketAmount:
+    get:
+      tags:
+        - tariff
+      summary: >-
+        Расчет максимально возможного числа лотов и суммы поручения с учетом
+        комиссии (Рыночные заявки)
+      description: >-
+        Расчитывает максимально возможное число лотов и сумму поручения с учетом
+        комиссии (Рыночные заявки)
+      operationId: calculateMaxMarketAmount
+      produces:
+        - application/json
+      parameters:
+        # TODO: deprecated
+        - name: clientCode
+          description: Биржевой номер брокерского договора (deprecated)
+          in: query
+          required: false
+          type: string
+        - name: contractId
+          description: Номер договора
+          in: query
+          # TODO: required: true
+          required: false
+          type: string
+          minLength: 1
+          maxLength: 10
+        - name: orderDateTime
+          in: query
+          type: string
+          format: date-time
+          required: false
+          description: Дата и время поручения
+        - name: amount
+          in: query
+          type: number
+          required: true
+          description: Максимальная сумма
+        - name: currency
+          in: query
+          required: true
+          type: string
+          description: Валюта поручения
+        - name: operation
+          type: string
+          enum:
+            - sell
+            - buy
+          in: query
+          required: true
+          description: Тип операции (покупка или продажа)
+        - name: secCode
+          type: string
+          in: query
+          required: true
+          description: Биржевой код бумаги. Код инструмента
+        - name: classCode
+          type: string
+          in: query
+          required: true
+          description: Код класса инструментов
+        - name: trackingId
+          in: query
+          type: string
+          required: false
+          description: Идентификатор запроса
+          maxLength: 36
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CalculateMaxAmountResponseType'
+        '400':
+          description: Неверные входные данные
+          schema:
+            $ref: '#/definitions/ErrorType'
+        '500':
+          description: Ошибка сервиса
+          schema:
+            $ref: '#/definitions/ErrorType'
+
+parameters:
+
+  ApplicationName:
+    description: Название вызывающего приложения
+    name: x-app-name
+    in: header
+    required: true
+    type: string
+    minLength: 1
+
+  B3TraceId:
+    name: x-b3-traceid
+    in: header
+    required: false
+    type: string
+    minLength: 16
+    maxLength: 32
+
+  B3SpanId:
+    name: x-b3-spanid
+    in: header
+    required: false
+    type: string
+    minLength: 16
+    maxLength: 16
+
+  B3ParentSpanId:
+    name: x-b3-parentspanid
+    in: header
+    required: false
+    type: string
+    minLength: 16
+    maxLength: 16
+
+  B3Sampled:
+    name: x-b3-sampled
+    in: header
+    required: false
+    type: integer
+    minimum: 0
+    maximum: 1
+
+definitions:
+  CalculateMarginFeeRequestType:
+    type: object
+    required:
+      - date
+      - unpaidBalance
+    properties:
+      clientCode:
+        type: string
+        description: Биржевой номер брокерского договора
+      contractId:
+        type: string
+        description: Номер договора
+      date:
+        type: string
+        format: date
+        description: Дата за которую рассчитывается комиссия
+      unpaidBalance:
+        type: array
+        minItems: 1
+        items:
+          $ref: '#/definitions/MoneyValueType'
+  CalculateOtcFeeResponseType:
+    type: object
+    required:
+      - fee
+    properties:
+      fee:
+        type: number
+        description: Брокерская комиссия
+      currency:
+        type: string
+        description: Валюта комиссии
+  CalculateMaxAmountResponseType:
+    type: object
+    required:
+      - qty
+      - brokerFee
+      - order
+    properties:
+      qty:
+        type: number
+        description: Максимально возможное количество лотов
+      brokerFee:
+        $ref: '#/definitions/MoneyValueType'
+      serviceFee:
+        $ref: '#/definitions/MoneyValueType'
+      order:
+        $ref: '#/definitions/OrderMoneyValueType'
+  OrderMoneyValueType:
+    type: object
+    description: Занчение + валюта
+    required:
+      - amount
+      - currency
+    properties:
+      amount:
+        type: number
+        description: Сумма
+      aci:
+        type: number
+        description: Сумма НКД
+      currency:
+        type: string
+        description: Валюта
+  MoneyValueType:
+    type: object
+    description: Занчение + валюта
+    required:
+      - amount
+      - currency
+    properties:
+      amount:
+        type: number
+        description: Сумма
+      currency:
+        type: string
+        description: Валюта
+
+  TariffIdResponseType:
+    type: object
+    required:
+      - tariffId
+      - tariff
+      - settlementPeriod
+    properties:
+      tariffId:
+        type: string
+        description: Тариф клиента (deprecated - использовать tariff.siebeId)
+      tariff:
+        $ref: '#/definitions/Tariff'
+      settlementPeriod:
+        $ref: '#/definitions/SettlementPeriod'
+
+  Tariff:
+    description: Тариф клиента
+    type: object
+    required:
+      - siebelId
+      - startAt
+    properties:
+      siebelId:
+        description: SiebelId тарифа
+        type: string
+        example: TRD3.0
+      startAt:
+        description: Метка времени перехода на тариф
+        type: string
+        format: date-time
+
+  TariffResponseType:
+    type: object
+    required:
+      - tariff
+      - settlementPeriod
+    properties:
+      tariff:
+        $ref: '#/definitions/ClientTariff'
+      settlementPeriod:
+        $ref: '#/definitions/SettlementPeriod'
+
+  ClientTariff:
+    description: Тариф клиента
+    type: object
+    required:
+      - siebelId
+      - startAt
+      - name
+      - siebelName
+      - type
+    properties:
+      siebelId:
+        description: SiebelId тарифа
+        type: string
+        example: TRD3.0
+      startAt:
+        description: Метка времени перехода на тариф
+        type: string
+        format: date-time
+      name:
+        description: Клиентское название тарифа
+        type: string
+        example: Инвестор
+      siebelName:
+        description: Название тарифа в Siebel
+        type: string
+        example: Брокерский счет
+      type:
+        description: Тип тарифа
+        type: string
+        enum:
+          - mm
+          - wm
+          - private
+          - tracking
+          - pia
+          - capital
+          - isa
+          - invest_lab
+          - insuranse
+
+  SettlementPeriod:
+    description: Расчётный период
+    type: object
+    required:
+      - startAt
+    properties:
+      startAt:
+        description: Метка вермени начала расчётного периода
+        type: string
+        format: date-time
+
+  MainTariffResponseType:
+    type: object
+    required:
+      - tariff
+    properties:
+      tariff:
+        $ref: '#/definitions/MainTariff'
+
+  MainTariff:
+    description: Тариф клиента
+    type: object
+    required:
+      - siebelId
+      - startAt
+      - contractId
+    properties:
+      siebelId:
+        description: SiebelId тарифа
+        type: string
+        example: TRD3.0
+      startAt:
+        description: Метка времени перехода на тариф
+        type: string
+        format: date-time
+      contractId:
+        description: Номер основного договора
+        type: string
+        example: 2005462284
+
+  CheckTariffPeriodRequestType:
+    type: object
+    description: Данные для проверки дат расчетного периода
+    required:
+      - clientCode
+      - dates
+    properties:
+      clientCode:
+        type: string
+        description: Биржевой номер брокерского договора
+      dates:
+        type: array
+        items:
+          type: string
+          format: date-time
+        minItems: 2
+  CheckTariffPeriodResponseType:
+    type: object
+    description: Результат проверки дат расчетного периода
+    properties:
+      result:
+        type: boolean
+        description: true если даты относятся к одному расчетному периоду
+  PreCalculateFeeRequestType:
+    type: object
+    description: Данные для предварительного расчета комиссий
+    required:
+      - orderDateTime
+      - amount
+    properties:
+      # TODO: deprecated
+      clientCode:
+        type: string
+        description: Биржевой номер брокерского договора (deprecated)
+      # TODO: required: true
+      contractId:
+        description: Номер договора
+        type: string
+        minLength: 1
+        maxLength: 10
+      orderDateTime:
+        type: string
+        format: date-time
+        description: Дата\время подачи поручения
+      amount:
+        type: number
+        description: Сумма поручения
+      currency:
+        type: string
+        description: Валюта поручения
+      operation:
+        type: string
+        enum:
+          - buy
+          - sell
+        description: Тип операции (покупка или продажа)
+      seccode:
+        type: string
+        description: Биржевой код бумаги
+      qty:
+        type: number
+        description: Количество лотов
+      lot:
+        type: number
+        description: Количесвто бумаг в лоте
+      classCode:
+        type: string
+        description: Код класса инструментов
+  PreCalculateFeeResponseType:
+    type: object
+    description: Результат предрасчета
+    required:
+      - brokerFee
+    properties:
+      brokerFee:
+        type: number
+        description: Брокерская комиссия
+      serviceFee:
+        type: number
+        description: Сервисная комиссия
+      currency:
+        type: string
+        description: Валюта комиссии
+  CalculateBrokerFeeRequestType:
+    type: object
+    description: Данные для расчета комиссии по сделке
+    required:
+      - tradeDateTime
+      - amount
+      - tradeNum
+      - orderNum
+    properties:
+      clientCode:
+        type: string
+        description: Биржевой номер брокерского договора
+      tradeDateTime:
+        type: string
+        format: date-time
+        description: Дата\время совершения сделки
+      amount:
+        type: number
+        description: Сумма сделки
+      currency:
+        type: string
+        description: Валюта сделки
+      account:
+        type: string
+        description: Торговый счет
+      operation:
+        type: string
+        enum:
+          - buy
+          - sell
+        description: Тип операции (покупка или продажа)
+      seccode:
+        type: string
+        description: Биржевой код бумаги
+      qty:
+        type: number
+        description: Количество лотов
+      brokerRef:
+        type: string
+        description: Комментарий брокерa
+      specmm:
+        type: boolean
+        description: Признак неторговой спец сделки для переноса позиций
+      kind:
+        type: string
+        description: Тип сделки
+      classCode:
+        type: string
+        description: Режим торгов
+      tradeNum:
+        type: string
+        description: Номер сделки
+      orderNum:
+        type: string
+        description: Номер поручения
+      repoTerm:
+        type: integer
+        description: Срок РЕПО
+      repoValue:
+        type: number
+        description: Стоимость сделки 1 части РЕПО
+      exchangeFee:
+        type: number
+        description: Комиссия биржи
+      internalTrade:
+        type: boolean
+        description: Признак, что сделка порождена интернализацией
+      requestFee:
+        type: boolean
+        description: Признак, показывающий какое значение биржевой комиссии использовать при расчете Суммы брокерской комиссии
+  CalculateBrokerFeeResponseType:
+    type: object
+    description: Результат расчета комисии
+    required:
+      - fee
+    properties:
+      fee:
+        type: number
+        description: Брокерская комиссия за сделку
+      currency:
+        type: string
+        description: Валюта комиссии
+      brokerFee:
+        type: number
+        description: Сумма брокерской комиссии
+      exchangeFee:
+        type: number
+        required: false
+        description: Комиссия биржи
+  CalculateServiceFeeResponseType:
+    type: object
+    description: Результат расчета сервисной комисии
+    required:
+      - fee
+      - brokerFee
+    properties:
+      fee:
+        type: number
+        description: Брокерская комиссия за сделку
+      currency:
+        type: string
+        description: Валюта комиссии
+  CalculateMarginFeeResponseType:
+    type: object
+    description: Результат расчета сервисной комисии
+    required:
+      - fee
+    properties:
+      fee:
+        type: number
+        description: Брокерская комиссия за сделку
+      currency:
+        type: string
+        description: Валюта комиссии
+  ErrorType:
+    type: object
+    description: Сообщение об ошибке
+    required:
+      - code
+    properties:
+      code:
+        type: string
+        description: Внутренний код ошибки
+      message:
+        type: string
+        description: Внутреннее описание ошибки
+
+  V3ErrorResponse:
+    description: Ответ с ошибкой
+    type: object
+    required:
+      - errorId
+      - errorCode
+      - errorMessage
+    properties:
+      errorId:
+        description: Уникальный идентификатор ошибки
+        type: string
+        minLength: 16
+        maxLength: 16
+        example: 02d55cabb05b44f0
+      errorCode:
+        description: Служебный код ошибки
+        type: string
+        minLength: 1
+        maxLength: 12
+        example: 0350-01-Z99
+      errorMessage:
+        description: Служебное описание ошибки
+        type: string
+        minLength: 1
+        example: Сервис временно недоступен

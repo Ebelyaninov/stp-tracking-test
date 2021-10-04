@@ -71,6 +71,16 @@ app:
         keyspace-name: invest_tracking
         username: qa_invest_tracking
         password: L3j3Og2[6xoh
+    tariff:
+        #url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
+         url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
+         username: tariff
+         password: tariff
+         driver-class-name: org.postgresql.Driver
+         configuration:
+            maximum-pool-size: 4
+         hikari:
+            idle-timeout: 10000
 
 #      investTracking:
 #        url: jdbc:cassandra://m1-qa-common-transit-cas-1.ost.tinkoff:9042/invest_tracking
