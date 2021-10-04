@@ -32,16 +32,14 @@ public class SubscriptionBlock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    Long id;
+    private Long id;
 
 
     @Column(name = "subscription_id")
-    Long subscriptionId;
+    private Long subscriptionId;
 
-    @Type( type = "pgsql_enum" )
-    @Enumerated(EnumType.STRING)
     @Column(name = "reason")
-    SubscriptionBlockReason reason;
+    private String reason;
 
     @Type(type = "daterange")
     @Column(name = "period")

@@ -151,8 +151,9 @@ tasks.compileJava {
         "generateTrackingApiCacheApi",
         "generateFiregApi",
         "generateMDApi",
-        "generateSocialTrackingStrategy"//,
+        "generateSocialTrackingStrategy",
         //"generateTradingApi"
+        "generateTariffApi"
     )
 }
 
@@ -429,6 +430,30 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 //        )
 //    )
 //}
+
+tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTariffApi") {
+    val openApiPackage = "ru.qa.tinkoff.swagger"
+    val path = "$buildDir/generated/sources/swagger"
+
+    inputSpec.set("$projectDir/src/test/resources/swagger/tariff-module.yml")
+    outputDir.set(path)
+
+    generateApiTests.set(false)
+    skipValidateSpec.set(true)
+    generatorName.set("java")
+    apiPackage.set("$openApiPackage.Tariff.api")
+    invokerPackage.set("$openApiPackage.Tariff.invoker")
+    modelPackage.set("$openApiPackage.Tariff.model")
+    library.set("rest-assured")
+    generateModelDocumentation.set(false)
+    generateApiDocumentation.set(false)
+    configOptions.set(
+        mapOf(
+            "dateLibrary" to "java8",
+            "serializationLibrary" to "jackson"
+        )
+    )
+}
 
 
 
