@@ -20,4 +20,6 @@ public class MasterSignal {
     private final BigDecimal quantity;
     private final BigDecimal price;
     private final Date createdAt;
+    private final BigDecimal tailOrderQuantity;
+
 }

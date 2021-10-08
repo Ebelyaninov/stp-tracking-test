@@ -113,7 +113,7 @@ public class GetStrategiesCatalogTest {
 
 
     String siebelIdMaster1 = "1-7XOAYPX";
-    String siebelIdMaster2 = "5-234PFFTBK";
+    String siebelIdMaster2 = "5-FPOY5U0S";
     String siebelIdMaster3 = "4-1OQ8F0QG";
     String xApiKey = "x-api-key";
     String key = "stp-tracking";

@@ -41,7 +41,7 @@ public class SubscriptionBlockService {
     @Step("Сохранение заблокированной подписки")
     public SubscriptionBlock saveSubscriptionBlock(long subscriptionId, SubscriptionBlockReason reason, String period) throws JsonProcessingException {
         subscriptionBlockRepository
-            .saveSubscriptionBlock(subscriptionId, reason.name(), period);
+            .saveSubscriptionBlock(subscriptionId, reason.getAlias(), period);
         SubscriptionBlock saved = subscriptionBlockRepository
             .findSubscriptionBlockBySubscriptionId(subscriptionId)
             .orElseThrow(RuntimeException::new);

@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.steps.trackingAnalyticsSteps;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
@@ -10,14 +11,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
@@ -37,13 +44,23 @@ public class StpTrackingAnalyticsSteps {
     private final ContractService contractService;
     private final TrackingService trackingService;
     private final ClientService clientService;
+    private final SubscriptionService subscriptionService;
+    private final SlavePortfolioDao slavePortfolioDao;
+    public Client clientMaster;
+    public Contract contractMaster;
+    public Strategy strategy;
+    public Subscription subscription;
+    public Contract contractSlave;
+    public Client clientSlave;
+    public Client client;
+    public Contract contract;
+
+
 
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
 
-    public Client clientMaster;
-    public Contract contractMaster;
-    public Strategy strategy;
+
 
     public String ticker1 = "SBER";
     public String tradingClearingAccount1 = "L01+00002F00";
@@ -129,7 +146,8 @@ public class StpTrackingAnalyticsSteps {
 
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
         .ApiClient.Config.apiConfig()).prices();
-
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
+        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 //    public StpTrackingAnalyticsSteps() {
 //    }
 
@@ -665,6 +683,152 @@ public class StpTrackingAnalyticsSteps {
     public ByteString byteString(UUID uuid) {
         return ByteString.copyFrom(bytes(uuid));
     }
+
+
+    public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
+        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resAccount;
+    }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionWithBlocked(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                             java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionDeleteOrDraft(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                             java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+    public void createSlavePortfolioWithPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
+                                                 String money,Date date, List<SlavePortfolio.Position> positionList) {
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
+    }
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLight(String ticker, String tradingClearingAccount,
+                                                                                String quantityPos, Date date)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantityPos))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithTwoPosLight(String ticker1, String tradingClearingAccount1,
+                                                                                String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
+                                                                                String quantityPos2, Date date2)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date1)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date2)
+            .lastChangeAction(null)
+            .build());
+
+        return positionList;
+
+    }
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithThreePosLight(String ticker1, String tradingClearingAccount1,
+                                                                                  String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
+                                                                                  String quantityPos2, Date date2, String ticker3, String tradingClearingAccount3,
+                                                                                  String quantityPos3, Date date3)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date1)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date2)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .quantity(new BigDecimal(quantityPos3))
+            .changedAt(date3)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+
+
+    }
+
 
 
 

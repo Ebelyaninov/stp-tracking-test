@@ -11,6 +11,10 @@ import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.rowmapper.SlaveOrderRowMapper;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -118,6 +122,31 @@ public class SlaveOrderDao {
             .value("state", state)
             .value("ticker", ticker)
             .value("trading_clearing_account",tradingClearingAccount);
+
+        cqlTemplate.execute(insertQueryBuilder);
+    }
+
+
+    public void insertIntoSlaveOrderWithFilledQuantityCrTime(String contractId, UUID strategyId, int version, int attemptsCount,
+                                                       int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, BigDecimal price,
+                                                       BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_order")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("attempts_count", attemptsCount)
+            .value("action", action)
+            .value("class_code", classCode)
+            .value("filled_quantity", filledQuantity)
+            .value("idempotency_key", idempotencyKey)
+            .value("price", price)
+            .value("quantity", quantity)
+            .value("state", state)
+            .value("ticker", ticker)
+            .value("trading_clearing_account",tradingClearingAccount)
+            .value("created_at", Date.from(OffsetDateTime.now(ZoneOffset.UTC).toInstant()))
+            ;
+
         cqlTemplate.execute(insertQueryBuilder);
     }
 

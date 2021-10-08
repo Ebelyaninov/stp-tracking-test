@@ -622,7 +622,7 @@ public class GetStrategyTest {
         assertThat("Номер договора, с которого подписан ведомый", getStrategy.getSubscription().getContractId(), is(contractIdSlave));
         assertThat("Признак наличия подписки авторизованного пользователя на стратегию не равно", getStrategy.getSubscription().getIsLead(), is(true));
         assertThat("Статус блокировки не равно", getStrategy.getSubscription().getBlocked(), is(true));
-        assertThat("Причина блокировки не равно", getStrategy.getSubscription().getBlockReasons().get(0).getId(), is("risk_profile"));
+        assertThat("Причина блокировки не равно", getStrategy.getSubscription().getBlockReasons().get(0).getId(), is("risk-profile"));
 
     }
 

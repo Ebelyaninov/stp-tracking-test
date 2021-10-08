@@ -85,9 +85,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-
     StrategyApi strategyApi;
-
     @Autowired
     BillingService billingService;
     @Autowired

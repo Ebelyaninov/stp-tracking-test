@@ -63,6 +63,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -679,6 +680,84 @@ public class HandleActualizeCommandErrorTest {
         assertThat("запись по портфелю не равно", order.isPresent(), is(false));
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2,  588486, contractIdSlave,
             versionMiddle+2,   OffsetDateTime.now(), Tracking.Portfolio.Action.ADJUST, true);
+        //вычитываем все события из tracking.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.event:  {}", event);
+        //проверяем, данные в сообщении
+        checkEventParam(event);
+        assertThat("contractId не равен", (event.getContract().getId()), is(contractIdSlave));
+        //проверяем запись в базе по договору slave
+        contract = contractService.getContract(contractIdSlave);
+        assertThat("action события не равен", contract.getBlocked(), is(true));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle-2));
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1365612")
+    @DisplayName("1365612.HandleActualizeCommand.Команда по отложенным изменениям - параметр delayed_correction = true," +
+        "если кеш actualizeCommandCache пустой и Упущено более одного изменения")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
+        "Version из команды - slave_portfolio.version текущего портфеля  > 1, delayed_correction = true")
+    void C1365612() {
+        String SIEBEL_ID_SLAVE = "5-3HYUEXL7";
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "description test стратегия autotest update adjust base currency";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в БД сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerYNDX, tradingClearingAccountYNDX,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        ru.tinkoff.invest.miof.Client.GetClientPositionsReq clientPositionsReq = ru.tinkoff.invest.miof.Client.GetClientPositionsReq.newBuilder()
+            .setAgreementId(contractIdSlave)
+            .build();
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions =
+            middleGrpcService.getClientPositions(clientPositionsReq);
+        int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
+
+        // создаем портфель slave с позицией в кассандре
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(tickerYNDX, tradingClearingAccountYNDX,
+            "3", date);
+        String baseMoneySl = "3000.0";
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        OffsetDateTime time = OffsetDateTime.now();
+        //формируем  команду на актуализацию для slave
+        Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 500000, contractIdSlave,
+            versionMiddle+2, time, Tracking.Portfolio.Action.ADJUST, true);
         //вычитываем все события из tracking.event
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
