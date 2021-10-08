@@ -128,7 +128,7 @@ public class AnalyzePortfolioErrorTest {
     final String tickerMinfinRU = "RU000A0JXU14";
     final String tradingClearingAccountMinfinRU = "L01+00002F00";
 
-    final String tickerINFN = "VTBH";
+    final String tickerINFN = "BCR";
     final String tradingClearingAccountINFN = "L01+00002F00";
 
     final String tickerApple = "AAPL";
@@ -400,8 +400,6 @@ public class AnalyzePortfolioErrorTest {
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        //получаем портфель slave
-//        Thread.sleep(5000);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -811,6 +809,15 @@ public class AnalyzePortfolioErrorTest {
         assertThat("Ticker позиции slave не равна", slavePortfolio.getPositions().get(0).getTicker(), is("AAPL"));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+    }
+
+    void checkComparedToMasterVersion(int version) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+            if (slavePortfolio.getComparedToMasterVersion() != version) {
+                Thread.sleep(5000);
+            }
+        }
     }
 
 }

@@ -1,18 +1,14 @@
 package ru.qa.tinkoff.tracking.entities;
-import com.vladmihalcea.hibernate.type.range.Range;
+
 import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
+import com.vladmihalcea.hibernate.type.range.Range;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import ru.qa.tinkoff.PostgreSQLEnumType;
-import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
-import ru.qa.tinkoff.tracking.entities.enums.SubscriptionBlockReason;
-
 
 import javax.persistence.*;
-import java.sql.Timestamp;
-
 
 
 @Data

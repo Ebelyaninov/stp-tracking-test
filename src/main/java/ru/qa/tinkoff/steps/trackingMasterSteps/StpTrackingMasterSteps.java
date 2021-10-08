@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
@@ -54,7 +56,8 @@ public class StpTrackingMasterSteps {
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
-
+    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
+        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -202,6 +205,56 @@ public class StpTrackingMasterSteps {
     }
 
 
+    //Создаем команду в топик кафка tracking.master.command
+    public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithTailOrderQuantity(String contractId, OffsetDateTime time, int version,
+                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
+                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount,
+                                                                                                        Tracking.Decimal tailOrderQuantity) {
+        Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaled)
+            .setScale(scale)
+            .build();
+        Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaledBaseMoney)
+            .setScale(scaleBaseMoney)
+            .build();
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(action).build())
+            .setQuantity(quantity)
+            .build();
+        Tracking.PortfolioCommand command;
+        Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
+            .setQuantity(quantityBaseMoney)
+            .build();
+        Tracking.Portfolio portfolio = Tracking.Portfolio.newBuilder()
+            .setVersion(version)
+            .addPosition(position)
+            .setBaseMoneyPosition(baseMoneyPosition)
+            .build();
+        Tracking.Signal signal = Tracking.Signal.newBuilder()
+            .setPrice(price)
+            .setQuantity(quantityS)
+            .setTailOrderQuantity(tailOrderQuantity)
+            .build();
+        command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractId)
+            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .setPortfolio(portfolio)
+            .setSignal(signal)
+
+            .build();
+        return command;
+    }
+
+
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
         log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
@@ -289,6 +342,16 @@ public class StpTrackingMasterSteps {
             .setBlocked(blocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
+    }
+
+    public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
+        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resAccount;
     }
 
 }

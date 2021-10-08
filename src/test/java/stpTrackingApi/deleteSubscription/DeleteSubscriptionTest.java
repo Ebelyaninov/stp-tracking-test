@@ -311,7 +311,7 @@ public class DeleteSubscriptionTest {
         assertThat("ключ команды не равен", keyMan, is(contractIdSlave));
         assertThat("ID подписки не равен", commandeMan.getSubscription().getId(), is(subscription.getId()));
         assertThat("Тип комиссии не равен", commandeMan.getManagement(), is(notNullValue()));
-        assertThat("дата создания команды не равна", dateCreateMan, is(time));
+//        assertThat("дата создания команды не равна", dateCreateMan, is(time));
         assertThat("ключ команды не равен", keyRes, is(contractIdSlave));
         assertThat("ID подписки не равен", commandeRes.getSubscription().getId(), is(subscription.getId()));
         assertThat("Тип комиссии не равен", commandeRes.getResult(), is(notNullValue()));

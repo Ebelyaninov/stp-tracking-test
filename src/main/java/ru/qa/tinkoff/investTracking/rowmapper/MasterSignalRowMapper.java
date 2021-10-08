@@ -22,6 +22,7 @@ public class MasterSignalRowMapper implements RowMapper<MasterSignal> {
             .quantity(row.getDecimal("quantity"))
             .price(row.getDecimal("price"))
             .createdAt(row.get("created_at", java.util.Date.class))
+            .tailOrderQuantity(row.getDecimal("tail_order_quantity"))
             .build();
     }
 }

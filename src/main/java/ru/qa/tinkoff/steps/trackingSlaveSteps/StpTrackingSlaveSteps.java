@@ -472,6 +472,43 @@ public class StpTrackingSlaveSteps {
         return positionList;
     }
 
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithTwoPos(String ticker1, String tradingClearingAccount1,
+                                                                           String quantityPos1,
+                                                                           BigDecimal price1, BigDecimal rate1,
+                                                                           BigDecimal rateDiff1, BigDecimal quantityDiff1,
+                                                                           String ticker2, String tradingClearingAccount2,
+                                                                           String quantityPos2, BigDecimal price2, BigDecimal rate2,
+                                                                           BigDecimal rateDiff2, BigDecimal quantityDiff2,
+                                                                           Date date, int synchronizedToMasterVersion)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .synchronizedToMasterVersion(synchronizedToMasterVersion)
+            .price(price1)
+            .rate(rate1)
+            .rateDiff(rateDiff1)
+            .quantityDiff(quantityDiff1)
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .synchronizedToMasterVersion(synchronizedToMasterVersion)
+            .price(price2)
+            .rate(rate2)
+            .rateDiff(rateDiff2)
+            .quantityDiff(quantityDiff2)
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
     public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLight(String ticker, String tradingClearingAccount,
                                                                                 String quantityPos, Date date)    {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -885,6 +922,23 @@ public class StpTrackingSlaveSteps {
 
     public ByteString byteString(UUID uuid) {
         return ByteString.copyFrom(bytes(uuid));
+    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createClientAndContract(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, null);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
     }
 
 
