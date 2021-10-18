@@ -250,6 +250,7 @@ message Portfolio {
         DELAYED_CORRECTION = 38;
         // Изменения состояния отслеживания договора в автоследовании
         TRACKING_STATE_UPDATE = 39;
+        TEST = 99;
 
     }
 
