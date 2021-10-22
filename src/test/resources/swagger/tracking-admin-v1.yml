@@ -6,11 +6,9 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.2.1
+  version: 1.5.0
 
 servers:
- # - url: http://tracking-admin.dev2.k8s.tcsbank.ru/tracking/admin/v1/
- # - url: http://stp-tracking-admin.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/admin/v1/
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
     description: тестовый стенд
   - url: http://trading.tinkoff.local
@@ -23,6 +21,8 @@ tags:
     description: Торговая стратегия
   - name: exchange-position
     description: Торговая позиция на бирже
+  - name: contract
+    description: Договор клиента
 
 paths:
 
@@ -46,7 +46,7 @@ paths:
       description: Подтверждает право участия клиента {clientId} в роли master
       operationId: confirmMasterClient
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/ClientId'
       responses:
@@ -86,7 +86,7 @@ paths:
       description: Возвращает список клиентов, участвующих в автоследовании в роли master
       operationId: getMasterClients
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -129,7 +129,7 @@ paths:
       description: Возвращает торговую стратегию {strategyId}
       operationId: getStrategy
       security:
-        - apiKey: [ ]
+        - apiKey: []
       responses:
         200:
           description: OK
@@ -158,7 +158,7 @@ paths:
       description: Обновляет торговую стратегию {strategyId}
       operationId: updateStrategy
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/Login'
       requestBody:
@@ -208,7 +208,7 @@ paths:
       description: Активирует торговую стратегию {strategyId}
       operationId: activateStrategy
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/StrategyId'
       responses:
@@ -248,7 +248,7 @@ paths:
       description: Возвращает список торговых стратегий
       operationId: getStrategies
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -291,7 +291,7 @@ paths:
       description: Создаёт торговую биржевую позицию
       operationId: createExchangePosition
       security:
-        - apiKey: [ ]
+        - apiKey: []
       requestBody:
         required: true
         content:
@@ -326,7 +326,7 @@ paths:
       description: Обновляет торговую биржевую позицию
       operationId: updateExchangePosition
       security:
-        - apiKey: [ ]
+        - apiKey: []
       requestBody:
         required: true
         content:
@@ -361,7 +361,7 @@ paths:
       description: Возвращает торговые биржевые позиции, добавленные в автоследование
       operationId: getExchangePositions
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -381,6 +381,45 @@ paths:
           $ref: '#/components/responses/Error'
         401:
           description: Unauthorized
+        500:
+          $ref: '#/components/responses/Error'
+
+  /contract/{contractId}/block:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    post:
+      tags:
+        - contract
+      summary: blockContract
+      description: Создаёт техническую блокировку на договоре {contractId} клиента
+      operationId: blockContract
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContractId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
         500:
           $ref: '#/components/responses/Error'
 
@@ -540,6 +579,17 @@ components:
         maximum: 1
       example: 1
 
+    ContractId:
+      description: Номер договора
+      name: contractId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 10
+      example: 2000000000
+
   responses:
 
     Error:
@@ -596,7 +646,7 @@ components:
         exchange:
           description: Биржа (торговая площадка)
           type: string
-          enum: [ MOEX, MOEX_PLUS, FX, SPB ]
+          enum: [MOEX, MOEX_PLUS, FX, SPB]
         trackingAllowed:
           description: Признак разрешённой для торговли в автоследовании позиции
           type: boolean
@@ -660,6 +710,48 @@ components:
           minimum: 1
           maximum: 5
           nullable: true
+        tests:
+          description: Список тестирований, прохождение которых необходимо для следования за стратегией
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTest'
+        feeRate:
+          $ref: '#/components/schemas/NullableStrategyFeeRate'
+
+    StrategyTest:
+      description: Тестирование
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор тестирования
+          type: string
+          minLength: 1
+          example: foreign_shares
+
+    NullableStrategyFeeRate:
+      description: Ставка комиссии (в долях) за следование за стратегией
+      type: object
+      required:
+        - management
+        - result
+      properties:
+        management:
+          description: Ставка комиссии за управление
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          exclusiveMinimum: true
+        result:
+          description: Ставка комиссии за результат
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          exclusiveMinimum: true
+      nullable: true
 
     UpdateStrategyResponse:
       allOf:
@@ -737,7 +829,7 @@ components:
         status:
           description: Статус клиента
           type: string
-          enum: [ confirmed, registered ]
+          enum: [confirmed, registered]
         socialProfile:
           $ref: '#/components/schemas/MasterSocialProfile'
 
@@ -783,6 +875,7 @@ components:
         - riskProfile
         - description
         - owner
+        - tests
       properties:
         id:
           description: Идентификатор стратегии
@@ -792,7 +885,7 @@ components:
         status:
           description: Статус стратегии
           type: string
-          enum: [ draft, active ]
+          enum: [draft, active]
         title:
           description: Название стратегии
           type: string
@@ -801,11 +894,11 @@ components:
         baseCurrency:
           description: Базовая валюта стратегии
           type: string
-          enum: [ rub, usd ]
+          enum: [rub, usd]
         riskProfile:
           description: Риск-профиль стратегии
           type: string
-          enum: [ conservative, moderate, aggressive ]
+          enum: [conservative, moderate, aggressive]
         description:
           description: Описание стратегии
           type: string
@@ -818,6 +911,13 @@ components:
           maximum: 5
         owner:
           $ref: '#/components/schemas/StrategyOwner'
+        tests:
+          description: Список тестирований, прохождение которых необходимо для следования за стратегией
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTest'
+        feeRate:
+          $ref: '#/components/schemas/StrategyFeeRate'
 
     StrategyOwner:
       description: Владелец стратегии
@@ -825,6 +925,28 @@ components:
       properties:
         socialProfile:
           $ref: '#/components/schemas/MasterSocialProfile'
+
+    StrategyFeeRate:
+      description: Ставка комиссии (в долях) за следование за стратегией
+      type: object
+      required:
+        - management
+        - result
+      properties:
+        management:
+          description: Ставка комиссии за управление
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          exclusiveMinimum: true
+        result:
+          description: Ставка комиссии за результат
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          exclusiveMinimum: true
 
     ErrorResponse:
       description: Ответ с ошибкой
