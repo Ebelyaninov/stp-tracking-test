@@ -12,6 +12,7 @@ import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.Context;
 import ru.qa.tinkoff.investTracking.entities.ManagementFee;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.rowmapper.ManagementFeeRowMapper;
 
@@ -41,6 +42,30 @@ public class ManagementFeeDao {
             "settlement_period_started_at DESC LIMIT 1 ";
         return cqlTemplate.queryForObject(query, managementFeeRowMapper, contractId, strategyId, subscriptionId, version);
     }
+
+
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public Optional<ManagementFee> findLatestManagementFee(String contractId, UUID strategyId, Long subscriptionId, int version) {
+        String query = "select * " +
+            "FROM invest_tracking.management_fee " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and subscription_id = ? " +
+            "  and version = ? " +
+            "ORDER BY subscription_id, version DESC, " +
+            "settlement_period_started_at DESC LIMIT 1 ";
+        List<ManagementFee> result = cqlTemplate.query(query, managementFeeRowMapper, contractId, strategyId, subscriptionId,version);
+        if (result.size() > 1) {
+            throw new RuntimeException("Too many results");
+        }
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(result.get(0));
+    }
+
 
     public void deleteManagementFee(String contract, UUID strategy) {
         Delete.Where delete = QueryBuilder.delete()

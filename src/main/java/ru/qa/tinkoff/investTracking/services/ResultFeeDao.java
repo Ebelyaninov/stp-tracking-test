@@ -41,6 +41,29 @@ public class ResultFeeDao {
         return cqlTemplate.queryForObject(query, resultFeeRowMapper, contractId, strategyId, subscriptionId, version);
     }
 
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public Optional<ResultFee> findLastResultFee(String contractId, UUID strategyId, Long subscriptionId, int version) {
+        String query = "select * " +
+            "FROM invest_tracking.result_fee " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and subscription_id = ? " +
+            "  and version = ? " +
+            "ORDER BY subscription_id, version DESC, " +
+            "settlement_period_started_at DESC LIMIT 1 ";
+        List<ResultFee> result = cqlTemplate.query(query, resultFeeRowMapper, contractId, strategyId, subscriptionId,version);
+        if (result.size() > 1) {
+            throw new RuntimeException("Too many results");
+        }
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(result.get(0));
+    }
+
+
     public void deleteResultFee(String contract, UUID strategy) {
         Delete.Where delete = QueryBuilder.delete()
             .from("result_fee")
