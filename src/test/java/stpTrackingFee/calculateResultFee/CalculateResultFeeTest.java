@@ -126,10 +126,25 @@ public class CalculateResultFeeTest {
 
 
     String ticker3 = "YNDX";
-    String tradingClearingAccount3 = "L01+00002F00";
+    String tradingClearingAccount3 = "Y02+00001F00";
     String classCode3 = "TQBR";
     String instrumet3 = ticker3 + "_" + classCode3;
     String quantity3 = "5";
+
+
+    String tickerNoteXPosCache = "TEST";
+    String tradingClearingAccountNoteXPosCache = "L01+00002F00";
+    String classCodeNoteXPosCache = "TQBR";
+    String instrumetNoteXPosCache = tickerNoteXPosCache + "_" + classCodeNoteXPosCache;
+    String quantityNoteXPosCache = "2";
+
+
+    String tickerNotInsPrice = "FXITTEST";
+    String tradingClearingAccountNotInsPrice = "L01+00002F00";
+    String classCodeNotInsPrice = "TQBR";
+    String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
+    String quantityNotInsPrice = "2";
+
 
 
 
@@ -553,8 +568,8 @@ public class CalculateResultFeeTest {
             .getStartedAt().getSeconds()), ZoneId.of("UTC"));
         LocalDateTime commandEndTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
             .getEndedAt().getSeconds()), ZoneId.of("UTC"));
-        assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(5).atStartOfDay().toString()));
-        assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().toString()));
+        assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(5).atStartOfDay().minusHours(3).toString()));
+        assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
 
         resultFee = resultFeeDao.getResultFee(contractIdSlave, this.strategyId, subscriptionId, 3);
         BigDecimal portfolioValue = resultFee.getContext().getPortfolioValue();
@@ -694,6 +709,145 @@ public class CalculateResultFeeTest {
                 () -> kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND),
                 is(empty())
             ).stream().findFirst();
+    }
+
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1419019")
+    @DisplayName("C1419019.CalculateResultFee.Расчет комиссии за результат. " +
+        "Не найдена позиция в exchangePositionCache при расчете стоимости портфеля")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1419019() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney("50000.0",
+            Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
+            tradingClearingAccount1, "20","285.51", tickerNoteXPosCache, tradingClearingAccountNoteXPosCache, "5", "105.29",
+            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
+            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionFive, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+       List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+            "285.51",Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
+            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3,
+            3, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        Optional<ResultFee> portfolio = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 1);
+        assertThat("запись по комисси не равно", portfolio.isPresent(), is(true));
+        Optional<ResultFee> portfolio1 = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 2);
+        assertThat("запись по комисси не равно", portfolio1.isPresent(), is(false));
+        Optional<ResultFee> portfolio2 = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 3);
+        assertThat("запись по комисси не равно", portfolio2.isPresent(), is(false));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1419025")
+    @DisplayName("C1419025.CalculateResultFee.Расчет комиссии за результат. " +
+        "Не найдена позиция в exchangePositionCache при расчете стоимости портфеля instrumentPriceCache")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1419025() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney("50000.0",
+            Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
+            tradingClearingAccount1, "20","285.51", tickerNotInsPrice, tradingClearingAccountNotInsPrice, "5", "105.29",
+            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
+            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionFive, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+            "285.51",Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
+            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3,
+            3, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        Optional<ResultFee> portfolio = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 1);
+        assertThat("запись по комисси не равно", portfolio.isPresent(), is(true));
+        Optional<ResultFee> portfolio1 = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 2);
+        assertThat("запись по комисси не равно", portfolio1.isPresent(), is(false));
+        Optional<ResultFee> portfolio2 = resultFeeDao.findLastResultFee(contractIdSlave, strategyId, subscriptionId, 3);
+        assertThat("запись по комисси не равно", portfolio2.isPresent(), is(false));
     }
 
 
