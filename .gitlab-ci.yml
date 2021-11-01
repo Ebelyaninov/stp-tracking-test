@@ -4,6 +4,6 @@ variables:
   ALLURE_PROJECT_ID: 330
 
 include:
-  - project: 'invest-sdet/invest-autoqa-pipelines'
+  - project: 'invest-auto-qa/common-ci-pipeline'
     file: '.common-pipeline.yml'
     ref: master
