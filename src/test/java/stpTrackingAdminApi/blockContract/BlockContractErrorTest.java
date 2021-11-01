@@ -1,6 +1,5 @@
 package stpTrackingAdminApi.blockContract;
 
-
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -62,6 +61,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
@@ -81,7 +84,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class
 })
 
-public class BlockContractSuccessTest {
+public class BlockContractErrorTest {
 
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
@@ -113,7 +116,11 @@ public class BlockContractSuccessTest {
     UUID investIdSlave;
 
     String xApiKey = "x-api-key";
-    String key= "tracking";
+    String key = "tracking";
+
+    String notKey = "summer";
+    String notContractIdSlave = "1234567890";
+
 
     @AfterEach
     void deleteClient() {
@@ -145,17 +152,16 @@ public class BlockContractSuccessTest {
         });
     }
 
-
     @SneakyThrows
     @Test
-    @AllureId("1288017")
-    @DisplayName("Блокировка контракта ведомого. Успешная блокировка")
-    @Subfeature("Успешные сценарии")
+    @AllureId("1288208")
+    @DisplayName("Блокировка контракта ведомого. Авторизация. Не передан x-app-name")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод для наложения технической блокировки на договор ведомого.")
-    void C1288017() {
+    void C1288208(){
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "Autotest block contract true";
+        String description = "Autotest block contract false";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -175,47 +181,87 @@ public class BlockContractSuccessTest {
         clientSlave = clientService.getClient(investIdSlave);
         contractSlave = contractService.getContract(contractIdSlave);
         //Вычитываем из топика кафка tracking.event все offset
-        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+       // steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //Вызываем метод blockContract
+        Response responseBlockContract = contractApi.blockContract()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+//           .xAppNameHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response);
+        JSONObject jsonObject = new JSONObject(responseBlockContract.getBody().asString());
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertFalse(responseBlockContract.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(responseBlockContract.getHeaders().getValue("x-server-time").isEmpty());
+        //Проверяем тело ответа "0344-00-Z99"
+        assertThat("код ошибки не равно", errorCode, is("0344-00-Z99"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1288159")
+    @DisplayName("Блокировка контракта ведомого. Авторизация. Передан не корректный x-api-key")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для наложения технической блокировки на договор ведомого.")
+    void C1288159(){
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "Autotest block contract false";
+        UUID strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку клиента slave на strategy клиента master
+        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        clientSlave = clientService.getClient(investIdSlave);
+        contractSlave = contractService.getContract(contractIdSlave);
+        //Вызываем метод blockContract
+        Response responseBlockContract = contractApi.blockContract()
+            .reqSpec(r -> r.addHeader(xApiKey, notKey))
+            .xAppNameHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1288379")
+    @DisplayName("Блокировка контракта ведомого. Авторизация. Передан не существующий contract_id")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для наложения технической блокировки на договор ведомого.")
+    void C1288379(){
         //Вызываем метод blockContract
         Response responseBlockContract = contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("tracking")
-/*            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")*/
-            .contractIdPath(contractIdSlave)
-            .respSpec(spec -> spec.expectStatusCode(200))
+            .contractIdPath(notContractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response);
-        //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
-            .sorted(Collections.reverseOrder())
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
-        //Проверяем, данные в сообщении
-        checkEventParams(event, "UPDATED", contractIdSlave, "TRACKED", true);
-        //Находим в БД автоследования стратегию и проверяем ее поля
-        checkContractParamDB(contractIdSlave, investIdSlave, null, "tracked", strategyId, true);
-
+        JSONObject jsonObject = new JSONObject(responseBlockContract.getBody().asString());
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertFalse(responseBlockContract.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(responseBlockContract.getHeaders().getValue("x-server-time").isEmpty());
+        //Проверяем тело ответа
+        assertThat("код ошибки не равно", errorCode, is("0344-12-B11"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
-
-    //Проверяем параметры события
-    void checkEventParams(Tracking.Event event, String action, String ContractIdSlave, String state, boolean blocked) {
-        assertThat("Action события не равен", event.getAction().toString(), is(action));
-        assertThat("ID договора не равен", (event.getContract().getId()), is(ContractIdSlave));
-        assertThat("State не равен Tracked", (event.getContract().getState().toString()), is(state));
-        assertThat("Blocked не равен true", (event.getContract().getBlocked()), is(true));
-
-    }
-
-    void checkContractParamDB(String contractId, UUID clientIdSlave, String role, String state, UUID strategyId, boolean blocked ) {
-        assertThat("ContractId не равен", contractSlave.getId(), is(contractId));
-        assertThat("номер клиента не равен", contractSlave.getClientId(), is(clientIdSlave));
-        assertThat("роль в контракте не равна", contractSlave.getRole(), is(role));
-        assertThat("state не равен", contractSlave.getState().toString(), is(state));
-        assertThat("ID стратегии не равно", contractSlave.getStrategyId(), is(strategyId));
-        assertThat("статус блокировки не равен", contractSlave.getBlocked(), is(true));
-    }
 }
-
