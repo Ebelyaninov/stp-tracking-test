@@ -103,14 +103,18 @@ public class BlockContractSuccessTest {
     StpTrackingApiSteps steps;
 
 
-    Client clientSlave;
-    Contract contractSlave;
+    Client client;
+    Contract contract;
     Subscription subscription;
 
     String siebelIdMaster = "5-CQNPKPNH";
     String siebelIdSlave = "5-22NDYVFEE";
+
     String contractIdSlave;
+    String contractIdMaster;
+
     UUID investIdSlave;
+    UUID investIdMaster;
 
     String xApiKey = "x-api-key";
     String key= "tracking";
@@ -123,7 +127,7 @@ public class BlockContractSuccessTest {
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(contractSlave);
+                contractService.deleteContract(contract);
             } catch (Exception e) {
             }
             try {
@@ -159,8 +163,8 @@ public class BlockContractSuccessTest {
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
@@ -172,16 +176,14 @@ public class BlockContractSuccessTest {
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        clientSlave = clientService.getClient(investIdSlave);
-        contractSlave = contractService.getContract(contractIdSlave);
+        client = clientService.getClient(investIdSlave);
+        contract = contractService.getContract(contractIdSlave);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("tracking")
-/*            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")*/
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
@@ -194,8 +196,52 @@ public class BlockContractSuccessTest {
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
         checkEventParams(event, "UPDATED", contractIdSlave, "TRACKED", true);
-        //Находим в БД автоследования стратегию и проверяем ее поля
+        //Находим в БД автоследования контракт и проверяем его поля
         checkContractParamDB(contractIdSlave, investIdSlave, null, "tracked", strategyId, true);
+
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1288706")
+    @DisplayName("Блокировка контракта ведомого. Блокировка contract_id Мастера")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для наложения технической блокировки на договор ведомого.")
+    void C1288706() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "Autotest block contract true";
+        UUID strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //Вызываем метод blockContract
+        Response responseBlockContract = contractApi.blockContract()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("tracking")
+            .contractIdPath(contractIdMaster)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(30));
+        Pair<String, byte[]> message = messages.stream()
+//            .sorted(Collections.reverseOrder())
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        client = clientService.getClient(investIdMaster);
+        contract = contractService.getContract(contractIdMaster);
+        //Проверяем, данные в сообщении
+        checkEventParams(event, "UPDATED", contractIdMaster, "UNTRACKED", true);
+        //Находим в БД автоследования контракт и проверяем его поля
+        checkContractParamDB(contractIdMaster, investIdMaster, null, "untracked", null, true);
 
     }
 
@@ -209,13 +255,13 @@ public class BlockContractSuccessTest {
 
     }
 
-    void checkContractParamDB(String contractId, UUID clientIdSlave, String role, String state, UUID strategyId, boolean blocked ) {
-        assertThat("ContractId не равен", contractSlave.getId(), is(contractId));
-        assertThat("номер клиента не равен", contractSlave.getClientId(), is(clientIdSlave));
-        assertThat("роль в контракте не равна", contractSlave.getRole(), is(role));
-        assertThat("state не равен", contractSlave.getState().toString(), is(state));
-        assertThat("ID стратегии не равно", contractSlave.getStrategyId(), is(strategyId));
-        assertThat("статус блокировки не равен", contractSlave.getBlocked(), is(true));
+    void checkContractParamDB(String contractId, UUID clientId, String role, String state, UUID strategyId, boolean blocked ) {
+        assertThat("ContractId не равен", contract.getId(), is(contractId));
+        assertThat("номер клиента не равен", contract.getClientId(), is(clientId));
+        assertThat("роль в контракте не равна", contract.getRole(), is(role));
+        assertThat("state не равен", contract.getState().toString(), is(state));
+        assertThat("ID стратегии не равно", contract.getStrategyId(), is(strategyId));
+        assertThat("статус блокировки не равен", contract.getBlocked(), is(true));
     }
 }
 

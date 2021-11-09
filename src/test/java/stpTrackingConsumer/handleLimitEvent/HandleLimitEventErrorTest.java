@@ -117,7 +117,7 @@ public class HandleLimitEventErrorTest {
     Contract contract;
     UUID strategyId;
     SlavePortfolio slavePortfolio;
-    String siebelIdMaster = "1-51Q76AT";
+    String siebelIdMaster = "5-CTNZ67KS";
 
 
     String ticker1 = "SBER";
@@ -191,7 +191,7 @@ public class HandleLimitEventErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C580022() {
-        String SIEBEL_ID_SLAVE = "1-2ML9VUT";
+        String SIEBEL_ID_SLAVE = "5-IQGHZUOO";
         Random ran = new Random();
         int x = ran.nextInt(6) + 5;
         String title = "autotest " + x;

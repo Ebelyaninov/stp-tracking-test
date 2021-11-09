@@ -124,8 +124,8 @@ public class HandleLimitEventTest {
     Contract contract;
     UUID strategyId;
     SlavePortfolio slavePortfolio;
-    String siebelIdMaster = "1-51Q76AT";
-
+   // String siebelIdMaster = "1-51Q76AT";
+    String siebelIdMaster = "5-CTNZ67KS";
 
     String tickerSBER = "SBER";
     String tradingClearingAccountSBER = "L01+00002F00";
@@ -698,7 +698,7 @@ public class HandleLimitEventTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C580020() {
-        String SIEBEL_ID_SLAVE = "1-D24XMPH";
+        String SIEBEL_ID_SLAVE = "5-CTNZ67KS";
         Random ran = new Random();
         int x = ran.nextInt(6) + 5;
         String title = "autotest " + x;

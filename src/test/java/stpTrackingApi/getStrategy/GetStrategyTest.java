@@ -285,7 +285,7 @@ public class GetStrategyTest {
                 .collect(Collectors.toList());
         assertThat("Тип характеристики не равно", strategyCharacteristics.get(0).getType(), is(GetStrategyResponseCharacteristics.TypeEnum.CONDITION));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
-        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("5.0 %"));
+        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("0.417 %"));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(1).getTitle(), is("Комиссия за результат"));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(1).getValue(), is("30.0 %"));
     }
@@ -1392,7 +1392,7 @@ public class GetStrategyTest {
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1267043() throws JsonProcessingException, InterruptedException {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
