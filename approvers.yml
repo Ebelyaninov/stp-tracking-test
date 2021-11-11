@@ -1,4 +1,5 @@
 maintainers:
   count: 1
-  users:
-    - "e.kolyakov@tinkoff.ru"
+  groups:
+  - "invest-sdet"
+  - "invest-tracking-qa"
