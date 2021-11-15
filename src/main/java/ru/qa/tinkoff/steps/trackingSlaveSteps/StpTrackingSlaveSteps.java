@@ -216,7 +216,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-            .reqSpec(r -> r.addHeader("magic-number", "3"))
+//            .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -435,6 +435,43 @@ public class StpTrackingSlaveSteps {
     }
 
 
+    public List<MasterPortfolio.Position> createListMasterPositionWithThreePos(String ticker1, String tradingClearingAccount1,
+                                                                             String quantityPos1, String ticker2,
+                                                                             String tradingClearingAccount2,
+                                                                             String quantityPos2, String ticker3,
+                                                                               String tradingClearingAccount3,
+                                                                               String quantityPos3, Date date,
+                                                                             int lastChangeDetectedVersion,
+                                                                             Tracking.Portfolio.Position position) {
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date)
+            .lastChangeDetectedVersion(lastChangeDetectedVersion)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date)
+            .lastChangeDetectedVersion(lastChangeDetectedVersion)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .quantity(new BigDecimal(quantityPos3))
+            .changedAt(date)
+            .lastChangeDetectedVersion(lastChangeDetectedVersion)
+            .lastChangeAction((byte) position.getAction().getActionValue())
+            .build());
+        return positionList;
+    }
+
+
 
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,
                                       String money, List<MasterPortfolio.Position> positionList) {
@@ -453,7 +490,7 @@ public class StpTrackingSlaveSteps {
 
 
     public List<SlavePortfolio.Position> createListSlavePositionWithOnePos(String ticker, String tradingClearingAccount,
-                                                                           String quantityPos, Date date, int synchronizedToMasterVersion,
+                                                                           String quantityPos, Date date, Integer synchronizedToMasterVersion,
                                                                            BigDecimal price, BigDecimal rate,
                                                                            BigDecimal rateDiff, BigDecimal quantityDiff)    {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -468,6 +505,32 @@ public class StpTrackingSlaveSteps {
             .quantityDiff(quantityDiff)
             .changedAt(date)
             .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
+
+
+    public List<SlavePortfolio.Position> createListSlavePositionOnePosWithEnable(String ticker, String tradingClearingAccount,
+                                                                           String quantityPos, Date date, Integer synchronizedToMasterVersion,
+                                                                           BigDecimal price, BigDecimal rate,
+                                                                           BigDecimal rateDiff, BigDecimal quantityDiff,
+                                                                                 Boolean buyEnabled,Boolean sellEnabled)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantityPos))
+            .synchronizedToMasterVersion(synchronizedToMasterVersion)
+            .price(price)
+//            .price_ts(date)
+            .rate(rate)
+            .rateDiff(rateDiff)
+            .quantityDiff(quantityDiff)
+            .changedAt(date)
+            .lastChangeAction(null)
+            .buyEnabled(buyEnabled)
+            .sellEnabled(sellEnabled)
             .build());
         return positionList;
     }
@@ -522,11 +585,29 @@ public class StpTrackingSlaveSteps {
         return positionList;
     }
 
+    public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLightAndWithSellAndBuy (String ticker, String tradingClearingAccount,
+                                                                                String quantityPos, Date date, Boolean buyEnabled, Boolean sellEnabled)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantityPos))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .buyEnabled(buyEnabled)
+            .sellEnabled(sellEnabled)
+            .build());
+        return positionList;
+    }
+
 
 
     public List<SlavePortfolio.Position> createListSlavePositionWithTwoPosLight(String ticker1, String tradingClearingAccount1,
-                                                                                String quantityPos1, String ticker2, String tradingClearingAccount2,
-                                                                                String quantityPos2, Date date)    {
+                                                                                String quantityPos1, Boolean buyEnableFirst,
+                                                                                Boolean sellEnableFirst, String ticker2,
+                                                                                String tradingClearingAccount2, String quantityPos2,
+                                                                                Boolean buyEnabledSecond, Boolean sellEnableSecond,
+                                                                                Date date)    {
 
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
@@ -535,6 +616,8 @@ public class StpTrackingSlaveSteps {
             .quantity(new BigDecimal(quantityPos1))
             .changedAt(date)
             .lastChangeAction(null)
+            .buyEnabled(buyEnableFirst)
+            .sellEnabled(sellEnableFirst)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker2)
@@ -542,6 +625,8 @@ public class StpTrackingSlaveSteps {
             .quantity(new BigDecimal(quantityPos2))
             .changedAt(date)
             .lastChangeAction(null)
+            .buyEnabled(buyEnabledSecond)
+            .sellEnabled(sellEnableSecond)
             .build());
         return positionList;
     }

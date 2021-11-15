@@ -2,6 +2,9 @@ variables:
 #  Необходимые переменные для настройки отгрузки отчета в Allure
   ALLURE_TOKEN: 3a1ca7e1-3ed8-482f-a14d-44012010279b
   ALLURE_PROJECT_ID: 330
+  DAST_SUPPORT: "false"
+  VAULT_SUPPORT: "false"
+  AUTO_START: "true"
 
 include:
   - project: 'invest-auto-qa/common-ci-pipeline'

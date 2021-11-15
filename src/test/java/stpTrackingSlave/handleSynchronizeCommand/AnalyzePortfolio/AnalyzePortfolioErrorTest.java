@@ -117,7 +117,7 @@ public class AnalyzePortfolioErrorTest {
     String contractIdSlave;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-2383868GN";
-    String SIEBEL_ID_SLAVE = "4-1O6RYOAP";
+    String SIEBEL_ID_SLAVE = "4-LQB8FKN";
     long subscriptionId;
 
 
@@ -129,7 +129,7 @@ public class AnalyzePortfolioErrorTest {
     final String tradingClearingAccountMinfinRU = "L01+00002F00";
 
     final String tickerINFN = "BCR";
-    final String tradingClearingAccountINFN = "L01+00002F00";
+    final String tradingClearingAccountINFN = "TKCBM_TCAB";
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
@@ -235,14 +235,13 @@ public class AnalyzePortfolioErrorTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionList);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-
         //проверяем что после анализа в портфеле slave позиция с правильной валютой
         checkParam(baseMoneySlave, utc);
     }
@@ -289,7 +288,7 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos("TEST", "NDS000000001",
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
@@ -343,7 +342,7 @@ public class AnalyzePortfolioErrorTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionListSl);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -396,7 +395,7 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerYandex, tradingClearingAccountYandex,
             "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -449,7 +448,7 @@ public class AnalyzePortfolioErrorTest {
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionListSl);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -504,7 +503,7 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfin, tradingClearingAccountMinfin,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -556,7 +555,7 @@ public class AnalyzePortfolioErrorTest {
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionListSl);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -608,7 +607,7 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerBRJ1, tradingClearingAccountBRJ1,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -661,7 +660,7 @@ public class AnalyzePortfolioErrorTest {
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionListSl);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -714,7 +713,7 @@ public class AnalyzePortfolioErrorTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfinRU, tradingClearingAccountMinfinRU,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -765,7 +764,7 @@ public class AnalyzePortfolioErrorTest {
         String baseMoneySlave = "6576.23";
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> positionListSl = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, positionListSl);
         //вычитываем все события из tracking.event
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
@@ -787,12 +786,11 @@ public class AnalyzePortfolioErrorTest {
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия последнего портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("Версия последнего портфеля ведущего не равна", slavePortfolio.getComparedToMasterVersion(), is(1));
+        assertThat("Версия последнего портфеля ведущего не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Размер позиций slave не равна", slavePortfolio.getPositions().size(), is(0));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-
     }
 
 

@@ -109,13 +109,13 @@ public class CreateSlaveOrderTest {
     Client clientSlave;
     Subscription subscription;
     String contractIdMaster;
-    String contractIdSlave = "2006508531";
+    String contractIdSlave = "2056750892";
     String ticker = "AAPL";
-    String tradingClearingAccount = "TKCBM_TCAB";
+    String tradingClearingAccount = "L01+00000SPB";
     String classCode = "SPBXM";
     BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
-    String SIEBEL_ID_SLAVE = "5-40IB2WGH";
+    String SIEBEL_ID_SLAVE = "5-23LMDXSIW";
     UUID strategyId;
     long subscriptionId;
     public String value;
@@ -215,7 +215,7 @@ public class CreateSlaveOrderTest {
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -242,13 +242,12 @@ public class CreateSlaveOrderTest {
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
+        Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", classCode, priceOrder, lots, ticker, tradingClearingAccount);
     }
-
-
 
 
     @SneakyThrows
@@ -290,7 +289,7 @@ public class CreateSlaveOrderTest {
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "6", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -313,7 +312,9 @@ public class CreateSlaveOrderTest {
         BigDecimal rateDiff = masterPositionRate.subtract(slavePositionRate);
         BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 4, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal priceBid = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "bid"));
+//        BigDecimal priceBid = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(ticker, "bid"));
+        BigDecimal priceBid = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(ticker, tradingClearingAccount, "bid", SIEBEL_ID_SLAVE));
+
         BigDecimal priceOrder = priceBid.subtract(price.multiply(new BigDecimal("0.002"))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01")));
@@ -334,7 +335,7 @@ public class CreateSlaveOrderTest {
         return Stream.of(
 //            Arguments.of("KMX", "L01+00000SPB", "SPBXM", "104.3", "104.3", "99.71",  new BigDecimal("1"), new BigDecimal("0.01"),
 //                new BigDecimal("6"), StrategyCurrency.usd)
-            Arguments.of("AAPL", "TKCBM_TCAB", "SPBXM", "107.57", "107.52", "108.66",  new BigDecimal("1"), new BigDecimal("0.01"),
+            Arguments.of("AAPL", "L01+00000SPB", "SPBXM", "107.57", "107.52", "108.66",  new BigDecimal("1"), new BigDecimal("0.01"),
                 "6", StrategyCurrency.usd)
         );
     }
@@ -382,7 +383,7 @@ public class CreateSlaveOrderTest {
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(tickerPos, tradingClearingAccountPos,
             quantity, date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 4,
             baseMoneySl, date, createListSlaveOnePos);
        //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);

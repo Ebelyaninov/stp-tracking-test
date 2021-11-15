@@ -219,14 +219,14 @@ public class HandleSynchronizeCommandTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, positionList);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        checkSlavePortfolioParameters(1,1,"6576.23");
+        checkSlavePortfolioParameters(1,2,"6576.23");
     }
 
 
@@ -268,7 +268,7 @@ public class HandleSynchronizeCommandTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, positionList);
 //        //отправляем команду на синхронизацию
 //        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -276,8 +276,6 @@ public class HandleSynchronizeCommandTest {
 //        await().atMost(FIVE_SECONDS).until(() ->
 //            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
 //        checkSlavePortfolioParameters(1,1,"6576.23");
-
-
         //вычитываем все события из tracking.event
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
