@@ -38,6 +38,7 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import javax.swing.text.StyledEditorKit;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
@@ -201,7 +202,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategy(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Boolean overloaded) {
         //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -239,7 +240,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(overloaded);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -304,7 +306,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategyFee(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                        UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                        ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management) {
+                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded) {
 
         //находим данные по клиенту в БД social
         String image = "";
@@ -342,7 +344,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(overloaded);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -354,7 +357,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategyWithProfile(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                                UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                                ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score) {
+                                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score, Boolean overload) {
 //        //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -392,7 +395,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(score)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(overload);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -401,10 +405,10 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createClientWintContractAndStrategyWithOutProfile(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
+    public void createClientWintContractAndStrategyWithOutProfile(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                                                   UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                                   ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                                  StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management) {
+                                                                  StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded) {
 
 
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
@@ -432,7 +436,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(overloaded);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

@@ -170,7 +170,7 @@ public class CreateSignalSuccessTest {
         strategyId = UUID.randomUUID();
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -245,7 +245,7 @@ public class CreateSignalSuccessTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, Double.toString(quantityPosMasterPortfolio));
@@ -313,7 +313,7 @@ public class CreateSignalSuccessTest {
         strategyId = UUID.randomUUID();
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
@@ -393,7 +393,7 @@ public class CreateSignalSuccessTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null,contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, strategyRiskProfile,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -440,7 +440,7 @@ public class CreateSignalSuccessTest {
         strategyId = UUID.randomUUID();
         steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

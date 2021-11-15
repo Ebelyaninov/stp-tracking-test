@@ -341,7 +341,7 @@ public class DeleteSubscriptionTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         //вызываем метод CreateSubscription
         subscriptionApi.createSubscription()
             .xAppNameHeader("invest")

@@ -169,7 +169,7 @@ public class GetStrategiesCatalogTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
             .xTcsSiebelIdHeader(siebelIdMaster2)
@@ -210,7 +210,7 @@ public class GetStrategiesCatalogTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
             .xAppNameHeader("invest")
@@ -245,7 +245,7 @@ public class GetStrategiesCatalogTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
             .xAppNameHeader("invest")
@@ -320,7 +320,7 @@ public class GetStrategiesCatalogTest {
                     //создаем стратегию на договор
                     steps.createClientWintContractAndStrategyWithProfile(siebelIds.get(i), investId, null, contractId, null, ContractState.untracked,
                         strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                        StrategyStatus.active, slaveCount, LocalDateTime.now(), score);
+                        StrategyStatus.active, slaveCount, LocalDateTime.now(), score, false);
                 } catch (Exception e) {
                     log.error("завис на создании");
                 }
@@ -440,7 +440,7 @@ public class GetStrategiesCatalogTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
             GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
                 .xAppNameHeader("invest")
@@ -502,7 +502,7 @@ public class GetStrategiesCatalogTest {
                     //создаем стратегию
                     steps.createClientWintContractAndStrategyWithProfile(siebelId, investId, null, contractId, null, ContractState.untracked,
                         strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                        StrategyStatus.active, slaveCount, LocalDateTime.now(), 1);
+                        StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, false);
                     //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
                     createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
                     createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
