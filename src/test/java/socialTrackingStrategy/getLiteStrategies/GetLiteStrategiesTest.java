@@ -186,18 +186,21 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyBaseCurrencyFromApi = new HashSet<>();
         Set<String> listStrategyRiskProfileFromApi = new HashSet<>();
         Set<Integer> listStrategyScoreFromApi = new HashSet<>();
+        Set<Boolean> listStrategyIsOverloadedFromApi = new HashSet<>();
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
             listStrategyIdsFromApi.add(getLiteStrategies.getItems().get(i).getId());
             listStrategyTitleFromApi.add(getLiteStrategies.getItems().get(i).getTitle());
             listStrategyBaseCurrencyFromApi.add(getLiteStrategies.getItems().get(i).getBaseCurrency().toString());
             listStrategyRiskProfileFromApi.add(getLiteStrategies.getItems().get(i).getRiskProfile().toString());
             listStrategyScoreFromApi.add(getLiteStrategies.getItems().get(i).getScore());
+            listStrategyIsOverloadedFromApi.add(getLiteStrategies.getItems().get(i).getIsOverloaded());
         }
         Set<String>  listStrategyTitleFromDB = new HashSet<>();
         Set<UUID> listStrategyIdsFromDB = new HashSet<>();
         Set<String> listStrategyBaseCurrencyFromDB = new HashSet<>();
         Set<String> listStrategyRiskProfileFromDB = new HashSet<>();
         Set<Integer> listStrategyScoreFromDB = new HashSet<>();
+        Set<Boolean> listIsOverloaded = new HashSet<>();
 
         for (int i = 0; i < strategysFromDB.size(); i++) {
             listStrategyIdsFromDB.add(strategysFromDB.get(i).getId());
@@ -205,7 +208,9 @@ public class GetLiteStrategiesTest {
             listStrategyBaseCurrencyFromDB.add(strategysFromDB.get(i).getBaseCurrency().toString());
             listStrategyRiskProfileFromDB.add(strategysFromDB.get(i).getRiskProfile().toString());
             listStrategyScoreFromDB.add(strategysFromDB.get(i).getScore());
+            listIsOverloaded.add(strategysFromDB.get(i).getOverloaded());
         }
+        assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded));
         assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromDB));
         assertThat("title стратегий не совпадают", listStrategyTitleFromApi, is(listStrategyTitleFromDB));
         assertThat("baseCurrency стратегий не совпадают", listStrategyBaseCurrencyFromApi, is(listStrategyBaseCurrencyFromDB));
@@ -253,7 +258,7 @@ public class GetLiteStrategiesTest {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
-        strategyId = UUID.randomUUID();
+        strategyId = UUID.fromString("c139978f-fd13-4071-9563-89e574cab05b");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
@@ -263,7 +268,7 @@ public class GetLiteStrategiesTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -280,10 +285,10 @@ public class GetLiteStrategiesTest {
             .divide(minMaxDif, 4, RoundingMode.HALF_UP)
             .multiply(normalizedMinMaxDif)
             .add(new BigDecimal("0"));
-        List<Double> portfolioValuesPoints = new ArrayList<>();
-        portfolioValuesPoints.add(0.0);
-        portfolioValuesPoints.add(point.setScale(0, RoundingMode.HALF_UP).doubleValue());
-        portfolioValuesPoints.add(99.0);
+        List<BigDecimal> portfolioValuesPoints = new ArrayList<>();
+        portfolioValuesPoints.add(BigDecimal.valueOf(0));
+        portfolioValuesPoints.add(BigDecimal.valueOf(68));
+        portfolioValuesPoints.add(BigDecimal.valueOf(99));
         //считаем recommended-base-money-position-quantity
         BigDecimal recommendedBaseMoneyPositionQuantity = new BigDecimal("109268.75")
             .add(new BigDecimal("109268.75").multiply(new BigDecimal("0.05")));
@@ -407,7 +412,7 @@ public class GetLiteStrategiesTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null);
+            StrategyStatus.draft, 0, null, false);
         Thread.sleep(15000);
         //вызываем метод getLiteStrategy
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
@@ -444,7 +449,7 @@ public class GetLiteStrategiesTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyWithOutProfile(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         Thread.sleep(15000);
         //вызываем метод getLiteStrategy
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()

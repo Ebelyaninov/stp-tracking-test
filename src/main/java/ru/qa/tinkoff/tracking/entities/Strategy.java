@@ -71,6 +71,9 @@ public class Strategy {
     @Column(name = "position", insertable = false, updatable = false)
     Integer position;
 
+    @Column(name = "overloaded")
+    Boolean overloaded;
+
 //    @Type( type = "jsonb" )
 //    @Column(name = "fee_rate", columnDefinition = "jsonb")
 //    Map<String, BigDecimal> feeRate;

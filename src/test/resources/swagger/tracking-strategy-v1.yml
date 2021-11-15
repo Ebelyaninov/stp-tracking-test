@@ -6,7 +6,7 @@ info:
   contact:
     name: Asya Tsvaeva
     email: a.tsvaeva@tinkoff.ru
-  version: 1.0.0
+  version: 1.1.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
@@ -83,7 +83,7 @@ paths:
       description: Возвращает облегченные данные списка торговых стратегий
       operationId: getLiteStrategies
       security:
-        - apiKey: [ ]
+        - apiKey: []
       responses:
         200:
           description: OK
@@ -111,7 +111,6 @@ components:
       type: apiKey
       in: header
       name: X-API-KEY
-
 
   headers:
 
@@ -253,6 +252,7 @@ components:
         - relativeYield
         - portfolioValues
         - characteristics
+        - isOverloaded
       properties:
         id:
           description: Идентификатор стратегии
@@ -284,13 +284,15 @@ components:
           type: array
           items:
             type: number
-            format: double
             minimum: 0
         characteristics:
           description: Характеристики стратегии
           type: array
           items:
             $ref: '#/components/schemas/StrategyCharacteristic'
+        isOverloaded:
+          description: Признак перегруженности стратегии
+          type: boolean
 
     Currency:
       description: Валюта

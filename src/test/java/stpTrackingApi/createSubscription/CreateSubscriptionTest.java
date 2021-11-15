@@ -391,7 +391,7 @@ public class CreateSubscriptionTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,  null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
         //вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //вызываем метод CreateSubscription
