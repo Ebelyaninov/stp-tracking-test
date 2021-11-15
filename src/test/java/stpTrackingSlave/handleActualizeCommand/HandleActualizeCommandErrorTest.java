@@ -522,7 +522,7 @@ public class HandleActualizeCommandErrorTest {
         // создаем портфель slave с позицией в кассандре
         String baseMoneySlave = "6551.10";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(ticker, tradingClearingAccount,
-            "2", tickerABBV, tradingClearingAccountABBV, "1", date);
+            "2", true, true, tickerABBV, tradingClearingAccountABBV, "1", true, true, date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 4,
             baseMoneySlave, date, createListSlaveOnePos);
         //формируем команду на актуализацию для slave

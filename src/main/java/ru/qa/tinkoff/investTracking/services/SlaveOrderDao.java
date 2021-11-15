@@ -36,6 +36,17 @@ public class SlaveOrderDao {
         return cqlTemplate.queryForObject(query, slaveOrderRowMapper, contractId, strategyId);
     }
 
+    public SlaveOrder getSlaveOrderState(String contractId, UUID strategyId, Byte state) {
+        String query = "select * " +
+            "from invest_tracking.slave_order " +
+            "where contract_id = ? " +
+            " and strategy_id = ? " +
+            " and state = ? " +
+            "order by version DESC, attempts_count DESC " +
+            "limit 1";
+        return cqlTemplate.queryForObject(query, slaveOrderRowMapper, contractId, strategyId);
+    }
+
 
 
     public SlaveOrder getSlaveOrderWithVersionAndAttemps(String contractId, UUID strategyId, Integer version, Byte attemptsCount) {

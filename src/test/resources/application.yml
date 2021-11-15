@@ -44,8 +44,8 @@ app:
       configuration:
         maximum-pool-size: 4
     tracking:
-      #url: jdbc:postgresql://db-tracking.trading.local:5940/tracking
-      url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5940/tracking
+      #url: jdbc:postgresql://db-tracking.trading.local:5432/tracking
+      url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5432/tracking
       username: tracking
       password: tracking
       driver-class-name: org.postgresql.Driver

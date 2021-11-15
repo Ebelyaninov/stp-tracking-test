@@ -218,6 +218,7 @@ public class HandleRetrySynchronizationCommandTest {
             (byte) 0, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -263,7 +264,6 @@ public class HandleRetrySynchronizationCommandTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -301,6 +301,7 @@ public class HandleRetrySynchronizationCommandTest {
             null, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -393,6 +394,7 @@ public class HandleRetrySynchronizationCommandTest {
             null, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -475,6 +477,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
