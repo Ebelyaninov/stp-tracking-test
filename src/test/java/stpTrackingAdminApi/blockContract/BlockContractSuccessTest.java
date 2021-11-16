@@ -111,7 +111,15 @@ public class BlockContractSuccessTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                subscriptionService.deleteSubscription(subscription);
+                subscriptionService.deleteSubscription(subscriptionService.getSubscriptionByContract(contractIdSlave));
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(contractService.getContract(contractIdSlave));
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(clientService.getClient(investIdSlave));
             } catch (Exception e) {
             }
             try {
@@ -126,14 +134,7 @@ public class BlockContractSuccessTest {
                 clientService.deleteClient(clientService.getClient(investIdMaster));
             } catch (Exception e) {
             }
-            try {
-                contractService.deleteContract(contractService.getContract(contractIdSlave));
-            } catch (Exception e) {
-            }
-            try {
-                clientService.deleteClient(clientService.getClient(investIdSlave));
-            } catch (Exception e) {
-            }
+
 /*            try {
                 contractService.deleteContract(contract);
             } catch (Exception e) {
@@ -226,9 +227,10 @@ public class BlockContractSuccessTest {
             .contractIdPath(contractIdMaster)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
-        strategy = strategyService.getStrategy(strategyId);
-        client = clientService.getClient(investIdMaster);
-        contract = contractService.getContract(contractIdMaster);
+//        strategy = strategyService.getStrategy(strategyId);
+//        client = clientService.getClient(investIdMaster);
+//        contract = contractService.getContract(contractIdMaster);
+        Contract getDataFromContract = contractService.getContract(contractIdMaster);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -253,12 +255,13 @@ public class BlockContractSuccessTest {
     }
 
     void checkContractParamDB(String contractId, UUID clientId, String role, String state, UUID strategyId, boolean blocked ) {
-        assertThat("ContractId не равен", contract.getId(), is(contractId));
-        assertThat("номер клиента не равен", contract.getClientId(), is(clientId));
-        assertThat("роль в контракте не равна", contract.getRole(), is(role));
-        assertThat("state не равен", contract.getState().toString(), is(state));
-        assertThat("ID стратегии не равно", contract.getStrategyId(), is(strategyId));
-        assertThat("статус блокировки не равен", contract.getBlocked(), is(true));
+        Contract getDataFromContract = contractService.getContract(contractId);
+        assertThat("ContractId не равен", getDataFromContract.getId(), is(contractId));
+        assertThat("номер клиента не равен", getDataFromContract.getClientId(), is(clientId));
+        assertThat("роль в контракте не равна", getDataFromContract.getRole(), is(role));
+        assertThat("state не равен", getDataFromContract.getState().toString(), is(state));
+        assertThat("ID стратегии не равно", getDataFromContract.getStrategyId(), is(strategyId));
+        assertThat("статус блокировки не равен", getDataFromContract.getBlocked(), is(true));
     }
 
     public static int randomNumber(int min, int max) {
