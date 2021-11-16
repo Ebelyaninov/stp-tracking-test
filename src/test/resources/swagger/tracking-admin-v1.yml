@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.5.0
+  version: 1.7.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
@@ -23,6 +23,8 @@ tags:
     description: Торговая позиция на бирже
   - name: contract
     description: Договор клиента
+  - name: signal
+    description: Торговый сигнал
 
 paths:
 
@@ -391,6 +393,7 @@ paths:
       - $ref: '#/components/parameters/ApplicationVersion'
       - $ref: '#/components/parameters/Platform'
       - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
       - $ref: '#/components/parameters/B3TraceId'
       - $ref: '#/components/parameters/B3SpanId'
       - $ref: '#/components/parameters/B3ParentSpanId'
@@ -418,6 +421,135 @@ paths:
           $ref: '#/components/responses/Error'
         401:
           description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /contract/{contractId}/synchronization/enable:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    post:
+      tags:
+        - contract
+      summary: enableContractSynchronization
+      description: Включить синхронизацию позиций в портфеле ведомого {contractId} в обе стороны
+      operationId: enableContractSynchronization
+      security:
+        - apiKey: [ ]
+      parameters:
+        - $ref: '#/components/parameters/ContractId'
+      responses:
+        202:
+          description: Accepted
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /contract/block:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - contract
+      summary: getBlockedContracts
+      description: Возвращает договоры, на которые наложена техническая блокировка
+      operationId: getBlockedContracts
+      security:
+        - apiKey: [ ]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedContractsResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}/signal:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - signal
+      summary: getSignals
+      description: Возвращает список сигналов в рамках торговой стратегии {strategyId}
+      operationId: getSignals
+      security:
+        - apiKey: [ ]
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSignalsResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
         422:
           $ref: '#/components/responses/Error'
         500:
@@ -878,23 +1010,15 @@ components:
         - tests
       properties:
         id:
-          description: Идентификатор стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
         status:
           description: Статус стратегии
           type: string
           enum: [draft, active]
         title:
-          description: Название стратегии
-          type: string
-          minLength: 1
-          example: Ракета
+          $ref: '#/components/schemas/StrategyTitle'
         baseCurrency:
-          description: Базовая валюта стратегии
-          type: string
-          enum: [rub, usd]
+          $ref: '#/components/schemas/Currency'
         riskProfile:
           description: Риск-профиль стратегии
           type: string
@@ -947,6 +1071,172 @@ components:
           minimum: 0
           maximum: 1
           exclusiveMinimum: true
+
+    GetBlockedContractsResponse:
+      type: object
+      required:
+        - nextCursor
+        - hasNext
+        - items
+      properties:
+        nextCursor:
+          description: Крайний возвращённый в текущем ответе идентификатор элемента, который необходимо использовать при следующем запросе
+          type: string
+          minLength: 1
+          nullable: true
+        hasNext:
+          description: Признак наличия элементов, не вошедших в текущий ответ
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockedContract'
+
+    BlockedContract:
+      description: Заблокированный договор
+      type: object
+      required:
+        - id
+        - owner
+        - strategy
+      properties:
+        id:
+          $ref: '#/components/schemas/ContractId'
+        owner:
+          $ref: '#/components/schemas/ContractOwner'
+        strategy:
+          $ref: '#/components/schemas/ContractStrategy'
+
+    ContractId:
+      description: Номер договора
+      type: string
+      minLength: 1
+      maxLength: 10
+      example: 2000000000
+
+    ContractOwner:
+      description: Владелец договора
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Единый идентификатор клиента
+          type: string
+          format: uuid
+          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    ContractStrategy:
+      description: Торговая стратегия, к которой подключен договор
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          $ref: '#/components/schemas/StrategyId'
+        title:
+          $ref: '#/components/schemas/StrategyTitle'
+
+    StrategyId:
+      description: Идентификатор стратегии
+      type: string
+      format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    StrategyTitle:
+      description: Название стратегии
+      type: string
+      minLength: 1
+      example: Ракета
+
+    GetSignalsResponse:
+      type: object
+      required:
+        - nextCursor
+        - hasNext
+        - items
+      properties:
+        nextCursor:
+          description: Крайний возвращённый в текущем ответе идентификатор элемента, который необходимо использовать при следующем запросе
+          type: string
+          minLength: 1
+          nullable: true
+        hasNext:
+          description: Признак наличия элементов, не вошедших в текущий ответ
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Signal'
+
+    Signal:
+      description: Торговый сигнал
+      type: object
+      required:
+        - createdAt
+        - quantity
+        - action
+        - price
+        - exchangePosition
+      properties:
+        createdAt:
+          description: Дата и время сигнала
+          type: string
+          format: date-time
+        quantity:
+          description: Количество единиц актива
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+        action:
+          description: Действие, на которое направлен торговый сигнал (покупка/продажа)
+          type: string
+          enum: [ buy, sell ]
+        price:
+          $ref: '#/components/schemas/Price'
+        exchangePosition:
+          $ref: '#/components/schemas/SignalExchangePosition'
+
+    Price:
+      description: Цена
+      type: object
+      required:
+        - value
+        - currency
+      properties:
+        value:
+          description: Значение цены за единицу актива
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+        currency:
+          $ref: '#/components/schemas/Currency'
+
+    Currency:
+      description: Валюта
+      type: string
+      enum: [ rub, usd ]
+
+    SignalExchangePosition:
+      description: Биржевая позиция, на изменение которой был направлен сигнал
+      type: object
+      required:
+        - ticker
+        - tradingClearingAccount
+      properties:
+        ticker:
+          description: Тикер
+          type: string
+          minLength: 1
+          example: TCS
+        tradingClearingAccount:
+          description: Торгово-клиринговый счёт
+          type: string
+          minLength: 1
+          example: L01+00002F00
 
     ErrorResponse:
       description: Ответ с ошибкой

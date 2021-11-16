@@ -9,7 +9,6 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,50 +20,33 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
-import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.trading.tracking.Tracking;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static ru.qa.tinkoff.kafka.Topics.*;
-import org.json.JSONArray;
-import org.json.JSONException;
+
 import org.json.JSONObject;
-import org.json.JSONString;
+
 
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
@@ -180,12 +162,9 @@ public class BlockContractErrorTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         clientSlave = clientService.getClient(investIdSlave);
         contractSlave = contractService.getContract(contractIdSlave);
-        //Вычитываем из топика кафка tracking.event все offset
-       // steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
-//           .xAppNameHeader("tracking")
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
@@ -230,7 +209,7 @@ public class BlockContractErrorTest {
         clientSlave = clientService.getClient(investIdSlave);
         contractSlave = contractService.getContract(contractIdSlave);
         //Вызываем метод blockContract
-        Response responseBlockContract = contractApi.blockContract()
+        contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("tracking")
             .contractIdPath(contractIdSlave)

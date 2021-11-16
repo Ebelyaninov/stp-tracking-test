@@ -243,7 +243,7 @@ public class HandleActualizeCommandErrorTest {
     void C731507() {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
+        String description = "description test стратегия autotest update adjust base currency1";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -494,7 +494,7 @@ public class HandleActualizeCommandErrorTest {
     void C1052844() {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
+        String description = "description test стратегия autotest update adjust base currency2";
            //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
