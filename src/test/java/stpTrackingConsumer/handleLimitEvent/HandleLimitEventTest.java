@@ -291,7 +291,7 @@ public class HandleLimitEventTest {
         assertThat("Action не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getAction().getAction().name(), is("ADJUST_CURRENCY"));
     }
 
-
+    // нужна бумага SU29009RMFS6
     @SneakyThrows
     @Test
     @AllureId("1084044")
