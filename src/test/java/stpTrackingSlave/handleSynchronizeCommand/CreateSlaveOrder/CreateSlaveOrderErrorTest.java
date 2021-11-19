@@ -121,7 +121,7 @@ public class CreateSlaveOrderErrorTest {
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
     UUID strategyId;
     long subscriptionId;
-
+    String description = "description test стратегия autotest update adjust base currency";
 
     @AfterEach
     void deleteClient() {
@@ -189,9 +189,6 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2047111824";
         String ticker = "BANEP";
         String tradingClearingAccount = "L01+00002F00";
-        String classCode = "TQBR";
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -203,7 +200,7 @@ public class CreateSlaveOrderErrorTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -252,9 +249,6 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2054235441";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
-        String classCode = "SPBXM";
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -265,7 +259,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -318,9 +312,6 @@ public class CreateSlaveOrderErrorTest {
         String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
-        String classCode = "SPBXM";
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -330,7 +321,7 @@ public class CreateSlaveOrderErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -384,9 +375,6 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2065560563";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
-        String classCode = "SPBXM";
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -396,7 +384,7 @@ public class CreateSlaveOrderErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -447,9 +435,6 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2006508531";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
-        String classCode = "SPBXM";
-        String title = "тест стратегия autotest";
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -460,7 +445,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

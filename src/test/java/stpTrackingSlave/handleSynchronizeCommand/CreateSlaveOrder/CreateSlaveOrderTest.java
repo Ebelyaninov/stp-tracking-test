@@ -111,7 +111,7 @@ public class CreateSlaveOrderTest {
     String contractIdMaster;
     String contractIdSlave = "2056750892";
     String ticker = "AAPL";
-    String tradingClearingAccount = "L01+00000SPB";
+    String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
     BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
@@ -120,6 +120,7 @@ public class CreateSlaveOrderTest {
     long subscriptionId;
     public String value;
 
+    String description = "description test стратегия autotest update adjust base currency";
 
     @AfterEach
     void deleteClient() {
@@ -183,9 +184,9 @@ public class CreateSlaveOrderTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C668233() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
+//        int randomNumber = 0 + (int) (Math.random() * 100);
+//        String title = "Autotest " +String.valueOf(randomNumber);
+//        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -196,7 +197,7 @@ public class CreateSlaveOrderTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -257,9 +258,9 @@ public class CreateSlaveOrderTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C705781() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
+//        int randomNumber = 0 + (int) (Math.random() * 100);
+//        String title = "Autotest" +String.valueOf(randomNumber);
+//        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -270,7 +271,7 @@ public class CreateSlaveOrderTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -350,9 +351,9 @@ public class CreateSlaveOrderTest {
     void C878566(String tickerPos, String tradingClearingAccountPos, String classCodePos, String last,
                  String ask, String bid, BigDecimal lot,  BigDecimal minPriceIncrement, String quantity, StrategyCurrency strategyCurrency) {
         steps.createDataToMarketData(tickerPos, classCodePos, last, ask, bid);
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
+//        int randomNumber = 0 + (int) (Math.random() * 100);
+//        String title = "Autotest" +String.valueOf(randomNumber);
+//        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -363,7 +364,7 @@ public class CreateSlaveOrderTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);

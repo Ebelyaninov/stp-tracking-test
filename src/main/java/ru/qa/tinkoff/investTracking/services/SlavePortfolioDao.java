@@ -91,6 +91,28 @@ public class SlavePortfolioDao {
     }
 
 
+    @SneakyThrows
+    public Optional<SlavePortfolio> findLatestSlavePortfolioWithVersion(String contractId, UUID strategyId, int version) {
+        String query = "select * " +
+            "from invest_tracking.slave_portfolio " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and version = ? " +
+            "order by version DESC, " +
+            "compared_to_master_version DESC " +
+            "limit 1";
+        List<SlavePortfolio> result = cqlTemplate.query(query, slavePortfolioRowMapper, contractId, strategyId, version);
+        if (result.size() > 1) {
+            throw new RuntimeException("Too many results");
+        }
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(result.get(0));
+
+    }
+
+
     public void insertIntoSlavePortfolio(String contractId, UUID strategyId, int version,
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,

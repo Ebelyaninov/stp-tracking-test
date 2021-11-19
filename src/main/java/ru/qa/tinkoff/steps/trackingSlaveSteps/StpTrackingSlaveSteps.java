@@ -139,8 +139,8 @@ public class StpTrackingSlaveSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
-
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -216,7 +216,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-//            .reqSpec(r -> r.addHeader("magic-number", "3"))
+//            .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -1024,6 +1024,13 @@ public class StpTrackingSlaveSteps {
             .setStrategyId(strategyId)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+    }
+
+
+    public String getTitleStrategy() {
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest " + String.valueOf(randomNumber);
+        return title;
     }
 
 
