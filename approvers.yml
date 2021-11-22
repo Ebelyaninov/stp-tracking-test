@@ -1,4 +1,12 @@
 maintainers:
   count: 1
+  groups:
+    - invest-sdet
+    - invest-tracking-qa
+developers:
+  count: 1
   users:
     - "e.kolyakov@tinkoff.ru"
+    - "ext.ebelyaninov@tinkoff.ru"
+    - "b.motin@tinkoff.ru"
+    - "a.s.shevchenko@tinkoff.ru"

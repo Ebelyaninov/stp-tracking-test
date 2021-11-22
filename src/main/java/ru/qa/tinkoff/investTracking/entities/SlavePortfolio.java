@@ -50,6 +50,10 @@ public class SlavePortfolio {
         private Date changedAt;
         @Field(name = "last_change_action")
         private Byte lastChangeAction;
+        @Field(name = "buy_enabled")
+        private Boolean buyEnabled;
+        @Field(name = "sell_enabled")
+        private Boolean sellEnabled;
     }
 
     @UDT(name = "slave_portfolio_base_money_position")

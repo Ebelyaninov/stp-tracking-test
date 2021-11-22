@@ -158,9 +158,11 @@ public class CreateStrategySuccessTest {
         String title = "Autotest 001" + dateNow;
         String description = "New test стратегия Autotest 001 " + dateNow;
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -207,9 +209,11 @@ public class CreateStrategySuccessTest {
         String title = "Autotest 002" + dateNow;
         String description = "New test стратегия Autotest 002 " + dateNow;
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.03);
-        feeRate.setResult(0.1);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.03);
+//        feeRate.setResult(0.1);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -265,9 +269,11 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Autotest 003" + dateNow;
         String description = "New test стратегия Autotest 003 " + dateNow;
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.05);
-        feeRate.setResult(0.5);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.05);
+//        feeRate.setResult(0.5);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -319,9 +325,11 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Autotest 004" + dateNow;
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Получаем данные по Master-клиенту через API сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -337,7 +345,7 @@ public class CreateStrategySuccessTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+//        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -365,9 +373,11 @@ public class CreateStrategySuccessTest {
         String titleNew = "Autotest 005";
         String description = "  New test стратегия Autotest 005  ";
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -418,9 +428,11 @@ public class CreateStrategySuccessTest {
         String dateNow = (fmt.format(now));
         String title = "Autotest 006" + dateNow;
         String description = "New test стратегия Autotest 006 " + dateNow;
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -472,9 +484,11 @@ public class CreateStrategySuccessTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investId = resAccountMaster.getInvestId();
@@ -627,10 +641,12 @@ public class CreateStrategySuccessTest {
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 
+
+    //ToDo FeeRate was disabled, StrategyFeeRate feeRate
     CreateStrategyRequest createStrategyRequest(Currency currency, String contractId, String description,
                                                 StrategyRiskProfile strategyRiskProfile, String title,
                                                 BigDecimal basemoney, String positionRetentionId,
-                                                StrategyFeeRate feeRate) {
+                                                String feeRate) {
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setBaseCurrency(currency);
         createStrategyRequest.setContractId(contractId);
@@ -639,7 +655,7 @@ public class CreateStrategySuccessTest {
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
         createStrategyRequest.setPositionRetentionId(positionRetentionId);
-        createStrategyRequest.setFeeRate(feeRate);
+//        createStrategyRequest.setFeeRate(feeRate);
         return createStrategyRequest;
     }
 }

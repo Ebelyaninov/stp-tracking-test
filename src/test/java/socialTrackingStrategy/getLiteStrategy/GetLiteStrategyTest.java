@@ -146,6 +146,9 @@ public class GetLiteStrategyTest {
     String tradingClearingAccountMoney = "MB9885503216";
     String quantityMoney = "2000";
 
+    Boolean overloadedFalse = false;
+    Boolean overloadedTrue = true;
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -193,7 +196,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", overloadedFalse);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -217,6 +220,8 @@ public class GetLiteStrategyTest {
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
         assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(relativeYield.doubleValue()));
+        assertThat("Isoverloaded стратегии не равно" + overloadedFalse, getLiteStrategy.getIsOverloaded(), is(overloadedFalse));
+
     }
 
 
@@ -239,7 +244,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", overloadedTrue);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -267,6 +272,7 @@ public class GetLiteStrategyTest {
         assertThat("owner image стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getImage(), is(profile.getImage()));
         assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(0.0));
         assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues(), is(portfolioValuesPoints));
+        assertThat("portfolioValues стратегии не равно", getLiteStrategy.getIsOverloaded(), is(overloadedTrue));
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
             is("0"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
@@ -293,7 +299,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -310,10 +316,10 @@ public class GetLiteStrategyTest {
             .divide(minMaxDif, 4, RoundingMode.HALF_UP)
             .multiply(normalizedMinMaxDif)
             .add(new BigDecimal("0"));
-        List<Double> portfolioValuesPoints = new ArrayList<>();
-        portfolioValuesPoints.add(0.0);
-        portfolioValuesPoints.add(point.setScale(0, RoundingMode.HALF_UP).doubleValue());
-        portfolioValuesPoints.add(99.0);
+        List<BigDecimal> portfolioValuesPoints = new ArrayList<>();
+        portfolioValuesPoints.add(BigDecimal.valueOf(0));
+        portfolioValuesPoints.add(BigDecimal.valueOf(68));
+        portfolioValuesPoints.add(BigDecimal.valueOf(99));
         //вызываем метод getLiteStrategy
         GetLiteStrategyResponse getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -356,7 +362,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -421,7 +427,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -488,7 +494,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null);
+            StrategyStatus.draft, 0, null, false);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
@@ -522,7 +528,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
 //            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
@@ -556,7 +562,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05");
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
 //            .xAppNameHeader("stp-tracking-api")

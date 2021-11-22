@@ -268,7 +268,7 @@ public class HandleAccountRegistrationEventTest {
         //Добавляем стратегию мастеру
         steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
 
         //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).toByteArray();
@@ -591,7 +591,7 @@ public class HandleAccountRegistrationEventTest {
         //Добавляем стратегию мастеру
         steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
 
         //updateTariffId(70, contractIdConservative);
 

@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.4.0
+  version: 1.8.0
 
 servers:
   - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
@@ -307,6 +307,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetStrategyResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}/lite:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getLiteStrategy
+      description: Возвращает облегченные данные торговой стратегии {strategyId}
+      operationId: getLiteStrategy
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLiteStrategyResponse'
         400:
           $ref: '#/components/responses/Error'
         401:
@@ -707,6 +749,50 @@ paths:
         500:
           $ref: '#/components/responses/Error'
 
+  /contract/{contractId}/order:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - contract
+      summary: getOrders
+      description: Возвращает все заявки, выставляемые с договора {contractId} в рамках торговой стратегии, за которой он следует в текущий момент
+      operationId: getOrders
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ContractId'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrdersResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
 components:
 
   headers:
@@ -845,6 +931,17 @@ components:
         type: integer
         minimum: 1
 
+    ContractId:
+      description: Номер договора
+      name: contractId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 10
+      example: 2000000000
+
   responses:
 
     Error:
@@ -897,7 +994,6 @@ components:
         - description
         - baseMoneyPositionQuantity
         - positionRetentionId
-        - feeRate
       properties:
         contractId:
           $ref: '#/components/schemas/ContractId'
@@ -920,8 +1016,6 @@ components:
           exclusiveMinimum: true
         positionRetentionId:
           $ref: '#/components/schemas/PositionRetentionId'
-        feeRate:
-          $ref: '#/components/schemas/StrategyFeeRate'
 
     StrategyTitle:
       description: Название стратегии
@@ -939,24 +1033,24 @@ components:
     Currency:
       description: Валюта
       type: string
-      enum: [ rub, usd ]
+      enum: [rub, usd]
 
     NullableCurrency:
       description: Валюта
       type: string
-      enum: [ rub, usd ]
+      enum: [rub, usd]
       # TODO: наследовать?
       nullable: true
 
     StrategyRiskProfile:
       description: Риск-профиль стратегии
       type: string
-      enum: [ conservative, moderate, aggressive ]
+      enum: [conservative, moderate, aggressive]
 
     NullableStrategyRiskProfile:
       description: Риск-профиль стратегии
       type: string
-      enum: [ conservative, moderate, aggressive ]
+      enum: [conservative, moderate, aggressive]
       # TODO: наследовать?
       nullable: true
 
@@ -967,28 +1061,6 @@ components:
       minLength: 1
       maxLength: 16
       example: days
-
-    StrategyFeeRate:
-      description: Ставка комиссии (в долях) за следование за стратегией
-      type: object
-      required:
-        - management
-        - result
-      properties:
-        management:
-          description: Ставка комиссии за управление
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-          exclusiveMinimum: true
-        result:
-          description: Ставка комиссии за результат
-          type: number
-          format: double
-          minimum: 0
-          maximum: 1
-          exclusiveMinimum: true
 
     CreateStrategyResponse:
       type: object
@@ -1005,10 +1077,7 @@ components:
         - id
       properties:
         id:
-          description: Идентификатор стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
 
     UpdateStrategyRequest:
       type: object
@@ -1038,10 +1107,7 @@ components:
         - price
       properties:
         strategyId:
-          description: Идентификатор торговой стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
         version:
           $ref: '#/components/schemas/MasterPortfolioVersion'
         ticker:
@@ -1059,7 +1125,7 @@ components:
         action:
           description: Действие, на которое направлен торговый сигнал (покупка/продажа)
           type: string
-          enum: [ buy, sell ]
+          enum: [buy, sell]
         quantity:
           description: Количество единиц актива
           type: integer
@@ -1120,21 +1186,15 @@ components:
         - topPositions
         - portfolioRate
         - subscription
+        - tests
+        - isOverloaded
       properties:
         id:
-          description: Идентификатор стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
         status:
-          description: Статус стратегии
-          type: string
-          enum: [ draft, active, frozen, closed ]
+          $ref: '#/components/schemas/StrategyStatus'
         title:
-          description: Название стратегии
-          type: string
-          minLength: 1
-          example: Ракета
+          $ref: '#/components/schemas/StrategyTitle'
         description:
           description: Описание стратегии
           type: string
@@ -1161,7 +1221,7 @@ components:
               type:
                 description: Тип характеристик
                 type: string
-                enum: [ main, trade, condition ]
+                enum: [main, trade, condition]
               items:
                 description: Характеристики
                 type: array
@@ -1175,6 +1235,14 @@ components:
           $ref: '#/components/schemas/PortfolioRate'
         subscription:
           $ref: '#/components/schemas/StrategySubscription'
+        tests:
+          description: Список тестирований, прохождение которых необходимо для следования за стратегией
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTest'
+        isOverloaded:
+          description: Признак перегруженности стратегии
+          type: boolean
 
     StrategyOwner:
       description: Владелец стратегии
@@ -1318,6 +1386,46 @@ components:
           pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
           example: risk-profile
 
+    GetLiteStrategyResponse:
+      type: object
+      required:
+        - id
+        - title
+        - baseCurrency
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/StrategyId'
+        title:
+          $ref: '#/components/schemas/StrategyTitle'
+        baseCurrency:
+          $ref: '#/components/schemas/Currency'
+        status:
+          $ref: '#/components/schemas/StrategyStatus'
+
+    StrategyId:
+      description: Идентификатор торговой стратегии
+      type: string
+      format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    StrategyStatus:
+      description: Статус стратегии
+      type: string
+      enum: [draft, active, frozen, closed]
+
+    StrategyTest:
+      description: Тестирование
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор тестирования
+          type: string
+          minLength: 1
+          example: foreign_shares
+
     GetPositionRetentionsResponse:
       type: object
       required:
@@ -1394,7 +1502,7 @@ components:
         action:
           description: Действие, на которое направлен торговый сигнал (покупка/продажа)
           type: string
-          enum: [ buy, sell ]
+          enum: [buy, sell]
         price:
           $ref: '#/components/schemas/Price'
         exchangePosition:
@@ -1442,7 +1550,7 @@ components:
         type:
           description: Тип актива
           type: string
-          enum: [ bond, share, etf, sp, currency, futures ]
+          enum: [bond, share, etf, sp, currency, futures]
 
     GetMasterStrategiesResponse:
       type: object
@@ -1462,16 +1570,13 @@ components:
         - status
       properties:
         id:
-          description: Идентификатор торговой стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
         title:
           $ref: '#/components/schemas/StrategyTitle'
         status:
           description: Статус стратегии
           type: string
-          enum: [ draft, active ]
+          enum: [draft, active]
 
     CheckStrategyTitleRequest:
       type: object
@@ -1507,7 +1612,7 @@ components:
         status:
           description: Статус клиента в роли ведущего
           type: string
-          enum: [ none, confirmed, registered ]
+          enum: [none, confirmed, registered]
 
     GetMasterStrategyAnalyticsResponse:
       type: object
@@ -1710,15 +1815,9 @@ components:
         - characteristics
       properties:
         id:
-          description: Идентификатор стратегии
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/StrategyId'
         title:
-          description: Название стратегии
-          type: string
-          minLength: 1
-          example: Ракета
+          $ref: '#/components/schemas/StrategyTitle'
         baseCurrency:
           $ref: '#/components/schemas/Currency'
         riskProfile:
@@ -1802,6 +1901,62 @@ components:
           type: string
           minLength: 1
           example: в управлении
+
+    GetOrdersResponse:
+      type: object
+      required:
+        - nextCursor
+        - hasNext
+        - items
+      properties:
+        nextCursor:
+          description: Крайний возвращённый в текущем ответе идентификатор элемента, который необходимо использовать при следующем запросе
+          type: string
+          minLength: 1
+          nullable: true
+        hasNext:
+          description: Признак наличия элементов, не вошедших в текущий ответ
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+
+    Order:
+      description: Выставленная заявка
+      type: object
+      required:
+        - totalAmount
+        - createdAt
+        - quantity
+        - action
+        - price
+        - exchangePosition
+      properties:
+        totalAmount:
+          description: Общая сумма заявки
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+        createdAt:
+          description: Дата и время создания заявки
+          type: string
+          format: date-time
+        quantity:
+          description: Количество единиц актива
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+        action:
+          description: Действие, на которое направлена заявка (покупка/продажа)
+          type: string
+          enum: [buy, sell]
+        price:
+          $ref: '#/components/schemas/Price'
+        exchangePosition:
+          $ref: '#/components/schemas/ExchangePosition'
 
     ErrorResponse:
       description: Ответ с ошибкой

@@ -217,7 +217,9 @@ public class StpTrackingConsumerSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRate);
+            .setFeeRate(feeRate)
+            .setOverloaded(false);
+
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

@@ -109,7 +109,7 @@ public class HandleRetrySynchronizationCommandTest {
 
     public String value;
 
-
+    String description = "description test стратегия autotest update adjust base currency";
 
 
 
@@ -175,9 +175,6 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739018() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -191,7 +188,7 @@ public class HandleRetrySynchronizationCommandTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
@@ -218,6 +215,7 @@ public class HandleRetrySynchronizationCommandTest {
             (byte) 0, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -257,13 +255,9 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739019() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -274,7 +268,7 @@ public class HandleRetrySynchronizationCommandTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
@@ -301,6 +295,7 @@ public class HandleRetrySynchronizationCommandTest {
             null, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -350,9 +345,6 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C739020() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -366,7 +358,7 @@ public class HandleRetrySynchronizationCommandTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
 //        // создаем портфель ведущего с позицией в кассандре
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
@@ -393,6 +385,7 @@ public class HandleRetrySynchronizationCommandTest {
             null, ticker, tradingClearingAccount);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -436,9 +429,6 @@ public class HandleRetrySynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C738183() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "description test стратегия autotest update adjust base currency";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -452,7 +442,7 @@ public class HandleRetrySynchronizationCommandTest {
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
@@ -475,6 +465,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave

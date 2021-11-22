@@ -29,7 +29,7 @@ import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyFeeRate;
+//import ru.qa.tinkoff.swagger.tracking.model.StrategyFeeRate;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -109,9 +109,11 @@ public class CreateStrategyErrorValidDataTest {
     void С1185005() {
         String title = "общий, недетализированный план.";
         String description = "new test стратегия autotest CreateStrategy007";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo нужно будет вернуть StrategyFeeRate feeRate
+        String feeRate = "test";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
@@ -147,9 +149,10 @@ public class CreateStrategyErrorValidDataTest {
 
         String title = "Autotest 004";
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo отключили feeRate
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
@@ -165,7 +168,7 @@ public class CreateStrategyErrorValidDataTest {
         request.setTitle(title);
         request.setBaseMoneyPositionQuantity(baseMoney);
         request.setPositionRetentionId(positionRetentionId);
-        request.setFeeRate(feeRate);
+//        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApi.createStrategy()
             .xAppNameHeader("invest")
@@ -197,9 +200,10 @@ public class CreateStrategyErrorValidDataTest {
             "Понятие произошло от понятия военная стратегия — наука о ведении войны, одна из областей военного искусства, " +
             "высшее его проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование " +
             "и ведение, исследует закономерности войны.";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        String feeRate = "Вернуть feeRate";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим investId клиента через API сервиса счетов
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         UUID investId = brokerAccount.getInvestId();
@@ -253,11 +257,11 @@ public class CreateStrategyErrorValidDataTest {
         return resBrokerAccount;
     }
 
-
+    //ToDo Нужно будет вернуть feeRate как StrategyFeeRate
     CreateStrategyRequest createStrategyRequest (Currency currency, String contractId, String description,
                                                  StrategyRiskProfile strategyRiskProfile, String title,
                                                  BigDecimal basemoney, String  positionRetentionId,
-                                                 StrategyFeeRate feeRate) {
+                                                 String feeRate) {
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setBaseCurrency(currency);
         createStrategyRequest.setContractId(contractId);
@@ -266,7 +270,7 @@ public class CreateStrategyErrorValidDataTest {
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
         createStrategyRequest.setPositionRetentionId(positionRetentionId);
-        createStrategyRequest.setFeeRate(feeRate);
+        //createStrategyRequest.setFeeRate(feeRate);
         return createStrategyRequest;
     }
 }

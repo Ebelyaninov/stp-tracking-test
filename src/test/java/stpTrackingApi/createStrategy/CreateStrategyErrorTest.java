@@ -122,9 +122,11 @@ public class CreateStrategyErrorTest {
     void C442935(String name, String version, String platform) {
         String title = "Тест стратегия CreateStrategy Autotest 001";
         String description = "New test стратегия Autotest 001";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -168,9 +170,11 @@ public class CreateStrategyErrorTest {
     void C266603()  {
         String title = "Тест стратегия CreateStrategy Autotest 002";
         String description = "New test стратегия Autotest 002";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -206,9 +210,11 @@ public class CreateStrategyErrorTest {
     void C438058() {
         String title = "Тест стратегия CreateStrategy Autotest 003";
         String description = "New test стратегия Autotest 003";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -254,9 +260,11 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C443467(Currency baseCurrency, StrategyRiskProfile strategyRiskProfile, String title, String positionRetentionId) {
         String description = "New test стратегия Autotest 004";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -294,9 +302,11 @@ public class CreateStrategyErrorTest {
     void C499682() {
         String title = "Тест стратегия CreateStrategy Autotest 005";
         String description = "New test стратегия Autotest 005";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -308,7 +318,7 @@ public class CreateStrategyErrorTest {
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
         createStrategyRequest.setPositionRetentionId("days");
-        createStrategyRequest.setFeeRate(feeRate);
+//        createStrategyRequest.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
@@ -342,9 +352,11 @@ public class CreateStrategyErrorTest {
         String dateNow = (fmt.format(now));
         String title = "";
         String description = "New test стратегия Autotest 006";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -382,9 +394,11 @@ public class CreateStrategyErrorTest {
     void C441407() {
         String title = "Тест стратегия CreateStrategy Autotest 007";
         String description = "";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -418,9 +432,11 @@ public class CreateStrategyErrorTest {
     void C455499() {
         String title = "Тест стратегия CreateStrategy Autotest 008";
         String description = "New test стратегия Autotest 008";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -454,9 +470,11 @@ public class CreateStrategyErrorTest {
     void C271533() throws JSONException {
         String title = "CreateStrategy Autotest 009";
         String description = "New test стратегия Autotest 009";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -494,9 +512,11 @@ public class CreateStrategyErrorTest {
     void C266604(ClientStatusType clientStatusType) throws JSONException {
         String title = "CreateStrategy Autotest 010";
         String description = "New test стратегия Autotest 010";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, clientStatusType);
         //Формируем body для запроса
@@ -537,9 +557,11 @@ public class CreateStrategyErrorTest {
         String contractId = findValidAccountWithSiebelId.get(0).getId();
         String title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Создаем по нему запись в tracking.client
         createClientNotBrokerOrOpened(investIdNotBroker, siebelIdNotBroker, ClientStatusType.registered);
         //Формируем body для запроса
@@ -582,9 +604,11 @@ public class CreateStrategyErrorTest {
         String contractId = findValidAccountWithSiebelId.get(0).getId();
         String title = "CreateStrategy Autotest 012";
         String description = "New test стратегия Autotest 012";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Создаем по нему запись в tracking.client
         createClientNotBrokerOrOpened(investIdNotOpen, siebelIdNotOpen, ClientStatusType.registered);
         //Формируем body для запроса
@@ -621,9 +645,11 @@ public class CreateStrategyErrorTest {
     void C266607() {
         String title = "CreateStrategy Autotest 013";
         String description = "New test стратегия Autotest 013";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
         List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
         client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null, null);
@@ -666,9 +692,11 @@ public class CreateStrategyErrorTest {
     void C441659() {
         String title = "Тест стратегия CreateStrategy Autotest 014";
         String description = "New test стратегия Autotest 014";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         String contractIdNew = contractId + "123";
@@ -710,9 +738,11 @@ public class CreateStrategyErrorTest {
     void C638559() {
         String title = "Тест стратегия CreateStrategy Autotest 015";
         String description = "New test стратегия Autotest 015";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -723,7 +753,7 @@ public class CreateStrategyErrorTest {
         createStrategyRequest.setRiskProfile(StrategyRiskProfile.CONSERVATIVE);
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setPositionRetentionId("days");
-        createStrategyRequest.setFeeRate(feeRate);
+//        createStrategyRequest.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
@@ -757,9 +787,11 @@ public class CreateStrategyErrorTest {
         String title = "CreateStrategy Autotest 016";
         String description = "New test стратегия Autotest 016";
         String positionRetentionId = "years";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -798,9 +830,11 @@ public class CreateStrategyErrorTest {
     void C931444() {
         String title = "Тест стратегия CreateStrategy Autotest 016";
         String description = "New test стратегия Autotest 016";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(0.04);
-        feeRate.setResult(0.2);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(0.04);
+//        feeRate.setResult(0.2);
         //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
 
@@ -849,9 +883,11 @@ public class CreateStrategyErrorTest {
         String title = "Тест стратегия CreateStrategy Autotest 017";
         String description = "New test стратегия Autotest 017";
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(management);
-        feeRate.setResult(result);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(management);
+//        feeRate.setResult(result);
         //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -900,9 +936,11 @@ public class CreateStrategyErrorTest {
         String title = "Тест стратегия CreateStrategy Autotest 018";
         String description = "New test стратегия Autotest 018";
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(management);
-        feeRate.setResult(result);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(management);
+//        feeRate.setResult(result);
         //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -950,9 +988,11 @@ public class CreateStrategyErrorTest {
         String title = "Тест стратегия CreateStrategy Autotest 018";
         String description = "New test стратегия Autotest 018";
         String positionRetentionId = "days";
-        StrategyFeeRate feeRate = new StrategyFeeRate();
-        feeRate.setManagement(management);
-        feeRate.setResult(result);
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+//        StrategyFeeRate feeRate = new StrategyFeeRate();
+//        feeRate.setManagement(management);
+//        feeRate.setResult(result);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
@@ -1006,11 +1046,11 @@ public class CreateStrategyErrorTest {
         client = clientService.createClient(investId, clientIdStatusType, null, null);
     }
 
-
+    //ToDo Пока отключили fee, нужно будет вернуть StrategyFeeRate   feeRate, а не string
     CreateStrategyRequest createStrategyRequest (Currency currency, String contractId, String description,
                                                  StrategyRiskProfile strategyRiskProfile, String title,
                                                  BigDecimal basemoney, String  positionRetentionId,
-                                                 StrategyFeeRate feeRate) {
+                                                 String   feeRate) {
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setBaseCurrency(currency);
         createStrategyRequest.setContractId(contractId);
@@ -1019,7 +1059,7 @@ public class CreateStrategyErrorTest {
         createStrategyRequest.setTitle(title);
         createStrategyRequest.setBaseMoneyPositionQuantity(basemoney);
         createStrategyRequest.setPositionRetentionId(positionRetentionId);
-        createStrategyRequest.setFeeRate(feeRate);
+//        createStrategyRequest.setFeeRate(feeRate);
         return createStrategyRequest;
     }
 
