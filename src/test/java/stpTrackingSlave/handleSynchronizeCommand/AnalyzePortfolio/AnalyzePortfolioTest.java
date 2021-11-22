@@ -116,7 +116,7 @@ public class AnalyzePortfolioTest {
     String contractIdSlave;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-KHGHC74O";
-    String SIEBEL_ID_SLAVE = "4-1O6RYOAP";
+    String SIEBEL_ID_SLAVE = "5-21256A3ZA";
     long subscriptionId;
 
 

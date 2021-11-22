@@ -698,7 +698,7 @@ public class HandleLimitEventTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C580020() {
-        String SIEBEL_ID_SLAVE = "5-CTNZ67KS";
+        String SIEBEL_ID_SLAVE = "5-22NDYVFEE";
         Random ran = new Random();
         int x = ran.nextInt(6) + 5;
         String title = "autotest " + x;
@@ -780,9 +780,9 @@ public class HandleLimitEventTest {
         // вычитываем из топика кафка tracking.slave.command tracking.contract.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //изменяем позицию по валюте в miof
-        steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "GBP", 1);
+        steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "TRY", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(30));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -840,8 +840,8 @@ public class HandleLimitEventTest {
         assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
     }
 
-    @SneakyThrows
-    @Test
+ /*   @SneakyThrows
+    @Test 5-22NDYVFEE
     @AllureId("1034763")
     @DisplayName("C1034763.HandleLimitEvent.[depo_limit|money_limit].open_balance_value + [depo_limit|money_limit].locked_value >= 0")
     @Subfeature("Альтернативные сценарии")
@@ -899,7 +899,7 @@ public class HandleLimitEventTest {
         assertThat("статус договора не равен", (eventBlock.getContract().getState()), is(Tracking.Contract.State.TRACKED));
         assertThat("blocked договора не равен", (eventBlock.getContract().getBlocked()), is(true));
     }
-
+*/
 
 
     @SneakyThrows

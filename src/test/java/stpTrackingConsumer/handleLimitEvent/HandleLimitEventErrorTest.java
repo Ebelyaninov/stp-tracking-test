@@ -184,7 +184,7 @@ public class HandleLimitEventErrorTest {
     }
 
 
-    @SneakyThrows
+ /*   @SneakyThrows
     @Test
     @AllureId("580022")
     @DisplayName("C580022.HandleLimitEvent.Параметр version не заполнен")
@@ -234,7 +234,7 @@ public class HandleLimitEventErrorTest {
             ).stream().findFirst();
 
     }
-
+*/
 
     //общие методы для тестов
     List<MasterPortfolio.Position> masterPositions(Date date, String tickerOne, String tradingClearingAccountOne,

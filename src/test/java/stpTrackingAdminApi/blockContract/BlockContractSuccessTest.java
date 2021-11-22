@@ -10,10 +10,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -107,6 +104,18 @@ public class BlockContractSuccessTest {
     String xApiKey = "x-api-key";
     String key= "tracking";
 
+    @BeforeAll
+    void getDataClients() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+    }
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -134,15 +143,6 @@ public class BlockContractSuccessTest {
                 clientService.deleteClient(clientService.getClient(investIdMaster));
             } catch (Exception e) {
             }
-
-/*            try {
-                contractService.deleteContract(contract);
-            } catch (Exception e) {
-            }
-            try {
-                clientService.deleteClient(client);
-            } catch (Exception e) {
-            }*/
         });
     }
 
@@ -157,24 +157,24 @@ public class BlockContractSuccessTest {
         String title = "Autotest" + randomNumber(0,100);
         String description = "Autotest block contract true";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
+/*        //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();*/
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+/*        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         strategy = strategyService.getStrategy(strategyId);
         client = clientService.getClient(investIdSlave);
-        contract = contractService.getContract(contractIdSlave);
+        contract = contractService.getContract(contractIdSlave);*/
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
@@ -209,10 +209,10 @@ public class BlockContractSuccessTest {
         String title = "Autotest" + randomNumber(0,100);
         String description = "Autotest block contract true";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
+/*        //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();*/
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -227,10 +227,7 @@ public class BlockContractSuccessTest {
             .contractIdPath(contractIdMaster)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
-//        strategy = strategyService.getStrategy(strategyId);
-//        client = clientService.getClient(investIdMaster);
-//        contract = contractService.getContract(contractIdMaster);
-        Contract getDataFromContract = contractService.getContract(contractIdMaster);
+        //Contract getDataFromContract = contractService.getContract(contractIdMaster);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
