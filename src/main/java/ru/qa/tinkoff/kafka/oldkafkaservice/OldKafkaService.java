@@ -1,7 +1,6 @@
 package ru.qa.tinkoff.kafka.oldkafkaservice;
 
 import io.qameta.allure.Step;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.header.Headers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,9 @@ public class OldKafkaService {
     @Qualifier("oldKafkaByteArraySender")
     private BoostedSender<String, byte[]> kafkaByteArraySender;
 
-
+    @Autowired
+    @Qualifier("oldKafkaStringSender")
+    private BoostedSender<String, String> kafkaStringToStringArraySender;
 
     @Step("Отправить сообщения в топик {topic.name}")
     public void send(Topics topic, byte[] key, byte[] value) {
@@ -43,6 +44,13 @@ public class OldKafkaService {
     public void send(Topics topic, String key, byte[] value, Headers headers) {
         log.info("sending message to topic: {}:\n{}", topic.getName(), value);
         kafkaByteArraySender.send(topic.getName(), key, value, headers);
+        addTextAttachment("Сообщение", value);
+    }
+
+    @Step("Отправить сообщения в топик {topic.name}")
+    public void send(Topics topic, String key, String value) {
+        log.info("sending message to topic: {}:\n{}", topic.getName(), value);
+        kafkaStringToStringArraySender.send(topic.getName(), key, value);
         addTextAttachment("Сообщение", value);
     }
 }

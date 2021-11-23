@@ -32,6 +32,7 @@ public enum Topics {
     TRACKING_STRATEGY_EVENT("tracking.strategy.event"),
     ACCOUNT_REGISTRATION_EVENT("account.registration.event"),
     TRACKING_CONSUMER_COMMAND("tracking.consumer.command"),
+    CCYEV("CCYEV"),
 
     ;
     private final String name;
