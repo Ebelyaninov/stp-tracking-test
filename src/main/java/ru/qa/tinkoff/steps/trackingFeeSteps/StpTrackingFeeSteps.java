@@ -131,7 +131,8 @@ public class StpTrackingFeeSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRate);
+            .setFeeRate(feeRate)
+            .setOverloaded(false);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -438,6 +439,39 @@ public class StpTrackingFeeSteps {
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionDraftOrInActive(UUID investId, ClientRiskProfile clientRiskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                                 UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                                 java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient1(investId, ClientStatusType.none, null, clientRiskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+    public String getTitleStrategy() {
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest " + String.valueOf(randomNumber);
+        return title;
+    }
+
 
 
 

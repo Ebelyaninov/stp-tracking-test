@@ -316,20 +316,20 @@ public class CalculateResultFeeTest {
         //обавляем еще пару версий за текущий месяц
         List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(ticker1,
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()));
+            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTen = steps.createBaseMoney("31051.38",
-            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()), (byte) 12);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()), (byte) 12);
 
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 10,
-            3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(5).toInstant()));
+            3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
 
         List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(ticker1,
             tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()));
+            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEleven = steps.createBaseMoney("34051.38",
-            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()), (byte) 4);
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 11,
-            3, baseMoneyVersionEleven, positionSlaveListVersionEleven, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(4).toInstant()));
+            3, baseMoneyVersionEleven, positionSlaveListVersionEleven, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()));
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Расчитываем стоимость порфеля на конец расчетного периода
@@ -481,12 +481,12 @@ public class CalculateResultFeeTest {
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
         BigDecimal highWaterMarkThirdPeriodBefore = resultFee.getHighWaterMark();
         BigDecimal highWaterMarkThirdPeriod = highWaterMarkThirdPeriodBefore.max(valuePortfolioThirdPeriod);
-        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 10);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
         //Расчитываем стоимость порфеля на конец расчетного периода
         BigDecimal valuePortfolioFourPeriod = getPorfolioValue("34051.38", "10", "8", "8", endSubTime.toLocalDateTime());
-        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 10);
         BigDecimal highWaterMarkFourPeriodBefore = resultFee.getHighWaterMark();
         BigDecimal adjustValueFourPeriod = highWaterMarkFourPeriodBefore.add(new BigDecimal("3000")) ;
         BigDecimal highWaterMarkFourPeriod = adjustValueFourPeriod.max(valuePortfolioFourPeriod);
