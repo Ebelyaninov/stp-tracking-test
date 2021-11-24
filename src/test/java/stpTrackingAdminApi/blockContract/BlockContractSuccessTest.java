@@ -24,6 +24,7 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -83,7 +84,7 @@ public class BlockContractSuccessTest {
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
-    StpTrackingApiSteps steps;
+    StpTrackingAdminSteps steps;
 
 
     Client client;
@@ -166,9 +167,12 @@ public class BlockContractSuccessTest {
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();*/
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
+/*        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());*/
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
 /*        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -178,13 +182,14 @@ public class BlockContractSuccessTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
-        contractApi.blockContract()
+        steps.BlockContract(contractIdSlave);
+/*        contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
-            .xAppNameHeader("tracking")
-            .xTcsLoginHeader(siebelIdSlave)
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
+            .execute(response -> response);*/
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -214,13 +219,13 @@ public class BlockContractSuccessTest {
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();*/
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+/*        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now());*/
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
-        contractApi.blockContract()
+       contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("tracking")
             .xTcsLoginHeader(siebelIdMaster)

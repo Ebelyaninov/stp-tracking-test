@@ -28,6 +28,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -70,8 +71,10 @@ public class StpTrackingApiSteps {
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
-    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
-
+    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
+    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).contract();
 
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ApiClient.Config.apiConfig()).cache();
 
@@ -968,6 +971,19 @@ public class StpTrackingApiSteps {
         assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
         assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
         contractSlave = contractService.getContract(contractIdSlave);
+    }
+
+    //вызываем метод blockContract для slave
+    public void BlockContract(String contractIdSlave) {
+        contractApi.blockContract()
+            .reqSpec(r -> r.addHeader("X-API_KEY", "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        contractSlave = contractService.getContract(contractIdSlave);
+
     }
 
 
