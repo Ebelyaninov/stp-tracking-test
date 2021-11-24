@@ -1141,7 +1141,7 @@ public class AnalyzePortfolioTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(tickerUSD, tradingClearingAccountUSD,
-            "10", false, null, tickerSBER, classCodeSBER, "20", true, true, date);
+            "10", false, null, tickerSBER, tradingClearingAccountSBER, "20", true, true, date);
         String baseMoney = "0";
         List<SlavePortfolio.Position> positionListForSlave = new ArrayList<>();
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -1205,7 +1205,7 @@ public class AnalyzePortfolioTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(tickerUSD, tradingClearingAccountUSD,
-            "0", false, null, tickerSBER, classCodeSBER, "0", true, true, date);
+            "0", false, null, tickerSBER, tradingClearingAccountSBER, "0", true, true, date);
         String baseMoney = "0";
         List<SlavePortfolio.Position> positionListForSlave = new ArrayList<>();
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
@@ -1269,7 +1269,7 @@ public class AnalyzePortfolioTest {
             null, false);
 
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(tickerUSD, tradingClearingAccountUSD,
-            "5", null, false, tickerSBER, classCodeSBER, "20", false, false, date);
+            "5", null, false, tickerSBER, tradingClearingAccountSBER, "20", false, false, date);
         String baseMoney = "0";
         List<SlavePortfolio.Position> positionListForSlave = new ArrayList<>();
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,

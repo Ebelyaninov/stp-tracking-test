@@ -165,7 +165,7 @@ public class StpTrackingFeeSteps {
     }
 
     // создаем команду в топик кафка tracking.master.command
-    Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
+    public Tracking.Event createEventUpdateAfterSubscriptionSlave(String contractId) {
         OffsetDateTime now = OffsetDateTime.now();
         Tracking.Event event = Tracking.Event.newBuilder()
             .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
@@ -397,6 +397,10 @@ public class StpTrackingFeeSteps {
             }
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(baseMoney);
+        //проверям, что если получили valuePortfolio < 0 считаем тогда valuePortfolio = 0
+        if (valuePortfolio.compareTo(BigDecimal.ZERO) < 0) {
+            valuePortfolio = BigDecimal.ZERO;
+        }
         log.info("valuePortfolio:  {}", valuePortfolio);
         return valuePortfolio;
     }
@@ -471,6 +475,39 @@ public class StpTrackingFeeSteps {
         String title = "Autotest " + String.valueOf(randomNumber);
         return title;
     }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcription1(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                  UUID strategyId,Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  java.sql.Timestamp dateEnd, Boolean blockedSub) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(blockedContract);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blockedSub);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+
+
+
+
 
 
 
