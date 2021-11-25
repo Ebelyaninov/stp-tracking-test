@@ -19,10 +19,7 @@ import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
-import ru.qa.tinkoff.investTracking.services.ManagementFeeDao;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.ResultFeeDao;
-import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
@@ -35,20 +32,15 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
-import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
+import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.math.RoundingMode;;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
@@ -101,6 +93,9 @@ public class CalculateResultFeeTest {
     StringToByteSenderService kafkaStringToByteSender;
     @Autowired
     ResultFeeDao resultFeeDao;
+    @Autowired
+    SlaveAdjustDao slaveAdjustDao;
+
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
     Client clientSlave;
@@ -109,6 +104,10 @@ public class CalculateResultFeeTest {
     Subscription subscription;
     ResultFee resultFee;
     UUID strategyId;
+    UUID investIdMaster;
+    UUID investIdSlave;
+    SlaveAdjust slaveAdjust;
+    String operId = "2321010121";
 
     String siebelIdMaster = "1-51Q76AT";
     String siebelIdSlave = "5-1P87U0B13";
@@ -149,10 +148,27 @@ public class CalculateResultFeeTest {
 
     String description = "new test стратегия autotest";
 
+    @BeforeAll
+    void getDataFromAccount(){
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+    }
+
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
+            try {
+                slaveAdjustDao.deleteSlaveAdjustByStrategyAndContract(contractIdSlave, strategyId);
+            } catch (Exception e)  {
+
+            }
             try {
                 subscriptionService.deleteSubscription(steps.subscription);
             } catch (Exception e) {
@@ -305,7 +321,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -375,7 +391,7 @@ public class CalculateResultFeeTest {
         steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -440,7 +456,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),  false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -521,7 +537,7 @@ public class CalculateResultFeeTest {
             strategyId,false, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
@@ -646,7 +662,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -909,7 +925,7 @@ public class CalculateResultFeeTest {
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePortfolioWithOutPeriod();
@@ -943,6 +959,444 @@ public class CalculateResultFeeTest {
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
     }
 
+    @SneakyThrows
+    @Test
+    @AllureId("1482950")
+    @DisplayName("C1482950. Расчет первой комиссии за результат с отрицательной BaseMoneyPosition и пустым портфелем, нет заводов")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1482950() {
+        BigDecimal baseMoneyPositionForFirstVersion = new BigDecimal("-53763.35");
+        BigDecimal baseMoneyPositionForLastVersion = new BigDecimal("53763.35");
+        strategyId = UUID.fromString("070d11e3-9978-4c18-9316-94daa877b641");
+
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+
+        //создаем портфели slave
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
+            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            "105.29", Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).minusDays(0).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).toInstant()));
+
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+
+        createCommandResult(subscriptionId);
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(BigDecimal.valueOf(0)));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(BigDecimal.valueOf(0)));
+        //Проверяем отправку HWM в событии 0
+        assertThat("subscriptionId подписки не равен", feeCommand.getResult().getHighWaterMark().getScale(), is(0));
+        assertThat("subscriptionId подписки не равен", feeCommand.getResult().getHighWaterMark().getUnscaled(), is(0L));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1488412")
+    @DisplayName("C1488412. Расчет первой комиссии за результат с отрицательным портфелем на старте и переопределение HWM текущем портфелем")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488412() {
+        BigDecimal baseMoneyPositionForFirstVersion = new BigDecimal("-153763.35");
+        BigDecimal baseMoneyPositionForLastVersion = new BigDecimal("13289.21");
+        strategyId = UUID.fromString("070d11e3-9978-4c18-9316-94daa877b641");
+        BigDecimal slaveAdjustValue = new BigDecimal("5000");
+
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
+        LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionTwo = twoSlavePositions111(
+            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            "105.29", Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).minusDays(0).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionFour, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(2).toInstant()));
+
+        //Добавляем заводы на сумму baseMoneyPositionForFirstVersion + baseMoneyPositionForLastVersion
+        createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
+            OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValue.toString());
+
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //Расчитываем стоимость порфеля на конец первого расчетного периода
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), ticker2, classCode2);
+        BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForLastVersion);
+
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 2);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(porfolioValue));
+        //Сумма заводов меньше porfolioValue, оставляем его
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(porfolioValue));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1483238")
+    @DisplayName("C1483238. Стоимость портфеля отрицательная, для первого HWM c пустым портфелем и заводами")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1483238() {
+        BigDecimal baseMoneyPositionForFirstVersion = new BigDecimal("-23763.35");
+        BigDecimal slaveAdjustValueFirst = new BigDecimal("5000");
+        BigDecimal slaveAdjustValueSecond = new BigDecimal("5000");
+        strategyId = UUID.fromString("070d11e3-9978-4c18-9316-94daa877b641");
+
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
+
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+
+        //создаем портфели slave
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()));
+
+        //Добавляем заводы на сумму 10000
+        createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
+            OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValueFirst.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
+            OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValueSecond.toString());
+
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
+            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(BigDecimal.valueOf(0)));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(slaveAdjustValueFirst.add(slaveAdjustValueSecond)));
+        //Проверяем отправку HWM в событии 0 + заводы
+        assertThat("subscriptionId подписки не равен", feeCommand.getResult().getHighWaterMark().getScale(), is(0));
+        assertThat("subscriptionId подписки не равен", feeCommand.getResult().getHighWaterMark().getUnscaled(), is(Long.valueOf(slaveAdjustValueFirst.add(slaveAdjustValueSecond).toString())));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1081005")
+    @DisplayName("С1488560. Расчет второго HWM с отрицательным портфелем + заводы")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488560() {
+        BigDecimal baseMoneyPositionForFirstVersion = new BigDecimal("-123763.35");
+        BigDecimal baseMoneyPositionForLastVersion = new BigDecimal("53763.35");
+        BigDecimal hWM = new BigDecimal("66319.95000");
+        BigDecimal slaveAdjustValue = new BigDecimal("5000");
+        strategyId = UUID.fromString("070d11e3-9978-4c18-9316-94daa877b641");
+
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(2);
+        LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
+
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+            "285.51",Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("44898",
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(2).plusMinutes(2).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
+            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            "105.29", Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3,
+            2, baseMoneyVersionThree, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(3).toInstant()));
+
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 4,
+            3, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(4).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 5,
+            4, baseMoneyVersionFive, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5).toInstant()));
+
+        List<Context.Positions> positionListEmpty = new ArrayList<>();
+        positionListEmpty.add(Context.Positions.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal("20"))
+            .price(new BigDecimal("297.73"))
+            .priceTs(Date.from(startSubTime.toInstant()))
+            .build());
+        positionListEmpty.add(Context.Positions.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal("5"))
+            .price(new BigDecimal("1088.91000"))
+            .priceTs(Date.from(startSubTime.toInstant()))
+            .build());
+        Context context = Context.builder()
+            .portfolioValue(hWM)
+            .positions(positionListEmpty)
+            .build();
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(ZoneOffset.UTC)), context, hWM);
+
+        //Добавляем заводы на сумму baseMoneyPositionForFirstVersion + baseMoneyPositionForLastVersion
+        createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
+            OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValue.toString());
+
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //Расчитываем стоимость порфеля на конец первого расчетного периода
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), ticker2, classCode2);
+        //c отрицательным BaseMoneyPosition
+        BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForFirstVersion);
+
+        if (porfolioValue.compareTo(BigDecimal.ZERO) < 0){
+            porfolioValue = new BigDecimal("0");
+        }
+
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 5);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(porfolioValue));
+        //Переопределяем HWM, сумма заводов + HWM
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(hWM.add(slaveAdjustValue)));
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1081005")
+    @DisplayName("Расчет второго HWM c положительным портфелем и отрицательным BaseMoneyPosition")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488561() {
+        BigDecimal baseMoneyPositionForFirstVersion = new BigDecimal("-9763.35");
+        BigDecimal baseMoneyPositionForLastVersion = new BigDecimal("53763.35");
+        BigDecimal hWM = new BigDecimal("112.2");
+        strategyId = UUID.fromString("070d11e3-9978-4c18-9316-94daa877b641");
+
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(2);
+        LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
+
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+
+        //создаем портфели slave
+        List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+            "285.51",Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("44898",
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
+            2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(2).plusMinutes(2).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
+            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "15",
+            "105.29", Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 3,
+            2, baseMoneyVersionThree, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(3).toInstant()));
+
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 4,
+            3, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(4).toInstant()));
+
+        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney(baseMoneyPositionForFirstVersion.toString(),
+            Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 5,
+            4, baseMoneyVersionFive, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5).toInstant()));
+
+        List<Context.Positions> positionListEmpty = new ArrayList<>();
+        positionListEmpty.add(Context.Positions.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal("20"))
+            .price(new BigDecimal("297.73"))
+            .priceTs(Date.from(startSubTime.toInstant()))
+            .build());
+        positionListEmpty.add(Context.Positions.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal("5"))
+            .price(new BigDecimal("1088.91000"))
+            .priceTs(Date.from(startSubTime.toInstant()))
+            .build());
+        Context context = Context.builder()
+            .portfolioValue(hWM)
+            .positions(positionListEmpty)
+            .build();
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(ZoneOffset.UTC)), context, hWM);
+
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //Расчитываем стоимость порфеля на конец первого расчетного периода
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(15), ticker2, classCode2);
+        //c отрицательным BaseMoneyPosition
+        BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForFirstVersion);
+
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 5);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(porfolioValue));
+        //Сумма портфеля > HWM, определяем новый HWM = portfolioValue, заводов не было
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(porfolioValue));
+    }
 
 
 
@@ -1190,9 +1644,6 @@ public class CalculateResultFeeTest {
             3, baseMoneyVersionNine, positionSlaveVersionNine, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
 
     }
-
-
-
 
 
     BigDecimal createPortfolioValueOnePeriod() {
@@ -1531,6 +1982,74 @@ public class CalculateResultFeeTest {
         byte[] eventBytes = event.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
         kafkaStringToByteSender.send(TRACKING_CONTRACT_EVENT, contractIdSlave, eventBytes);
+    }
+
+
+    BigDecimal calculateNotBondPositionValue (LocalDateTime cut, BigDecimal qty, String ticker, String classCode) {
+        // формируем список позиций для запроса prices MD
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String dateTs = fmt.format(cut);
+        String ListInst = ticker + "_" + classCode;
+        //вызываем метод MD и сохраняем prices в Map
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        //выполняем расчеты стоимости позиции
+        BigDecimal valuePos = pricesPos.values().stream().findFirst().get();
+        BigDecimal positionValue = qty.multiply(valuePos);
+        log.info("positionValue:  {}", positionValue);
+        return positionValue;
+    }
+
+
+    BigDecimal calculatePositionBondValue (LocalDateTime cutDate, BigDecimal qty, String ticker, String classCode) {
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String dateTs = fmt.format(cutDate);
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateFireg = fmtFireg.format(cutDate);
+        String ListInst = ticker + "_" + classCode;
+        //вызываем метод MD и сохраняем prices
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        //выполняем расчеты стоимости позиции Bond
+        BigDecimal pricePosition = pricesPos.values().stream().findFirst().get();
+        // получаем данные для расчета по облигациям
+        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
+            .instrumentIdPath(ticker2)
+            .idKindQuery("ticker")
+            .classCodeQuery(classCode2)
+            .startDateQuery(dateFireg)
+            .endDateQuery(dateFireg)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        BigDecimal aciValue = new BigDecimal(resp.getBody().jsonPath().getString("[0].value"));
+        BigDecimal nominal = new BigDecimal(resp.getBody().jsonPath().getString("[0].nominal"));
+        //выполняем расчеты стоимости позиции Bond
+        BigDecimal newPrice = pricePosition
+            .multiply(nominal)
+            .divide(BigDecimal.valueOf(100));
+        BigDecimal newMinPriceIncrement = minPriceIncrement
+            .multiply(nominal)
+            .divide(BigDecimal.valueOf(100));
+        BigDecimal roundNewPrice = newPrice
+            .divide(minPriceIncrement, RoundingMode.HALF_DOWN)
+            .multiply(minPriceIncrement);
+        BigDecimal bondPrice = roundNewPrice.add(aciValue);
+        BigDecimal valueBondPosition = bondPrice.multiply(qty);
+        log.info("valuePortfolio:  {}", valueBondPosition);
+        return valueBondPosition;
+    }
+    void createsSlaveAdjust(String contractId, UUID strategyId, OffsetDateTime createDate, long operationId,
+                            OffsetDateTime changedAt, String currency, Boolean deleted, String quantity) {
+        slaveAdjust = SlaveAdjust.builder()
+            .contractId(contractId)
+            .strategyId(strategyId)
+            .createdAt(Date.from(createDate.toInstant()))
+            .operationId(operationId)
+            .quantity(new BigDecimal(quantity))
+            .currency(currency)
+            .deleted(deleted)
+            .changedAt(Date.from(changedAt.toInstant()))
+            .build();
+        slaveAdjustDao.insertIntoSlaveAdjust(slaveAdjust);
     }
 
 }
