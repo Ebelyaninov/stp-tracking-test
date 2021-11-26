@@ -115,12 +115,9 @@ public class CalculateManagementFeeTest {
     String contractIdSlave;
     Subscription subscription;
     ManagementFee managementFee;
-
     SlavePortfolio slavePortfolio;
 
-
     UUID strategyId;
-
     String siebelIdMaster = "1-51Q76AT";
     String siebelIdSlave = "5-1P87U0B13";
 
@@ -157,6 +154,9 @@ public class CalculateManagementFeeTest {
     String classCodeNotInsPrice = "TQBR";
     String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
     String quantityNotInsPrice = "2";
+
+
+    String description = "new test стратегия autotest";
 
     @AfterEach
     void deleteClient() {
@@ -218,31 +218,17 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1013342() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -251,8 +237,8 @@ public class CalculateManagementFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -281,31 +267,17 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1025019() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -316,8 +288,8 @@ public class CalculateManagementFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
@@ -347,31 +319,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1025024() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
         Date date = Date.from(utc.toInstant());
@@ -381,8 +340,8 @@ public class CalculateManagementFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         //создаем портфели slave
@@ -409,31 +368,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1025026() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -442,15 +388,13 @@ public class CalculateManagementFeeTest {
             ticker3, tradingClearingAccount3, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
-//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-         long subscriptionId = subscription.getId();
+        long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
         createManagemetFee(subscriptionId);
@@ -475,31 +419,17 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1031163() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -510,9 +440,9 @@ public class CalculateManagementFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()),false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         //создаем портфели slave
@@ -572,31 +502,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1025033() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -604,17 +521,9 @@ public class CalculateManagementFeeTest {
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
 //        //создаем подписку на стратегию
-//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-//        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //изменяем дату создания подписки
-//        long subscriptionId = subscription.getId().longValue();
-//        OffsetDateTime updateTime = OffsetDateTime.now().minusDays(3);
-//        subscription.setStartTime(new Timestamp(updateTime.toInstant().toEpochMilli()));
-//        subscriptionService.saveSubscription(subscription);
-
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
@@ -640,31 +549,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1025013() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -673,9 +569,9 @@ public class CalculateManagementFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null,false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         //создаем портфели slave
@@ -722,8 +618,6 @@ public class CalculateManagementFeeTest {
     }
 
 
-
-
     @SneakyThrows
     @Test
     @AllureId("1418659")
@@ -732,31 +626,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1418659() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
-        strategyId = UUID.randomUUID();
+         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -765,8 +646,8 @@ public class CalculateManagementFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -804,31 +685,18 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1418733() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
@@ -837,8 +705,8 @@ public class CalculateManagementFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -869,6 +737,521 @@ public class CalculateManagementFeeTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1487145")
+    @DisplayName("C1487145.CalculateManagementFee.CalculateManagementFee.Расчет комиссии за управление." +
+        " Определения расчетных периодов.startedAt = subscription.start_time, endedAt <= метки времени от now()," +
+        " по cron-выражению. Отрицательное значение по базовой валюте.PortfolioValue < 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1487145() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolio("25000.0", "18700.02", "-18171.04");
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeOne(subscriptionId);
+        checkManagementFeeTwo(subscriptionId);
+        checkManagementFeeLast(subscriptionId);
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1488500")
+    @DisplayName("C1488500.CalculateManagementFee.Расчет комиссии за управление. Определения расчетных периодов." +
+        "startedAt = subscription.start_time, endedAt <= метки времени от now(), по cron-выражению. " +
+        "Отрицательное значение по базовой валюте.PortfolioValue < 0.Для bond")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488500() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolio("25000.0", "-18700.02", "18171.04");
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeOne(subscriptionId);
+        checkManagementFeeTwo(subscriptionId);
+        checkManagementFeeLast(subscriptionId);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1488428")
+    @DisplayName("C1488428.CalculateManagementFee.CalculateManagementFee.Расчет комиссии за управление. " +
+        "Определения расчетных периодов.startedAt = subscription.start_time, endedAt = найденный end_time." +
+        "Отрицательное значение по базовой валюте.PortfolioValue > 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488428() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
+            ticker3, tradingClearingAccount3, "4");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId,false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new Timestamp(endSubTime.toInstant().toEpochMilli()), false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolioNoBond("25000.0", "18700.02", "-974.42");
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeOne(subscriptionId);
+        checkManagementFeeTwo(subscriptionId);
+        checkManagementFeeLastNoBond(subscriptionId, Date.from(endSubTime.toInstant()));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1488499")
+    @DisplayName("C1488499.CalculateManagementFee. CalculateManagementFee.Расчет комиссии за управление." +
+        " Определения расчетных периодов.startedAt = subscription.start_time, endedAt <= метки времени от now()," +
+        " по cron-выражению.ContractBlocked")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1488499() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, true, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolio("25000.0", "18700.02", "18171.04");
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeOneBlocked(subscriptionId, "contractBlocked");
+        checkManagementFeeTwoBlocked(subscriptionId, "contractBlocked");
+        checkManagementFeeLastBlocked(subscriptionId, "contractBlocked");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1492239")
+    @DisplayName("C1492239.CalculateManagementFee.Расчет комиссии за управление. Определения расчетных периодов." +
+        "startedAt > метки времени от settlement_period_started_at, endedAt = найденный end_time.ContractBlocked")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1492239() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
+            ticker3, tradingClearingAccount3, "4");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, true, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
+        //создаем записи о расчете комиссии за управление
+        createManagemetFee(subscriptionId);
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.fee.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        String key = message.getKey();
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
+        assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
+        byte[] strategyIdByteArray = feeCommand.getSubscription().getStrategy().getId().toByteArray();
+        UUID guidFromByteArray = UtilsTest.getGuidFromByteArray(strategyIdByteArray);
+        assertThat("subscription.strategy_id не равен", guidFromByteArray, is(strategyId));
+        double rateResultScale = Math.pow(10, -1 * feeCommand.getRate().getScale());
+        BigDecimal rateResult = BigDecimal.valueOf(feeCommand.getRate().getUnscaled()).multiply(BigDecimal.valueOf(rateResultScale));
+        assertThat("rate result не равен", rateResult, is(new BigDecimal("0.04")));
+        assertThat("rate unscaled  не равен", feeCommand.getRate().getUnscaled(), is(4L));
+        assertThat("rate scale не равен", feeCommand.getRate().getScale(), is(2));
+        assertThat("currency не равен", feeCommand.getCurrency().toString(), is("RUB"));
+        LocalDateTime commandStartTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getStartedAt().getSeconds()), ZoneId.of("UTC"));
+        LocalDateTime commandEndTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getEndedAt().getSeconds()), ZoneId.of("UTC"));
+        assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
+        assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
+        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is("contractBlocked"));
+        double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
+        BigDecimal value = BigDecimal.valueOf(feeCommand.getManagement().getPortfolioValue().getUnscaled()).multiply(BigDecimal.valueOf(scale));
+        assertThat("value стоимости портфеля не равно", value.toString(), is("0.0"));
+        assertThat("ключ команды по синхронизации ведомого  не равен", key, is(contractIdSlave));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1492298")
+    @DisplayName("C1492298.CalculateManagementFee.Расчет комиссии за управление. " +
+        "Определения расчетных периодов.startedAt = subscription.start_time, endedAt = найденный end_time.SubscriptionBlocked")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1492298() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
+            ticker3, tradingClearingAccount3, "4");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new Timestamp(endSubTime.toInstant().toEpochMilli()), true);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeOneBlocked(subscriptionId, "subscriptionBlocked");
+        checkManagementFeeTwoBlocked(subscriptionId, "subscriptionBlocked");
+        checkManagementFeeLastBlocked(subscriptionId, "subscriptionBlocked");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1492301")
+    @DisplayName("C1492301.CalculateManagementFee.Расчет комиссии за управление. " +
+        "Определения расчетных периодов.startedAt = > метки времени от settlement_period_started_at," +
+        " endedAt <= метка времени от now(), по cron-выражению.SubscriptionBlocked")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1492301() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
+            ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolio("25000.0", "18700.02", "18171.04");
+        createManagemetFee(subscriptionId);
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        checkManagementFeeLastBlocked(subscriptionId, "subscriptionBlocked");
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        String key = message.getKey();
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
+        assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
+        byte[] strategyIdByteArray = feeCommand.getSubscription().getStrategy().getId().toByteArray();
+        UUID guidFromByteArray = UtilsTest.getGuidFromByteArray(strategyIdByteArray);
+        assertThat("subscription.strategy_id не равен", guidFromByteArray, is(strategyId));
+        double rateResultScale = Math.pow(10, -1 * feeCommand.getRate().getScale());
+        BigDecimal rateResult = BigDecimal.valueOf(feeCommand.getRate().getUnscaled()).multiply(BigDecimal.valueOf(rateResultScale));
+        assertThat("rate result не равен", rateResult, is(new BigDecimal("0.04")));
+        assertThat("rate unscaled  не равен", feeCommand.getRate().getUnscaled(), is(4L));
+        assertThat("rate scale не равен", feeCommand.getRate().getScale(), is(2));
+        assertThat("currency не равен", feeCommand.getCurrency().toString(), is("RUB"));
+        LocalDateTime commandStartTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getStartedAt().getSeconds()), ZoneId.of("UTC"));
+        LocalDateTime commandEndTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getEndedAt().getSeconds()), ZoneId.of("UTC"));
+        assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
+        assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
+        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is("subscriptionBlocked"));
+        double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
+        BigDecimal value = BigDecimal.valueOf(feeCommand.getManagement().getPortfolioValue().getUnscaled()).multiply(BigDecimal.valueOf(scale));
+        assertThat("value стоимости портфеля не равно", value.toString(), is("0.0"));
+        assertThat("ключ команды по синхронизации ведомого  не равен", key, is(contractIdSlave));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1492302")
+    @DisplayName("C1492302.CalculateManagementFee.Расчет комиссии за управление. Определения расчетных периодов." +
+        "startedAt > метки времени от settlement_period_started_at, endedAt = найденный end_time")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1492302() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdMaster)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(siebelIdSlave)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
+            ticker3, tradingClearingAccount3, "4");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
+        //создаем записи о расчете комиссии за управление
+        createManagemetFeeWithBlocked(subscriptionId);
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        String key = message.getKey();
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
+        assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
+        byte[] strategyIdByteArray = feeCommand.getSubscription().getStrategy().getId().toByteArray();
+        UUID guidFromByteArray = UtilsTest.getGuidFromByteArray(strategyIdByteArray);
+        assertThat("subscription.strategy_id не равен", guidFromByteArray, is(strategyId));
+        double rateResultScale = Math.pow(10, -1 * feeCommand.getRate().getScale());
+        BigDecimal rateResult = BigDecimal.valueOf(feeCommand.getRate().getUnscaled()).multiply(BigDecimal.valueOf(rateResultScale));
+        assertThat("rate result не равен", rateResult, is(new BigDecimal("0.04")));
+        assertThat("rate unscaled  не равен", feeCommand.getRate().getUnscaled(), is(4L));
+        assertThat("rate scale не равен", feeCommand.getRate().getScale(), is(2));
+        assertThat("currency не равен", feeCommand.getCurrency().toString(), is("RUB"));
+        LocalDateTime commandStartTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getStartedAt().getSeconds()), ZoneId.of("UTC"));
+        LocalDateTime commandEndTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(feeCommand.getSettlementPeriod()
+            .getEndedAt().getSeconds()), ZoneId.of("UTC"));
+        assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
+        assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
+        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        BigDecimal portfolioValue = managementFee.getContext().getPortfolioValue();
+        double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
+        BigDecimal value = BigDecimal.valueOf(feeCommand.getManagement().getPortfolioValue().getUnscaled()).multiply(BigDecimal.valueOf(scale));
+        assertThat("value стоимости портфеля не равно", value, is(portfolioValue));
+        assertThat("ключ команды по синхронизации ведомого  не равен", key, is(contractIdSlave));
+    }
 
 
     // методы для работы тестов*****************************************************************
@@ -1043,9 +1426,6 @@ public class CalculateManagementFeeTest {
     }
 
 
-
-
-
     void createSlavePOrtfolioNoBond(String baseMoneyOne, String baseMoneyTwo, String baseMoneyThree) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         steps.createSlavePortfolio(contractIdSlave, strategyId, 1, 1, baseMoneyOne,
@@ -1059,23 +1439,6 @@ public class CalculateManagementFeeTest {
         steps.createSlavePortfolio(contractIdSlave, strategyId, 3, 3, baseMoneyThree,
             twoPositionSlaveList, Date.from(OffsetDateTime.now().minusDays(1).toInstant()));
     }
-
-
-
-    void createSlavePortfolioNoExchangePositionCache(String baseMoneyOne, String baseMoneyTwo, String baseMoneyThree) {
-        List<SlavePortfolio.Position> positionList = new ArrayList<>();
-        steps.createSlavePortfolio(contractIdSlave, strategyId, 1, 1, baseMoneyOne,
-            positionList, Date.from(OffsetDateTime.now().minusDays(3).toInstant()));
-
-        List<SlavePortfolio.Position> onePositionSlaveList = oneSlavePositions(Date.from(OffsetDateTime.now().minusDays(2).toInstant()));
-        steps.createSlavePortfolio(contractIdSlave, strategyId, 2, 2, baseMoneyTwo,
-            onePositionSlaveList, Date.from(OffsetDateTime.now().minusDays(2).toInstant()));
-
-        List<SlavePortfolio.Position> twoPositionSlaveList = twoSlavePositionsExchangePositionCache(Date.from(OffsetDateTime.now().minusDays(1).toInstant()));
-        steps.createSlavePortfolio(contractIdSlave, strategyId, 3, 3, baseMoneyThree,
-            twoPositionSlaveList, Date.from(OffsetDateTime.now().minusDays(1).toInstant()));
-    }
-
 
     void checkManagementFeeOne(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(2).atStartOfDay();
@@ -1091,9 +1454,50 @@ public class CalculateManagementFeeTest {
             is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
             is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
-        assertThat("positions не равно", managementFee.getContext().getPositions().size(),
-            is(0));
+        assertThat("positions не равно", managementFee.getContext().getPositions().size(), is(0));
+
     }
+
+
+    void checkManagementFeeOneBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
+        checkComparedToMasterFeeVersion(1, subscriptionId);
+        await().atMost(TEN_SECONDS).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
+        assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is(reasonBlocked));
+    }
+
+    void checkManagementFeeTwoBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
+        checkComparedToMasterFeeVersion(2, subscriptionId);
+        await().atMost(TEN_SECONDS).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
+        //Проверяем данные в management_fee
+        assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is(reasonBlocked));
+    }
+
+
+    void checkManagementFeeLastBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
+        checkComparedToMasterFeeVersion(3, subscriptionId);
+        await().atMost(TEN_SECONDS).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
+        //Проверяем данные в management_fee
+        assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
+            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is(reasonBlocked));
+    }
+
 
     void checkManagementFeeTwo(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(1).atStartOfDay();
@@ -1117,11 +1521,14 @@ public class CalculateManagementFeeTest {
             }
         }
         BigDecimal valuePortfolio = valuePos1.add(basemoney);
+        //проверям, что если получили valuePortfolio < 0 считаем тогда valuePortfolio = 0
+        if (valuePortfolio.compareTo(BigDecimal.ZERO) < 0) {
+            valuePortfolio = BigDecimal.ZERO;
+        }
         log.info("valuePortfolio:  {}", valuePortfolio);
         checkComparedToMasterFeeVersion(2, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
-
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
@@ -1180,6 +1587,10 @@ public class CalculateManagementFeeTest {
             }
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(baseMoney);
+        //проверям, что если получили valuePortfolio < 0 считаем тогда valuePortfolio = 0
+        if (valuePortfolio.compareTo(BigDecimal.ZERO) < 0) {
+            valuePortfolio = BigDecimal.ZERO;
+        }
         log.info("valuePortfolio:  {}", valuePortfolio);
         checkComparedToMasterFeeVersion(3, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
@@ -1257,6 +1668,28 @@ public class CalculateManagementFeeTest {
             Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithPos);
     }
 
+
+    void createManagemetFeeWithBlocked(long subscriptionId) {
+        List<Context.Positions> positionListEmpty = new ArrayList<>();
+        Context context = Context.builder()
+            .portfolioValue(new BigDecimal("25000.0"))
+            .positions(positionListEmpty)
+            .build();
+        steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 1,
+            Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(ZoneOffset.UTC)),
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)), context);
+
+
+        List<String> contractBlocked = new ArrayList<>();
+        contractBlocked.add("contractBlocked");
+        Context contextWithBlocked = Context.builder()
+            .notChargedReasons(contractBlocked)
+            .build();
+        steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)),
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithBlocked);
+    }
+
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
         Thread.sleep(3000);
         for (int i = 0; i < 5; i++) {
@@ -1265,5 +1698,15 @@ public class CalculateManagementFeeTest {
                 Thread.sleep(5000);
             }
         }
+    }
+
+
+    void checkParamManagementFee() {
+        assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+        assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
+            is("contractBlocked"));
     }
 }

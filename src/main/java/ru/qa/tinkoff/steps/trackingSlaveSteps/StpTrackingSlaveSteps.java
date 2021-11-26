@@ -111,6 +111,14 @@ public class StpTrackingSlaveSteps {
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
+        if (contractOpt.isPresent() == true) {
+            contractMaster = contractService.getContract(contractId);
+            clientMaster = clientService.getClient(investId);
+            contractService.deleteContract(contractMaster);
+            clientService.deleteClient(clientMaster);
+        }
+
         //создаем запись о клиенте в tracking.client
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
@@ -847,6 +855,13 @@ public class StpTrackingSlaveSteps {
     public void createSubcriptionWithBlocked(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        Optional<Contract> contractOpt = contractService.findContract(contractId);
+        if (contractOpt.isPresent() == true) {
+            contractMaster = contractService.getContract(contractId);
+            clientMaster = clientService.getClient(investId);
+            contractService.deleteContract(contractMaster);
+            clientService.deleteClient(clientMaster);
+        }
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract

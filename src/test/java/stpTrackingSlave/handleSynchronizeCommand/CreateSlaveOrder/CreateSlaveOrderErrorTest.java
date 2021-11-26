@@ -219,7 +219,7 @@ public class CreateSlaveOrderErrorTest {
         String baseMoneySl = "27000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "7", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
@@ -308,8 +308,8 @@ public class CreateSlaveOrderErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C849688() {
-        contractIdSlave = "2015430701";
-        String SIEBEL_ID_SLAVE = "5-15WB1PPUX";
+        contractIdSlave = "2092721501";
+        String SIEBEL_ID_SLAVE = "5-2IMV74EF5";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
@@ -339,7 +339,7 @@ public class CreateSlaveOrderErrorTest {
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
@@ -358,9 +358,6 @@ public class CreateSlaveOrderErrorTest {
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
     }
-
-
-
 
 
 
@@ -401,7 +398,7 @@ public class CreateSlaveOrderErrorTest {
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
@@ -431,8 +428,8 @@ public class CreateSlaveOrderErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C851304() {
-        String SIEBEL_ID_SLAVE = "5-18C9NQC0R";
-        contractIdSlave = "2006508531";
+        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+        contractIdSlave = "2054235441";
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
@@ -462,7 +459,7 @@ public class CreateSlaveOrderErrorTest {
         String baseMoneySl = "7000";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию

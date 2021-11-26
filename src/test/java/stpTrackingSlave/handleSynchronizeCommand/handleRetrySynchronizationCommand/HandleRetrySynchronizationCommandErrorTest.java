@@ -66,7 +66,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 
 @Slf4j
 @Epic("handleSynchronizeCommand - Обработка команд на повторную синхронизацию")
-@Feature("TAP-6843")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -188,10 +187,10 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Test
     @AllureId("739012")
     @DisplayName("C739012.HandleRetrySynchronizationCommand.Ошибка на анализе портфеля slave'а относительно портфеля master'а")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739012() {
-        String ticker = "XS0861981180";
+        String ticker = "TECH";
         String tradingClearingAccount = "L01+00002F00";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -254,7 +253,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Test
     @AllureId("739015")
     @DisplayName("C739015.HandleRetrySynchronizationCommand.Ошибка при выставлении заявки")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739015() {
         String ticker = "WLH";
@@ -320,7 +319,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Test
     @AllureId("739006")
     @DisplayName("C739006.HandleRetrySynchronizationCommand.У contractId blocked = true")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739006() {
         steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
@@ -373,7 +372,7 @@ public class HandleRetrySynchronizationCommandErrorTest {
     @Test
     @AllureId("739008")
     @DisplayName("C739008.HandleRetrySynchronizationCommand.Не найден портфель slave'a в бд Cassandra в таблице slave_portfolio")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на повторную синхронизацию slave-портфеля.")
     void C739008() {
         steps.createDataToMarketData(ticker, classCode, "108.09", "107.79", "107.72");
