@@ -273,6 +273,5 @@ public class BlockContractSuccessTest {
         return number;
     }
 
-
 }
 

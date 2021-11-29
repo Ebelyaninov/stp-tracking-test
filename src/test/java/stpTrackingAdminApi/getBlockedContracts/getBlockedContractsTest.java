@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -166,6 +167,13 @@ public class getBlockedContractsTest {
         steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //блокируем контракт Slave
         steps.BlockContract(contractIdSlave);
+        //получаем список заблокированных контрактов
+        List <Contract> getAllBlockedContracts = contractService.findAllBlockedContract(true);
+        Set<String>  listOfBlockedId = new HashSet<>();
+        getAllBlockedContracts.stream().filter(contract -> contract.getState().equals("tracked")).collect(Collectors.toList());
+        for (int i = 0; i < 30; i++) {
+            listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
+        }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
@@ -173,15 +181,51 @@ public class getBlockedContractsTest {
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBlockedContractsResponse.class));
+        Set<String>  listOfBlockedIdFromGet = new HashSet<>();
+        for (int i = 0; i < getblockedContracts.getItems().size(); i++) {
+            listOfBlockedIdFromGet.add(getblockedContracts.getItems().get(i).getId());
+        }
         //получаем ответ и проверяем
         assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
-       // assertThat("cursor не равен", getblockedContracts.getNextCursor(), is());
+        //assertThat("cursor не равен", getblockedContracts.getNextCursor(), is());
         assertThat("items не равен", getblockedContracts.getItems().size(), is(30));
-
-
-
+        assertThat("Проверка", listOfBlockedId , is(listOfBlockedIdFromGet));
 
     }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1491599")
+    @DisplayName("getBlockedContracts. Передан limit")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
+    void C1491599() {
+        String title = "Autotest" + randomNumber(0,100);
+        String description = "Autotest get block contract";
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку клиента slave на strategy клиента master
+        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //блокируем контракт Slave
+        steps.BlockContract(contractIdSlave);
+        //вызываем метод getBlockedContracts
+        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .limitQuery(1)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBlockedContractsResponse.class));
+        //получаем ответ и проверяем
+        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
+        //assertThat("cursor не равен", getblockedContracts.getNextCursor(), is());
+        assertThat("items не равен", getblockedContracts.getItems().size(), is(1));
+    }
+
+
 
     public static int randomNumber(int min, int max) {
         int number = min + (int) (Math.random() * max);

@@ -466,7 +466,7 @@ paths:
         500:
           $ref: '#/components/responses/Error'
 
-  /contract/block:
+  /contract/blocked:
 
     parameters:
       - $ref: '#/components/parameters/ApplicationName'
