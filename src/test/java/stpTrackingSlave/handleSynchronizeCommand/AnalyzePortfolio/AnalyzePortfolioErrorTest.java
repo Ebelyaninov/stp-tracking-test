@@ -70,7 +70,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-//    BillingDatabaseAutoConfiguration.class,
+    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -86,8 +86,8 @@ public class AnalyzePortfolioErrorTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StringSenderService stringSenderService;
-//    @Autowired
-//    BillingService billingService;
+    @Autowired
+    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

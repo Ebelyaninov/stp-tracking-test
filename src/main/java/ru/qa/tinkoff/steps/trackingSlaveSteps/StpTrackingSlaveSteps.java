@@ -27,6 +27,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.miof.api.ClientApi;
+import ru.qa.tinkoff.swagger.miof.model.RuTinkoffTradingMiddlePositionsPositionsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -92,7 +94,8 @@ public class StpTrackingSlaveSteps {
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
         api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
+    ClientApi clientMiofApi = ru.qa.tinkoff.swagger.miof.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.miof.invoker.ApiClient.Config.apiConfig()).client();
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -354,6 +357,20 @@ public class StpTrackingSlaveSteps {
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
             .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .build();
+        return command;
+    }
+
+
+    //отправляем команду на снятие технической блокировки с договора
+    public Tracking.PortfolioCommand createCommandUnBlockContract(String contractIdSlave, OffsetDateTime time) {
+        Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractIdSlave)
+            .setOperation(Tracking.PortfolioCommand.Operation.UNBLOCK_CONTRACT)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())
@@ -771,6 +788,21 @@ public class StpTrackingSlaveSteps {
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
+
+
+
+    //метод отправляет команду с operation = 'SYNCHRONIZE'.
+    public  void createCommandUnBlockContractSlaveCommand(String contractIdSlave) {
+        //создаем команду
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandUnBlockContract(contractIdSlave, time);
+        log.info("Команда в tracking.slave.command:  {}", command);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
+    }
+
     //  метод отправляет команду с operation = 'RETRY_SYNCHRONIZE'.
     public void createCommandRetrySynTrackingSlaveCommand(String contractIdSlave)  {
         //создаем команду
@@ -913,6 +945,84 @@ public class StpTrackingSlaveSteps {
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionWithBlockedContract(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
+                                             UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                             java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(true);
+        if (contractState == ContractState.untracked){
+            contractSlave.setStrategyId(null);
+        }
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createBlockedContract(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
+                                                     UUID strategyId) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(true);
+        if (contractState == ContractState.untracked){
+            contractSlave.setStrategyId(null);
+        }
+        contractSlave = contractService.saveContract(contractSlave);
+    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionDraftWithBlockedContract(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(true);
+        contractSlave = contractService.saveContract(contractSlave);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blocked);
+        subscription = subscriptionService.saveSubscription(subscription);
+    }
+
+
+
 
 //    //метод создает клиента, договор и стратегию в БД автоследования
 //    public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
@@ -1041,19 +1151,22 @@ public class StpTrackingSlaveSteps {
         contractSlave = contractService.saveContract(contractSlave);
     }
 
-
-    public String getTitleStrategy() {
-        int randomNumber = 0 + (int) (Math.random() * 1000);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        return title;
+    public void getClientAdjustCurrencyMiof (String clientCodeSlave, String contractId, String tickerCurrency, int quantity) {
+        clientMiofApi.clientAdjustCurrencyGet()
+            .typeQuery("Withdraw")
+            .amountQuery(quantity)
+            .currencyQuery(tickerCurrency)
+            .clientCodeQuery(clientCodeSlave)
+            .agreementIdQuery(contractId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(RuTinkoffTradingMiddlePositionsPositionsResponse.class));
     }
 
 
-
-
-
-
-
-
+    public String getTitleStrategy(){
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest" + randomNumber;
+        return title;
+    }
 
 }
