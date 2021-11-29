@@ -249,7 +249,7 @@ public class RouteRetryCommandErrorTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топика кафка tracking.30.delay.retryer.command все offset
         resetOffsetToLate(TRACKING_30_DELAY_RETRYER_COMMAND);
         //отправляем команду tracking.delay.command:
@@ -329,7 +329,7 @@ public class RouteRetryCommandErrorTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топиков кафка  все offset
         resetOffsetToLate(TRACKING_SPB_RETRYER_COMMAND);
         resetOffsetToLate(TRACKING_FX_RETRYER_COMMAND);
@@ -435,7 +435,7 @@ public class RouteRetryCommandErrorTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топика кафка tracking.30.delay.retryer.command все offset
         resetOffsetToLate(TRACKING_30_DELAY_RETRYER_COMMAND);
         //отправляем команду tracking.delay.command:

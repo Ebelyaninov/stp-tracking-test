@@ -236,7 +236,7 @@ public class Handle30DelayRetryCommandTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топика кафка tracking.slave.command все offset
         resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
