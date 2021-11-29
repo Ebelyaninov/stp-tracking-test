@@ -239,7 +239,7 @@ public class RouteRetryCommandTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal("90.18"), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топика кафка tracking.30.delay.retryer.command все offset
         resetOffsetToLate(TRACKING_30_DELAY_RETRYER_COMMAND);
         //отправляем команду tracking.delay.command:
@@ -338,7 +338,7 @@ public class RouteRetryCommandTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal(price), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //отправляем команду tracking.delay.command:
         OffsetDateTime time = OffsetDateTime.now();
         createCommandTrackingDelayExCommand(contractIdSlave, exchange, time);
