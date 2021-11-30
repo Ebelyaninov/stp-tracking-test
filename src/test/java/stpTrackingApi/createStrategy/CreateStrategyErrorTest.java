@@ -552,9 +552,11 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266605()  {
         //Находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
-        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebelId.get(0).getId();
+//        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
+//        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
+//        String contractId = findValidAccountWithSiebelId.get(0).getId();
+        UUID investIdNotBroker = UUID.fromString("d82f8890-d218-4fc3-9211-fe47c10f6a24");
+        String contractId = "2002587380";
         String title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
         //ToDo feeRate was disabled
@@ -628,7 +630,7 @@ public class CreateStrategyErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Стратегию можно создать только под открытый брокерский договор"));
         //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
         Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
@@ -671,7 +673,7 @@ public class CreateStrategyErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки Registered client not found не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Стратегию можно создать только под открытый брокерский договор"));
         //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
         Optional<Contract> contractOptFirst = contractService.findContract(brokerAccounts.get(0).getId());
         assertThat("запись по договору не равно", contractOptFirst.isPresent(), is(false));
@@ -872,50 +874,51 @@ public class CreateStrategyErrorTest {
             Arguments.of(0.04, 0.1294, "Ставка комиссии за результат должна быть кратна 0.001")
         );
     }
-    @SneakyThrows
-    @ParameterizedTest
-    @MethodSource("provideFeeRateMultiplicity")
-    @AllureId("1050967")
-    @DisplayName("C1050967.CreateStrategy.Проверка на кратность ставок по комиссии")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Метод создания стратегии на договоре ведущего")
-    void C1050967(double management, double result, String errorMessage) {
-        String title = "Тест стратегия CreateStrategy Autotest 017";
-        String description = "New test стратегия Autotest 017";
-        String positionRetentionId = "days";
-        //ToDo feeRate was disabled
-        String feeRate = "disabled";
-//        StrategyFeeRate feeRate = new StrategyFeeRate();
-//        feeRate.setManagement(management);
-//        feeRate.setResult(result);
-        //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
-        String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
-        //Формируем body для запроса
-        BigDecimal baseMoney = new BigDecimal("15000.0");
-        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
-            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
-        //Вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
-            .xTcsSiebelIdHeader(SIEBEL_ID)
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios 8.1")
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        createStrategy.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(createStrategy.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessageReq = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is(errorMessageReq));
-        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractNewOpt = contractService.findContract(contractId);
-        assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
-        Optional<Contract> contractOpt = contractService.findContract(contractId);
-        assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
-        Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
-        assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
-    }
+//
+//    @SneakyThrows
+//    @ParameterizedTest
+//    @MethodSource("provideFeeRateMultiplicity")
+//    @AllureId("1050967")
+//    @DisplayName("C1050967.CreateStrategy.Проверка на кратность ставок по комиссии")
+//    @Subfeature("Альтернативные сценарии")
+//    @Description("Метод создания стратегии на договоре ведущего")
+//    void C1050967(double management, double result, String errorMessage) {
+//        String title =steps.getTitleStrategy();
+//        String description = "New test стратегия Autotest 017";
+//        String positionRetentionId = "days";
+//        //ToDo feeRate was disabled
+//        String feeRate = "disabled";
+////        StrategyFeeRate feeRate = new StrategyFeeRate();
+////        feeRate.setManagement(management);
+////        feeRate.setResult(result);
+//        //Находим данные по клиенту чере API-сервиса счетов, Создаем по нему запись в tracking.client
+//        String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
+//        //Формируем body для запроса
+//        BigDecimal baseMoney = new BigDecimal("15000.0");
+//        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
+//            StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
+//        //Вызываем метод CreateStrategy
+//        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
+//            .xTcsSiebelIdHeader(SIEBEL_ID)
+//            .xAppNameHeader("invest")
+//            .xAppVersionHeader("4.5.6")
+//            .xPlatformHeader("ios 8.1")
+//            .body(request)
+//            .respSpec(spec -> spec.expectStatusCode(422));
+//        createStrategy.execute(ResponseBodyData::asString);
+//        JSONObject jsonObject = new JSONObject(createStrategy.execute(ResponseBodyData::asString));
+//        String errorCode = jsonObject.getString("errorCode");
+//        String errorMessageReq = jsonObject.getString("errorMessage");
+//        assertThat("код ошибки не равно", errorCode, is("Error"));
+//        assertThat("Сообщение об ошибке не равно", errorMessage, is(errorMessageReq));
+//        //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
+//        Optional<Contract> contractNewOpt = contractService.findContract(contractId);
+//        assertThat("запись по договору не равно", contractNewOpt.isPresent(), is(false));
+//        Optional<Contract> contractOpt = contractService.findContract(contractId);
+//        assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
+//        Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
+//        assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
+//    }
 
     private static Stream<Arguments> provideFeeRateLowerUpper() {
         return Stream.of(
@@ -1019,6 +1022,12 @@ public class CreateStrategyErrorTest {
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
     }
+
+
+
+
+
+
 
 
     //*** Методы для работы тестов ***
