@@ -159,21 +159,25 @@ public class getBlockedContractsTest {
         String title = "Autotest" + randomNumber(0,100);
         String description = "Autotest get block contract";
         strategyId = UUID.randomUUID();
-        //создаем в БД tracking данные: client, contract, strategy в статусе active
+/*        //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //блокируем контракт Slave
-        steps.BlockContract(contractIdSlave);
+        steps.BlockContract(contractIdSlave);*/
         //получаем список заблокированных контрактов
-        List <Contract> getAllBlockedContracts = contractService.findAllBlockedContract(true);
-        Set<String>  listOfBlockedId = new HashSet<>();
-        getAllBlockedContracts.stream().filter(contract -> contract.getState().equals("tracked")).collect(Collectors.toList());
+        List <Contract> getAllBlockedContracts = contractService.findAllBlockedContract(true).stream()
+           // .sorted(Comparator.comparing(Contract::getId))
+            .filter(c -> c.getState().equals(ContractState.tracked))
+            .collect(Collectors.toList());
+/*        Set<String>  listOfBlockedId = new HashSet<>();
         for (int i = 0; i < 30; i++) {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
-        }
+        }*/
+        ArrayList<Contract> listOfBlockedId = new ArrayList<>(30);
+        listOfBlockedId.addAll(getAllBlockedContracts);
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
