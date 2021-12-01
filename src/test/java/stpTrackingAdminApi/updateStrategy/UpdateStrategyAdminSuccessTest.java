@@ -61,15 +61,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
-
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("updateStrategy - Обновление стратегии администратором")
-@Feature("TAP-7225")
 @Service("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -88,8 +85,8 @@ public class UpdateStrategyAdminSuccessTest {
     String xApiKey = "x-api-key";
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    BillingService billingService;
+//    @Autowired
+//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

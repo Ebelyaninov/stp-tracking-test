@@ -63,15 +63,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class
 })
 public class HandleSynchronizeCommandTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     StringToByteSenderService kafkaSender;
     @Autowired

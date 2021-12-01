@@ -66,7 +66,6 @@ import static org.hamcrest.Matchers.is;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
@@ -75,8 +74,6 @@ import static org.hamcrest.Matchers.is;
 })
 public class GetSignalsTest {
 
-    @Autowired
-    BillingService billingService;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -113,7 +110,7 @@ public class GetSignalsTest {
 
 
     String siebelIdMaster = "1-7XOAYPX";
-    String siebelIdSlave = "5-RGHKKZA6";
+    String siebelIdSlave = "5-42ASJ9C7";
 
     MasterSignal masterSignal;
 

@@ -67,7 +67,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
@@ -75,8 +74,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 
 public class CreateStrategyErrorTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -552,11 +549,16 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266605()  {
         //Находим investId клиента в БД сервиса счетов
+        String SIEBEL_ID = "5-2T11RRL1";
+        String contractId = "2002694087";
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdNotBroker = resAccountMaster.getInvestId();
+//        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
 //        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
 //        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
 //        String contractId = findValidAccountWithSiebelId.get(0).getId();
-        UUID investIdNotBroker = UUID.fromString("d82f8890-d218-4fc3-9211-fe47c10f6a24");
-        String contractId = "2002587380";
+
         String title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
         //ToDo feeRate was disabled
@@ -598,12 +600,10 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266606() throws JSONException {
-        //Находим клиента со статусом договора !=opened
-        //profile = profileService.getProfileBySiebelId(siebelIdNotOpen);
-        //Находим investId клиента в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotOpenAccountBySiebelId(siebelIdNotOpen);
-        UUID investIdNotOpen = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
-        String contractId = findValidAccountWithSiebelId.get(0).getId();
+        String SIEBEL_ID = "1-B33CKAM";
+        String contractId ="2000030052";
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdNotOpen = resAccountMaster.getInvestId();
         String title = "CreateStrategy Autotest 012";
         String description = "New test стратегия Autotest 012";
         //ToDo feeRate was disabled
@@ -619,7 +619,7 @@ public class CreateStrategyErrorTest {
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
-            .xTcsSiebelIdHeader(siebelIdNotOpen)
+            .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios 8.1")
@@ -645,6 +645,8 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266607() {
+        String SIEBEL_ID1 = "5-20IBIUPTE";
+        String SIEBEL_ID2 = "1-1P424JS";
         String title = "CreateStrategy Autotest 013";
         String description = "New test стратегия Autotest 013";
         //ToDo feeRate was disabled
@@ -652,17 +654,23 @@ public class CreateStrategyErrorTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
-        List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
-        client = clientService.createClient(brokerAccounts.get(0).getInvestAccount().getId(), ClientStatusType.registered, null, null);
+//        //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
+//        List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
+        GetBrokerAccountsResponse resAccountMaster1 = steps.getBrokerAccounts(SIEBEL_ID1);
+        UUID investIdMaster1 = resAccountMaster1.getInvestId();
+        String contractIdMaster1 = resAccountMaster1.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountMaster2 = steps.getBrokerAccounts(SIEBEL_ID2);
+        UUID investIdMaster2 = resAccountMaster2.getInvestId();
+        String contractIdMaster2 = resAccountMaster2.getBrokerAccounts().get(0).getId();
+        client = clientService.createClient(investIdMaster1, ClientStatusType.registered, null, null);
         //Вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, brokerAccounts.get(1).getId(), description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractIdMaster2, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
-            .xTcsSiebelIdHeader(brokerAccounts.get(0).getInvestAccount().getSiebelId())
+            .xTcsSiebelIdHeader(SIEBEL_ID1)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios 8.1")
@@ -675,13 +683,13 @@ public class CreateStrategyErrorTest {
         assertThat("код ошибки Registered client not found не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Стратегию можно создать только под открытый брокерский договор"));
         //Проверяем код ответа и что записи в БД автоследование в tracking.contract tracking.strategy отсутствуют
-        Optional<Contract> contractOptFirst = contractService.findContract(brokerAccounts.get(0).getId());
+        Optional<Contract> contractOptFirst = contractService.findContract(contractIdMaster1);
         assertThat("запись по договору не равно", contractOptFirst.isPresent(), is(false));
-        Optional<Contract> contractOptSecond = contractService.findContract(brokerAccounts.get(1).getId());
+        Optional<Contract> contractOptSecond = contractService.findContract(contractIdMaster2);
         assertThat("запись по договору не равно", contractOptSecond.isPresent(), is(false));
-        Optional<Strategy> strategyOptFirst = strategyService.findStrategyByContractId(brokerAccounts.get(0).getId());
+        Optional<Strategy> strategyOptFirst = strategyService.findStrategyByContractId(contractIdMaster1);
         assertThat("запись по стратегии не равно", strategyOptFirst.isPresent(), is(false));
-        Optional<Strategy> strategyOptSecond = strategyService.findStrategyByContractId(brokerAccounts.get(1).getId());
+        Optional<Strategy> strategyOptSecond = strategyService.findStrategyByContractId(contractIdMaster2);
         assertThat("запись по стратегии не равно", strategyOptSecond.isPresent(), is(false));
     }
 

@@ -64,7 +64,6 @@ import static org.hamcrest.Matchers.nullValue;
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -73,11 +72,7 @@ import static org.hamcrest.Matchers.nullValue;
 })
 public class GetStrategiesTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -90,8 +85,8 @@ public class GetStrategiesTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StrategyService strategyService;
-    @Autowired
-    PlatformTransactionManager billingTransactionManager;
+//    @Autowired
+//    PlatformTransactionManager billingTransactionManager;
     Client client;
     Contract contract;
     Strategy strategy;

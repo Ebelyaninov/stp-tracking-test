@@ -67,7 +67,6 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -75,8 +74,6 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
     KafkaOldConfiguration.class
 })
 public class HandleAdjustEventTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
