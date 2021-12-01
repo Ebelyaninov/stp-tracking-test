@@ -54,7 +54,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -66,8 +65,7 @@ public class GetStrategyTest {
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
-    @Autowired
-    BillingService billingService;
+
     @Autowired
     ClientService clientService;
     @Autowired

@@ -47,12 +47,10 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Epic("getExchangePositions -  Получение биржевых позиций, добавленных в автоследование")
-@Feature("TAP-10351")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,

@@ -76,7 +76,7 @@ import static org.hamcrest.Matchers.is;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
+
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -86,8 +86,6 @@ import static org.hamcrest.Matchers.is;
 public class CreateSignalErrorTest {
     @Autowired
     StringSenderService stringSenderService;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -117,8 +115,8 @@ public class CreateSignalErrorTest {
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
 
-//    String SIEBEL_ID = "1-3W70RM8";
-    String SIEBEL_ID = "1-7UY6DEL";
+     String SIEBEL_ID = "1-3L0X4M1";
+//    String SIEBEL_ID = "1-7UY6DEL";
     String contractIdMaster = "2000001772";
     @AfterEach
     void deleteClient() {
@@ -303,7 +301,10 @@ public class CreateSignalErrorTest {
         //находим данные ведущего в БД сервиса счетов
 //        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
 //        contractId = findValidAccountWithSiebleId.get(0).getId();
-//        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
+        strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);

@@ -78,7 +78,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -111,7 +110,7 @@ public class GetMasterPortfolioValuesTest {
     MasterPortfolioValue masterPortfolioValue;
     Strategy strategy;
     String siebelIdMaster = "1-BABKO0G";
-    String siebelIdSlave = "5-RGHKKZA6";
+    String siebelIdSlave = "5-42ASJ9C7";
     UUID strategyId;
 
     @AfterEach

@@ -75,7 +75,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("stp-tracking-retryer")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-   BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -89,8 +88,6 @@ public class RouteRetryCommandErrorTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StringSenderService stringSenderService;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

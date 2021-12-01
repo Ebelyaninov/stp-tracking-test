@@ -70,7 +70,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -85,8 +84,6 @@ public class HandleRetrySynchronizationCommandErrorTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     ByteToByteSenderService kafkaByteSender;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired

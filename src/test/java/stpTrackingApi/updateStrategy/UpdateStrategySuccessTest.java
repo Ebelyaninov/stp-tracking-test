@@ -60,15 +60,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
 })
 public class UpdateStrategySuccessTest {
-    @Autowired
-    BillingService billingService;
+
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -297,7 +295,8 @@ public class UpdateStrategySuccessTest {
             .setSlavesCount(0)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
 
         strategy = trackingService.saveStrategy(strategy);
     }

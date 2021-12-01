@@ -55,7 +55,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Owner("ext.ebelyaninov")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,

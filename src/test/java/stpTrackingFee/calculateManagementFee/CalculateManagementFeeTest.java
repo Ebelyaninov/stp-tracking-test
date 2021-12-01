@@ -70,15 +70,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
 @DisplayName("stp-tracking-fee")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class
 })
 public class CalculateManagementFeeTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired

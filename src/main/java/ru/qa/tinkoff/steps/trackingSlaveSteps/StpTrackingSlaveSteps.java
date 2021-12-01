@@ -226,8 +226,8 @@ public class StpTrackingSlaveSteps {
         //получаем содержимое кеша exchangePositionPriceCache
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
-            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-//            .reqSpec(r -> r.addHeader("magic-number", "4"))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")

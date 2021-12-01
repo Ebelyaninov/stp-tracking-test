@@ -60,7 +60,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("stp-tracking-master")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -68,9 +68,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingMasterStepsConfiguration.class
 })
 public class HandleActualizeCommandTest {
-
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -440,7 +437,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719882() {
         String siebelIdMaster = "1-DC5C5KJ";
-        String siebelIdSlave = "5-14D9VHBMH";
+        String siebelIdSlave = "5-37UW09LR";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -933,7 +930,7 @@ public class HandleActualizeCommandTest {
     void C1244154() {
         String siebelIdMaster = "1-BABKO0G";
         String siebelIdSlaveActive = "1-BU57GIO";
-        String siebelIdSlaveBlocked = "1-7J4CQZD";
+        String siebelIdSlaveBlocked = "1-5PQK50Q";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";

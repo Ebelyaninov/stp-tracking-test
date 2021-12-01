@@ -45,7 +45,7 @@ import static org.hamcrest.Matchers.is;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -77,8 +77,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520697(String name, String login)  {
-//        String ticker = "FXGD";
-//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -145,7 +143,6 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520851()  {
         String ticker = "";
-//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -174,7 +171,6 @@ public class CreateExchangePositionErrorTest {
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520861()  {
         String ticker = "FXGDFXGDFXGDF";
-//        String tradingClearingAccount = "L01+00002F00";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -202,7 +198,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520878()  {
-//        String ticker = "FXGD";
         String tradingClearingAccount = "";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -231,7 +226,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520885()  {
-//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -260,7 +254,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521188()  {
-//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -289,7 +282,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521208() throws Exception {
-//        String ticker = "FXGD";
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "";
@@ -442,8 +434,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521257()  {
-//        String ticker = "FXGD";
-//        String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -470,8 +460,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521266()  {
-//        String ticker = "FXGD";
-//        String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
@@ -499,8 +487,6 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521288() throws Exception {
-//        String ticker = "FXGD";
-//        String tradingClearingAccount = "L01+00002F001";
         //формируем тело запроса
         List<OrderQuantityLimit> orderQuantityLimitList
             = new ArrayList<>();

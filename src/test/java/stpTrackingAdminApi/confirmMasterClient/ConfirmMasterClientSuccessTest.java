@@ -50,7 +50,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -67,12 +66,12 @@ public class ConfirmMasterClientSuccessTest {
     String siebelIdEmptyNick = "1-9X6NHTJ";
     String siebelIdNullImage = "5-421S5P27";
     String siebelIdNotBroker = "5-11FZVG5DZ";
-    String siebelIdNotOpen = "5-3SWTP8DX";
+
+    String siebelIdNotOpen = "1-BQCZQC7";
 
     String xApiKey = "x-api-key";
 
-    @Autowired
-    BillingService billingService;
+
     @Autowired
     ProfileService profileService;
     @Autowired

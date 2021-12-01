@@ -80,7 +80,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
+//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -93,8 +93,8 @@ public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     StrategyApi strategyApi;
-    @Autowired
-    BillingService billingService;
+//    @Autowired
+//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -192,11 +192,11 @@ public class CreateStrategySuccessTest {
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
             0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(3)).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(3)).until(() ->
             masterPortfolioPositionRetention =
                 masterPortfolioPositionRetentionDao.getMasterPortfolioPositionRetention(strategyId), notNullValue());
         checkParamMasterPortfolioPositionRetention(positionRetentionId);

@@ -66,7 +66,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-master")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -80,8 +80,6 @@ public class HandleActualizeCommandErrorTest {
     StringToByteSenderService kafkaSender;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -171,8 +169,11 @@ public class HandleActualizeCommandErrorTest {
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         //находим данные ведущего в БД сервиса счетов
-        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
-        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
+//        List<BrokerAccount> findValidAccountWithSiebleIdMaster = billingService.getFindValidAccountWithSiebelId(siebelIdMaster);
+//        contractIdMaster = findValidAccountWithSiebleIdMaster.get(0).getId();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()

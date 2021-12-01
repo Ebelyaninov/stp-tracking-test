@@ -72,7 +72,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -88,8 +87,6 @@ public class CreateSlaveOrderErrorTest {
     ByteArrayReceiverService receiverBytes;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired

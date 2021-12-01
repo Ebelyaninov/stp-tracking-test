@@ -64,7 +64,6 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -72,8 +71,6 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     GrpcServicesAutoConfiguration.class,
 })
 public class HandleUnblockContractCommandTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     MiddleGrpcService middleGrpcService;
     @Autowired

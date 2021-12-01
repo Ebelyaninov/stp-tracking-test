@@ -56,7 +56,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @DisplayName("Kafka")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -67,8 +66,6 @@ public class HandleInitializeCommandErrorTest {
 
     @Autowired
     StringToByteSenderService kafkaSender;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

@@ -68,7 +68,6 @@ import static org.hamcrest.Matchers.notNullValue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,

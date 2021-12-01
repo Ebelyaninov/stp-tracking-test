@@ -30,7 +30,7 @@ import java.util.HashMap;
 public class TrackingDatabaseAutoConfiguration {
 
     @Bean
-//    @Primary
+    @Primary
     @ConfigurationProperties("app.datasource.tracking")
     public DataSourceProperties trackingDataSourceProperties() {
         return new DataSourceProperties();
