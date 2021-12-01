@@ -183,7 +183,8 @@ public class StpTrackingAnalyticsSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
         strategy = trackingService.saveStrategy(strategy);
     }
 

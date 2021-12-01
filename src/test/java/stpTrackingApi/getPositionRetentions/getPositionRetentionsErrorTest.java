@@ -1,9 +1,12 @@
 package stpTrackingApi.getPositionRetentions;
 
 
+import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -12,13 +15,20 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
+import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 
 import java.util.stream.Stream;
 
@@ -27,12 +37,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-@Slf4j
-@Epic("5885")
-@Subfeature("Альтернативные сценарии")
-@Service("stp-tracking-api")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
+@Epic("getPositionRetentions")
+@Feature("TAP-10862")
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
+@DisplayName("stp-tracking-api")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest(classes = {
+    TrackingDatabaseAutoConfiguration.class,
+    SocialDataBaseAutoConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    KafkaAutoConfiguration.class,
+    StpTrackingApiStepsConfiguration.class
+})
 
 public class getPositionRetentionsErrorTest {
     AnalyticsApi analyticsApi;

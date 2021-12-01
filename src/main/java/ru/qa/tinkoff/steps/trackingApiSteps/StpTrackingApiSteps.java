@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
@@ -89,9 +91,13 @@ public class StpTrackingApiSteps {
     private final SubscriptionBlockService subscriptionBlockService;
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
+    @Autowired(required = false)
+    StrategyTailValueDao strategyTailValueDao;
+
     public Client clientMaster;
     public Contract contractMaster;
     public Strategy strategyMaster;
+    public StrategyTailValue strategyTailValue;
     private final StringToByteSenderService kafkaSender;
 
 
@@ -302,7 +308,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -1026,5 +1033,22 @@ public class StpTrackingApiSteps {
 //        subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionBlock);
 
 //    }
+
+
+   public void createDateStrategyTailValue(UUID strategyId, Date date, String value) {
+        strategyTailValue = StrategyTailValue.builder()
+            .strategyId(strategyId)
+            .cut(date)
+            .value(new BigDecimal(value))
+            .build();
+        strategyTailValueDao.insertIntoStrategyTailValue(strategyTailValue);
+    }
+
+    public String getTitleStrategy() {
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest " + String.valueOf(randomNumber);
+        return title;
+    }
+
 
 }

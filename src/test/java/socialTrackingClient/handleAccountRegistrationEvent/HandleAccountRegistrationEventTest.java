@@ -71,7 +71,6 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Owner("ext.ebelyaninov")
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -80,6 +79,7 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
+
     TariffDataBaseAutoConfiguration.class
 })
 public class HandleAccountRegistrationEventTest {

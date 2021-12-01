@@ -47,12 +47,10 @@ import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
 @Slf4j
 @Epic("UpdateExchangePosition - Редактирования биржевой позиции")
-@Feature("TAP-7224")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,

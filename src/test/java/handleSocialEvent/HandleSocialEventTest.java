@@ -53,7 +53,7 @@ import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
 @DisplayName("Kafka")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
+//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -68,8 +68,8 @@ public class HandleSocialEventTest {
     ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
-    @Autowired
-    BillingService billingService;
+//    @Autowired
+//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

@@ -181,6 +181,12 @@ message PortfolioCommand {
 
         // Повторить синхронизацию портфеля
         RETRY_SYNCHRONIZATION = 5;
+        // Включить синхронизацию позиций в slave-портфеле в обе стороны
+        ENABLE_SYNCHRONIZATION = 6;
+        // Снять техническую блокировку с договора
+        UNBLOCK_CONTRACT = 7;
+
+
     }
 }
 

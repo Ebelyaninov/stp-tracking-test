@@ -59,7 +59,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
 @DisplayName("stp-tracking-analytics")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,

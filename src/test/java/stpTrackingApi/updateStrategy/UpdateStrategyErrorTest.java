@@ -64,7 +64,7 @@ import static org.hamcrest.Matchers.is;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
@@ -73,8 +73,6 @@ import static org.hamcrest.Matchers.is;
 public class UpdateStrategyErrorTest {
     @Autowired
     ProfileService profileService;
-    @Autowired
-    BillingService billingService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -829,7 +827,8 @@ public class UpdateStrategyErrorTest {
             .setSlavesCount(0)
             .setActivationTime(date)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
 
         strategy = trackingService.saveStrategy(strategy);
     }

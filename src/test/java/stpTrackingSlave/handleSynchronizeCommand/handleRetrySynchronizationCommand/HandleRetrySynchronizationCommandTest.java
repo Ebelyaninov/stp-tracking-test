@@ -58,7 +58,6 @@ import static org.hamcrest.Matchers.notNullValue;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -102,7 +101,7 @@ public class HandleRetrySynchronizationCommandTest {
     long subscriptionId;
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
     //    String SIEBEL_ID_MASTER = "4-1V1UVPX8";
-    String SIEBEL_ID_SLAVE = "5-1NIRKRJIH";
+    String SIEBEL_ID_SLAVE = "1-848IVEJ";
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
@@ -212,7 +211,7 @@ public class HandleRetrySynchronizationCommandTest {
         // добавляем запись о выставлении заявки по lave
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
             1, classCode, UUID.randomUUID(), new BigDecimal("108.11"), new BigDecimal("2"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
@@ -292,7 +291,7 @@ public class HandleRetrySynchronizationCommandTest {
         //создаем запись о выставлении заявки
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
             0, classCode, UUID.randomUUID(), new BigDecimal("108.11"), new BigDecimal("2"),
-            null, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
@@ -382,7 +381,7 @@ public class HandleRetrySynchronizationCommandTest {
         //создаем запись о выставленной заявке
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
             0, classCode, UUID.randomUUID(), new BigDecimal("108.11"), new BigDecimal("2"),
-            null, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
@@ -500,6 +499,182 @@ public class HandleRetrySynchronizationCommandTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1508130")
+    @DisplayName("C1508130. Портфель синхронизируется - выставляем ту же заявку. Slave_order.state Is Null. Action = sell")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1508130() {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        BigDecimal orderQty = new BigDecimal("22");
+        UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "3", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave в cassandra c поизицией
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
+            "7", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0964"),
+            new BigDecimal("-0.0211"), new BigDecimal("-2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        // добавляем запись о выставлении заявки по lave
+        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
+            1, classCode, orderKey, priceOrder, orderQty,
+            null, ticker, tradingClearingAccount, BigDecimal.valueOf(0));
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        // рассчитываем значение
+        BigDecimal lots = orderQty.divide(lot);
+        //проверяем, что выставилась новая заявка
+        await().atMost(TEN_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("2")), notNullValue());
+        checkOrderParameters(2, "1", "2", lot, lots, priceOrder, ticker, tradingClearingAccount,
+            classCode);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1508129")
+    @DisplayName("C1508129. Портфель синхронизируется - выставляем ту же заявку. Slave_order.state Is Null. Action = buy")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1508129() {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal orderQty = new BigDecimal("11");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
+            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            new BigDecimal("0.0319"), new BigDecimal("2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        //создаем запись о выставлении заявки
+        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
+            0, classCode, orderKey, priceOrder, orderQty,
+            null, ticker, tradingClearingAccount, new BigDecimal("0"));
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        BigDecimal lots = orderQty.divide(lot);
+        //проверяем, что выставилась новая заявка
+        await().atMost(TEN_SECONDS).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("2")), notNullValue());
+        checkOrderParameters(2, "0", "2", lot, lots, priceOrder, ticker, tradingClearingAccount,
+            classCode);
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1510128")
+    @DisplayName("C1510128. Портфель синхронизируется - выставляем ту же заявку. И slave_order.filled_quantity != 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1510128() {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal orderQty = new BigDecimal("33");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
+            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            new BigDecimal("0.0319"), new BigDecimal("2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        //создаем запись о выставлении заявки
+        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
+            0, classCode, orderKey, priceOrder, orderQty,
+            null, ticker, tradingClearingAccount, new BigDecimal("1"));
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        //проверяем, что не выставилась новая заявка
+        assertThat("Нашли новую запись", slaveOrderDao.findSlaveOrderWithVersionAndAttemps(contractIdSlave, strategyId, 2, Byte.valueOf("2")).toString(), is("Optional.empty"));
+    }
 
 
 //методы для тестов*************************************************************************************

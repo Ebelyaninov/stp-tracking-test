@@ -61,16 +61,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
-
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Slf4j
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("activateStrategy - Активация стратегии")
 @Feature("TAP-6815")
 @Subfeature("Успешные сценарии")
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -83,8 +81,6 @@ public class ActivateStrategySuccessTest {
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired

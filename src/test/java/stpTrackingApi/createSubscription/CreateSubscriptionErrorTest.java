@@ -56,7 +56,7 @@ import static org.hamcrest.Matchers.is;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = {BillingDatabaseAutoConfiguration.class,
+@SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
@@ -64,8 +64,6 @@ import static org.hamcrest.Matchers.is;
 })
 
 public class CreateSubscriptionErrorTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -421,7 +419,7 @@ public class CreateSubscriptionErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Стратегию можно создать только под открытый брокерский договор"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlaveNotBroker);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);
@@ -466,7 +464,7 @@ public class CreateSubscriptionErrorTest {
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Стратегию можно создать только под открытый брокерский договор"));
         Optional<Client> clientOpt = clientService.findClient(investIdSlaveNotBrokerOpen);
         assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
         Optional<Contract> contractOpt = contractService.findContract(contractIdSlave);

@@ -57,7 +57,7 @@ import static org.hamcrest.Matchers.is;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
+//    BillingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,

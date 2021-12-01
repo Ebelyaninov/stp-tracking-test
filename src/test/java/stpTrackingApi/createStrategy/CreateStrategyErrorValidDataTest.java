@@ -59,15 +59,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaAutoConfiguration.class
 })
 public class CreateStrategyErrorValidDataTest {
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

@@ -48,7 +48,6 @@ import static org.hamcrest.Matchers.is;
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -60,10 +59,9 @@ public class ConfirmMasterClientErrorTest {
     ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    String SIEBEL_ID = "5-22C671TPV";
+    String SIEBEL_ID = "5-34CAI32H";
     String xApiKey = "x-api-key";
-    @Autowired
-    BillingService billingService;
+
     @Autowired
     ProfileService profileService;
     @Autowired

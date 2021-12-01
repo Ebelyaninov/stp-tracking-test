@@ -73,7 +73,7 @@ app:
         password: L3j3Og2[6xoh
     tariff:
         #url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
-         url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
+         url: jdbc:postgresql://pg-invest-tariff-qa.m1.invest.cloud:5432/tariff
          username: tariff
          password: tariff
          driver-class-name: org.postgresql.Driver

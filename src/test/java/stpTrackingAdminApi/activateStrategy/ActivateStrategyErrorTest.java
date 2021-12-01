@@ -7,6 +7,7 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-
+@Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 
 @Epic("activateStrategy -  Активация стратегии")
@@ -53,7 +54,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @Subfeature("Альтернативные сценарии")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -75,8 +75,6 @@ public class ActivateStrategyErrorTest {
     TrackingService trackingService;
     @Autowired
     ProfileService profileService;
-    @Autowired
-    BillingService billingService;
     @Autowired
     StpTrackingAdminSteps steps;
 

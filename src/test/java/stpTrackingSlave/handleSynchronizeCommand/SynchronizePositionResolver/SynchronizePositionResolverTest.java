@@ -59,7 +59,6 @@ import static org.hamcrest.Matchers.notNullValue;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -71,8 +70,6 @@ public class SynchronizePositionResolverTest {
     StringToByteSenderService kafkaSender;
     @Autowired
     StringSenderService stringSenderService;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired

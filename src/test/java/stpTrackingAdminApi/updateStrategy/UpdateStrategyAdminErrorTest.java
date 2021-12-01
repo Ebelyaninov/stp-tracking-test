@@ -8,6 +8,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,16 +59,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-
+@Slf4j
 @Epic("updateStrategy - Обновление стратегии администратором")
-@Feature("TAP-7225")
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Subfeature("Альтернативные сценарии")
 @Service("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -83,8 +81,7 @@ public class UpdateStrategyAdminErrorTest {
     Contract contract;
     Strategy strategy;
 
-    @Autowired
-    BillingService billingService;
+
     @Autowired
     ProfileService profileService;
     @Autowired

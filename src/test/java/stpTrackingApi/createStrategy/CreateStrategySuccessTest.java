@@ -4,12 +4,16 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.core.IsNull;
+import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +34,7 @@ import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.*;
@@ -40,6 +45,7 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
@@ -52,6 +58,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -73,7 +80,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
+//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -86,8 +93,8 @@ public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     StrategyApi strategyApi;
-    @Autowired
-    BillingService billingService;
+//    @Autowired
+//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -183,13 +190,13 @@ public class CreateStrategySuccessTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.2", "0.04");
+            0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(3)).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
         //Находим значение времени удержания позиции в Cassandra invest_tracking.master_portfolio_position_retention
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(3)).until(() ->
             masterPortfolioPositionRetention =
                 masterPortfolioPositionRetentionDao.getMasterPortfolioPositionRetention(strategyId), notNullValue());
         checkParamMasterPortfolioPositionRetention(positionRetentionId);
@@ -244,7 +251,7 @@ public class CreateStrategySuccessTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.1", "0.03");
+            0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
@@ -293,7 +300,7 @@ public class CreateStrategySuccessTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(expectedResponse.getStrategy().getId());
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.5", "0.05");
+            0, "0", "0");
         //Находим запись о портфеле мастера в cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
@@ -397,7 +404,7 @@ public class CreateStrategySuccessTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(expectedResponse.getStrategy().getId());
         checkParamStrategy(contractId, titleNew, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.2", "0.04");
+            0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
@@ -453,7 +460,7 @@ public class CreateStrategySuccessTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.2", "0.04");
+            0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
@@ -528,12 +535,62 @@ public class CreateStrategySuccessTest {
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));
         strategy = strategyService.getStrategy(strategyId);
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
-            0, "0.2", "0.04");
+            0, "0", "0");
         //Находим запись о портфеле мастера в Cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
     }
+
+
+
+    private static Stream<Arguments> strategy() {
+        return Stream.of(
+            Arguments.of(ru.qa.tinkoff.tracking.entities.enums.StrategyStatus.draft, null),
+            Arguments.of(ru.qa.tinkoff.tracking.entities.enums.StrategyStatus.active, LocalDateTime.now())
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("strategy")
+    @AllureId("1515398")
+    @DisplayName("C1515398.CreateStrategy.На договор уже создана др. стратегия")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод создания стратегии на договоре ведущего")
+    void C1515398(ru.qa.tinkoff.tracking.entities.enums.StrategyStatus strategyStatus, LocalDateTime date) {
+        String title = steps.getTitleStrategy();
+        String description = "Тew test стратегия Autotest 007 - INITIALIZE";
+        //ToDo feeRate was disabled
+        String feeRate = "disabled";
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyStatus, 0, date, false);
+        strategy = strategyService.getStrategy(strategyId);
+        //Формируем body для запроса
+        BigDecimal basemoney = new BigDecimal("8000.0");
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
+        //Вызываем метод CreateStrategy
+        StrategyApi.CreateStrategyOper createSignal = strategyApi.createStrategy()
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios 8.1")
+            .body(createStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(422));
+        createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("К договору уже привязана другая торговая стратегия"));
+    }
+
 
 
     //*** Методы для работы тестов ***

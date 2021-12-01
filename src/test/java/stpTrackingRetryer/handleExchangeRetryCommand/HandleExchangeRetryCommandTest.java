@@ -77,7 +77,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("stp-tracking-retryer")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -90,8 +89,6 @@ public class HandleExchangeRetryCommandTest {
     StringToByteSenderService kafkaSender;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -262,7 +259,7 @@ public class HandleExchangeRetryCommandTest {
         createSlavePortfolioWithOutPosition(2, 2, baseMoneySlave, positionListSl);
         slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1, 0,
             classCode, java.util.UUID.randomUUID(), new BigDecimal(price), new BigDecimal("3"),
-            (byte) 0, ticker, tradingClearingAccount);
+            (byte) 0, ticker, tradingClearingAccount, null);
         //вычитываем из топика кафка tracking.slave.command все offset
         resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на повтор в топик биржи

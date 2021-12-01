@@ -57,7 +57,7 @@ import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -70,7 +70,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
@@ -85,8 +84,6 @@ public class HandleRetrySynchronizationCommandErrorTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     ByteToByteSenderService kafkaByteSender;
-    @Autowired
-    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -472,6 +469,150 @@ public class HandleRetrySynchronizationCommandErrorTest {
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         checkSlavePortfolioParameters(1,1,"6576.23");
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1510159")
+    @DisplayName("C1510159.Портфель синхронизируется - выставляем ту же заявку. Не нашли данные в кэше exchangePositionCache")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1510159 () {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal orderQty = new BigDecimal("3");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
+            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            new BigDecimal("0.0319"), new BigDecimal("2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        //создаем запись о выставлении заявки
+        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 1,
+            0, classCode, UUID.randomUUID(), priceOrder, orderQty,
+            null, "AAPL2", tradingClearingAccount, new BigDecimal("0"));
+        //вычитываем все события из tracking.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Contract getContract = contractService.getContract(contractIdSlave);
+
+        if (getContract.getBlocked() == false){
+            Thread.sleep(10000);
+        }
+
+        // ловим событие о блокировке slave в топике tracking.event
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(30));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.contract.event:  {}", event);
+        //проверяем, данные в сообщении
+        checkParamEvent(event, "UPDATED", "TRACKED", true);
+        //находим в БД автоследования contract
+        contract = contractService.getContract(contractIdSlave);
+        checkParamContract("tracked", true);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1510349")
+    @DisplayName("C1510349.Портфель синхронизируется - выставляем ту же заявку. Не нашли данные в кэше exchangePositionCache")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1510349 () {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal orderQty = new BigDecimal("3");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker, tradingClearingAccount,
+            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            new BigDecimal("0.0319"), new BigDecimal("2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        //создаем запись о выставлении заявки
+        slaveOrderDao.insertIntoSlaveOrder(contractIdSlave, strategyId, 2, 126,
+            0, classCode, UUID.randomUUID(), priceOrder, orderQty,
+            null, ticker, tradingClearingAccount, new BigDecimal("0"));
+        //вычитываем все события из tracking.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        Contract getContract = contractService.getContract(contractIdSlave);
+
+        if (getContract.getBlocked() == false){
+            Thread.sleep(90000);
+        }
+
+        // ловим событие о блокировке slave в топике tracking.event
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(60));
+        Pair<String, byte[]> message = messages.stream()
+            .filter(ms ->  ms.getKey().equals(contractIdSlave))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.contract.event:  {}", event);
+        //проверяем, данные в сообщении
+        checkParamEvent(event, "UPDATED", "TRACKED", true);
+        //находим в БД автоследования contract
+        contract = contractService.getContract(contractIdSlave);
+        checkParamContract("tracked", true);
     }
 
 

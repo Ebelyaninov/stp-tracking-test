@@ -54,6 +54,11 @@ message Event {
         OTC_EXECUTION_SELL_TRADE = 35; // Совершение внебиржевой сделки продажи через OTC-Execution
         OTC_EXECUTION_BUY_TRADE = 36; // Совершение внебиржевой сделки покупки через OTC-Execution
         OTC_EXECUTION_FEE = 37; // Удержание комиссии за сделку выставленную через OTC-Execution
+        // Корректировка отложенных изменений позиций
+        DELAYED_CORRECTION = 38;
+        // Изменения состояния отслеживания договора в автоследовании
+        TRACKING_STATE_UPDATE = 39;
+
     }
 }
 
