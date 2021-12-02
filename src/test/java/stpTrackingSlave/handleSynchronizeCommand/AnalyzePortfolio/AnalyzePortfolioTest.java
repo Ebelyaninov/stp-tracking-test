@@ -1191,10 +1191,10 @@ public class AnalyzePortfolioTest {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "9999.99", positionList);
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerSBER, tradingClearingAccountSBER,
-            "20", tickerUSD, tradingClearingAccountUSD, "10", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            "20", tickerGBP, tradingClearingAccountGBP, "10", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9999.99", masterPos);
         masterPos = steps.createListMasterPositionWithTwoPos(tickerSBER, tradingClearingAccountSBER,
-            "30", tickerUSD, tradingClearingAccountUSD, "10", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            "30", tickerGBP, tradingClearingAccountGBP, "10", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9999.99", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -2437,9 +2437,10 @@ public class AnalyzePortfolioTest {
     // ожидаем версию портфеля slave
     void checkSlavePortfolioVersion(int version) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, version);
-            if (slavePortfolio.getVersion() != version) {
-                Thread.sleep(5000);
+            if (slavePortfolio.getVersion() == version) {
+                i = 5;
             }
         }
     }
