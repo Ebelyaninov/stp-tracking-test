@@ -87,6 +87,7 @@ public class getBlockedContractsTest {
     UUID strategyId;
 
     Integer defaultLimit = 30;
+    int limit = 60;
 
     @BeforeAll
     void getDataClients() {
@@ -269,7 +270,6 @@ public class getBlockedContractsTest {
         assertThat("договор не равен", getblockedContracts.getItems().get(0).getId(), is(listOfBlockedId.first()));
 
     }
-
 
     public static int randomNumber(int min, int max) {
         int number = min + (int) (Math.random() * max);

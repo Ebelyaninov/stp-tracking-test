@@ -21,6 +21,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -280,26 +281,6 @@ public class StpTrackingAdminSteps {
             .execute(response -> response);
         contract = contractService.getContract(contractIdSlave);
 
-    }
-
-    public void getBlockedContractsWithParams(int limit, int cursor){
-        contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
-            .xAppNameHeader("invest")
-            .xTcsLoginHeader("tracking")
-            .limitQuery(limit)
-            .cursorQuery(cursor)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-    }
-
-    public void getBlockedContracts(){
-        contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
-            .xAppNameHeader("invest")
-            .xTcsLoginHeader("tracking")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
     }
 
 }
