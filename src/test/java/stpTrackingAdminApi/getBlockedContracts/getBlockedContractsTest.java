@@ -87,7 +87,9 @@ public class getBlockedContractsTest {
     UUID strategyId;
 
     Integer defaultLimit = 30;
-    int limit = 60;
+
+    String xApiKey = "x-api-key";
+    String key= "tracking";
 
     @BeforeAll
     void getDataClients() {
@@ -159,7 +161,7 @@ public class getBlockedContractsTest {
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .limitQuery(60)
@@ -195,7 +197,7 @@ public class getBlockedContractsTest {
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .limitQuery(1)
@@ -227,7 +229,7 @@ public class getBlockedContractsTest {
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .cursorQuery(cursorContract)
@@ -258,7 +260,7 @@ public class getBlockedContractsTest {
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(200))

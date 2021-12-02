@@ -87,7 +87,8 @@ public class getBlockedContractsErrorTest {
     UUID investIdMaster;
     UUID strategyId;
 
-    Integer defaultLimit = 30;
+    String xApiKey = "x-api-key";
+    String key= "tracking";
 
     @BeforeAll
     void getDataClients() {
@@ -140,7 +141,7 @@ public class getBlockedContractsErrorTest {
     void C1491578() {
         //вызываем метод getBlockedContracts
         contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response);
@@ -155,7 +156,7 @@ public class getBlockedContractsErrorTest {
     void C1491608() {
         //вызываем метод getBlockedContracts
         Response getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
@@ -179,7 +180,7 @@ public class getBlockedContractsErrorTest {
     void C1491580() {
         //вызываем метод getBlockedContracts
         Response getblockedContracts = contractApi.getBlockedContracts()
-            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
