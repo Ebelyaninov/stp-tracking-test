@@ -30,4 +30,13 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
     @Modifying(clearAutomatically = true)
     void deleteContractsByIdIn(Collection<String> ids);
 
+    List<Contract> findAllByBlocked (Boolean blocked);
+
+ //   List <Contract> findAllByState (String state);
+
+
+
+
+
+
 }

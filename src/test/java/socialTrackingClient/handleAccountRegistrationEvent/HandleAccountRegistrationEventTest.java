@@ -270,7 +270,7 @@ public class HandleAccountRegistrationEventTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
 
-        //Форимируем и отправляем событие в OffsetDateTimeтопик account.registration.event
+        //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).getId().toByteArray();
         //вычитываем все события из топика

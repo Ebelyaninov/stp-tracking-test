@@ -124,4 +124,22 @@ public class ContractService {
        return strategyByStatusNative;
     }
 
+    @Step("Поиск всех заблокированных и подписанных контрактов")
+    @SneakyThrows
+    public List<Contract> findAllBlockedContract(Boolean blocked) {
+        List<Contract> getBlockedContract = contractRepository.findAllByBlocked(blocked);
+        log.info("Successfully find contract {}", getBlockedContract);
+        Allure.addAttachment("Найденный контракт", "application/json", objectMapper.writeValueAsString(getBlockedContract));
+        return getBlockedContract;
+    }
+
+/*    @Step("Поиск всех заблокированных и подписанных контрактов")
+    @SneakyThrows
+    public List<Contract> findAllContractByState (String state) {
+        List<Contract> getContractByState = contractRepository.findAllByState(state);
+        log.info("Successfully find contract {}", getContractByState);
+        Allure.addAttachment("Найденный контракт", "application/json", objectMapper.writeValueAsString(getContractByState));
+        return getContractByState;
+    }*/
+
 }

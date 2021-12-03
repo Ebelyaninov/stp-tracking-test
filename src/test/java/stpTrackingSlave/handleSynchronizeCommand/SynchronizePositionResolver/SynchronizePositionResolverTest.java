@@ -102,7 +102,8 @@ public class SynchronizePositionResolverTest {
     UUID strategyId;
     long subscriptionId;
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "5-JDFC5N71";
+    //String SIEBEL_ID_SLAVE = "5-JDFC5N71";
+    String SIEBEL_ID_SLAVE = "5-CQNPKPNH";
 
 
     String tickerShareABBV = "ABBV";
@@ -1017,8 +1018,8 @@ public class SynchronizePositionResolverTest {
             tradingClearingAccountPos = slavePortfolio.getPositions().get(0).getTradingClearingAccount();
         }
         if (lotsList.get(1).compareTo(new BigDecimal(baseMoneySlave)) < 0) {
-            quantityDiff = slavePortfolio.getPositions().get(0).getQuantityDiff();
-            tickerPos = slavePortfolio.getPositions().get(0).getTicker();
+            quantityDiff = slavePortfolio.getPositions().get(1).getQuantityDiff();
+            tickerPos = slavePortfolio.getPositions().get(1).getTicker();
             tradingClearingAccountPos = slavePortfolio.getPositions().get(1).getTradingClearingAccount();
         }
         // рассчитываем значение lots
