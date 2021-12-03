@@ -2,6 +2,7 @@ package ru.qa.tinkoff.steps.trackingAdminSteps;
 
 
 import io.qameta.allure.Step;
+import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,16 +17,17 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -35,6 +37,8 @@ import java.time.ZoneOffset;
 import java.util.*;
 
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 @Slf4j
 @Service
@@ -46,17 +50,26 @@ public class StpTrackingAdminSteps {
     private final ByteArrayReceiverService kafkaReceiver;
     private final ProfileService profileService;
     private final ExchangePositionService exchangePositionService;
+    private final SubscriptionService subscriptionService;
     @Autowired(required = false)
     private final MasterPortfolioDao masterPortfolioDao;
     public Client client;
     public Contract contract;
     public Strategy strategy;
+    public Subscription subscription;
+    Profile profile;
 
     ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
+    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
+        .ApiClient.api(ApiClient.Config.apiConfig()).contract();
+
+    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -101,6 +114,56 @@ public class StpTrackingAdminSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(score)
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
+        strategy = trackingService.saveStrategy(strategy);
+    }
+
+    //Метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
+    @SneakyThrows
+    public void createClientWithContractAndStrategyNew(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                                       UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
+                                                       ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
+                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+        //находим данные по клиенту в БД social
+        String image = "";
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        if (profile.getImage() == null) {
+            image = "";
+        }
+        else {
+            image = profile.getImage().toString();
+        }
+        //создаем запись о клиенте в tracking.client
+        client = clientService.createClient1(investId, ClientStatusType.registered, new SocialProfile()
+            .setId(profile.getId().toString())
+            .setNickname(profile.getNickname())
+            .setImage(image), riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contract = new Contract()
+            .setId(contractId)
+            .setClientId(client.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(null)
+            .setBlocked(false);
+        contract = contractService.saveContract(contract);
+        //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("result", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
+        strategy = new Strategy()
+            .setId(strategyId)
+            .setContract(contract)
+            .setTitle(title)
+            .setBaseCurrency(strategyCurrency)
+            .setRiskProfile(strategyRiskProfile)
+            .setDescription(description)
+            .setStatus(strategyStatus)
+            .setSlavesCount(slaveCount)
+            .setActivationTime(date)
+            .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false);
         strategy = trackingService.saveStrategy(strategy);
@@ -188,6 +251,36 @@ public class StpTrackingAdminSteps {
             .build();
         //insert запись в cassandra
         masterPortfolioDao.insertIntoMasterPortfolioWithChangedAt(contractIdMaster, strategyId, version, baseMoneyPosition, positionList, date);
+    }
+
+    //вызываем метод CreateSubscription для slave
+    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebleIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        contract = contractService.getContract(contractIdSlave);
+    }
+
+    //вызываем метод blockContract для slave
+    public void BlockContract(String contractIdSlave) {
+        contractApi.blockContract()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        contract = contractService.getContract(contractIdSlave);
+
     }
 
 }

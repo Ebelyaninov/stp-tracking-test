@@ -7,6 +7,7 @@ import com.vladmihalcea.hibernate.type.range.Range;
 import com.google.protobuf.Timestamp;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +26,11 @@ import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -54,6 +57,8 @@ import java.util.stream.Collectors;
 
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
@@ -68,8 +73,10 @@ public class StpTrackingApiSteps {
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
-
-
+    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
+    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
+        .ApiClient.api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).contract();
 
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ApiClient.Config.apiConfig()).cache();
 
@@ -955,6 +962,37 @@ public class StpTrackingApiSteps {
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
+
+    //вызываем метод CreateSubscription для slave
+    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
+        subscriptionApi.createSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebleIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
+        contractSlave = contractService.getContract(contractIdSlave);
+    }
+
+    //вызываем метод blockContract для slave
+    public void BlockContract(String contractIdSlave) {
+        contractApi.blockContract()
+            .reqSpec(r -> r.addHeader("X-API_KEY", "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        contractSlave = contractService.getContract(contractIdSlave);
+
+    }
+
 
 
 //    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache
