@@ -479,7 +479,7 @@ public class GetStrategyTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, subscriptionStatus, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         GetStrategyResponse getStrategy = strategyApi.getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -609,7 +609,7 @@ public class GetStrategyTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, subscriptionStatus, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, true);
+            null, true, false);
         subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -664,7 +664,7 @@ public class GetStrategyTest {
         OffsetDateTime endTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, true);
+            null, true, false);
         subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -718,7 +718,7 @@ public class GetStrategyTest {
         OffsetDateTime endTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

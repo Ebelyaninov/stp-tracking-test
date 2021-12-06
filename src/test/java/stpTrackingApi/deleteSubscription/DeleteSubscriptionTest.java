@@ -156,7 +156,7 @@ public class DeleteSubscriptionTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave,ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         //находим подписку и проверяем по ней данные
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -235,7 +235,7 @@ public class DeleteSubscriptionTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave,ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         //находим подписку и проверяем по ней данные
         strategyMaster = strategyService.getStrategy(strategyId);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -320,7 +320,7 @@ public class DeleteSubscriptionTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave,ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         strategyMaster = strategyService.getStrategy(strategyId);
         //находим подписку и проверяем по ней данные
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);

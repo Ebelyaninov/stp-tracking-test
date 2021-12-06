@@ -42,7 +42,7 @@ app:
       password: account_reader
       driver-class-name: org.postgresql.Driver
       configuration:
-        maximum-pool-size: 4
+        maximum-pool-size: 3
     tracking:
       #url: jdbc:postgresql://db-tracking.trading.local:5432/tracking
       url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5432/tracking
@@ -50,7 +50,7 @@ app:
       password: tracking
       driver-class-name: org.postgresql.Driver
       configuration:
-        maximum-pool-size: 4
+        maximum-pool-size: 3
       hikari:
         idle-timeout: 10000
     social:
@@ -60,7 +60,7 @@ app:
       password: social
       driver-class-name: org.postgresql.Driver
       configuration:
-        maximum-pool-size: 4
+        maximum-pool-size: 3
     cassandra:
       tracking:
         #contactpoints: m1-qa-common-transit-cas-1.ost.tinkoff
@@ -78,7 +78,7 @@ app:
          password: tariff
          driver-class-name: org.postgresql.Driver
          configuration:
-            maximum-pool-size: 4
+            maximum-pool-size: 3
          hikari:
             idle-timeout: 10000
 
