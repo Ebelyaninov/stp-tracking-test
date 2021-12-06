@@ -519,11 +519,24 @@ public class StpTrackingApiSteps {
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
-    public void createContractAndStrategyDraft(Client clientMaster, String contractId, ContractRole contractRole, ContractState contractState,
+    public void createContractAndStrategyDraft(String SIEBLE_ID, UUID investId, String contractId, ClientRiskProfile riskProfile, ContractRole contractRole, ContractState contractState,
                                                UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, boolean overloaded) {
 
+        //находим данные по клиенту в БД social
+        String image = "";
+        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        if (profile.getImage() == null) {
+            image = "";
+        } else {
+            image = profile.getImage().toString();
+        }
+        //создаем запись о клиенте в tracking.client
+        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
+            .setId(profile.getId().toString())
+            .setNickname(profile.getNickname())
+            .setImage(image), riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
             .setId(contractId)
@@ -543,10 +556,12 @@ public class StpTrackingApiSteps {
             .setDescription(description)
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
-            .setActivationTime(date);
+            .setActivationTime(date)
+            .setOverloaded(overloaded);
 
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
+
 
 
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client

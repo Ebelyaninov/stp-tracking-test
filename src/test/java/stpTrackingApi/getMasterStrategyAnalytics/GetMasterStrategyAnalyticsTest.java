@@ -375,9 +375,9 @@ public class GetMasterStrategyAnalyticsTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createContractAndStrategyDraft(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, null,null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), false);
+            StrategyStatus.draft, 0, null, false);
         //создаем портфель в кассандра без позиций
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         // вызываем метод getMasterStrategyAnalytics
