@@ -510,7 +510,8 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(score)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -884,7 +885,7 @@ public class StpTrackingApiSteps {
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, ClientRiskProfile clientRiskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                  java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
+                                  java.sql.Timestamp dateEnd, Boolean subscriptionBlocked, Boolean contractBlocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient1(investId, ClientStatusType.none, null, clientRiskProfile);
         // создаем запись о договоре клиента в tracking.contract
@@ -894,7 +895,7 @@ public class StpTrackingApiSteps {
             .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
-            .setBlocked(false);
+            .setBlocked(contractBlocked);
         contractSlave = contractService.saveContract(contractSlave);
         //создаем запись подписке клиента
         subscription = new Subscription()
@@ -903,7 +904,7 @@ public class StpTrackingApiSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked);
+            .setBlocked(subscriptionBlocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

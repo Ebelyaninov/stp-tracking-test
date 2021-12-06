@@ -169,7 +169,8 @@ public class СheckStrategyTitleTest {
             .setSlavesCount(0)
             .setActivationTime(null)
             .setScore(1)
-            .setFeeRate(feeRateProperties);
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false);
 
         strategy = trackingService.saveStrategy(strategy);
 

@@ -505,7 +505,7 @@ public class GetSignalsTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
             .strategyIdPath(strategyId)
@@ -832,7 +832,7 @@ public class GetSignalsTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-            null, false);
+            null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
             .strategyIdPath(strategyId)
