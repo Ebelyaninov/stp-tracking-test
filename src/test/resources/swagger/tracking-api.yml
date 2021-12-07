@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.8.0
+  version: 1.9.0
 
 servers:
   - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
@@ -740,6 +740,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetStrategiesCatalogResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/catalog/tab:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - strategy
+      summary: getStrategiesCatalogTabs
+      description: Возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий
+      operationId: getStrategiesCatalogTabs
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStrategiesCatalogTabsResponse'
         400:
           $ref: '#/components/responses/Error'
         401:
@@ -1957,6 +1997,35 @@ components:
           $ref: '#/components/schemas/Price'
         exchangePosition:
           $ref: '#/components/schemas/ExchangePosition'
+
+    GetStrategiesCatalogTabsResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogStrategyTab'
+
+    CatalogStrategyTab:
+      description: Вкладка для фильтрации в каталоге стратегий
+      type: object
+      required:
+        - tabId
+        - title
+      properties:
+        tabId:
+          description: Идентификатор вкладки
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          minLength: 1
+          example: conservative-risk-level
+        title:
+          description: Отображаемое наименование
+          type: string
+          minLength: 1
+          example: Низкий риск
 
     ErrorResponse:
       description: Ответ с ошибкой
