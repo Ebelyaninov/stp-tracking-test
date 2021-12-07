@@ -1,0 +1,3 @@
+include:
+  - 'https://s3.tinkoff.ru/devplatform-resources/compliance-ci/templates/compliance.gitlab-ci.yml'
+  - local: .gitlab-ci.yml
