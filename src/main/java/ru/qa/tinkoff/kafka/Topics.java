@@ -33,7 +33,7 @@ public enum Topics {
     ACCOUNT_REGISTRATION_EVENT("account.registration.event"),
     TRACKING_CONSUMER_COMMAND("tracking.consumer.command"),
     CCYEV("CCYEV"),
-
+    ORIGINATION_TESTING_RISK_NOTIFICATION_RAW("origination.testing.risk.notification.raw"),
     ;
     private final String name;
 }
