@@ -21,19 +21,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.SignalsCount;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.SignalsCountDao;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
-
-import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
-import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
-import ru.tinkoff.trading.tracking.Tracking;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
+import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.tinkoff.trading.tracking.Tracking;
+
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
@@ -121,7 +120,6 @@ public class CalculateSignalsCountTest {
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.RECALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
@@ -132,7 +130,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
+        checkMasterSignalsCount(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
@@ -157,7 +155,6 @@ public class CalculateSignalsCountTest {
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
@@ -168,7 +165,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
+        checkMasterSignalsCount(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
@@ -207,21 +204,20 @@ public class CalculateSignalsCountTest {
             "90.18", "3", 11);
         createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18", "1", 12);
-        Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNALS_COUNT,
             strategyIdByte);
-
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytes = calculateCommand.toByteArray();
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
+//        Thread.sleep(5000);
+        checkMasterSignalsCount(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
@@ -241,13 +237,11 @@ public class CalculateSignalsCountTest {
             "3.09", "4", 12);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
         signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId);
         long countRecord = signalsCountDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
         assertThat("количество сигналов по стратегии не равно", signalsCount.getValue(), is(count));
     }
-
 
 
     @SneakyThrows
@@ -274,7 +268,6 @@ public class CalculateSignalsCountTest {
             "90.18", "3", 11);
         createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
             "190.18", "1", 12);
-        Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -287,7 +280,6 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
@@ -305,7 +297,7 @@ public class CalculateSignalsCountTest {
             "3.17", "4", 12);
         createMasterSignal(0, 1, 11, strategyId, tickerNok, tradingClearingAccountNok,
             "3.09", "4", 12);
-        Thread.sleep(3000);
+//        Thread.sleep(3000);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         OffsetDateTime createTimeNew = OffsetDateTime.now();
         Tracking.AnalyticsCommand reCalculateCommand = steps.createCommandAnalytics(createTimeNew, cutTime,
@@ -315,9 +307,10 @@ public class CalculateSignalsCountTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = reCalculateCommand.toByteArray();
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
-        Thread.sleep(5000);
+//        Thread.sleep(5000);
         long countRecord = signalsCountDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
+        checkMasterSignalsCount(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
@@ -346,8 +339,7 @@ public class CalculateSignalsCountTest {
     }
 
 
-
-   //методы создает записи по сигналам стратегии
+    //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignal(UUID strategyId) {
         createMasterSignal(31, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
             "4.07", "4", 12);
@@ -388,6 +380,16 @@ public class CalculateSignalsCountTest {
         masterSignalDao.insertIntoMasterSignal(masterSignal);
     }
 
+
+    // ожидаем версию портфеля slave
+    void checkMasterSignalsCount(UUID strategyId) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId);
+            if (signalsCount.getStrategyId() == null) {
+                Thread.sleep(5000);
+            }
+        }
+    }
 
 
 }

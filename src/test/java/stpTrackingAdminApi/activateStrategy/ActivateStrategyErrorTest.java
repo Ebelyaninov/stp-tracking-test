@@ -47,11 +47,9 @@ import static io.qameta.allure.Allure.step;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-
 @Epic("activateStrategy -  Активация стратегии")
-@Feature("TAP-6815")
-@Service("stp-tracking-admin")
 @Subfeature("Альтернативные сценарии")
+@DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

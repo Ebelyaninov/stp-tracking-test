@@ -7,7 +7,6 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
-import io.restassured.response.Response;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +20,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioRate;
@@ -32,26 +30,24 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
-import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
-import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.tinkoff.trading.tracking.Tracking;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
@@ -107,10 +103,7 @@ public class CalculateMasterPortfolioRateTest {
     String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
     String contractIdMaster;
 
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
-        .api(ApiClient.Config.apiConfig()).instruments();
+    String description = "new test стратегия autotest";
 
 
     @AfterEach
@@ -156,24 +149,16 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C966227(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
@@ -194,42 +179,43 @@ public class CalculateMasterPortfolioRateTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateTs = fmt.format(cutTime);
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," +  steps.instrumet2 + "," + steps.instrumet3 + "," +  steps.instrumet4 + "," +
-            steps.instrumet5 + "," +  steps.instrumet6 + "," +  steps.instrumet7;
+        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4 + "," +
+            steps.instrumet5 + "," + steps.instrumet6 + "," + steps.instrumet7;
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 7);
         //получаем параметры для расчета стоимости портфеля bonds
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         //группируем данные по показателям
-        Map<PositionDateFromFireg, BigDecimal> positionIdMap = getPositionsMap(pricesPos,  nominal,
-             minPriceIncrement, aciValue,  baseMoney);
-        BigDecimal valuePortfolio = getValuePortfolio(pricesPos,  nominal,
-        minPriceIncrement, aciValue,  baseMoney);
+        Map<PositionDateFromFireg, BigDecimal> positionIdMap = getPositionsMap(pricesPos, nominal,
+            minPriceIncrement, aciValue, baseMoney);
+        BigDecimal valuePortfolio = getValuePortfolio(pricesPos, nominal,
+            minPriceIncrement, aciValue, baseMoney);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
         //определяем стоимость каждой группы
-        sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
     }
-
 
 
     @SneakyThrows
@@ -240,24 +226,15 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978635(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "77545.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
@@ -278,31 +255,24 @@ public class CalculateMasterPortfolioRateTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateTs = fmt.format(cutTime);
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," +  steps.instrumet2 + "," + steps.instrumet3;
+        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3;
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
         //получаем параметры для расчета стоимости портфеля bonds
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         BigDecimal valuePos3 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
             if (pair.getKey().equals(steps.instrumet2)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = valuePosBonds(priceTs,nominal,minPriceIncrement, aciValue, valuePos2);
+                valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
             if (pair.getKey().equals(steps.instrumet3)) {
                 valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
@@ -323,16 +293,24 @@ public class CalculateMasterPortfolioRateTest {
         sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
     }
-
 
 
     @SneakyThrows
@@ -344,29 +322,21 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на" +
         " заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978760() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
         steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
         steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
-        steps.createMasterPortfolioTwoPosition(20,3,"119335.55",contractIdMaster, strategyId);
+        steps.createMasterPortfolioTwoPosition(20, 3, "119335.55", contractIdMaster, strategyId);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -385,30 +355,23 @@ public class CalculateMasterPortfolioRateTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateTs = fmt.format(cutTime);
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," +  steps.instrumet2;
+        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
-        //получаем значения по bond из fireg
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        //получаем параметры для расчета стоимости портфеля bonds
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
             if (pair.getKey().equals(steps.instrumet2)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = valuePosBonds(priceTs,nominal,minPriceIncrement, aciValue, valuePos2);
+                valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
         }
         BigDecimal valuePortfolio = valuePos1
@@ -424,22 +387,30 @@ public class CalculateMasterPortfolioRateTest {
         sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
-        steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster,strategyId);
-        steps.createMasterPortfolioFourPosition(10, 5, "73445.55", contractIdMaster,strategyId);
+        checkParam(sectors, types, companys, cut, cutInCommand);
+        steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster, strategyId);
+        steps.createMasterPortfolioFourPosition(10, 5, "73445.55", contractIdMaster, strategyId);
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
         masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
     }
 
 
@@ -452,29 +423,21 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля" +
         " на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978790() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
-        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster,strategyId);
-        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster,strategyId);
-        steps.createMasterPortfolioTwoPosition(20,3,"119335.55", contractIdMaster,strategyId );
+        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
+        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
+        steps.createMasterPortfolioTwoPosition(20, 3, "119335.55", contractIdMaster, strategyId);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -493,30 +456,23 @@ public class CalculateMasterPortfolioRateTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateTs = fmt.format(cutTime);
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," +  steps.instrumet2;
+        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
-        //получаем значения по bond из fireg
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        //получаем параметры для расчета стоимости портфеля bonds
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
             if (pair.getKey().equals(steps.instrumet2)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = valuePosBonds(priceTs,nominal,minPriceIncrement, aciValue, valuePos2);
+                valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
         }
         BigDecimal valuePortfolio = valuePos1
@@ -532,6 +488,15 @@ public class CalculateMasterPortfolioRateTest {
         sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
@@ -539,7 +504,7 @@ public class CalculateMasterPortfolioRateTest {
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
         //добавляем версия портфеля мастера
         steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster, strategyId);
         steps.createMasterPortfolioFourPosition(10, 5, "73445.55", contractIdMaster, strategyId);
@@ -547,7 +512,7 @@ public class CalculateMasterPortfolioRateTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //расчитываем новые доли
         String baseMoneyNew = "73445.55";
-        String ListInstNew =   steps.instrumet1 + "," +  steps.instrumet2 + "," +  steps.instrumet3 + "," +  steps.instrumet4;
+        String ListInstNew = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4;
         Map<String, BigDecimal> pricesPosNew = steps.getPriceFromMarketAllDataWithDate(ListInstNew, "last", dateTs, 4);
         BigDecimal valuePosNew1 = BigDecimal.ZERO;
         BigDecimal valuePosNew2 = BigDecimal.ZERO;
@@ -555,13 +520,13 @@ public class CalculateMasterPortfolioRateTest {
         BigDecimal valuePosNew4 = BigDecimal.ZERO;
         Iterator itNew = pricesPosNew.entrySet().iterator();
         while (itNew.hasNext()) {
-            Map.Entry pair = (Map.Entry)itNew.next();
+            Map.Entry pair = (Map.Entry) itNew.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePosNew1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
             if (pair.getKey().equals(steps.instrumet2)) {
                 String priceTs = pair.getValue().toString();
-                valuePosNew2 = valuePosBonds(priceTs,nominal,minPriceIncrement, aciValue, valuePos2);
+                valuePosNew2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
             if (pair.getKey().equals(steps.instrumet3)) {
                 valuePosNew3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
@@ -587,13 +552,20 @@ public class CalculateMasterPortfolioRateTest {
         sectorsNew.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolioNew, 4, RoundingMode.HALF_UP));
         typesNew.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolioNew, 4, RoundingMode.HALF_UP));
         companysNew.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolioNew, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSumNew = calculateSumWithoutMoneyGroup(sectorsNew, "money");
+        BigDecimal sectorRateSumNew = calculateSumWithoutMoneyGroup(typesNew, "money");
+        BigDecimal companyRateSumNew = calculateSumWithoutMoneyGroup(companysNew, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectorsNew.put("money", BigDecimal.ONE.subtract(typeRateSumNew));
+        typesNew.put("money", BigDecimal.ONE.subtract(sectorRateSumNew));
+        companysNew.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSumNew));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         //Проверяем параметры
-        checkParam ( sectorsNew, typesNew, companysNew,   cut, cutInCommand);
+        checkParam(sectorsNew, typesNew, companysNew, cut, cutInCommand);
     }
-
-
 
 
     @SneakyThrows
@@ -631,22 +603,14 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля " +
         "на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978840() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -673,26 +637,18 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978841() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String ticker8 = "TEST";
         String tradingClearingAccount8 = "L01+00000F00";
         String quantity8 = "3";
         String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -718,7 +674,7 @@ public class CalculateMasterPortfolioRateTest {
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
@@ -734,14 +690,23 @@ public class CalculateMasterPortfolioRateTest {
         sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
     }
 
 
@@ -752,26 +717,18 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978843() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String ticker8 = "FXITTEST";
         String tradingClearingAccount8 = "L01+00002F00";
         String quantity8 = "3";
         String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -797,7 +754,7 @@ public class CalculateMasterPortfolioRateTest {
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
@@ -813,16 +770,24 @@ public class CalculateMasterPortfolioRateTest {
         sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
         companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_UP));
-        await().atMost(FIVE_SECONDS).until(() ->
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
-        checkParam ( sectors, types, companys,   cut, cutInCommand);
+        checkParam(sectors, types, companys, cut, cutInCommand);
     }
-
 
 
     @SneakyThrows
@@ -849,18 +814,13 @@ public class CalculateMasterPortfolioRateTest {
         String tradingClearingAccountMoney = "MB9885503216";
         String quantityMoney = "2000";
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -934,13 +894,12 @@ public class CalculateMasterPortfolioRateTest {
     }
 
 
-
-
-
 //методы для работы тестов*******************************************************************************
 
+
     Map<PositionDateFromFireg, BigDecimal> getPositionsMap(Map<String, BigDecimal> pricesPos, String nominal,
-                                                           BigDecimal minPriceIncrement, String aciValue,String baseMoney) {
+                                                           BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
+
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         BigDecimal valuePos3 = BigDecimal.ZERO;
@@ -948,9 +907,10 @@ public class CalculateMasterPortfolioRateTest {
         BigDecimal valuePos5 = BigDecimal.ZERO;
         BigDecimal valuePos6 = BigDecimal.ZERO;
         BigDecimal valuePos7 = BigDecimal.ZERO;
+
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
@@ -963,7 +923,7 @@ public class CalculateMasterPortfolioRateTest {
                     .scaleByPowerOfTen(-2);
                 BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
                     .multiply(minPriceIncrementNew);
-                BigDecimal price =roundPrice
+                BigDecimal price = roundPrice
                     .add(new BigDecimal(aciValue));
                 valuePos2 = new BigDecimal(steps.quantity2).multiply(price);
             }
@@ -983,15 +943,16 @@ public class CalculateMasterPortfolioRateTest {
                 valuePos7 = new BigDecimal(steps.quantity7).multiply((BigDecimal) pair.getValue());
             }
         }
-        BigDecimal valuePortfolio = valuePos1
-            .add(valuePos2)
-            .add(valuePos3)
-            .add(valuePos4)
-            .add(valuePos5)
-            .add(valuePos6)
-            .add(valuePos7)
-            .add(new BigDecimal(baseMoney));
-        log.info("valuePortfolio:  {}", valuePortfolio);
+
+//        BigDecimal valuePortfolio = valuePos1
+//            .add(valuePos2)
+//            .add(valuePos3)
+//            .add(valuePos4)
+//            .add(valuePos5)
+//            .add(valuePos6)
+//            .add(valuePos7)
+//            .add(new BigDecimal(baseMoney));
+//        log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
         positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
         positionIdMap.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePos2);
@@ -1003,8 +964,8 @@ public class CalculateMasterPortfolioRateTest {
         return positionIdMap;
     }
 
-   BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,
-                                                           BigDecimal minPriceIncrement, String aciValue,String baseMoney) {
+    BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,
+                                 BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         BigDecimal valuePos3 = BigDecimal.ZERO;
@@ -1014,7 +975,7 @@ public class CalculateMasterPortfolioRateTest {
         BigDecimal valuePos7 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(steps.instrumet1)) {
                 valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
             }
@@ -1027,7 +988,7 @@ public class CalculateMasterPortfolioRateTest {
                     .scaleByPowerOfTen(-2);
                 BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
                     .multiply(minPriceIncrementNew);
-                BigDecimal price =roundPrice
+                BigDecimal price = roundPrice
                     .add(new BigDecimal(aciValue));
                 valuePos2 = new BigDecimal(steps.quantity2).multiply(price);
             }
@@ -1060,40 +1021,41 @@ public class CalculateMasterPortfolioRateTest {
         return valuePortfolio;
     }
 
-    Map<String, BigDecimal> getSectors (Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney){
+    Map<String, BigDecimal> getSectors(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> sectors = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getSector(),
                 Map.Entry::getValue, BigDecimal::add));
-        sectors.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
+
+//        sectors.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
         return sectors;
     }
 
-    Map<String, BigDecimal> getTypes (Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney){
+    Map<String, BigDecimal> getTypes(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> types = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getType(),
                 Map.Entry::getValue, BigDecimal::add));
-        types.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
+//        types.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
         return types;
     }
 
-    Map<String, BigDecimal> getCompanys (Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney){
+    Map<String, BigDecimal> getCompanys(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> companys = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getCompany(),
                 Map.Entry::getValue, BigDecimal::add));
-        companys.merge("Денежные средства", new BigDecimal(baseMoney), BigDecimal::add);
+//        companys.merge("Денежные средства", new BigDecimal(baseMoney), BigDecimal::add);
         return companys;
     }
 
 
-    void checkParam (Map<String, BigDecimal> sectors, Map<String, BigDecimal> types,Map<String,
-        BigDecimal> companys,  LocalDateTime cut, LocalDateTime cutInCommand) {
+    void checkParam(Map<String, BigDecimal> sectors, Map<String, BigDecimal> types, Map<String,
+        BigDecimal> companys, LocalDateTime cut, LocalDateTime cutInCommand) {
         assertThat("доли по секторам не равны", true, is(sectors.equals(masterPortfolioRate.getSectorToRateMap())));
         assertThat("доли типам  не равны", true, is(types.equals(masterPortfolioRate.getTypeToRateMap())));
         assertThat("доли по компаниям не равны", true, is(companys.equals(masterPortfolioRate.getCompanyToRateMap())));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
     }
 
-    BigDecimal valuePosBonds(String priceTs, String nominal,BigDecimal minPriceIncrement, String aciValue, BigDecimal valuePos) {
+    BigDecimal valuePosBonds(String priceTs, String nominal, BigDecimal minPriceIncrement, String aciValue, BigDecimal valuePos) {
         BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
             .scaleByPowerOfTen(-2);
         BigDecimal minPriceIncrementNew = minPriceIncrement
@@ -1101,7 +1063,7 @@ public class CalculateMasterPortfolioRateTest {
             .scaleByPowerOfTen(-2);
         BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
             .multiply(minPriceIncrementNew);
-        BigDecimal price =roundPrice
+        BigDecimal price = roundPrice
             .add(new BigDecimal(aciValue));
         valuePos = new BigDecimal(steps.quantity2).multiply(price);
         return valuePos;
@@ -1109,18 +1071,18 @@ public class CalculateMasterPortfolioRateTest {
 
 
     void createMasterPortfolios() {
-        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10",contractIdMaster,  strategyId);
-        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioTwoPosition(20,3,"119335.55", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioFourPosition(10, 5, "73445.55", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioFivePosition(8, 6, "57545.35", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioSixPosition(6, 7, "34545.78", contractIdMaster,  strategyId);
-        steps.createMasterPortfolioSevenPosition(3, 8, "16551.10", contractIdMaster,  strategyId);
+        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
+        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
+        steps.createMasterPortfolioTwoPosition(20, 3, "119335.55", contractIdMaster, strategyId);
+        steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster, strategyId);
+        steps.createMasterPortfolioFourPosition(10, 5, "73445.55", contractIdMaster, strategyId);
+        steps.createMasterPortfolioFivePosition(8, 6, "57545.35", contractIdMaster, strategyId);
+        steps.createMasterPortfolioSixPosition(6, 7, "34545.78", contractIdMaster, strategyId);
+        steps.createMasterPortfolioSevenPosition(3, 8, "16551.10", contractIdMaster, strategyId);
     }
 
     List getPosListOne(String ticker, String tradingClearingAccount, String quantity,
-                       Tracking.Portfolio.Position positionAction,Date date) {
+                       Tracking.Portfolio.Position positionAction, Date date) {
         List<MasterPortfolio.Position> positionListMasterOne = new ArrayList<>();
         positionListMasterOne.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
@@ -1135,7 +1097,7 @@ public class CalculateMasterPortfolioRateTest {
 
     List getPosListTwo(String ticker1, String tradingClearingAccount1, String quantity1,
                        String ticker2, String tradingClearingAccount2, String quantity2,
-                       Tracking.Portfolio.Position positionAction,Date date) {
+                       Tracking.Portfolio.Position positionAction, Date date) {
         List<MasterPortfolio.Position> positionListMasterOne = new ArrayList<>();
         positionListMasterOne.add(MasterPortfolio.Position.builder()
             .ticker(ticker1)
@@ -1168,10 +1130,29 @@ public class CalculateMasterPortfolioRateTest {
         Date dateOne = Date.from(utc.toInstant());
         OffsetDateTime utcTwo = OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).minusHours(2);
         Date dateTwo = Date.from(utcTwo.toInstant());
-        List<MasterPortfolio.Position> positionListMasterOne =getPosListOne(ticker1, tradingClearingAccount1, quantity1, positionAction, dateOne);
+        List<MasterPortfolio.Position> positionListMasterOne = getPosListOne(ticker1, tradingClearingAccount1, quantity1, positionAction, dateOne);
         steps.createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMasterOne, 2, "32560.90", dateOne);
-        List<MasterPortfolio.Position> positionListMasterTwo =getPosListTwo(ticker1, tradingClearingAccount1, quantity1,
-            ticker2, tradingClearingAccount2,  quantity2,positionAction, dateOne);
+        List<MasterPortfolio.Position> positionListMasterTwo = getPosListTwo(ticker1, tradingClearingAccount1, quantity1,
+            ticker2, tradingClearingAccount2, quantity2, positionAction, dateOne);
         steps.createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMasterTwo, 3, "16551.10", dateTwo);
+    }
+
+
+    // ожидаем версию портфеля slave
+    void checkMasterPortfolioRate(UUID strategyId) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId);
+            if (masterPortfolioRate.getStrategyId() == null) {
+                Thread.sleep(5000);
+            }
+        }
+    }
+
+
+    private BigDecimal calculateSumWithoutMoneyGroup(Map<String, BigDecimal> map, String moneyGroupKey) {
+        return map.entrySet()
+            .stream()
+            .filter(entry -> !entry.getKey().equals(moneyGroupKey))
+            .map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

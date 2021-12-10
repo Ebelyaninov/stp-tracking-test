@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.repositories.ClientRepository;
@@ -79,6 +80,16 @@ public class ClientService {
         Allure.addAttachment("Удаленный клиент", "application/json", objectMapper.writeValueAsString(client));
         clientRepository.delete(client);
         log.info("Successfully deleted client {}", client.toString());
+    }
+
+
+    @Step("Удаление контракта по id")
+    @SneakyThrows
+    public Client deleteClientById(UUID clientId) {
+        Client client = clientRepository.deleteClientById(clientId);
+        log.info("Successfully find client {}", clientId);
+        Allure.addAttachment("Удаленый клиент", "application/json", objectMapper.writeValueAsString(clientId));
+        return client;
     }
 
     @Step("Создание клиента для автоследования")

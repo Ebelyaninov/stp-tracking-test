@@ -15,6 +15,8 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
+import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -71,6 +73,7 @@ public class StpTrackingAnalyticsSteps {
     public String company1 = "Сбер Банк";
     public String classCode1 = "TQBR";
     public String instrumet1 = ticker1 + "_" + classCode1;
+    public String quantityDiff1  = "-0.1247";
 
     public String ticker2 = "SU29009RMFS6";
 //   public String tradingClearingAccount2 = "L01+00000F00";
@@ -81,6 +84,7 @@ public class StpTrackingAnalyticsSteps {
    public String type2 = "bond";
    public String company2 = "ОФЗ";
    public String instrumet2 = ticker2 + "_" + classCode2;
+   public String quantityDiff2  = "-0.0069";
     //
     public String ticker3 = "LKOH";
     public String tradingClearingAccount3 = "L01+00002F00";
@@ -91,6 +95,7 @@ public class StpTrackingAnalyticsSteps {
     public String type3 = "share";
     public String company3 = "Лукойл";
     public String instrumet3 = ticker3 + "_" + classCode3;
+    public String quantityDiff3  = "0.0";
 
     public String ticker4 = "SNGSP";
     public String tradingClearingAccount4 = "L01+00002F00";
@@ -129,13 +134,13 @@ public class StpTrackingAnalyticsSteps {
     public String classCode7 = "CETS";
     public String sector7 = "money";
     public String type7 = "money";
-    public String company7 = "Денежные средства";
+    public String company7 = "Другое";
     public String instrumet7 = ticker7 + "_" + classCode7;
 
 
     public String ticker8 = "YNDX";
 //    public String tradingClearingAccount8 = "L01+00000F00";
-    public String tradingClearingAccount8 = "L01+00002F00";
+    public String tradingClearingAccount8 = "Y02+00001F00";
     public String quantity8 = "3";
     public String classCode8 = "TQBR";
     public String sector8 = "telecom";
@@ -148,6 +153,11 @@ public class StpTrackingAnalyticsSteps {
         .ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
         api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
+    InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
+        .api(ApiClient.Config.apiConfig()).instruments();
+
+
 //    public StpTrackingAnalyticsSteps() {
 //    }
 
@@ -775,6 +785,23 @@ public class StpTrackingAnalyticsSteps {
         return positionList;
     }
 
+    public List<SlavePortfolio.Position> createListSlavePositionWithOnePos(String ticker, String tradingClearingAccount,
+                                                                                String quantityPos, Date date, BigDecimal price,
+                                                                           BigDecimal quantityDiff)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .quantity(new BigDecimal(quantityPos))
+            .changedAt(date)
+            .price(price)
+            .quantityDiff(quantityDiff)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
+
 
     public List<SlavePortfolio.Position> createListSlavePositionWithTwoPosLight(String ticker1, String tradingClearingAccount1,
                                                                                 String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
@@ -794,10 +821,37 @@ public class StpTrackingAnalyticsSteps {
             .changedAt(date2)
             .lastChangeAction(null)
             .build());
+        return positionList;
+    }
 
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithTwoPos(String ticker1, String tradingClearingAccount1,
+                                                                                String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
+                                                                                String quantityPos2, Date date2, BigDecimal price1, BigDecimal price2,
+                                                                           BigDecimal quantityDiff1, BigDecimal quantityDiff2)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date1)
+            .price(price1)
+            .quantityDiff(quantityDiff1)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date2)
+            .price(price2)
+            .quantityDiff(quantityDiff2)
+            .lastChangeAction(null)
+            .build());
         return positionList;
 
     }
+
 
     public List<SlavePortfolio.Position> createListSlavePositionWithThreePosLight(String ticker1, String tradingClearingAccount1,
                                                                                   String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
@@ -826,9 +880,72 @@ public class StpTrackingAnalyticsSteps {
             .lastChangeAction(null)
             .build());
         return positionList;
+    }
 
+
+    public List<SlavePortfolio.Position> createListSlavePositionWithThreePos(String ticker1, String tradingClearingAccount1,
+                                                                                  String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
+                                                                                  String quantityPos2, Date date2, String ticker3, String tradingClearingAccount3,
+                                                                                  String quantityPos3, Date date3, BigDecimal price1, BigDecimal price2, BigDecimal price3,
+                                                                             BigDecimal quantityDiff1, BigDecimal quantityDiff2, BigDecimal quantityDiff3)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date1)
+            .price(price1)
+            .quantityDiff(quantityDiff1)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date2)
+            .price(price2)
+            .quantityDiff(quantityDiff2)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .quantity(new BigDecimal(quantityPos3))
+            .changedAt(date3)
+            .price(price3)
+            .quantityDiff(quantityDiff3)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
+    public String getTitleStrategy(){
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest" + randomNumber;
+        return title;
+    }
+
+
+
+    public List<String> getDateBondFromInstrument (String ticker, String classCode, String dateFireg) {
+        List<String> dateBond = new ArrayList<>();
+        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
+            .instrumentIdPath(ticker)
+            .idKindQuery("ticker")
+            .classCodeQuery(classCode)
+            .startDateQuery(dateFireg)
+            .endDateQuery(dateFireg)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String aciValue = resp.getBody().jsonPath().getString("[0].value");
+        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        dateBond.add(aciValue);
+        dateBond.add(nominal);
+        return dateBond;
 
     }
+
+
 
 
 

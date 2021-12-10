@@ -64,7 +64,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("activateStrategy - Активация стратегии")
-@Feature("TAP-6815")
 @Subfeature("Успешные сценарии")
 @DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

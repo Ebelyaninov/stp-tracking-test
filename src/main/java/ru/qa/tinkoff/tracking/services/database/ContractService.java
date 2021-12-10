@@ -59,6 +59,17 @@ public class ContractService {
         log.info("Successfully deleted strategy {}", contract.toString());
     }
 
+
+    @Step("Удаление контракта по id")
+    @SneakyThrows
+    public Contract deleteContractById(String contractId) {
+        Contract contract = contractRepository.deleteContractById(contractId);
+        log.info("Successfully find contract {}", contractId);
+        Allure.addAttachment("Удаленый контракт", "application/json", objectMapper.writeValueAsString(contractId));
+        return contract;
+    }
+
+
     @SneakyThrows
     @Step("Сохранение контракта")
     public Contract saveContract(Contract contract)  {

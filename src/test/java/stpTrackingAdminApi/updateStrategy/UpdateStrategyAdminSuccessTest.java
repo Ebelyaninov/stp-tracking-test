@@ -62,9 +62,10 @@ import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 @Slf4j
-@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("updateStrategy - Обновление стратегии администратором")
-@Service("stp-tracking-admin")
+@ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
+@Subfeature("Успешные сценарии")
+@DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

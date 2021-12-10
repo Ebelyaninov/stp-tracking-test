@@ -7,7 +7,6 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
-import io.restassured.response.Response;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +20,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
@@ -30,16 +28,13 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
-import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
-import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -103,16 +98,12 @@ public class CalculateMasterPortfolioValueTest {
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
 
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
-    InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
-        .api(ApiClient.Config.apiConfig()).instruments();
-
     MasterPortfolioValue masterPortfolioValue;
     String contractIdMaster;
     String SIEBEL_ID_MASTER = "5-192WBUXCI";
     UUID strategyId;
+
+    String description = "new test стратегия autotest";
 
     @AfterEach
     void deleteClient() {
@@ -158,23 +149,15 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C836966(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
@@ -216,24 +199,16 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C842614(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "73445.55";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
@@ -260,16 +235,9 @@ public class CalculateMasterPortfolioValueTest {
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 4);
         // получаем данные для расчета по облигациям
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
@@ -315,24 +283,16 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C842615(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
@@ -359,16 +319,9 @@ public class CalculateMasterPortfolioValueTest {
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 7);
         // получаем данные для расчета по облигациям
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePortfolio = steps.getValuePortfolio(pricesPos, nominal,
             minPriceIncrement, aciValue, baseMoney);
@@ -419,22 +372,14 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C838564() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -463,24 +408,16 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C848110() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // оздаем записи по портфелям
         steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
@@ -510,16 +447,9 @@ public class CalculateMasterPortfolioValueTest {
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
@@ -563,24 +493,16 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C986488() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // оздаем записи по портфелям
         steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
@@ -610,16 +532,9 @@ public class CalculateMasterPortfolioValueTest {
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(steps.ticker2)
-            .idKindQuery("ticker")
-            .classCodeQuery(steps.classCode2)
-            .startDateQuery(dateFireg)
-            .endDateQuery(dateFireg)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
-        String aciValue = resp.getBody().jsonPath().getString("[0].value");
-        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
@@ -669,26 +584,18 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C884062() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String ticker1 = "TEST";
         String tradingClearingAccount1 = "L01+00000F00";
         String quantity1 = "50";
         String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, steps.ticker8, steps.tradingClearingAccount8, steps.quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -714,7 +621,9 @@ public class CalculateMasterPortfolioValueTest {
         log.info("valuePortfolio:  {}", valuePortfolio);
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
+
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
+
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
@@ -731,26 +640,18 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C884361() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String ticker1 = "FXITTEST";
         String tradingClearingAccount1 = "L01+00002F00";
         String quantity1 = "500";
         String baseMoney = "16551.10";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, steps.ticker8, steps.tradingClearingAccount8, steps.quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);

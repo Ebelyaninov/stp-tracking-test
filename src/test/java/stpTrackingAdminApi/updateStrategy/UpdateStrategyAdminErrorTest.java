@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @Epic("updateStrategy - Обновление стратегии администратором")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Subfeature("Альтернативные сценарии")
-@Service("stp-tracking-admin")
+@DisplayName("stp-tracking-admin")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

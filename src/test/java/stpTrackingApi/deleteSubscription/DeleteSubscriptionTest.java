@@ -61,15 +61,12 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
-})
+    })
 public class DeleteSubscriptionTest {
-//    @Autowired
-//    BillingService billingService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -90,47 +87,49 @@ public class DeleteSubscriptionTest {
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
 
     Strategy strategyMaster;
+    Contract contractMaster;
+    Client clientMaster;
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
     String siebelIdMaster = "5-2G2O9XVOR";
-    String siebelIdSlave = "5-7ECGV169";
+    String siebelIdSlave = "1-4P8R6J5";
     String description = "new test стратегия autotest";
+    String contractIdMaster;
+    UUID investIdMaster;
+    UUID investIdSlave;
+    UUID strategyId;
+    String contractIdSlave;
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                subscriptionService.deleteSubscription(steps.subscription);
+                subscriptionService.deleteSubscription(subscriptionService.getSubscriptionByContract(contractIdSlave));
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(steps.contractSlave);
+                contractService.deleteContract(contractService.getContract(contractIdSlave));
             } catch (Exception e) {
             }
             try {
-                clientSlave = clientService.getClient(steps.clientSlave.getId());
+                clientService.deleteClient(clientService.getClient(investIdSlave));
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(steps.clientSlave);
+                trackingService.deleteStrategy(strategyService.getStrategy(strategyId));
             } catch (Exception e) {
             }
             try {
-                trackingService.deleteStrategy(steps.strategyMaster);
+                contractService.deleteContract(contractService.getContract(contractIdMaster));
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(steps.contractMaster);
-            } catch (Exception e) {
-            }
-            try {
-                clientService.deleteClient(steps.clientMaster);
+                clientService.deleteClient(clientService.getClient(investIdMaster));
             } catch (Exception e) {
             }
         });
     }
-
 
 
     @Test
@@ -139,15 +138,15 @@ public class DeleteSubscriptionTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C535360() throws Exception {
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -158,7 +157,9 @@ public class DeleteSubscriptionTest {
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //находим подписку и проверяем по ней данные
-        strategyMaster = strategyService.getStrategy(strategyId);
+
+//        contractMaster = contractService.getContract(contractIdMaster);
+//        clientMaster = clientService.getClient(investIdMaster);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
         assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
@@ -169,7 +170,7 @@ public class DeleteSubscriptionTest {
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
-        //вычитываем из топика кафка tracking.event все offset
+        //вычитываем из топика кафкаtracking.subscription.event все offset
         steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
         subscriptionApi.deleteSubscription()
             .xAppNameHeader("invest")
@@ -189,18 +190,15 @@ public class DeleteSubscriptionTest {
         log.info("Команда в tracking.master.command:  {}", event);
         LocalDateTime dateCreateTr = Instant.ofEpochSecond(event.getCreatedAt().getSeconds(), event.getCreatedAt().getNanos())
             .atZone(ZoneId.of("UTC+3")).toLocalDateTime();
+
         //проверяем, данные в сообщении
         assertThat("тип события не равен", event.getAction().toString(), is("DELETED"));
         assertThat("ID договора не равен", event.getSubscription().getContractId(), is(contractIdSlave));
         assertThat("ID стратегии не равен", steps.uuid(event.getSubscription().getStrategy().getId()), is(strategyId));
+
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(0));
-        //находим подписку и проверяем по ней данные
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("inactive"));
-        assertThat("время удаления подписки не равно", subscription.getEndTime().toLocalDateTime(), is(dateCreateTr));
         //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
         assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
@@ -208,6 +206,12 @@ public class DeleteSubscriptionTest {
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(IsNull.nullValue()));
         clientSlave = clientService.getClient(investIdSlave);
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
+        //находим подписку и проверяем по ней данные
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
+        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("inactive"));
+        assertThat("время удаления подписки не равно", subscription.getEndTime().toLocalDateTime(), is(dateCreateTr));
+        strategyMaster = strategyService.getStrategy(strategyId);
     }
 
 
@@ -218,15 +222,23 @@ public class DeleteSubscriptionTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C1051655() throws Exception {
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        try {
+            contractService.deleteContract(contractService.getContract(contractIdSlave));
+        } catch (Exception e) {
+        }
+        try {
+            clientService.deleteClient(clientService.getClient(investIdSlave));
+        } catch (Exception e) {
+        }
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -238,6 +250,8 @@ public class DeleteSubscriptionTest {
             null, false, false);
         //находим подписку и проверяем по ней данные
         strategyMaster = strategyService.getStrategy(strategyId);
+//        contractMaster = contractService.getContract(contractIdMaster);
+//        clientMaster = clientService.getClient(investIdMaster);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
         assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
@@ -303,15 +317,15 @@ public class DeleteSubscriptionTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C1219549() throws Exception {
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        String contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -322,6 +336,8 @@ public class DeleteSubscriptionTest {
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         strategyMaster = strategyService.getStrategy(strategyId);
+//        contractMaster = contractService.getContract(contractIdMaster);
+//        clientMaster = clientService.getClient(investIdMaster);
         //находим подписку и проверяем по ней данные
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));

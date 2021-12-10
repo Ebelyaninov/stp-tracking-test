@@ -1,11 +1,15 @@
 package ru.qa.tinkoff.tracking.repositories;
 
+import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
+import lombok.SneakyThrows;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 
 import javax.transaction.Transactional;
@@ -29,5 +33,10 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     void deleteClientsByIdIn(Collection<UUID> ids);
 
     Client findByIdAndMasterStatus(UUID id, ClientStatusType masterStatus);
+
+
+    @Query(nativeQuery = true, value = "delete from client where id =:id")
+    Client deleteClientById(@Param(value = "id") UUID clientId);
+
 
 }
