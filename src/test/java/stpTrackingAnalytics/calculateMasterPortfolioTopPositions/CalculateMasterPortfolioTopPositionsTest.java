@@ -148,6 +148,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -207,6 +208,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -261,8 +263,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        Thread.sleep(5000);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -352,6 +354,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -537,6 +540,18 @@ public class CalculateMasterPortfolioTopPositionsTest {
             .collect(Collectors.toList());
         return expectedList;
     }
+
+
+    // ожидаем версию портфеля slave
+    void checkMasterPortfolioTopPositions(UUID strategyId) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositions(strategyId);
+            if (masterPortfolioTopPositions.getStrategyId() == null) {
+                Thread.sleep(5000);
+            }
+        }
+    }
+
 
 
 }

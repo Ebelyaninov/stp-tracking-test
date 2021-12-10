@@ -39,4 +39,8 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
 
 
 
+    // находим 1 запись по договору
+    @Query(nativeQuery = true, value = "delete from contract where id =:id")
+    Contract deleteContractById(@Param(value = "id") String contractId);
+
 }

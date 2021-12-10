@@ -358,6 +358,9 @@ message AnalyticsCommand {
 
         // Топ-позиций master-портфеля владельца стратегии
         MASTER_PORTFOLIO_TOP_POSITIONS = 7;
+        // Кривизна "хвоста" стратегии
+        STRATEGY_TAIL_DIFF_RATE = 8;
+
     }
 }
 

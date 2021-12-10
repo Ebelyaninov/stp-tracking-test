@@ -21,7 +21,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
@@ -49,6 +48,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -58,6 +58,7 @@ import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
 @Epic("calculateStrategyTailValue Пересчет объема хвоста стратегии")
@@ -116,6 +117,8 @@ public class CalculateStrategyTailValueTest {
     String siebelIdSlave2 = "5-7ECGV169";
     String contractIdSlave;
     UUID strategyId;
+
+    String description = "new test стратегия autotest";
 
     @AfterEach
     void deleteClient() {
@@ -184,9 +187,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1316557(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -196,7 +196,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -269,9 +269,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1351693(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -281,7 +278,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -348,9 +345,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1352912(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -360,7 +354,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -432,9 +426,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C983303_444(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -444,7 +435,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -482,9 +473,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1352954(Tracking.AnalyticsCommand.Operation operation) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -494,9 +482,8 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -525,9 +512,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1354173() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -537,7 +521,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -575,9 +559,6 @@ public class CalculateStrategyTailValueTest {
         String ticker1 = "TEST";
         String tradingClearingAccount1 = "L01+00000F00";
         String quantity1 = "50";
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -587,7 +568,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
@@ -633,9 +614,6 @@ public class CalculateStrategyTailValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1354512() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         String ticker1 = "FXITTEST";
         String tradingClearingAccount1 = "L01+00002F00";
         String quantity1 = "500";
@@ -648,7 +626,7 @@ public class CalculateStrategyTailValueTest {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
