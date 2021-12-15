@@ -532,8 +532,8 @@ public class CalculateManagementFeeTest {
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
-        Optional<ManagementFee> portfolioValue = managementFeeDao.findManagementFee(contractIdSlave, strategyId, subscriptionId, 1);
-        assertThat("запись по расчету комиссии за управления не равно", portfolioValue.isPresent(), is(false));
+        Optional<ManagementFee> portfolioValue = managementFeeDao.findManagementFee(contractIdSlave, strategyId, subscriptionId, 0);
+        assertThat("запись по расчету комиссии за управления не равно", portfolioValue.isPresent(), is(true));
     }
 
 
