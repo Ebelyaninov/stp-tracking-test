@@ -42,10 +42,7 @@ import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
-import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
+import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.tracking.services.grpc.CapturedResponse;
 import ru.qa.tinkoff.tracking.services.grpc.MiddleGrpcService;
@@ -157,6 +154,9 @@ public class HandleLimitEventTest {
 
     String tickerJPY = "JPYRUB";
     String tradingClearingAccountJPY = "MB9885503216";
+
+    String tickerRUB = "RUB";
+    String tradingClearingAccountRUB = "MB9885503216";
 
     String description = "description test стратегия autotest consumer";
 
@@ -298,7 +298,7 @@ public class HandleLimitEventTest {
         assertThat("Action не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getAction().getAction().name(), is("ADJUST_CURRENCY"));
     }
 
-    // нужна бумага SU29009RMFS6
+    // нужна бумага в midle SU29009RMFS6
     @SneakyThrows
     @Test
     @AllureId("1084044")
@@ -1033,7 +1033,7 @@ public class HandleLimitEventTest {
     @SneakyThrows
     @Test
     @AllureId("1510531")
-    @DisplayName("C1510531.HandleLimitEvent.Нулевая базовая валюта, если в результате всех фильтраций портфель оказался пустым")
+    @DisplayName("C1510531.HandleLimitEvent.Нулевая базовая валюта, если получили пустое событие")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1510531() {
@@ -1047,7 +1047,7 @@ public class HandleLimitEventTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
+//        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
 //        UUID investIdSlave = UUID.fromString("f17ace0f-8604-4df4-989f-c2e944633afa");
 //        contractIdSlave = "2000076964";
         contractIdSlaves.add(contractIdSlave);
@@ -1067,23 +1067,8 @@ public class HandleLimitEventTest {
             null, false);
         //вычитываем все события из топика tracking.slave.command
         OffsetDateTime now = OffsetDateTime.now();
-        List<Limit.MoneyLimit> moneyLimits = new ArrayList<>();
-        moneyLimits.add(Limit.MoneyLimit.newBuilder()
-            .setLoadDate(18949)
-            .setClientCode(clientCodeSlave)
-            .setCurrency("RUB")
-            .setFirmId("MC0253200000")
-            .setOpenBalance(0.0)
-            .setOpenLimit(0.0)
-            .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(0)
-                .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
-                .setUnscaled(0)
-                .setScale(0))
-            .setAccountId("MB9885503216").build());
         Limit.Event eventLimit = Limit.Event.newBuilder()
-            .addAllMoneyLimit(moneyLimits)
+            //.addAllMoneyLimit(moneyLimits)
             .setAction(limit.Limit.Event.Action.TRACKING_STATE_UPDATE)
             .setVersion(Int32Value.newBuilder().setValue(1).build())
             .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
@@ -1315,7 +1300,7 @@ public class HandleLimitEventTest {
     @SneakyThrows
     @Test
     @AllureId("1507503")
-    @DisplayName("C1507503.HandleLimitEvent.Исключение из массива позицию с currency = 'RUB' если она не является базовой валютой стратегии")
+    @DisplayName("C1507503.HandleLimitEvent.Не исключаем из массива позицию с currency = 'RUB' если она не является базовой валютой стратегии")
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1507503() {
@@ -1329,15 +1314,12 @@ public class HandleLimitEventTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
          String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
-//        UUID investIdSlave = UUID.fromString("fd0df403-65eb-4698-a1b7-8ab49e0e6949");
-//        contractIdSlave = "2050447842";
-//        String clientCodeSlave = "770014052245";
         contractIdSlaves.add(contractIdSlave);
-        strategyId = UUID.randomUUID();
+        strategyId = UUID.fromString("313644e0-f605-4ad5-b38b-f770ab9f0bbb");
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
-        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.slave, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
@@ -1345,7 +1327,7 @@ public class HandleLimitEventTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "151.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, ContractRole.slave, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
@@ -1364,14 +1346,21 @@ public class HandleLimitEventTest {
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddle));
         assertThat("delayed_correction не равен", portfolioCommand.getPortfolio().getDelayedCorrection(), is(false));
         assertThat("Action не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getAction().getAction().name(), is("TRACKING_STATE_UPDATE"));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("Quantity не равен", portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled(), is(2L));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(tickerRUB));
+        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(), is(tradingClearingAccountRUB));
+        assertThat("Quantity не равен", portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled(), is(0L));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(1).getTicker(), is(ticker));
+        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(1).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Quantity не равен", portfolioCommand.getPortfolio().getPosition(1).getQuantity().getUnscaled(), is(2L));
         assertThat("Quantity BaseMoney не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled(), is(5017L));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("версия не равна", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("версия мастера не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("quantity baseMoney не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("50.17"));
+//        List<SlavePortfolio.Position> positionRUB = slavePortfolio.getPositions().stream()
+//            .filter(ps -> ps.getTicker().equals(tickerRUB))
+//            .collect(Collectors.toList());
+        //RUB отфильтруем в slave
         assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(ticker));
         assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
