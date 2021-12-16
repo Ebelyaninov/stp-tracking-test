@@ -194,9 +194,9 @@ public class getStrategiesCatalogTabsTest {
             .execute(response -> response.as(GetStrategiesCatalogTabsResponse.class));
         //Проверяем ответ
         assertThat("Первый tabId не равен", getStrategiesCatalogTabs.getItems().get(0).getTabId(),
-            is("min-recommended-money-quantity"));
+            is("rub-currency"));
         assertThat("Первый title не равен", getStrategiesCatalogTabs.getItems().get(0).getTitle(),
-            is("Минимальный депозит"));
+            is("Рублевые"));
         assertThat("количество табов не равно", getStrategiesCatalogTabs.getItems().size(),
             is(5));
     }
