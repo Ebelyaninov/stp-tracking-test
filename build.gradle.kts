@@ -14,6 +14,10 @@ plugins {
     id("com.google.protobuf") version "0.8.17"
 }
 
+configurations.implementation {
+    exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
+}
+
 repositories {
     maven {
         url = uri("http://nexus-new.tcsbank.ru/content/repositories/inv-platform-core/")
