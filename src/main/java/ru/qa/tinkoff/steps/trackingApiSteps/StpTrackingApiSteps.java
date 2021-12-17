@@ -43,13 +43,11 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.swing.text.StyledEditorKit;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -60,7 +58,6 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
 
