@@ -862,7 +862,7 @@ public class HandleActualizeCommandTest {
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition().getQuantity().doubleValue(), is(middleQuantityBaseMoney));
     }
 
-    //должно быть 4 яндексов по позициям в мидле
+    //должно быть 5 яндексов по позициям в мидле
     @SneakyThrows
     @Test
     @AllureId("1365098")
@@ -926,7 +926,7 @@ public class HandleActualizeCommandTest {
         List<SlavePortfolio.Position> positionYNDX = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(tickerYNDX))
             .collect(Collectors.toList());
-        checkPosition(positionYNDX, tickerYNDX, tradingClearingAccountYNDX, "4");
+        checkPosition(positionYNDX, tickerYNDX, tradingClearingAccountYNDX, "5");
     }
 
 
@@ -1557,7 +1557,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1518740() {
-        String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1627,7 +1628,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1052370_111() {
-        String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1769,7 +1771,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1481900() {
-        String SIEBEL_ID_SLAVE = "5-CKWQPRIV";
+        //String SIEBEL_ID_SLAVE = "5-CKWQPRIV";
+        String SIEBEL_ID_SLAVE = "5-EJVMT8JB";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1822,7 +1825,7 @@ public class HandleActualizeCommandTest {
         List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(tickerFB))
             .collect(Collectors.toList());
-        assertThat("Quantity позиции в портфеле slave не равна", positionAAPL.get(0).getQuantity().toString(), is("5"));
+        assertThat("Quantity позиции в портфеле slave не равна", positionAAPL.get(0).getQuantity().toString(), is("2"));
 //        assertThat("Quantity позиции в портфеле slave не равна", positionFB.get(0).getQuantity().toString(), is("1"));
     }
 
@@ -1836,8 +1839,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1481454() {
-//        String SIEBEL_ID_SLAVE = "5-1E7G4E24N";
-        String SIEBEL_ID_SLAVE = "5-DXA6EWR9";
+        String SIEBEL_ID_SLAVE = "5-340W7W4R";
+       // String SIEBEL_ID_SLAVE = "5-DXA6EWR9";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2401,7 +2404,7 @@ public class HandleActualizeCommandTest {
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId,3), notNullValue());
         BigDecimal QuantityDiffticker = BigDecimal.ZERO;
         for (int i = 0; i < slavePortfolio.getPositions().size(); i++) {
-            if (ticker.equals(slavePortfolio.getPositions().get(i).getTicker())) {
+            if (tickerABBV.equals(slavePortfolio.getPositions().get(i).getTicker())) {
                 QuantityDiffticker = slavePortfolio.getPositions().get(i).getQuantityDiff();
             }
         }
@@ -2916,7 +2919,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1523191() {
-        String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2962,7 +2966,7 @@ public class HandleActualizeCommandTest {
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(3));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("100.00"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("100"));
         assertThat("ticker позиции в портфеле slave не равно", slavePortfolio.getPositions().get(0).getTicker(), is(ticker));
         assertThat("TradingClearingAccount позиции в портфеле slave не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("Quantity позиции в портфеле slave не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
@@ -2989,7 +2993,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1523957() {
-        String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
+        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3022,7 +3027,8 @@ public class HandleActualizeCommandTest {
             middleGrpcService.getClientPositions(clientPositionsReq);
         int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         //Получаем базовую валюту по стратегии из midle
-        String baseMoneyPositionSlave = String.valueOf(getBaseMoneyFromMiddle(clientPositions, "RUB"));
+        int baseMoneySlave = (int) getBaseMoneyFromMiddle(clientPositions, "RUB");
+        String baseMoneyPositionSlave = String.valueOf(baseMoneySlave);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 100,
@@ -3152,8 +3158,8 @@ public class HandleActualizeCommandTest {
         assertThat("Версия портфеля не равно", slaveOrder.getVersion(), is(version));
         assertThat("Направление заявки Action не равно", slaveOrder.getAction().toString(), is(action));
         assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder.getQuantity(), is(lots.multiply(lot)));
-        assertThat("ticker бумаги не равен", slaveOrder.getPrice(), is(priceOrder));
-        assertThat("price бумаги не равен", slaveOrder.getTicker(), is(ticker));
+        assertThat("price бумаги не равен", slaveOrder.getPrice(), is(priceOrder));
+        assertThat("ticker бумаги не равен", slaveOrder.getTicker(), is(ticker));
         assertThat("classCode бумаги не равен", slaveOrder.getClassCode(), is(classCode));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
