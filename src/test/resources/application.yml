@@ -50,7 +50,8 @@ app:
       password: tracking
       driver-class-name: org.postgresql.Driver
       configuration:
-        maximum-pool-size: 3
+        maximum-pool-size: 4
+        minimum-idle: 0
       hikari:
         idle-timeout: 10000
     social:

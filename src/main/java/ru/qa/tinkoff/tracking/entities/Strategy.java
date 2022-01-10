@@ -79,4 +79,7 @@ public class Strategy {
 //    Map<String, BigDecimal> feeRate;
 ////    String feeRate;
 
+    @Column(name = "expected_relative_yield")
+    BigDecimal expectedRelativeYield;
+
 }
