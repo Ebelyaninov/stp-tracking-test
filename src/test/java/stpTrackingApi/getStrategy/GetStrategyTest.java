@@ -9,6 +9,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.protocol.types.Field;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -163,6 +164,7 @@ public class GetStrategyTest {
     String tickerMoney = "USD000UTSTOM";
     String tradingClearingAccountMoney = "MB9885503216";
     String quantityMoney = "2000";
+    String expectedRelativeYieldName = "expected-relative-yield";
 
     @AfterEach
     void deleteClient() {
@@ -247,11 +249,11 @@ public class GetStrategyTest {
     }
 
     @Test
-    @AllureId("1087190")
-    @DisplayName("C1087190.GetStrategy.Получение данных торговой стратегии c типом характеристик условий management-fee")
+    @AllureId("1583843")
+    @DisplayName("C1583843.GetStrategy.Получение данных торговой стратегии c типом характеристик условий management-fee")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
-    void C1087190() {
+    void C1583843() {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -263,7 +265,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null);
         //создаем запись в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -282,6 +284,11 @@ public class GetStrategyTest {
                 .filter(strategyCharacteristic -> strategyCharacteristic.getType().getValue().equals("condition"))
                 .collect(Collectors.toList());
 
+        //Проверяем, что не нашли characteristics.expected-relative-yield (получим false)
+        Boolean checkStrategyCharacteristicsExpectedRelativeYield =
+            getStrategy.getCharacteristics().get(0).getItems().stream()
+                .anyMatch(strategyCharacteristic -> strategyCharacteristic.getId().equals("expected-relative-yield"));
+
         BigDecimal managementFee = new BigDecimal("0.05")
             .multiply(BigDecimal.valueOf(100))
             .divide(new BigDecimal("12"), 3, BigDecimal.ROUND_HALF_UP);
@@ -291,6 +298,7 @@ public class GetStrategyTest {
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is(managementFee.toString() + " %"));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(1).getTitle(), is("Комиссия за результат"));
+        assertThat("Получили expected-relative-yield", checkStrategyCharacteristicsExpectedRelativeYield, is(false));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(1).getValue(), is("30.0 %"));
         assertThat("isOverload != false", getStrategy.getIsOverloaded(), is(false));
     }
@@ -314,7 +322,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", true);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -467,7 +475,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            strategyStatus, 1, LocalDateTime.now(), "0.3", "0.05", false);
+            strategyStatus, 1, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -602,7 +610,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false);
+            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -656,7 +664,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false);
+            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -710,7 +718,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", true);
+            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", true, null);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -811,7 +819,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -886,7 +894,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -943,7 +951,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1004,7 +1012,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1062,7 +1070,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, countSlaves, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, countSlaves, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1123,7 +1131,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(days).minusHours(2);
@@ -1180,7 +1188,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1239,7 +1247,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1303,7 +1311,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1361,7 +1369,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1409,7 +1417,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1472,7 +1480,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1528,7 +1536,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1588,7 +1596,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0,null, "0.3", "0.05", false);
+            StrategyStatus.draft, 0,null, "0.3", "0.05", false, null);
 //        //изменяем время активации стратегии
 //        strategy = strategyService.getStrategy(strategyId);
 //        LocalDateTime updateTime = LocalDateTime.now().minusDays(days).minusHours(2);
@@ -1622,6 +1630,61 @@ public class GetStrategyTest {
         //проверяем полученные данные с расчетами
         assertThat("id характеристики не равно", tailCharacteristics.size(), is(0));
 
+
+    }
+
+
+    private static Stream<Arguments> validateExpectedRelativeYield() {
+        return Stream.of(
+            Arguments.of(BigDecimal.valueOf(-56.01)),
+            Arguments.of(BigDecimal.valueOf(0)),
+            Arguments.of(BigDecimal.valueOf(1)),
+            Arguments.of(BigDecimal.valueOf(99)),
+            Arguments.of(BigDecimal.valueOf(240))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("validateExpectedRelativeYield")
+    @AllureId("1583315")
+    @DisplayName("С1583315.GetStrategy.Получение expected-relative-yield")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
+    void С1583315(BigDecimal expectedRelativeYield) {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, expectedRelativeYield);
+        //создаем запись в кассандре
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
+        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        //Находим в БД автоследования стратегию и Проверяем ее поля
+        strategyMaster = strategyService.getStrategy(strategyId);
+        List<GetStrategyResponseCharacteristics> strategyCharacteristics =
+            getStrategy.getCharacteristics().stream()
+                .filter(strategyCharacteristic -> strategyCharacteristic.getType().getValue().equals("main"))
+                .collect(Collectors.toList());
+
+        //Проверяем, что нашли expected-relative-yield
+        assertThat("id не равно", strategyCharacteristics.get(0).getItems().get(0).getId(), is(expectedRelativeYieldName));
+        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Прогноз автора"));
+        assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("+"  + expectedRelativeYield.toString() + "% годовых"));
 
     }
 

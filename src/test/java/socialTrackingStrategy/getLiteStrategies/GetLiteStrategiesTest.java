@@ -268,7 +268,7 @@ public class GetLiteStrategiesTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
