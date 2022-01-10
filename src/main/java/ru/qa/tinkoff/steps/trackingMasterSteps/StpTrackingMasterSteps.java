@@ -239,7 +239,7 @@ public class StpTrackingMasterSteps {
         Tracking.Signal signal = Tracking.Signal.newBuilder()
             .setPrice(price)
             .setQuantity(quantityS)
-            .setTailOrderQuantity(tailOrderQuantity)
+            //.setTailOrderQuantity(tailOrderQuantity)
             .build();
         command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractId)

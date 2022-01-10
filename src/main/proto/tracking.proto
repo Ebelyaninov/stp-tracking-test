@@ -8,290 +8,310 @@ import "google/protobuf/timestamp.proto";
 // Идентификатор биржевой позиции
 message ExchangePositionId {
 
-    // Тикер на бирже
-    string ticker = 1;
+  // Тикер на бирже
+  string ticker = 1;
 
-    // Торгово-клиринговый счёт
-    string trading_clearing_account = 2;
+  // Торгово-клиринговый счёт
+  string trading_clearing_account = 2;
 }
 
 // Торговая биржевая позиция
 message ExchangePosition {
 
+  // Тикер на бирже
+  string ticker = 1;
+
+  // Торгово-клиринговый счёт
+  string trading_clearing_account = 2;
+
+  // Биржа (торговая площадка)
+  Exchange exchange = 3;
+
+  // Признак разрешённой для торговли в автоследовании позиции
+  bool tracking_allowed = 4;
+
+  // Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
+  google.protobuf.Int32Value daily_quantity_limit = 5;
+
+  // Лимит кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
+  repeated ExchangePosition.OrderQuantityLimit order_quantity_limit = 6;
+
+  // Тикер вне биржи (например, сплитованные валюты)
+  google.protobuf.StringValue otc_ticker = 7;
+
+  // Код класса инструмента вне биржи (например, сплитованные валюты)
+  google.protobuf.StringValue otc_class_code = 8;
+
+  message OrderQuantityLimit {
+
+    // Идентификатор периода
+    string period_id = 1;
+
+    // Лимит кол-ва единиц актива
+    int32 limit = 2;
+  }
+}
+
+// Биржа (торговая площадка)
+enum Exchange {
+  MOEX = 0;
+  MOEX_PLUS = 1;
+  FX = 2;
+  SPB = 3;
+}
+
+// Событие
+message Event {
+
+  // Идентификатор события
+  bytes id = 1;
+
+  // Действие, породившее событие
+  Action action = 2;
+
+  // Метка времени произошедшего события
+  google.protobuf.Timestamp created_at = 3;
+
+  // Сущность, породившая событие
+  oneof domain {
+
+    // Торговая стратегия
+    // Используется для:
+    //   - отображения стратегии в pulse
+    Strategy strategy = 4;
+
+    // Подписка на стратегию
+    // Используется для:
+    //    - инвалидации кэшей
+    Subscription subscription = 5;
+
+    // Договор
+    // Используется для:
+    //   - извещение middle о необходимости вычислять/хранить/возвращать версии портфеля
+    //   - извещение сервиса счетов о необходимости отключить договор от автоследования
+    //   - инвалидации кэшей
+    Contract contract = 6;
+  }
+
+  enum Action {
+    CREATED = 0;
+    UPDATED = 1;
+    DELETED = 2;
+  }
+}
+
+// Торговая стратегия
+message Strategy {
+
+  // Идентификатор стратегии
+  bytes id = 1;
+
+  // Название
+  string title = 2;
+}
+
+// Подписка на стратегию
+message Subscription {
+
+  // Торговая стратегия
+  Strategy strategy = 1;
+
+  // Номер договора
+  string contract_id = 2;
+
+  // Идентификатор подписки
+  int64 id = 3;
+}
+
+// Договор
+message Contract {
+
+  // Номер договора
+  string id = 1;
+
+  // Состояние договора
+  State state = 2;
+
+  // Признак заблокированного договора
+  bool blocked = 3;
+
+  enum State {
+    // Не отслеживается
+    UNTRACKED = 0;
+    // Отслеживается
+    TRACKED = 1;
+  }
+}
+
+// Команда для выполнения над портфелем
+message PortfolioCommand {
+
+  // Номер договора владельца портфеля
+  string contract_id = 1;
+
+  // Операция для выполнения над портфелем
+  Operation operation = 2;
+
+  // Метка времени события, инициировавшего создание команды
+  google.protobuf.Timestamp created_at = 3;
+
+  // Фрагмент портфеля
+  Portfolio portfolio = 4;
+
+  // Торговый сигнал
+  Signal signal = 5;
+
+  // Операция для выполнения над портфелем
+  enum Operation {
+    // Зарезервированные значения под неиспользованные операции (WITHDRAW_MONEY = 3; RESERVE = 4)
+    reserved 3, 4;
+
+    // Инициализировать (первично заполнить) портфель
+    INITIALIZE = 0;
+    // Актуализировать портфель согласно полученным изменениям
+    ACTUALIZE = 1;
+    // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
+    SYNCHRONIZE = 2;
+    // Повторить синхронизацию портфеля
+    RETRY_SYNCHRONIZATION = 5 [deprecated = true];
+    // Включить синхронизацию позиций в slave-портфеле в обе стороны
+    ENABLE_SYNCHRONIZATION = 6;
+    // Снять техническую блокировку с договора
+    UNBLOCK_CONTRACT = 7;
+  }
+}
+
+// Фрагмент портфеля
+message Portfolio {
+
+  // Версия портфеля
+  int32 version = 2;
+
+  // Позиция в портфеле
+  repeated Position position = 4;
+
+  // Позиция в портфеле
+  BaseMoneyPosition base_money_position = 5;
+
+  // Признак формирования команды в результате отложенных изменений
+  bool delayed_correction = 6;
+
+  // Действие над портфелем, приведшее к изменению его состава
+  // Набор значений задаётся master-системой middle
+  enum Action {
+    UNKNOWN = 0;
+    // Взимание комиссии за непокрытую позицию
+    MARGIN_FEE = 1;
+    // Удержание сервисной комиссии
+    SERVICE_FEE = 2;
+    // Удержание фактической комиссии за сделку
+    BROKER_FEE = 3;
+    // Завод денежных средств
+    ADJUST = 4;
+    // Вывод денежных средств
+    WITHDRAW = 5;
+    // Отмена вывода
+    CANCEL_WITHDRAW = 6;
+    // Увеличение денежной позиции методом client/adjust_currency
+    ADJUST_CURRENCY = 7;
+    // Увеличение ценно-бумажной позиции методом client/adjust_security
+    ADJUST_SECURITY = 8;
+    // Совершение сделки по покупке валюты
+    MONEY_BUY_TRADE = 9;
+    // Совершение сделки по продаже валюты
+    MONEY_SELL_TRADE = 10;
+    // Совершение сделки по продаже ценной бумаги
+    SECURITY_SELL_TRADE = 11;
+    // Совершение сделки по покупке ценной бумаги
+    SECURITY_BUY_TRADE = 12;
+    // Совершение сделки РЕПО РПС
+    REPO_RPS_TRADE = 13;
+    // Совершение сделки РЕПО с ЦК
+    REPO_CK_TRADE = 14;
+    // Совершение сделки РЕПО без ЦК
+    REPO_NO_CK_TRADE = 15;
+    // Удержание задолженности по налогу с клиента
+    TAX_DEBT = 16;
+    // Выплата купонов
+    COUPON = 17;
+    // Выплата дивидендов
+    DIVIDEND = 18;
+    // Купонный налог
+    COUPON_TAX = 19;
+    // Налог на дивиденды
+    DIVIDEND_TAX = 20;
+    // Частичное погашение
+    PARTIAL_REPAYMENT = 21;
+    // Полное погашение
+    REPAYMENT = 22;
+    // Корректировка налога
+    TAX_CORRECTION = 23;
+    // Корректировка налога на НКД
+    TAX_ACI_CORRECTION = 24;
+    // Корректировка налога на материальную выгоду
+    TAX_LUCRE_CORRECTION = 25;
+    // Корректировка налога по итогам года
+    TAX_YEAR_CORRECTION = 26;
+    // Изменение позиций через админку
+    ADMIN_UPDATE = 27;
+    // Изменение нескольких позиций через админку
+    ADMIN_MULTI_UPDATE = 28;
+    // Событие со слепком позиций после выгрузки утренних лимитов
+    MORNING_UPDATE = 29;
+    // Подтверждение исполнения внебиржевой заявки
+    OTC_CONFIRM = 30;
+    // Валютный своп (продажа валюты)
+    CURRENCY_SWAP_SELL = 31;
+    // Совершение сделки по покупке фьючерсов
+    FUTURES_BUY_TRADE = 32;
+    // Совершение сделки по продаже фьючерсов
+    FUTURES_SELL_TRADE = 33;
+    // Фиксация вар. маржи по промежуточному или основному клирингу
+    FUTURES_CLEARING = 34;
+    // Совершение внебиржевой сделки продажи через OTC-Execution
+    OTC_EXECUTION_SELL_TRADE = 35;
+    // Совершение внебиржевой сделки покупки через OTC-Execution
+    OTC_EXECUTION_BUY_TRADE = 36;
+    // Удержание комиссии за сделку выставленную через OTC-Execution
+    OTC_EXECUTION_FEE = 37;
+    // Корректировка отложенных изменений позиций
+    DELAYED_CORRECTION = 38;
+    // Изменения состояния отслеживания договора в автоследовании
+    TRACKING_STATE_UPDATE = 39;
+    // Не известный enum
+    TEST = 99;
+  }
+
+  message ActionValue {
+    Action action = 1;
+  }
+
+  // Позиция в портфеле
+  message Position {
+
     // Тикер на бирже
     string ticker = 1;
 
     // Торгово-клиринговый счёт
     string trading_clearing_account = 2;
 
-    // Биржа (торговая площадка)
-    Exchange exchange = 3;
+    // Актуальное кол-во единиц актива (не лоты)
+    Decimal quantity = 3;
 
-    // Признак разрешённой для торговли в автоследовании позиции
-    bool tracking_allowed = 4;
-
-    // Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
-    google.protobuf.Int32Value daily_quantity_limit = 5;
-
-    // Лимит кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
-    repeated ExchangePosition.OrderQuantityLimit order_quantity_limit = 6;
-
-    // Тикер вне биржи (например, сплитованные валюты)
-    google.protobuf.StringValue otc_ticker = 7;
-
-    // Код класса инструмента вне биржи (например, сплитованные валюты)
-    google.protobuf.StringValue otc_class_code = 8;
-
-    message OrderQuantityLimit {
-
-        // Идентификатор периода
-        string period_id = 1;
-
-        // Лимит кол-ва единиц актива
-        int32 limit = 2;
-    }
-}
-
-// Биржа (торговая площадка)
-enum Exchange {
-    MOEX = 0;
-    MOEX_PLUS = 1;
-    FX = 2;
-    SPB = 3;
-}
-
-// Событие
-message Event {
-
-    // Идентификатор события
-    bytes id = 1;
-
-    // Действие, породившее событие
-    Action action = 2;
-
-    // Метка времени произошедшего события
-    google.protobuf.Timestamp created_at = 3;
-
-    // Сущность, породившая событие
-    oneof domain {
-
-        // Торговая стратегия
-        Strategy strategy = 4;
-
-        // Подписка на стратегию
-        Subscription subscription = 5;
-
-        // Договор
-        Contract contract = 6;
-
-        // Операция по торговому портфелю
-        // TODO: draft
-        //    PortfolioOperation portfolio_operation = 7;
-    }
-
-    enum Action {
-        CREATED = 0;
-        UPDATED = 1;
-        DELETED = 2;
-    }
-}
-
-// Торговая стратегия
-// Используется для отображения стратегии в social
-message Strategy {
-
-    // Идентификатор стратегии
-    bytes id = 1;
-
-    // Название
-    string title = 2;
-}
-
-// Подписка на стратегию
-// Используется для отображения подписки на стратегию в social
-message Subscription {
-
-    // Торговая стратегия
-    Strategy strategy = 1;
-
-    // Номер договора
-    string contract_id = 2;
-
-    // Идентификатор подписки
-    int64 id = 3;
-}
-
-// Договор
-// TODO: draft
-// Используется для:
-//   - извещение middle о необходимости вычислять/хранить/возвращать версии портфеля
-//   - извещение сервиса счетов о необходимости пре-валидировать торговые/неторговые операции по договору
-message Contract {
-
-    // Номер договора
-    string id = 1;
-
-    // Состояние договора
-    State state = 2;
-
-    // Признак заблокированного договора
-    bool blocked = 3;
-
-    enum State {
-        // Не отслеживается
-        UNTRACKED = 0;
-        // Отслеживается
-        TRACKED = 1;
-    }
-}
-
-// Команда для выполнения над портфелем
-message PortfolioCommand {
-
-    // Номер договора владельца портфеля
-    string contract_id = 1;
-
-    // Операция для выполнения над портфелем
-    Operation operation = 2;
-
-    // Метка времени события, инициировавшего создание команды
-    google.protobuf.Timestamp created_at = 3;
-
-    // Фрагмент портфеля
-    Portfolio portfolio = 4;
-
-    // Торговый сигнал
-    Signal signal = 5;
-
-    // Операция для выполнения над портфелем
-    // TODO: draft
-    enum Operation {
-        // Инициализировать (первично заполнить) портфель
-        INITIALIZE = 0;
-        // Актуализировать портфель согласно полученным изменениям
-        ACTUALIZE = 1;
-
-        // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
-        SYNCHRONIZE = 2;
-
-        // Вывести денежные средства из slave-портфеля
-        WITHDRAW_MONEY = 3;
-        // Зарезервировать денежные средства в slave-портфеле (для последующего снятия комиссии)
-        RESERVE = 4;
-
-        // Повторить синхронизацию портфеля
-        RETRY_SYNCHRONIZATION = 5;
-        // Включить синхронизацию позиций в slave-портфеле в обе стороны
-        ENABLE_SYNCHRONIZATION = 6;
-        // Снять техническую блокировку с договора
-        UNBLOCK_CONTRACT = 7;
-
-
-    }
-}
-
-// Фрагмент портфеля
-message Portfolio {
-
-    // Версия портфеля
-    int32 version = 2;
-
-    // Позиция в портфеле
-    repeated Position position = 4;
-
-    // Позиция в портфеле
-    BaseMoneyPosition base_money_position = 5;
-
-  // Признак формирования команды в результате отложенных изменений
-  bool delayed_correction = 6;
-
-
-
-    // TODO: load_date?
-    // TODO: load_date?
-
-  // Действие над портфелем, приведшее к изменению его состава
-  // Набор значений задаётся master-системой middle
-  // TODO: draft
-    enum Action {
-        UNKNOWN = 0;
-        MARGIN_FEE = 1; // Взимание комиссии за непокрытую позицию
-        SERVICE_FEE = 2; // Удержание сервисной комиссии
-        BROKER_FEE = 3; // Удержание фактической комиссии за сделку
-        ADJUST = 4; // Завод денежных средств
-        WITHDRAW = 5; // Вывод денежных средств
-        CANCEL_WITHDRAW = 6; // Отмена вывода
-        ADJUST_CURRENCY = 7; // Увеличение денежной позиции методом client/adjust_currency
-        ADJUST_SECURITY = 8; // Увеличение ценно-бумажной позиции методом client/adjust_security
-        MONEY_BUY_TRADE = 9; // Совершение сделки по покупке валюты
-        MONEY_SELL_TRADE = 10; // Совершение сделки по продаже валюты
-        SECURITY_SELL_TRADE = 11; // Совершение сделки по продаже ценной бумаги
-        SECURITY_BUY_TRADE = 12; // Совершение сделки по покупке ценной бумаги
-        REPO_RPS_TRADE = 13; // Совершение сделки РЕПО РПС
-        REPO_CK_TRADE = 14; // Совершение сделки РЕПО с ЦК
-        REPO_NO_CK_TRADE = 15; // Совершение сделки РЕПО без ЦК
-        TAX_DEBT = 16; // Удержание задолженности по налогу с клиента
-        COUPON = 17; // Выплата купонов
-        DIVIDEND = 18; // Выплата дивидендов
-        COUPON_TAX = 19; // Купонный налог
-        DIVIDEND_TAX = 20; // Налог на дивиденды
-        PARTIAL_REPAYMENT = 21; // Частичное погашение
-        REPAYMENT = 22; // Полное погашение
-        TAX_CORRECTION = 23; // Корректировка налога
-        TAX_ACI_CORRECTION = 24; // Корректировка налога на НКД
-        TAX_LUCRE_CORRECTION = 25; // Корректировка налога на материальную выгоду
-        TAX_YEAR_CORRECTION = 26; // Корректировка налога по итогам года
-        ADMIN_UPDATE = 27; // Изменение позиций через админку
-        ADMIN_MULTI_UPDATE = 28; // Изменение нескольких позиций через админку
-        MORNING_UPDATE = 29; // Событие со слепком позиций после выгрузки утренних лимитов
-        OTC_CONFIRM = 30; // Подтверждение исполнения внебиржевой заявки
-        CURRENCY_SWAP_SELL = 31; // Валютный своп (продажа валюты)
-        FUTURES_BUY_TRADE = 32; // Совершение сделки по покупке фьючерсов
-        FUTURES_SELL_TRADE = 33; // Совершение сделки по продаже фьючерсов
-        FUTURES_CLEARING = 34; // Фиксация вар. маржи по промежуточному или основному клирингу
-        OTC_EXECUTION_SELL_TRADE = 35; // Совершение внебиржевой сделки продажи через OTC-Execution
-        OTC_EXECUTION_BUY_TRADE = 36; // Совершение внебиржевой сделки покупки через OTC-Execution
-        OTC_EXECUTION_FEE = 37; // Удержание комиссии за сделку выставленную через OTC-Execution
-        // Корректировка отложенных изменений позиций
-        DELAYED_CORRECTION = 38;
-        // Изменения состояния отслеживания договора в автоследовании
-        TRACKING_STATE_UPDATE = 39;
-        TEST = 99;
-
-    }
-
-
-    message ActionValue {
-    Action action = 1;
+    // Действие над позицией
+    ActionValue action = 4;
   }
 
-    // Позиция в портфеле
-    message Position {
-
-        // Тикер на бирже
-        string ticker = 1;
-
-        // Торгово-клиринговый счёт
-        string trading_clearing_account = 2;
-
-        // Актуальное кол-во единиц актива (не лоты)
-        Decimal quantity = 3;
-
-        // Действие над позицией
-        ActionValue action = 4;
-    }
-
   // Позиция базовой валюты портфеля
-    message BaseMoneyPosition {
+  message BaseMoneyPosition {
 
-        // Актуальное кол-во единиц актива (не лоты)
-        Decimal quantity = 1;
+    // Актуальное кол-во единиц актива (не лоты)
+    Decimal quantity = 1;
 
-        // Действие над позицией
-        ActionValue action = 2;
-    }
+    // Действие над позицией
+    ActionValue action = 2;
+  }
 }
-
 
 // Торговый сигнал
 message Signal {
@@ -301,153 +321,140 @@ message Signal {
 
     // Цена за одну единицу актива (в абсолютной величине)
     Decimal price = 2;
-
-    // Кол-во единиц актива в заявках хвоста, порожденных сигналом
-    Decimal tail_order_quantity = 3;
-
 }
 
 // Команда для расчета аналитических показателей
 message AnalyticsCommand {
 
-    // Метка времени события, инициировавшего создание команды
-    google.protobuf.Timestamp created_at = 1;
+  // Метка времени события, инициировавшего создание команды
+  google.protobuf.Timestamp created_at = 1;
 
-    // Аналитическая операция для выполнения над стратегией
-    Operation operation = 2;
+  // Аналитическая операция для выполнения над стратегией
+  Operation operation = 2;
 
-    // Расчет, выполняемый над стратегией
-    Calculation calculation = 3;
+  // Расчет, выполняемый над стратегией
+  Calculation calculation = 3;
 
-    // Идентификатор стратегии
-    bytes strategy_id = 4;
+  // Идентификатор стратегии
+  bytes strategy_id = 4;
 
-    // Метка времени среза, на которую необходимо выполнить расчет
-    google.protobuf.Timestamp cut = 5;
+  // Метка времени среза, на которую необходимо выполнить расчет
+  google.protobuf.Timestamp cut = 5;
 
-    // Аналитическая операция для выполнения над стратегией
-    enum Operation {
-        // Рассчитать аналитический показатель
-        CALCULATE = 0;
-        // Пересчитать аналитический показатель
-        RECALCULATE = 1;
-    }
+  // Аналитическая операция для выполнения над стратегией
+  enum Operation {
+    // Рассчитать аналитический показатель
+    CALCULATE = 0;
+    // Пересчитать аналитический показатель
+    RECALCULATE = 1;
+  }
 
-    // Расчет, выполняемый над стратегией
-    enum Calculation {
-        // Стоимость master-портфеля владельца стратегии
-        MASTER_PORTFOLIO_VALUE = 0;
-
-        // Доли master-портфеля владельца стратегии
-        MASTER_PORTFOLIO_RATE = 1;
-
-        // Объем "хвоста" стратегии (стоимость всех slave-портфелей, подписанных на нее)
-        STRATEGY_TAIL_VALUE = 2;
-
-        // Количество сигналов, созданных в рамках стратегии
-        SIGNALS_COUNT = 3;
-
-        // Частота созданий сигналов в рамках стратегии
-        SIGNAL_FREQUENCY = 4;
-
-        // Максимальная просадка master-портфеля владельца стратегии
-        MASTER_PORTFOLIO_MAX_DRAWDOWN = 5;
-
-        // Среднее время удержания позиции в master-портфеле владельца стратегии
-        MASTER_PORTFOLIO_POSITION_RETENTION = 6;
-
-        // Топ-позиций master-портфеля владельца стратегии
-        MASTER_PORTFOLIO_TOP_POSITIONS = 7;
-        // Кривизна "хвоста" стратегии
-        STRATEGY_TAIL_DIFF_RATE = 8;
-
-    }
+  // Расчет, выполняемый над стратегией
+  enum Calculation {
+    // Стоимость master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_VALUE = 0;
+    // Доли master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_RATE = 1;
+    // Объем "хвоста" стратегии (стоимость всех slave-портфелей, подписанных на нее)
+    STRATEGY_TAIL_VALUE = 2;
+    // Количество сигналов, созданных в рамках стратегии
+    SIGNALS_COUNT = 3;
+    // Частота созданий сигналов в рамках стратегии
+    SIGNAL_FREQUENCY = 4;
+    // Максимальная просадка master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_MAX_DRAWDOWN = 5;
+    // Среднее время удержания позиции в master-портфеле владельца стратегии
+    MASTER_PORTFOLIO_POSITION_RETENTION = 6;
+    // Топ-позиций master-портфеля владельца стратегии
+    MASTER_PORTFOLIO_TOP_POSITIONS = 7;
+    STRATEGY_TAIL_DIFF_RATE = 8;
+  }
 }
 
 // Команда на активацию расчета комиссии
 message ActivateFeeCommand {
 
-    // Метка времени события, инициировавшего создание команды
-    google.protobuf.Timestamp created_at = 1;
+  // Метка времени события, инициировавшего создание команды
+  google.protobuf.Timestamp created_at = 1;
 
-    // Данные подписки slave-договора на стратегию
-    Subscription subscription = 2;
+  // Данные подписки slave-договора на стратегию
+  Subscription subscription = 2;
 
-    // Данные для расчета каждого из типа комиссий
-    oneof context {
-        Management management = 3;
-        Result result = 4;
-    }
+  // Данные для расчета каждого из типа комиссий
+  oneof context {
+    Management management = 3;
+    Result result = 4;
+  }
 
-    // Данные для расчета комиссии за управление
-    message Management {}
+  // Данные для расчета комиссии за управление
+  message Management {}
 
-    // Данные для расчета комиссии за результат
-    message Result {}
+  // Данные для расчета комиссии за результат
+  message Result {}
 }
 
 // Команда на расчет комиссии
 message CalculateFeeCommand {
 
-    // Метка времени события, инициировавшего создание команды
-    google.protobuf.Timestamp created_at = 1;
+  // Метка времени события, инициировавшего создание команды
+  google.protobuf.Timestamp created_at = 1;
 
-    // Данные подписки slave-договора на стратегию
-    Subscription subscription = 2;
+  // Данные подписки slave-договора на стратегию
+  Subscription subscription = 2;
 
-    // Ставка комиссии
-    Decimal rate = 3;
+  // Ставка комиссии
+  Decimal rate = 3;
 
-    // Валюта расчетов
-    Currency currency = 4;
+  // Валюта расчетов
+  Currency currency = 4;
 
-    // Расчетный период
-    SettlementPeriod settlement_period = 5;
+  // Расчетный период
+  SettlementPeriod settlement_period = 5;
 
-    // Данные для расчета каждого из типа комиссий
-    oneof context {
-        Management management = 6;
-        Result result = 7;
-    }
+  // Данные для расчета каждого из типа комиссий
+  oneof context {
+    Management management = 6;
+    Result result = 7;
+  }
 
-    // Расчетный период
-    message SettlementPeriod {
+  // Расчетный период
+  message SettlementPeriod {
 
-        // Метка времени начала расчетного периода (включая)
-        google.protobuf.Timestamp started_at = 1;
+    // Метка времени начала расчетного периода (включая)
+    google.protobuf.Timestamp started_at = 1;
 
-        // Метка времени окончания расчетного периода (исключая)
-        google.protobuf.Timestamp ended_at = 2;
-    }
+    // Метка времени окончания расчетного периода (исключая)
+    google.protobuf.Timestamp ended_at = 2;
+  }
 
-    // Данные для расчета комиссии за управление
-    message Management {
+  // Данные для расчета комиссии за управление
+  message Management {
 
-        // Стоимость slave-портфеля на конец расчетного периода
-        Decimal portfolio_value = 1;
-    }
+    // Стоимость slave-портфеля на конец расчетного периода
+    Decimal portfolio_value = 1;
+  }
 
-    // Данные для расчета комиссии за результат
-    message Result {
+  // Данные для расчета комиссии за результат
+  message Result {
 
-        // Стоимость slave-портфеля на конец расчетного периода
-        Decimal portfolio_value = 1;
+    // Стоимость slave-портфеля на конец расчетного периода
+    Decimal portfolio_value = 1;
 
-        // Максимальная стоимость slave-портфеля на конец предыдущих расчетных периодов
-        Decimal high_water_mark = 2;
-    }
+    // Максимальная стоимость slave-портфеля на конец предыдущих расчетных периодов
+    Decimal high_water_mark = 2;
+  }
 }
 
 // Валюта
 enum Currency {
-    RUB = 0;
-    USD = 1;
+  RUB = 0;
+  USD = 1;
 }
 
 // Контейнер для безопасной передачи вещественного числа, обозначающего "деньги"
 message Decimal {
 
-    int64 unscaled = 1;
+  int64 unscaled = 1;
 
-    int32 scale = 2;
+  int32 scale = 2;
 }
