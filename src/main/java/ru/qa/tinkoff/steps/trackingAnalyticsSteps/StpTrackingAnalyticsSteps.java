@@ -3,6 +3,7 @@ package ru.qa.tinkoff.steps.trackingAnalyticsSteps;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
+import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -721,6 +722,8 @@ public class StpTrackingAnalyticsSteps {
             .setStrategyId(strategyId)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -728,7 +731,8 @@ public class StpTrackingAnalyticsSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked);
+            .setBlocked(blocked)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
@@ -748,6 +752,8 @@ public class StpTrackingAnalyticsSteps {
             .setStrategyId(null)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -755,7 +761,8 @@ public class StpTrackingAnalyticsSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked);
+            .setBlocked(blocked)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
