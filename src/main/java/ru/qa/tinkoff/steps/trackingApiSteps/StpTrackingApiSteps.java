@@ -910,6 +910,8 @@ public class StpTrackingApiSteps {
             .setStrategyId(strategyId)
             .setBlocked(contractBlocked);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -917,7 +919,8 @@ public class StpTrackingApiSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(subscriptionBlocked);
+            .setBlocked(subscriptionBlocked)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
@@ -937,6 +940,8 @@ public class StpTrackingApiSteps {
             .setStrategyId(null)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -944,7 +949,8 @@ public class StpTrackingApiSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked);
+            .setBlocked(blocked)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
@@ -965,6 +971,8 @@ public class StpTrackingApiSteps {
             .setStrategyId(strategyId)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -972,7 +980,8 @@ public class StpTrackingApiSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked);
+            .setBlocked(blocked)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

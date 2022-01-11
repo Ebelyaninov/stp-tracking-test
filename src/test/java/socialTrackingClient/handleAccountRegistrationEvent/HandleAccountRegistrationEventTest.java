@@ -1,6 +1,7 @@
 package socialTrackingClient.handleAccountRegistrationEvent;
 
 import com.google.protobuf.Timestamp;
+import com.vladmihalcea.hibernate.type.range.Range;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -408,6 +409,9 @@ public class HandleAccountRegistrationEventTest {
             .setStrategyId(null)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        LocalDateTime now = LocalDateTime.now();
+        String periodDefault = "[" + now + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractIdAgressive)
@@ -415,7 +419,8 @@ public class HandleAccountRegistrationEventTest {
             .setStartTime(startTime)
             .setStatus(SubscriptionStatus.draft)
             .setEndTime(null)
-            .setBlocked(false);
+            .setBlocked(false)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
         //вычитываем все события из топика tracking.fee.calculate.command

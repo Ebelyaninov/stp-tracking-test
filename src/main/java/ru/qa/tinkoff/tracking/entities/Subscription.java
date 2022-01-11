@@ -1,5 +1,7 @@
 package ru.qa.tinkoff.tracking.entities;
 
+import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
+import com.vladmihalcea.hibernate.type.range.Range;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
@@ -15,6 +17,10 @@ import java.util.UUID;
 @Accessors(chain = true)
 @Table(name = "subscription", schema = "tracking")
 @Entity
+@TypeDef(
+    name = "daterange",
+    typeClass = PostgreSQLRangeType.class
+)
 @TypeDef(
     name = "pgsql_enum",
     typeClass = PostgreSQLEnumType.class
@@ -49,5 +55,9 @@ public class Subscription {
 
     @Column(name = "blocked")
     Boolean blocked;
+
+    @Type(type = "daterange")
+    @Column(name = "period")
+    private Range period;
 
 }

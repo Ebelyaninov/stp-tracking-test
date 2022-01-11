@@ -4,6 +4,7 @@ package stpTrackingRetryer.routeRetryCommand;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.Timestamp;
+import com.vladmihalcea.hibernate.type.range.Range;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -541,6 +542,8 @@ public class RouteRetryCommandTest {
             .setStrategyId(strategyId)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
         //создаем запись подписке клиента
         subscription = new Subscription()
             .setSlaveContractId(contractId)
@@ -548,7 +551,8 @@ public class RouteRetryCommandTest {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(false);
+            .setBlocked(false)
+            .setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
