@@ -57,6 +57,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @Feature("TAP-6844")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-slave")
+@Tags({@Tag("stp-tracking-slave"), @Tag("handleSynchronizeCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

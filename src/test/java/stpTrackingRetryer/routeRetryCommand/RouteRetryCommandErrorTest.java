@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -74,6 +71,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Feature("TAP-8925")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-retryer")
+@Tags({@Tag("stp-tracking-retryer"), @Tag("RouteRetryCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
@@ -712,8 +710,8 @@ public class RouteRetryCommandErrorTest {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(false)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(false);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

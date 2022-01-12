@@ -442,8 +442,8 @@ public class StpTrackingFeeSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blocked);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
@@ -472,8 +472,8 @@ public class StpTrackingFeeSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blocked);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
@@ -508,8 +508,8 @@ public class StpTrackingFeeSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blockedSub)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blockedSub);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

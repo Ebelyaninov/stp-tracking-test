@@ -55,6 +55,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Feature("TAP-9903")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-fee")
+@Tags({@Tag("stp-tracking-fee"), @Tag("calculateResultFee")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
 @SpringBootTest(classes = {

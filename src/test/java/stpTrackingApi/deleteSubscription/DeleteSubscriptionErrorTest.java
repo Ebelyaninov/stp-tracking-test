@@ -53,6 +53,7 @@ import static org.hamcrest.Matchers.is;
 @Feature("TAP-7383")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("deleteSubscription")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
 //    BillingDatabaseAutoConfiguration.class,

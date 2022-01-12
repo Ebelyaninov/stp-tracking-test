@@ -15,10 +15,7 @@ import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -76,6 +73,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Feature("TAP-8926")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-retryer")
+@Tags({@Tag("stp-tracking-retryer"), @Tag("HandleExchangeRetryCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
@@ -456,8 +454,8 @@ public class HandleExchangeRetryCommandTest {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blocked);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }

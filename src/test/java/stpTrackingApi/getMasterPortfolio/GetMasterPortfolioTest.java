@@ -64,6 +64,7 @@ import static org.hamcrest.Matchers.is;
 @Feature("TAP-11459")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("getMasterPortfolio")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
 @SpringBootTest(classes = {

@@ -12,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,6 +60,7 @@ import static org.hamcrest.Matchers.is;
 @Epic("getLiteStrategies - Получение облегченных данных списка стратегий")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("social-tracking-strategy")
+@Tags({@Tag("social-tracking-strategy"), @Tag("getLiteStrategies")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

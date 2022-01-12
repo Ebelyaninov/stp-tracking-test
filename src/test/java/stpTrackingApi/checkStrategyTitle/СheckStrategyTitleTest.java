@@ -46,6 +46,7 @@ import static org.hamcrest.Matchers.*;
 @Epic("checkStrategyTitle - Проверка доступности названия для стратегии")
 @Feature("TAP-10732")
 @Owner("ext.ebelyaninov")
+@Tags({@Tag("stp-tracking-api"), @Tag("checkStrategyTitle")})
 @DisplayName("stp-tracking-api")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {

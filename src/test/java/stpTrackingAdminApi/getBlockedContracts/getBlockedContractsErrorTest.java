@@ -47,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @Feature("TAP-14194")
 @Subfeature("Альтернативные сценарии")
 @DisplayName("stp-tracking-admin")
+@Tags({@Tag("stp-tracking-admin"), @Tag("getBlockedContracts")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

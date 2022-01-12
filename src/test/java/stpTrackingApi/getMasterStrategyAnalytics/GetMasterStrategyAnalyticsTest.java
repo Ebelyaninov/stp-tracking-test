@@ -60,6 +60,7 @@ import static org.hamcrest.Matchers.is;
 @Feature("TAP-10862")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("getMasterStrategyAnalytics")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

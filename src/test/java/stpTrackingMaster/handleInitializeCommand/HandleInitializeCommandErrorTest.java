@@ -8,10 +8,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +49,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @Slf4j
 @Epic("handleInitializeCommand - Обработка команд по инициализации виртуального портфеля")
 @Feature("TAP-8067")
+@Tags({@Tag("stp-tracking-master"), @Tag("handleInitializeCommand")})
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("Kafka")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

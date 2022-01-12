@@ -43,6 +43,7 @@ import static org.hamcrest.Matchers.*;
 @Feature("TAP-10732")
 @Owner("ext.ebelyaninov")
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"),@Tag("checkStrategyTitle")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

@@ -78,6 +78,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @Epic("createStrategy - Создание стратегии")
 @Feature("TAP-6805")
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("createStrategy")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
 //    BillingDatabaseAutoConfiguration.class,

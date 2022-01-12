@@ -11,10 +11,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -69,6 +66,7 @@ import static org.junit.Assert.assertEquals;
 @Feature("TAP-6864")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-slave")
+@Tags({@Tag("stp-tracking-slave"), @Tag("handleActualizeCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
@@ -3274,8 +3272,8 @@ public class HandleActualizeCommandTest {
             .setStartTime(new java.sql.Timestamp(startSubTime.minusDays(2).toInstant().toEpochMilli()))
             .setEndTime(new java.sql.Timestamp(startSubTime.minusHours(2).toInstant().toEpochMilli()))
             .setStatus(SubscriptionStatus.inactive)
-            .setBlocked(false)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(false);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
         //формируем команду на актуализацию для slave с временем старта подписки

@@ -56,8 +56,8 @@ public class Subscription {
     @Column(name = "blocked")
     Boolean blocked;
 
-    @Type(type = "daterange")
-    @Column(name = "period")
-    private Range period;
+//    @Type(type = "daterange")
+//    @Column(name = "period")
+//    private Range period;
 
 }

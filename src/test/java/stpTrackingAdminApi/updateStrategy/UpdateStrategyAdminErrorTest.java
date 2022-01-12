@@ -9,10 +9,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -64,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Subfeature("Альтернативные сценарии")
 @DisplayName("stp-tracking-admin")
+@Tags({@Tag("stp-tracking-admin"), @Tag("updateStrategy")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
