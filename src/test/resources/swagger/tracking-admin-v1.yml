@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.7.0
+  version: 1.11.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
@@ -25,6 +25,8 @@ tags:
     description: Договор клиента
   - name: signal
     description: Торговый сигнал
+  - name: timeline
+    description: Лента событий
 
 paths:
 
@@ -466,7 +468,7 @@ paths:
         500:
           $ref: '#/components/responses/Error'
 
-  /contract/blocked:
+  /contract/{contractId}/unblock:
 
     parameters:
       - $ref: '#/components/parameters/ApplicationName'
@@ -479,33 +481,30 @@ paths:
       - $ref: '#/components/parameters/B3ParentSpanId'
       - $ref: '#/components/parameters/B3Sampled'
 
-    get:
+    post:
       tags:
         - contract
-      summary: getBlockedContracts
-      description: Возвращает договоры, на которые наложена техническая блокировка
-      operationId: getBlockedContracts
+      summary: unblockContract
+      description: Запустить снятие технической блокировки с договора {contractId} клиента
+      operationId: unblockContract
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
-        - $ref: '#/components/parameters/Cursor'
-        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ContractId'
       responses:
-        200:
+        202:
           description: OK
           headers:
             x-trace-id:
               $ref: '#/components/headers/XTraceId'
             x-server-time:
               $ref: '#/components/headers/XServerTime'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetBlockedContractsResponse'
         400:
           $ref: '#/components/responses/Error'
         401:
           description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
         500:
           $ref: '#/components/responses/Error'
 
@@ -529,7 +528,7 @@ paths:
       description: Возвращает список сигналов в рамках торговой стратегии {strategyId}
       operationId: getSignals
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/StrategyId'
         - $ref: '#/components/parameters/Cursor'
@@ -550,6 +549,100 @@ paths:
           $ref: '#/components/responses/Error'
         401:
           $ref: '#/components/responses/Error'
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /contract/blocked:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    get:
+      tags:
+        - contract
+      summary: getBlockedContracts
+      description: Возвращает договоры, на которые наложена техническая блокировка
+      operationId: getBlockedContracts
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBlockedContractsResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        500:
+          $ref: '#/components/responses/Error'
+
+  /timeline:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    post:
+      tags:
+        - timeline
+      summary: getTimeline
+      description: Возвращает ленту событий с изменениями master-сущностей и slave-сущностей (опционально)
+      operationId: getTimeline
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTimelineRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTimelineResponse'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
         422:
           $ref: '#/components/responses/Error'
         500:
@@ -755,13 +848,51 @@ components:
         - $ref: '#/components/schemas/ExchangePosition'
 
     ExchangePosition:
+      description: Биржевая позиция
+      allOf:
+        - $ref: '#/components/schemas/ExchangePositionId'
+        - type: object
+          required:
+            - exchange
+            - trackingAllowed
+            - orderQuantityLimits
+          properties:
+            exchange:
+              description: Биржа (торговая площадка)
+              type: string
+              enum: [MOEX, MOEX_PLUS, FX, SPB]
+            trackingAllowed:
+              description: Признак разрешённой для торговли в автоследовании позиции
+              type: boolean
+            dailyQuantityLimit:
+              description: Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
+              type: integer
+              minimum: 1
+            orderQuantityLimits:
+              description: Лимиты кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderQuantityLimit'
+              minItems: 1
+            otcTicker:
+              description: Тикер вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 12
+              example: USDRUB
+            otcClassCode:
+              description: Код класса инструмента вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 10
+              example: EES_CETS
+
+    ExchangePositionId:
+      description: Идентификатор биржевой позиции
       type: object
       required:
         - ticker
         - tradingClearingAccount
-        - exchange
-        - trackingAllowed
-        - orderQuantityLimits
       properties:
         ticker:
           description: Тикер на бирже
@@ -775,35 +906,6 @@ components:
           minLength: 1
           maxLength: 12
           example: L01+00002F00
-        exchange:
-          description: Биржа (торговая площадка)
-          type: string
-          enum: [MOEX, MOEX_PLUS, FX, SPB]
-        trackingAllowed:
-          description: Признак разрешённой для торговли в автоследовании позиции
-          type: boolean
-        dailyQuantityLimit:
-          description: Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
-          type: integer
-          minimum: 1
-        orderQuantityLimits:
-          description: Лимиты кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderQuantityLimit'
-          minItems: 1
-        otcTicker:
-          description: Тикер вне биржи (например, сплитованные валюты)
-          type: string
-          minLength: 1
-          maxLength: 12
-          example: USDRUB
-        otcClassCode:
-          description: Код класса инструмента вне биржи (например, сплитованные валюты)
-          type: string
-          minLength: 1
-          maxLength: 10
-          example: EES_CETS
 
     OrderQuantityLimit:
       type: object
@@ -849,6 +951,30 @@ components:
             $ref: '#/components/schemas/StrategyTest'
         feeRate:
           $ref: '#/components/schemas/NullableStrategyFeeRate'
+        isOverloaded:
+          description: Признак перегруженности стратегии
+          type: boolean
+        expectedRelativeYield:
+          description: Ожидаемая относительная доходность стратегии (в процентах)
+          type: number
+          format: decimal
+          nullable: true
+        shortDescription:
+          description: Короткое описание стратегии
+          type: string
+          minLength: 1
+          nullable: true
+          example: Получение доходности в валюте
+        owner:
+          description: Владелец стратегии
+          type: object
+          properties:
+            description:
+              description: Описание владельца стратегии
+              type: string
+              minLength: 1
+              nullable: true
+              example: 15 лет опыта, инвест. советник
 
     StrategyTest:
       description: Тестирование
@@ -890,21 +1016,8 @@ components:
         - $ref: '#/components/schemas/Strategy'
 
     GetStrategyResponse:
-      type: object
-      properties:
-        socialProfile:
-          $ref: '#/components/schemas/SocialProfile'
-
-    SocialProfile:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          description: Идентификатор социального профиля
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+      allOf:
+        - $ref: '#/components/schemas/Strategy'
 
     GetExchangePositionsResponse:
       type: object
@@ -954,10 +1067,7 @@ components:
         - status
       properties:
         id:
-          description: Единый идентификатор клиента
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/ClientId'
         status:
           description: Статус клиента
           type: string
@@ -994,7 +1104,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Strategy'
+            $ref: '#/components/schemas/StrategyPreview'
 
     Strategy:
       description: Торговая стратегия
@@ -1008,13 +1118,12 @@ components:
         - description
         - owner
         - tests
+        - load
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
         status:
-          description: Статус стратегии
-          type: string
-          enum: [draft, active]
+          $ref: '#/components/schemas/StrategyStatus'
         title:
           $ref: '#/components/schemas/StrategyTitle'
         baseCurrency:
@@ -1042,6 +1151,38 @@ components:
             $ref: '#/components/schemas/StrategyTest'
         feeRate:
           $ref: '#/components/schemas/StrategyFeeRate'
+        load:
+          $ref: '#/components/schemas/StrategyLoad'
+        expectedRelativeYield:
+          description: Ожидаемая относительная доходность стратегии (в процентах)
+          type: number
+          format: decimal
+        shortDescription:
+          description: Короткое описание стратегии
+          type: string
+          minLength: 1
+          example: Получение доходности в валюте
+
+    StrategyPreview:
+      description: Торговая стратегия
+      type: object
+      required:
+        - id
+        - status
+        - title
+        - owner
+        - load
+      properties:
+        id:
+          $ref: '#/components/schemas/StrategyId'
+        status:
+          $ref: '#/components/schemas/StrategyStatus'
+        title:
+          $ref: '#/components/schemas/StrategyTitle'
+        owner:
+          $ref: '#/components/schemas/PreviewStrategyOwner'
+        load:
+          $ref: '#/components/schemas/StrategyLoad'
 
     StrategyOwner:
       description: Владелец стратегии
@@ -1049,6 +1190,23 @@ components:
       properties:
         socialProfile:
           $ref: '#/components/schemas/MasterSocialProfile'
+        description:
+          description: Описание владельца
+          type: string
+          minLength: 1
+          example: 15 лет опыта, инвест. советник
+
+    PreviewStrategyOwner:
+      description: Владелец стратегии
+      type: object
+      properties:
+        socialProfile:
+          $ref: '#/components/schemas/MasterSocialProfile'
+
+    StrategyStatus:
+      description: Статус стратегии
+      type: string
+      enum: [ draft, active ]
 
     StrategyFeeRate:
       description: Ставка комиссии (в долях) за следование за стратегией
@@ -1103,9 +1261,9 @@ components:
         id:
           $ref: '#/components/schemas/ContractId'
         owner:
-          $ref: '#/components/schemas/ContractOwner'
+          $ref: '#/components/schemas/SlaveClient'
         strategy:
-          $ref: '#/components/schemas/ContractStrategy'
+          $ref: '#/components/schemas/SlaveStrategy'
 
     ContractId:
       description: Номер договора
@@ -1114,19 +1272,22 @@ components:
       maxLength: 10
       example: 2000000000
 
-    ContractOwner:
-      description: Владелец договора
+    SlaveClient:
+      description: Клиент в роли slave
       type: object
       required:
         - id
       properties:
         id:
-          description: Единый идентификатор клиента
-          type: string
-          format: uuid
-          example: 397aee00-f163-4eff-a7a6-a4bc11118776
+          $ref: '#/components/schemas/ClientId'
 
-    ContractStrategy:
+    ClientId:
+      description: Единый идентификатор клиента
+      type: string
+      format: uuid
+      example: 397aee00-f163-4eff-a7a6-a4bc11118776
+
+    SlaveStrategy:
       description: Торговая стратегия, к которой подключен договор
       type: object
       required:
@@ -1179,25 +1340,32 @@ components:
         - action
         - price
         - exchangePosition
+        - version
       properties:
         createdAt:
           description: Дата и время сигнала
           type: string
           format: date-time
         quantity:
-          description: Количество единиц актива
-          type: number
-          format: decimal
-          minimum: 0
-          exclusiveMinimum: true
+          $ref: '#/components/schemas/AssetQuantity'
         action:
-          description: Действие, на которое направлен торговый сигнал (покупка/продажа)
-          type: string
-          enum: [ buy, sell ]
+          $ref: '#/components/schemas/OrderAction'
         price:
           $ref: '#/components/schemas/Price'
         exchangePosition:
           $ref: '#/components/schemas/SignalExchangePosition'
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+
+    AssetQuantity:
+      description: Количество единиц актива (в штуках)
+      type: number
+      format: decimal
+
+    OrderAction:
+      description: Действие, на которое направлена заявка (покупка/продажа)
+      type: string
+      enum: [buy, sell]
 
     Price:
       description: Цена
@@ -1218,25 +1386,312 @@ components:
     Currency:
       description: Валюта
       type: string
-      enum: [ rub, usd ]
+      enum: [rub, usd]
 
     SignalExchangePosition:
-      description: Биржевая позиция, на изменение которой был направлен сигнал
+      description: Биржевая позиция, на изменение которой направлен сигнал
+      allOf:
+        - $ref: '#/components/schemas/ExchangePositionId'
+
+    StrategyLoad:
+      description: Загруженность стратегии
       type: object
       required:
-        - ticker
-        - tradingClearingAccount
+        - isOverloaded
+        - percent
       properties:
-        ticker:
-          description: Тикер
+        isOverloaded:
+          description: Признак перегруженности стратегии
+          type: boolean
+        percent:
+          description: Значение загруженности стратегии (в процентах)
+          type: number
+          format: decimal
+          minimum: 0
+
+    GetTimelineRequest:
+      type: object
+      required:
+        - strategyId
+      properties:
+        strategyId:
+          $ref: '#/components/schemas/StrategyId'
+        slaveContractId:
+          $ref: '#/components/schemas/ContractId'
+
+    GetTimelineResponse:
+      type: object
+      required:
+        - nextCursor
+        - hasNext
+        - items
+      properties:
+        nextCursor:
+          description: Крайний возвращённый в текущем ответе идентификатор элемента, который необходимо использовать при следующем запросе
           type: string
           minLength: 1
-          example: TCS
-        tradingClearingAccount:
-          description: Торгово-клиринговый счёт
+          nullable: true
+        hasNext:
+          description: Признак наличия элементов, не вошедших в текущий ответ
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineItem'
+
+    TimelineItem:
+      description: Элемент ленты событий
+      type: object
+      required:
+        - timestamp
+        - content
+      properties:
+        timestamp:
+          description: Метка времени события
           type: string
-          minLength: 1
-          example: L01+00002F00
+          format: date-time
+        content:
+          $ref: '#/components/schemas/TimelineItemContent'
+
+    TimelineItemContent:
+      description: Полезное содержимое события
+      type: object
+      required:
+        - domain
+      properties:
+        domain:
+          description: Домен сущности
+          type: string
+          enum: [master-portfolio, master-signal, slave-portfolio, slave-order]
+      discriminator:
+        propertyName: domain
+        mapping:
+          master-portfolio: '#/components/schemas/MasterPortfolioItem'
+          master-signal: '#/components/schemas/SignalItem'
+          slave-portfolio: '#/components/schemas/SlavePortfolioItem'
+          slave-order: '#/components/schemas/SlaveOrderItem'
+
+    MasterPortfolioItem:
+      description: Элемент события с типом MasterPortfolio
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/MasterPortfolio'
+
+    SignalItem:
+      description: Элемент события с типом Signal
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/Signal'
+
+    SlavePortfolioItem:
+      description: Элемент события с типом SlavePortfolio
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/SlavePortfolio'
+
+    SlaveOrderItem:
+      description: Элемент события с типом SlaveOrder
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/SlaveOrder'
+
+    MasterPortfolio:
+      description: Виртуальный портфель ведущего
+      type: object
+      required:
+        - version
+        - baseMoneyPosition
+        - positions
+      properties:
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+        baseMoneyPosition:
+          $ref: '#/components/schemas/MasterPortfolioBaseMoneyPosition'
+        positions:
+          description: Позиции виртуального портфеля
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterPortfolioPosition'
+
+    MasterPortfolioBaseMoneyPosition:
+      description: Денежная позиция в виртуальном портфеле в базовой валюте
+      type: object
+      required:
+        - quantity
+        - lastChange
+      properties:
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        lastChange:
+          $ref: '#/components/schemas/MasterPositionLastChange'
+
+    MasterPortfolioPosition:
+      description: Позиция в виртуальном портфеле
+      type: object
+      required:
+        - exchangePositionId
+        - quantity
+        - lastChange
+      properties:
+        exchangePositionId:
+          $ref: '#/components/schemas/ExchangePositionId'
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        lastChange:
+          $ref: '#/components/schemas/MasterPositionLastChange'
+
+    MasterPositionLastChange:
+      description: Последнее изменение master-позиции
+      type: object
+      required:
+        - changedAt
+      properties:
+        changedAt:
+          $ref: '#/components/schemas/PositionChangedAt'
+
+    SlavePortfolio:
+      description: Портфель ведомого
+      type: object
+      required:
+        - version
+        - comparedToMasterVersion
+        - baseMoneyPosition
+        - positions
+      properties:
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+        comparedToMasterVersion:
+          $ref: '#/components/schemas/PortfolioVersion'
+        baseMoneyPosition:
+          $ref: '#/components/schemas/SlavePortfolioBaseMoneyPosition'
+        positions:
+          description: Позиции портфеля
+          type: array
+          items:
+            $ref: '#/components/schemas/SlavePortfolioPosition'
+
+    SlavePortfolioBaseMoneyPosition:
+      description: Денежная позиция в портфеле в базовой валюте
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        lastChange:
+          $ref: '#/components/schemas/SlavePositionLastChange'
+
+    SlavePortfolioPosition:
+      description: Позиция в портфеле
+      type: object
+      required:
+        - exchangePositionId
+        - quantity
+        - price
+        - priceTimestamp
+        - rate
+        - rateDiff
+        - quantityDiff
+      properties:
+        exchangePositionId:
+          $ref: '#/components/schemas/ExchangePositionId'
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        price:
+          $ref: '#/components/schemas/Price'
+        priceTimestamp:
+          description: Метка времени, на которую была актуальна использованная цена
+          type: string
+          format: date-time
+        rate:
+          description: Доля позиции от всего портфеля ведомого
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+        rateDiff:
+          description: Разница между целевой и фактической долей позиции в портфеле ведомого
+          type: number
+          format: decimal
+          minimum: -1
+          maximum: 1
+        quantityDiff:
+          description: Разница между целевым и фактическим количеством единиц актива (в штуках) в портфеле ведомого
+          type: number
+          format: decimal
+        buyEnabled:
+          description: Доступность позиции на покупку
+          type: boolean
+        sellEnabled:
+          description: Доступность позиции на продажу
+          type: boolean
+        lastChange:
+          $ref: '#/components/schemas/SlavePositionLastChange'
+
+    SlavePositionLastChange:
+      description: Последнее изменение slave-позиции
+      type: object
+      required:
+        - action
+        - changedAt
+      properties:
+        action:
+          $ref: '#/components/schemas/PositionAction'
+        changedAt:
+          $ref: '#/components/schemas/PositionChangedAt'
+
+    SlaveOrder:
+      description: Заявка, выставляемая от лица ведомого
+      type: object
+      required:
+        - version
+        - attemptsCount
+        - exchangePositionId
+        - action
+        - quantity
+        - filledQuantity
+        - price
+      properties:
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+        attemptsCount:
+          description: Номер попытки выставления заявки
+          type: integer
+          format: int32
+        exchangePositionId:
+          $ref: '#/components/schemas/ExchangePositionId'
+        action:
+          $ref: '#/components/schemas/OrderAction'
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        filledQuantity:
+          description: Количество исполненных единиц актива (в штуках)
+          type: number
+          format: decimal
+          minimum: 0
+        price:
+          $ref: '#/components/schemas/Price'
+        state:
+          description: Состояние заявки
+          type: integer
+          format: int32
+
+    PortfolioVersion:
+      description: Версия портфеля
+      type: integer
+      format: int32
+      minimum: 0
+
+    PositionChangedAt:
+      description: Метка времени последнего изменения позиции
+      type: string
+      format: date-time
+
+    PositionAction:
+      description: Действие, в результате которого была изменена позиция
+      type: integer
+      format: int32
+      minimum: 0
 
     ErrorResponse:
       description: Ответ с ошибкой

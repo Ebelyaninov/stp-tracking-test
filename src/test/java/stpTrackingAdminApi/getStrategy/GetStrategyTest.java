@@ -123,7 +123,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null);
         Client clientDB = clientService.getClient(investId);
-        String profileId = clientDB.getSocialProfile().getId();
+        String nickname = clientDB.getSocialProfile().getNickname();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -132,7 +132,7 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //проверяем, данные в сообщении
-        assertThat("ID profile не равен", responseExep.getSocialProfile().getId().toString(), is(profileId));
+        assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
     }
 
 
@@ -162,7 +162,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1);
         Client clientDB = clientService.getClient(investId);
-        String profileId = clientDB.getSocialProfile().getId();
+        String nickname = clientDB.getSocialProfile().getNickname();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -171,7 +171,7 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //проверяем, данные в сообщении
-        assertThat("ID profile не равен", responseExep.getSocialProfile().getId().toString(), is(profileId));
+       assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
     }
 
 
