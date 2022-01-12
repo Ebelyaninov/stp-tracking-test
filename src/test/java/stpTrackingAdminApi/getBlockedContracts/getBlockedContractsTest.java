@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.is;
 @Feature("TAP-14194")
 @Subfeature("Успешные сценарии")
 @DisplayName("stp-tracking-admin")
+@Tags({@Tag("stp-tracking-admin"), @Tag("getBlockedContracts")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

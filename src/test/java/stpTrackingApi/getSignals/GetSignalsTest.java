@@ -64,6 +64,7 @@ import static org.hamcrest.Matchers.is;
 @Epic("getSignals - Получение списка сделок (сигналов) стратегии")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("getSignals")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

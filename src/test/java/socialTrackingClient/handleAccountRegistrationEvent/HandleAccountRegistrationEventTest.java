@@ -71,6 +71,7 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
 @DisplayName("social-tracking-client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Owner("ext.ebelyaninov")
+@Tags({@Tag("social-tracking-client"),@Tag("handleAccountRegistrationEvent")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
@@ -419,8 +420,8 @@ public class HandleAccountRegistrationEventTest {
             .setStartTime(startTime)
             .setStatus(SubscriptionStatus.draft)
             .setEndTime(null)
-            .setBlocked(false)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(false);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
         //вычитываем все события из топика tracking.fee.calculate.command

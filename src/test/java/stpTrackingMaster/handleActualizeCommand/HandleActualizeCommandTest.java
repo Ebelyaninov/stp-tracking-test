@@ -11,10 +11,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,6 +55,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Epic("handleActualizeCommand - Обработка команд на актуализацию виртуального портфеля")
 @Feature("TAP-8055")
 @DisplayName("stp-tracking-master")
+@Tags({@Tag("stp-tracking-master"), @Tag("handleActualizeCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @SpringBootTest(classes = {

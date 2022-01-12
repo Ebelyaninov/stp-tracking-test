@@ -118,17 +118,24 @@ configure<JavaPluginConvention> {
 
 tasks.test {
     useJUnitPlatform {
-        systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+        systemProperties = mapOf(
+            "user.timezone" to "Europe/Moscow",
+            "allure.results.directory" to "${buildDir}/allure-results",
+            "junit.jupiter.extensions.autodetection.enabled" to "true"
+        )
 
         val includedTags = project.properties["includeTags"] as String?
         val excludedTags = project.properties["excludeTags"] as String?
         if (!includedTags.isNullOrBlank()) {
+            println("Included tags: $includedTags");
             includeTags(includedTags)
         }
         if (!excludedTags.isNullOrBlank()) {
+            println("Excluded tags: $excludeTags");
             excludeTags(excludedTags)
         }
     }
+
 }
 
 

@@ -66,6 +66,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @DisplayName("social-tracking-client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Owner("ext.ebelyaninov")
+@Tags({@Tag("social-tracking-client"),@Tag("handleRiskProfileEvent")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,

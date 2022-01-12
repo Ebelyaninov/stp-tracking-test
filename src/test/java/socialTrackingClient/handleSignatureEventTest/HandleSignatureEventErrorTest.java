@@ -53,6 +53,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Feature("TAP-6569")
 @DisplayName("social-tracking-client")
 @Owner("ext.ebelyaninov")
+@Tags({@Tag("social-tracking-client"),@Tag("handleSignatureEvent")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

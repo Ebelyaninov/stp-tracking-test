@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.*;
 @Epic("getAuthorizedClient - Метод получения данных авторизованного клиента")
 @Feature("TAP-6645")
 @DisplayName("stp-tracking-api")
+@Tags({@Tag("stp-tracking-api"), @Tag("getAuthorizedClient")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,

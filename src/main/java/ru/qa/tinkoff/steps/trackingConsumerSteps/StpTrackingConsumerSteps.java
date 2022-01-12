@@ -250,8 +250,8 @@ public class StpTrackingConsumerSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blocked);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
@@ -281,8 +281,8 @@ public class StpTrackingConsumerSteps {
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
             .setEndTime(dateEnd)
-            .setBlocked(blocked)
-            .setPeriod(localDateTimeRange);
+            .setBlocked(blocked);
+            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
@@ -405,8 +405,8 @@ public class StpTrackingConsumerSteps {
             .setStrategyId(strategyId)
             .setStartTime(dateStart)
             .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd)
-            .setPeriod(localDateTimeRange);
+            .setEndTime(dateEnd);
+            //.setPeriod(localDateTimeRange);
 //            .setBlocked(blocked);
         subscription = subscriptionService.saveSubscription(subscription);
 
