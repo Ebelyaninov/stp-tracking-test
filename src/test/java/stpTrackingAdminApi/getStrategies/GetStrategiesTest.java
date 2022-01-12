@@ -83,7 +83,7 @@ public class GetStrategiesTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StrategyService strategyService;
-//    @Autowired
+    //    @Autowired
 //    PlatformTransactionManager billingTransactionManager;
     Client client;
     Contract contract;
@@ -147,6 +147,7 @@ public class GetStrategiesTest {
         String title = "Стратегия Autotest - Заголовок";
         String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
         Integer score = 2;
+        String percent = "0";
         UUID strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
         //Получаем данные по клиенту в API-Сервиса счетов
@@ -163,7 +164,7 @@ public class GetStrategiesTest {
         String contractIdNew = strategys.get(0).getContract().getId();
         contract = contractService.getContract(contractIdNew);
         client = clientService.getClient(contract.getClientId());
-        String nickName = client.getSocialProfile() == null ? null : client.getSocialProfile().getNickname();
+        String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -174,16 +175,15 @@ public class GetStrategiesTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesResponse.class));
         String nickNameOwner = responseExep.getItems().get(0).getOwner().getSocialProfile() == null ?
-            null : responseExep.getItems().get(0).getOwner().getSocialProfile().getNickname();
+            "" : responseExep.getItems().get(0).getOwner().getSocialProfile().getNickname();
         //проверяем, данные в сообщении
         assertThat("номера стратегии не равно", strategys.get(0).getId(), is(responseExep.getItems().get(0).getId()));
         assertThat("статус стратегии не равно", strategys.get(0).getStatus().toString(), is(responseExep.getItems().get(0).getStatus().toString()));
         assertThat("название стратегии не равно", (strategys.get(0).getTitle()), is(responseExep.getItems().get(0).getTitle()));
-        assertThat("валюта стратегии не равно", (strategys.get(0).getBaseCurrency()).toString(), is(responseExep.getItems().get(0).getBaseCurrency().toString()));
-        assertThat("риск-профиль стратегии не равно", (strategys.get(0).getRiskProfile().toString()), is(responseExep.getItems().get(0).getRiskProfile().toString()));
-        assertThat("описание стратегии не равно", strategys.get(0).getDescription(), is(responseExep.getItems().get(0).getDescription()));
-        assertThat("оценка стратегии не равна", (strategys.get(0).getScore()), is(responseExep.getItems().get(0).getScore()));
         assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
+        assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
+        assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
+
     }
 
 
