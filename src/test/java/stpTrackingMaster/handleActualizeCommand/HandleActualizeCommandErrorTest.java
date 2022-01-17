@@ -11,6 +11,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -48,6 +51,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -230,13 +234,22 @@ public class HandleActualizeCommandErrorTest {
         assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
     }
 
+
+    private static Stream<Arguments> versionParams() {
+        return Stream.of(
+            Arguments.of(3, 2),
+            Arguments.of(3, 3)
+        );
+    }
+
     @SneakyThrows
-    @Test
-    @AllureId("662386")
-    @DisplayName("C662386.HandleActualizeCommand.Version из команды < master_portfolio.version")
+    @ParameterizedTest
+    @MethodSource("versionParams")
+    @AllureId("1614492")
+    @DisplayName("HandleActualizeCommand.Version из команды <= master_portfolio.version")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
-    void C662386() {
+    void C1614492(int versionPortfolio, int versionCommand ) {
         String siebelIdMaster = "1-DPVDVIC";
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
@@ -244,8 +257,6 @@ public class HandleActualizeCommandErrorTest {
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
-        int versionPortfolio = 3;
-        int versionCommand = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(siebelIdMaster)
