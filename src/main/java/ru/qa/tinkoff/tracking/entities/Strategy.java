@@ -74,6 +74,13 @@ public class Strategy {
     @Column(name = "overloaded")
     Boolean overloaded;
 
+
+    @Column(name = "short_description")
+    String shortDescription;
+
+    @Column(name = "owner_description")
+    String ownerDescription;
+
 //    @Type( type = "jsonb" )
 //    @Column(name = "fee_rate", columnDefinition = "jsonb")
 //    Map<String, BigDecimal> feeRate;
