@@ -28,6 +28,7 @@ import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetStrategyResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -36,8 +37,11 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
@@ -79,6 +83,8 @@ public class GetStrategyTest {
 
     String SIEBEL_ID = "1-1XHHA7S";
     String xApiKey = "x-api-key";
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
+
 
     @AfterEach
     void deleteClient() {
@@ -105,7 +111,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536608() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -121,9 +127,12 @@ public class GetStrategyTest {
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, null);
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST", "OwnerTEST");
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
+        String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
+        BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
+        Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -133,6 +142,16 @@ public class GetStrategyTest {
             .execute(response -> response.as(GetStrategyResponse.class));
         //проверяем, данные в сообщении
         assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("ownerDescription не равно", responseExep.getOwner().getDescription(), is(ownerDescription));
+        assertThat("short_description не равно", responseExep.getShortDescription().toString(), is("TEST"));
+        assertThat("expectedRelativeYield не равено", responseExep.getExpectedRelativeYield(), is(expectedRelativeYield));
+        assertThat("status не равен", responseExep.getStatus().toString(), is("draft"));
+        assertThat("title не равен", responseExep.getTitle(), is(title));
+        assertThat("baseCurrency не равен", responseExep.getBaseCurrency().toString(), is("rub"));
+        assertThat("riskProfile не равно", responseExep.getRiskProfile().toString(), is("conservative"));
+        assertThat("description не равно", responseExep.getDescription(), is(description));
+        assertThat("score не равно", responseExep.getScore(), is(score));
+        assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04") );
     }
 
 
@@ -143,7 +162,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536280() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -160,9 +179,12 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST");
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
+        String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
+        BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
+        Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -171,7 +193,17 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //проверяем, данные в сообщении
-       assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("ownerDescription не равно", responseExep.getOwner().getDescription(), is(ownerDescription));
+        assertThat("short_description не равно", responseExep.getShortDescription().toString(), is("TEST"));
+        assertThat("expectedRelativeYield не равено", responseExep.getExpectedRelativeYield(), is(expectedRelativeYield));
+        assertThat("status не равен", responseExep.getStatus().toString(), is("active"));
+        assertThat("title не равен", responseExep.getTitle(), is(title));
+        assertThat("baseCurrency не равен", responseExep.getBaseCurrency().toString(), is("rub"));
+        assertThat("riskProfile не равно", responseExep.getRiskProfile().toString(), is("conservative"));
+        assertThat("description не равно", responseExep.getDescription(), is(description));
+        assertThat("score не равно", responseExep.getScore(), is(score));
+        assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04") );
     }
 
 
@@ -182,7 +214,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536612() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -198,7 +230,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST");
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -216,7 +248,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536613() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -231,7 +263,7 @@ public class GetStrategyTest {
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST");
         //вызываем метод getStrategy
         strategyApi.getStrategy()
             .xAppNameHeader("invest")
@@ -248,7 +280,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536614() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //находим клиента в БД social
@@ -264,7 +296,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST");
         //вызываем метод getStrategy
         strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
@@ -282,7 +314,7 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536615() {
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         UUID strategyIdTest = UUID.randomUUID();
@@ -299,7 +331,7 @@ public class GetStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST");
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))

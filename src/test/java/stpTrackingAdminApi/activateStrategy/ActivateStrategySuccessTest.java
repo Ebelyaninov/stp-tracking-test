@@ -44,6 +44,7 @@ import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public class ActivateStrategySuccessTest {
     MasterPortfolio masterPortfolio;
     String contractId;
     UUID strategyId;
-
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
 
 
 
@@ -148,7 +149,7 @@ public class ActivateStrategySuccessTest {
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -200,7 +201,7 @@ public class ActivateStrategySuccessTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);

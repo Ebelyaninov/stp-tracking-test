@@ -38,6 +38,7 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
@@ -59,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class ActivateStrategyErrorTest {
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     static final String SIEBEL_ID = "5-55RUONV5";
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String xApiKey = "x-api-key";
     String key = "tracking";
     @Autowired
@@ -110,7 +112,7 @@ public class ActivateStrategyErrorTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         //Вызываем ActiveStrategy
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -160,7 +162,7 @@ public class ActivateStrategyErrorTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         //Вызываем метод activateStrategy с некоррентным значением api-key
         Response responseActiveStrategy = strategyApi.activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trackinnng"))
@@ -189,7 +191,7 @@ public class ActivateStrategyErrorTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         //Вызываем метод activateStrategy без api-key
         strategyApi.activateStrategy()
             .xAppNameHeader("invest")
@@ -236,7 +238,7 @@ public class ActivateStrategyErrorTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft, при этом score передаем как null
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
         //Вызываем метод activateStrategy без api-key
         strategyApi.activateStrategy()
             .xAppNameHeader("invest")
@@ -264,7 +266,7 @@ public class ActivateStrategyErrorTest {
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST");
 
         //Вызываем метод activateStrategy без api-key
         Response responseActiveStrategy = strategyApi.activateStrategy()
