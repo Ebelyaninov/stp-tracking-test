@@ -111,17 +111,17 @@ public class SynchronizePositionResolverTest {
     String tradingClearingAccountShareABBV = "TKCBM_TCAB";
     String classCodeShareABBV = "SPBXM";
     String tickerShareQCOM = "QCOM";
-    String tradingClearingAccountShareQCOM = "TKCBM_TCAB";
+    String tradingClearingAccountShareQCOM = "L01+00000SPB";
     String classCodeShareQCOM = "SPBXM";
 
 
     String tickerBond = "XS1589324075";
-    String tradingClearingAccountBond = "L01+00002F00";
+    String tradingClearingAccountBond = "L01+00000F00";
     String classCodeBond = "TQOD";
 
 
     String tickerBond1 = "XS0191754729";
-    String tradingClearingAccountBond1 = "L01+00002F00";
+    String tradingClearingAccountBond1 = "L01+00000F00";
     String classCodeBond1 = "TQOD";
 
     String tickerBond2 = "ALFAperp";
