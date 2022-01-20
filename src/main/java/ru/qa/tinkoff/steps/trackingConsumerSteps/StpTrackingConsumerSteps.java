@@ -19,6 +19,7 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -207,6 +208,8 @@ public class StpTrackingConsumerSteps {
         Map<String, BigDecimal> feeRate = new HashMap<>();
         feeRate.put("management", new BigDecimal("0.04"));
         feeRate.put("result",new BigDecimal("0.2"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -219,7 +222,8 @@ public class StpTrackingConsumerSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRate)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
 
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }

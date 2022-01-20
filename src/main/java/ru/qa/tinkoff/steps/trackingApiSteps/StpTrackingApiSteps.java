@@ -22,6 +22,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -239,6 +240,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -251,7 +254,8 @@ public class StpTrackingApiSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(overloaded);
+            .setOverloaded(overloaded)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -294,6 +298,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -306,7 +312,8 @@ public class StpTrackingApiSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -344,6 +351,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal(result));
         feeRateProperties.put("management", new BigDecimal(management));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -357,7 +366,8 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
-            .setExpectedRelativeYield(expectedRelativeYield);
+            .setExpectedRelativeYield(expectedRelativeYield)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -396,6 +406,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -408,7 +420,8 @@ public class StpTrackingApiSteps {
             .setActivationTime(date)
             .setScore(score)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(overload);
+            .setOverloaded(overload)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -437,6 +450,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal(result));
         feeRateProperties.put("management", new BigDecimal(management));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -449,7 +464,8 @@ public class StpTrackingApiSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(overloaded);
+            .setOverloaded(overloaded)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -497,6 +513,8 @@ public class StpTrackingApiSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -509,7 +527,8 @@ public class StpTrackingApiSteps {
             .setActivationTime(date)
             .setScore(score)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -544,6 +563,8 @@ public class StpTrackingApiSteps {
             .setStrategyId(null)
             .setBlocked(false);
         contractMaster = contractService.saveContract(contractMaster);
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         //создаем запись о стратегии клиента
         strategyMaster = new Strategy()
             .setId(strategyId)
@@ -555,7 +576,8 @@ public class StpTrackingApiSteps {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setOverloaded(overloaded);
+            .setOverloaded(overloaded)
+            .setTestsStrategy(testsStrategiesList);
 
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }

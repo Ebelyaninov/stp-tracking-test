@@ -15,6 +15,7 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
@@ -183,6 +184,8 @@ public class StpTrackingAnalyticsSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -195,7 +198,8 @@ public class StpTrackingAnalyticsSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 

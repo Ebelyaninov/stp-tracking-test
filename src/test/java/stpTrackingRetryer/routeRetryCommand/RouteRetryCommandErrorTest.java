@@ -36,6 +36,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -571,6 +572,8 @@ public class RouteRetryCommandErrorTest {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("range", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -583,7 +586,8 @@ public class RouteRetryCommandErrorTest {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
 
         strategy = trackingService.saveStrategy(strategy);
     }
