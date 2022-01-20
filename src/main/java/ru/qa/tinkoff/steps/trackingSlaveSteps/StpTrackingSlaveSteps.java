@@ -25,6 +25,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -105,6 +106,8 @@ public class StpTrackingSlaveSteps {
     public Client client;
     public Contract contract;
 
+    List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+
     //метод создает клиента, договор и стратегию в БД автоследования
     @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
     @SneakyThrows
@@ -138,6 +141,8 @@ public class StpTrackingSlaveSteps {
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
 
+        testsStrategiesList.add(new TestsStrategy());
+
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -150,7 +155,8 @@ public class StpTrackingSlaveSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 

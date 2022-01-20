@@ -7,6 +7,7 @@ import org.hibernate.annotations.GenerationTime;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import ru.qa.tinkoff.PostgreSQLEnumType;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -14,6 +15,7 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -89,4 +91,7 @@ public class Strategy {
     @Column(name = "expected_relative_yield")
     BigDecimal expectedRelativeYield;
 
+    @Type( type = "jsonb" )
+    @Column(name = "tests", columnDefinition = "jsonb")
+    List<TestsStrategy> testsStrategy;
 }

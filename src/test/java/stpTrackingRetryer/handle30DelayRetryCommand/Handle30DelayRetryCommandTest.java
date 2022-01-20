@@ -30,6 +30,7 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -355,6 +356,8 @@ public class Handle30DelayRetryCommandTest {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("range", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -367,7 +370,8 @@ public class Handle30DelayRetryCommandTest {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
 
         strategy = trackingService.saveStrategy(strategy);
     }

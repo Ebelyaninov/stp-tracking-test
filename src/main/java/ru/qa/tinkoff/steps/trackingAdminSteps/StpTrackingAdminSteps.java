@@ -14,6 +14,7 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -103,6 +104,8 @@ public class StpTrackingAdminSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("range", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -118,7 +121,9 @@ public class StpTrackingAdminSteps {
             .setOverloaded(false)
             .setExpectedRelativeYield(expectedRelativeYield)
             .setShortDescription(shortDescription)
-            .setOwnerDescription(ownerDescription);
+            .setOwnerDescription(ownerDescription)
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -156,6 +161,8 @@ public class StpTrackingAdminSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -168,7 +175,8 @@ public class StpTrackingAdminSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -209,6 +217,8 @@ public class StpTrackingAdminSteps {
             .setBlocked(false);
 
         contract = contractService.saveContract(contract);
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
 
         strategy = new Strategy()
             .setId(strategyId)
@@ -220,7 +230,8 @@ public class StpTrackingAdminSteps {
             .setStatus(strategyStatus)
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
-            .setScore(score);
+            .setScore(score)
+            .setTestsStrategy(testsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 

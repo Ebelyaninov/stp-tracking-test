@@ -14,6 +14,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
@@ -158,6 +159,8 @@ public class СheckStrategyTitleTest {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("range", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
 
         strategy = new Strategy()
             .setId(UUID.fromString("eff82a34-8b9e-4730-9ecc-7dab4b2a5412"))
@@ -171,7 +174,8 @@ public class СheckStrategyTitleTest {
             .setActivationTime(null)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
 
         strategy = trackingService.saveStrategy(strategy);
 

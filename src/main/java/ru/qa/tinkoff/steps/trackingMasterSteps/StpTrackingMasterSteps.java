@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -90,6 +91,8 @@ public class StpTrackingMasterSteps {
         Map<String, BigDecimal> feeRateProperties = new HashMap<>();
         feeRateProperties.put("result", new BigDecimal("0.2"));
         feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -102,7 +105,8 @@ public class StpTrackingMasterSteps {
             .setActivationTime(date)
             .setScore(1)
             .setFeeRate(feeRateProperties)
-            .setOverloaded(false);
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

@@ -34,6 +34,8 @@ import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.StrategyTest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequestOwner;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -49,6 +51,8 @@ import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -888,6 +892,66 @@ public class UpdateStrategyAdminErrorTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
 
+    }
+
+
+    @Test
+    @AllureId("1363710")
+    @DisplayName("C1363710.UpdateStrategy. Один из элементов массива tests не входит в список из настройки strategy-test-ids")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C1363710() {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" +String.valueOf(randomNumber);
+        String description = "Стратегия Autotest 114 - Описание";
+        Integer score = 1;
+        String titleUpdate = "Стратегия Autotest 114 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 114 - Обновленное Описание";
+        Integer scoreUpdate = null;
+        //Создаем клиента в tracking: client, contract, strategy
+        UUID strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .isBlockedQuery(false)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0,  LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST");
+
+        List<StrategyTest> tests = new ArrayList<>();
+        tests.add(new StrategyTest().id("derivative"));
+        tests.add(new StrategyTest().id("structured_bonds"));
+        tests.add(new StrategyTest().id("closed_fund2"));
+        tests.add(new StrategyTest().id("bond"));
+
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setTitle(titleUpdate);
+        updateStrategyRequest.setDescription(descriptionUpdate);
+        updateStrategyRequest.setScore(scoreUpdate);
+        updateStrategyRequest.setTests(tests);
+        //Вызываем метод updateStrategy
+        ErrorResponse expectedResponse = strategyApi.updateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response.as(ErrorResponse.class));
+
+        assertThat("номера стратегии не равно", expectedResponse.getErrorMessage(), is("Указано недопустимое тестирование"));
+        assertThat("номера стратегии не равно", expectedResponse.getErrorCode(), is("0344-03-V05"));
+        //Находим в БД автоследования стратегию и Проверяем ее поля
+        strategy = strategyService.getStrategy(strategyId);
+        checkParamDB(strategyId, contractId, title, description, score, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE);
     }
 
 
