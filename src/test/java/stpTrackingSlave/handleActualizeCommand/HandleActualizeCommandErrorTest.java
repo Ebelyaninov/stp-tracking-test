@@ -809,8 +809,8 @@ public class HandleActualizeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C742690() {
         String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
-        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
-        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
+//        //отправляем в топик tracking.test.md.prices.int.stream данные по ценам на бумагу: last, ask, bid
+//        steps.createDataToMarketData(ticker, classCode, "107.97", "108.17", "108.06");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();

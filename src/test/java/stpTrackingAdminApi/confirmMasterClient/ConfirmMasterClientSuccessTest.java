@@ -16,6 +16,10 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ClientApiAdminCreator;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -26,6 +30,7 @@ import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -53,14 +58,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class
+    , ClientApiAdminCreator.class
 })
 
 public class ConfirmMasterClientSuccessTest {
-    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
+//    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
-    String SIEBEL_ID = "5-HVN32EX9";
+    String SIEBEL_ID = "1-7XOAYPX";
     String siebelIdEmptyNick = "1-9X6NHTJ";
     String siebelIdNullImage = "5-421S5P27";
     String siebelIdNotBroker = "5-11FZVG5DZ";
@@ -74,6 +80,8 @@ public class ConfirmMasterClientSuccessTest {
     ProfileService profileService;
     @Autowired
     ClientService clientService;
+    @Autowired
+    ApiAdminCreator<ClientApi> clientApiAdminCreator;
 
     @AfterEach
     void deleteClient() {
@@ -101,7 +109,7 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApi.confirmMasterClient()
+        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -140,7 +148,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         createClient(investId, ClientStatusType.registered, socialProfile);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApi.confirmMasterClient()
+        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -182,7 +190,7 @@ public class ConfirmMasterClientSuccessTest {
 //        //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApi.confirmMasterClient()
+        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -222,7 +230,7 @@ public class ConfirmMasterClientSuccessTest {
         //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed,socialProfile);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -260,7 +268,7 @@ public class ConfirmMasterClientSuccessTest {
         //достаем из БД сервиса счетов sieble_id, у которого несколько инвест счетов
         Profile profile = profileService.getProfileBySiebelId(siebelIdEmptyNick);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -300,7 +308,7 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdNullImage = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -341,7 +349,7 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -378,7 +386,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdNotBroker = resAccountMaster.getInvestId();
         Profile profile = profileService.getProfileBySiebelId(siebelIdNotBroker);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -414,7 +422,7 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdNotOpen = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster = clientApi.confirmMasterClient()
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

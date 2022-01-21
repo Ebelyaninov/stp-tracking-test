@@ -73,8 +73,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 @Feature("TAP-7930")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-slave")
-@Tags({@Tag("stp-tracking-slave"), @Tag("handleSynchronizeCommand")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Tags({@Tag("stp-tracking-slave"), @Tag("analyzePortfolio")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
@@ -207,6 +207,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("681845")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C681845.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -282,9 +283,12 @@ public class AnalyzePortfolioTest {
     }
 
 
+
+
     @SneakyThrows
     @Test
     @AllureId("683302")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C683302.AnalyzePortfolio.Набор позиций slave-портфеля, позиции в slave_portfolio и в master_portfolio")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -364,6 +368,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("684579")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C684579.AnalyzePortfolio.Набор позиций slave-портфеля, позиции есть в slave_portfolio, но нет в master_portfolio")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -462,6 +467,7 @@ public class AnalyzePortfolioTest {
     @ParameterizedTest
     @MethodSource("provideFlagNotChange")
     @AllureId("1439728")
+    @Tags({@Tag("qa")})
     @DisplayName("C1439728.AnalyzePortfolio.Набор позиций slave-портфеля, позиции есть в slave_portfolio, но нет в master_portfolio")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -526,6 +532,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("688348")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C688348.AnalyzePortfolio.Анализ портфеля.Набор позиций slave-портфеля по облигациям")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -621,6 +628,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1323457")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1323457.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio. Для валютных позиций USD")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -712,6 +720,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1346546")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1346546.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio.Для валютных позиций GBP")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
@@ -803,6 +812,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1382257")
+    @Tags({@Tag("qa")})
     @DisplayName("C1382257. Флаги buy_enabled и sell_enabled у позиций не заполнены (нет записи)")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
@@ -849,6 +859,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1439616")
+    @Tags({@Tag("qa")})
     @DisplayName("C1439616.Флаги buy_enabled и sell_enabled у позиции, которой нет у мастера на инициализации портфеля")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
@@ -909,6 +920,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1382266")
+    @Tags({@Tag("qa")})
     @DisplayName("C1382266. Проставляем флаг buy_enabled = true для operation = 'ACTUALIZE' и action = 'ADJUST'")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
@@ -975,6 +987,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1387788")
+    @Tags({@Tag("qa")})
     @DisplayName("C1387788. Проставляем значение флагов на false событие operation = 'ACTUALIZE' и action = 'ADJUST' и завели 0")
     @Subfeature("Успешные сценарии")
     @Description("Получили событие с baseMoneyPosition = 0")
@@ -1039,6 +1052,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1387789")
+    @Tags({@Tag("qa")})
     @DisplayName("C1387789. Определяем buy_enabled = false с action = MONEY_SELL_TRADE и оба флага у позиции включены ")
     @Subfeature("Успешные сценарии")
     @Description("Operation = 'ACTUALIZE'. ACTION = 'MONEY_SELL_TRADE'. " +
@@ -1099,6 +1113,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1385944")
+    @Tags({@Tag("qa")})
     @DisplayName("C1385944. Operation = 'ACTUALIZE'.Action =MONEY_SELL_TRADE. Master_portfolio.version > slave_portfolio.compared_to_master_version. lots после округления < 0")
     @Subfeature("Успешные сценарии")
     @Description(" Operation = 'ACTUALIZE'. ACTION = 'MONEY_SELL_TRADE'. " +
@@ -1163,6 +1178,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1385944")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1385944. Не достаточно средств докупить бумагу")
     @Subfeature("Успешные сценарии")
     @Description(" Operation = 'ACTUALIZE'. ACTION = 'SECURITY_BUY_TRADE'. " +
@@ -1226,6 +1242,7 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1385949")
+    @Tags({@Tag("qa")})
     @DisplayName("C1385949. Operation = 'ACTUALIZE'.Action =MONEY_SELL_TRADE. Master_portfolio.version > slave_portfolio.compared_to_master_version. Позиция < 0. lots после округления < 0")
     @Subfeature("Успешные сценарии")
     @Description(" Operation = 'ACTUALIZE'. ACTION = 'MONEY_SELL_TRADE'. " +

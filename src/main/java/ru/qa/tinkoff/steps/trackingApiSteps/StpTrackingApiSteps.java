@@ -27,6 +27,7 @@ import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetInvestIdResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient;
@@ -69,6 +70,9 @@ public class StpTrackingApiSteps {
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
+
+
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
     SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker

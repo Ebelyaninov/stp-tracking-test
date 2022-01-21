@@ -35,8 +35,6 @@ app:
 
   datasource:
     billing:
-      #      url: jdbc:postgresql://db-account.trading.local:5432/account
-      #      url: jdbc:postgresql://db-account.ds.trading.local:5432/account
       url: jdbc:postgresql://pg-invest-account-qa.ds.invest.cloud:5432/account
       username: account_reader
       password: account_reader
@@ -45,7 +43,7 @@ app:
         maximum-pool-size: 3
     tracking:
       #url: jdbc:postgresql://db-tracking.trading.local:5432/tracking
-      url: jdbc:postgresql://pg-invest-tracking-qa.ds.invest.cloud:5432/tracking
+      url: jdbc:postgresql://pg-invest-tracking-qa2.ds.invest.cloud:5432/tracking
       username: tracking
       password: tracking
       driver-class-name: org.postgresql.Driver
@@ -73,24 +71,22 @@ app:
         username: qa_invest_tracking
         password: L3j3Og2[6xoh
     tariff:
-        #url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
-         url: jdbc:postgresql://pg-invest-tariff-qa.m1.invest.cloud:5432/tariff
-         username: tariff
-         password: tariff
-         driver-class-name: org.postgresql.Driver
-         configuration:
-            maximum-pool-size: 3
-         hikari:
-            idle-timeout: 10000
+      #url: jdbc:postgresql://pg-invest-tariff-qa.ds.invest.cloud:5671/tariff
+      url: jdbc:postgresql://pg-invest-tariff-qa.m1.invest.cloud:5432/tariff
+      username: tariff
+      password: tariff
+      driver-class-name: org.postgresql.Driver
+      configuration:
+        maximum-pool-size: 3
+      hikari:
+        idle-timeout: 10000
   rest-client:
-    tracking-api-base-uri: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
-    tracking-api-admin-base-uri: http://invest-qa.tinkoff.ru/tracking/admin/v1/
-    invest-account-public-api-base-url: http://invest-qa.tinkoff.ru/account/public/v1/
-    md-api-base-url: http://trading-test.tcsbank.ru/v1/md/
-    miof-api-base-url: https://www-qa1.tcsbank.ru/api/miof
-    tracking-cache-slave-base-url: http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/cache/v1/
-
-
+    tracking-api-base-uri: http://tracking-api-qa2.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    tracking-api-admin-base-uri: http://stp-tracking-admin.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/admin/v1/
+    invest-account-public-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/account/public/v1/
+    md-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/v1/md/
+    miof-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/api/miof/
+    tracking-cache-slave-base-url: http://tracking-slave-qa2.dev2.k8s.tcsbank.ru/tracking/slave/cache/v1/
 #      investTracking:
 #        url: jdbc:cassandra://m1-qa-common-transit-cas-1.ost.tinkoff:9042/invest_tracking
 #        username: qa_invest_tracking
@@ -110,7 +106,7 @@ grpc:
     url: internal.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru
     port: 80
   middle:
-    url: invest-qa.tinkoff.ru
+    url: midle-pos-grpc-mock.invest-autoqa-ns.v2.dev2.k8s.tcsbank.ru
     port: 80
 #logging.level.com.baeldung.cloud.openfeign.client: DEBUG
 logging.level.ru.qa.tinkoff.swagger.tracking.api: DEBUG

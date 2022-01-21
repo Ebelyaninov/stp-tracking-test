@@ -14,11 +14,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ClientApiCreator;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.tracking.api.ClientApi;
+import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -50,18 +54,21 @@ import static org.hamcrest.Matchers.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
+    , ClientApiCreator.class
 
 })
 
 public class GetAuthorizedClientTest {
 
-    ClientApi clientApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-        .api((ApiClient.Config.apiConfig())).client();
+//    ClientApi clientApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
+//        .api((ApiClient.Config.apiConfig())).client();
 
     @Autowired
     ClientService clientService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    ApiCreator<ClientApi> clientApiCreator;
 
     String SIEBEL_ID = "5-192WBUXCI";
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
@@ -127,7 +134,7 @@ public class GetAuthorizedClientTest {
     void C1131992() {
         createClient(investId, ClientStatusType.none, null);
         //Вызов метода без traceId
-        Response getAuthorizedClientResponse = clientApi.getAuthorizedClient()
+        Response getAuthorizedClientResponse = clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -155,7 +162,7 @@ public class GetAuthorizedClientTest {
 
     @Step("Вызов метода getAuthorizedClient")
     Response getAuthorizedClient (String siebelId, String traceId) {
-        Response getAuthorizedClientResponse = clientApi.getAuthorizedClient()
+        Response getAuthorizedClientResponse = clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
