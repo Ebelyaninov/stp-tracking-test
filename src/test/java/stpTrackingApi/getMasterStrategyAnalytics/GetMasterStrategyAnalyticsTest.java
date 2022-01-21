@@ -19,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.AnalyticsApiCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
@@ -32,6 +35,7 @@ import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
+import ru.qa.tinkoff.swagger.tracking.api.ClientApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterStrategyAnalyticsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -68,6 +72,7 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
+    , AnalyticsApiCreator.class
 })
 public class GetMasterStrategyAnalyticsTest {
     @Autowired
@@ -101,9 +106,13 @@ public class GetMasterStrategyAnalyticsTest {
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
 
+    @Autowired
+   ApiCreator<AnalyticsApi>  analyticsApiCreator;
 
-    AnalyticsApi analyticsApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-        .api(ApiClient.Config.apiConfig()).analytics();
+
+
+//    AnalyticsApi analyticsApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
+//        .api(ApiClient.Config.apiConfig()).analytics();
 
 
     String contractIdMaster;
@@ -213,7 +222,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -270,7 +279,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -327,7 +336,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в master_portfolio_value за 10 дней
         createDatesMasterPortfolioValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -382,7 +391,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем портфель в кассандра без позиций
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -440,7 +449,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -487,7 +496,7 @@ public class GetMasterStrategyAnalyticsTest {
     @Description("Метод для получения аналитических данных по торговой стратегии.")
     void C1186572(String appName, String appVersion, String appPlatform) {
         strategyId = UUID.randomUUID();
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xTcsSiebelIdHeader(SIEBEL_ID_MASTER)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -517,7 +526,7 @@ public class GetMasterStrategyAnalyticsTest {
     @Description("Метод для получения аналитических данных по торговой стратегии.")
     void C1192522() {
         strategyId = UUID.randomUUID();
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -552,7 +561,7 @@ public class GetMasterStrategyAnalyticsTest {
         steps.createClientWintContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), false);
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -576,7 +585,7 @@ public class GetMasterStrategyAnalyticsTest {
     @Description("Метод для получения аналитических данных по торговой стратегии.")
     void C1192822() {
         strategyId = UUID.randomUUID();
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -613,7 +622,7 @@ public class GetMasterStrategyAnalyticsTest {
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), false);
         // вызываем метод getMasterStrategyAnalytics
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -673,7 +682,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -746,7 +755,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApi.getMasterStrategyAnalytics()
+        GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -815,7 +824,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем записи в strategy_tail_value
         createDatesStrategyTailValue();
         // вызываем метод getMasterStrategyAnalytics
-        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApi.getMasterStrategyAnalytics()
+        AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

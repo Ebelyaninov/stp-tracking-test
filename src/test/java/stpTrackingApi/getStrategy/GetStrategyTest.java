@@ -9,7 +9,6 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.protocol.types.Field;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
@@ -20,8 +19,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
 import ru.qa.tinkoff.investTracking.services.*;
@@ -33,21 +32,21 @@ import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponseCharacteristics;
 import ru.qa.tinkoff.swagger.tracking.model.PortfolioRateSection;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyCharacteristic;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.*;
+import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.Subscription;
+import ru.qa.tinkoff.tracking.entities.SubscriptionBlock;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -75,6 +74,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
+//    TrackingApiClientConfiguration.class
+    , StrategyApiCreator.class
 })
 public class GetStrategyTest {
     @Autowired
@@ -113,9 +114,18 @@ public class GetStrategyTest {
     SignalsCountDao signalsCountDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
-
     @Autowired
     SubscriptionBlockService subscriptionBlockService;
+
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
+
+//    @Autowired
+//    RestClientApiConfigurationProperties trackingApiProperties;
+//    @Autowired
+//    Supplier<StrategyApi> strategyApiSupplier;
+//    @Autowired
+//    ApiClient apiClient;
 
     Client clientMaster;
     Strategy strategyMaster;
@@ -133,7 +143,6 @@ public class GetStrategyTest {
     String contractIdMaster;
     String contractIdSlave;
     UUID strategyId;
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
     String siebelIdMaster = "1-7XOAYPX";
     String siebelIdSlave = "5-1P87U0B13";
@@ -267,7 +276,8 @@ public class GetStrategyTest {
         //создаем запись в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        //GetStrategyResponse getStrategy = apiClient.strategy().getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -342,7 +352,7 @@ public class GetStrategyTest {
         createDateSignalFrequency(strategyId, 1, 2, 6);
         createDateSignalsCount(strategyId, 1, 2, 6);
         createDateStrategyTailValue(strategyId, 1, 2, "500.0");
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -386,7 +396,7 @@ public class GetStrategyTest {
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -486,7 +496,7 @@ public class GetStrategyTest {
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, subscriptionStatus, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -561,7 +571,7 @@ public class GetStrategyTest {
 //            .respSpec(spec -> spec.expectStatusCode(200))
 //            .execute(ResponseBodyData::asString);
 //
-//        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+//        GetStrategyResponse getStrategy = strategyApiSupplier.get().getStrategy()
 //            .xAppNameHeader("invest")
 //            .xAppVersionHeader("4.5.6")
 //            .xPlatformHeader("ios")
@@ -622,7 +632,7 @@ public class GetStrategyTest {
         String periodDefault = "[" + fmt.format(startSubTime) + ",)";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
             SubscriptionBlockReason.RISK_PROFILE, periodDefault);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -677,7 +687,7 @@ public class GetStrategyTest {
         String periodDefault = "[" + fmt.format(startSubTime) + "," +fmt.format(endTime)+ "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
             SubscriptionBlockReason.RISK_PROFILE, periodDefault);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -731,7 +741,7 @@ public class GetStrategyTest {
         String periodDefault = "[" + fmt.format(startSubTime) + "," +fmt.format(endTime)+ "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
             SubscriptionBlockReason.RISK_PROFILE, periodDefault);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -782,7 +792,7 @@ public class GetStrategyTest {
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, true);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -826,7 +836,7 @@ public class GetStrategyTest {
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -847,15 +857,18 @@ public class GetStrategyTest {
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1115576() throws JSONException {
         strategyId = UUID.randomUUID();
-        StrategyApi.GetStrategyOper getStrategy = strategyApi.getStrategy()
+//        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+
+        String rawResponse = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdMaster)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(422));
-        getStrategy.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(getStrategy.execute(ResponseBodyData::asString));
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(ResponseBodyData::asString);
+
+        JSONObject jsonObject = new JSONObject(rawResponse);
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("StrategyNotFound"));
@@ -907,7 +920,7 @@ public class GetStrategyTest {
         createDateMasterPortfolioValue(strategyId, 3, 5, "87269.99");
         createDateMasterPortfolioValue(strategyId, 2, 4, "982684.75");
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -959,7 +972,7 @@ public class GetStrategyTest {
         List<MasterPortfolio.Position> positionList =new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1023,7 +1036,7 @@ public class GetStrategyTest {
         //создаем запись о стоимости портфеля
         createDateStrategyTailValue(strategyId, 0, 0, tailValue);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1079,7 +1092,7 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1140,7 +1153,7 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1198,7 +1211,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateSignalsCount(strategyId, 1, 2, signalsСount);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1259,7 +1272,7 @@ public class GetStrategyTest {
        BigDecimal maxDrawdownValue = new BigDecimal(value).multiply(new BigDecimal("-1"));
        String result = maxDrawdownValue.toString() + " %";
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1321,7 +1334,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateSignalFrequency(strategyId, 1, 2, value);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1379,7 +1392,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateMasterPortfolioPositionRetention(strategyId, 1, 2, value);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1427,7 +1440,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateMasterPortfolioRate(strategyId, 1, 2);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1490,7 +1503,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateMasterPortfolioTopPositions(strategyId,1,2);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1545,7 +1558,7 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1606,7 +1619,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
 
         // вызываем метод getStrategy
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -1648,7 +1661,7 @@ public class GetStrategyTest {
     @DisplayName("С1583315.GetStrategy.Получение expected-relative-yield")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
-    void С1583315(BigDecimal expectedRelativeYield) {
+    void C1583315(BigDecimal expectedRelativeYield) {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -1664,7 +1677,7 @@ public class GetStrategyTest {
         //создаем запись в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
-        GetStrategyResponse getStrategy = strategyApi.getStrategy()
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

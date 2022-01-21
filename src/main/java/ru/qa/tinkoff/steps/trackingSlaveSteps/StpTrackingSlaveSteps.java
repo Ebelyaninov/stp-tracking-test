@@ -10,15 +10,16 @@ import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.ApiCacheSlaveCreator;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
+import ru.qa.tinkoff.creator.MarketDataCreator;
+import ru.qa.tinkoff.creator.PricesMDApiCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
-import ru.qa.tinkoff.kafka.kafkaClient.KafkaHelper;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedEvent;
 import ru.qa.tinkoff.kafka.model.trackingTestMdPricesIntStream.PriceUpdatedKey;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -32,9 +33,8 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.miof.api.ClientApi;
 import ru.qa.tinkoff.swagger.miof.model.RuTinkoffTradingMiddlePositionsPositionsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-
+import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -45,14 +45,14 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-
 import ru.tinkoff.trading.tracking.Tracking;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,10 +64,14 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
 import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
 
+
+
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StpTrackingSlaveSteps {
+
 
     private final ContractService contractService;
     private final TrackingService trackingService;
@@ -80,22 +84,30 @@ public class StpTrackingSlaveSteps {
     private final StringSenderService stringSenderService;
     private final ByteToByteSenderService kafkaByteSender;
 
-    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
-
+    private  final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    private  final MarketDataCreator<PricesApi> pricesMDApiCreator;
+    private  final ApiCacheSlaveCreator<CacheApi> cacheApiCacheSlaveCreator;
+//
+//    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.MD.invoker.ApiClient.Config.apiConfig()).prices();
 
 //        CacheApi cacheApi    = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient
 //        .api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
 
-    ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi cacheApi = ru.qa.tinkoff.swagger
-        .trackingSlaveCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger
-            .trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
+//    ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi cacheApi = ru.qa.tinkoff.swagger
+//        .trackingSlaveCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger
+//            .trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
-        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    ClientApi clientMiofApi = ru.qa.tinkoff.swagger.miof.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.miof.invoker.ApiClient.Config.apiConfig()).client();
+
+//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
+//        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
+
+//    ClientApi clientMiofApi = ru.qa.tinkoff.swagger.miof.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.miof.invoker.ApiClient.Config.apiConfig()).client();
+
+
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -194,23 +206,23 @@ public class StpTrackingSlaveSteps {
     }
 
 
-    public void createDataToMarketData(String ticker, String classCode, String lastPrice, String askPrice, String bidPrice) {
-        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
-        String last = getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
-        String ask = getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
-        String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
-    }
+//    public void createDataToMarketData(String ticker, String classCode, String lastPrice, String askPrice, String bidPrice) {
+//        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
+//        String last = getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
+//        String ask = getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
+//        String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
+//    }
 
 
-    public void getPriceFromMarketDataSave(String ticker, String classCode, String typePrice, String lastPrice) {
-        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
-        String priceNew = getPriceFromMarketData(ticker + "_" + classCode, typePrice, lastPrice);
-        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, typePrice, lastPrice, priceNew);
-    }
+//    public void getPriceFromMarketDataSave(String ticker, String classCode, String typePrice, String lastPrice) {
+//        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
+//        String priceNew = getPriceFromMarketData(ticker + "_" + classCode, typePrice, lastPrice);
+//        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, typePrice, lastPrice, priceNew);
+//    }
 
 
   public   String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
-        Response res = pricesApi.mdInstrumentPrices()
+        Response res = pricesMDApiCreator.get().mdInstrumentPrices()
             .instrumentIdPath(instrumentId)
             .requestIdQuery("111")
             .systemCodeQuery("111")
@@ -229,7 +241,7 @@ public class StpTrackingSlaveSteps {
     public String getPriceFromExchangePositionPriceCacheWithSiebel(String ticker, String tradingClearingAccount, String type, String siebelId) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
-        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .reqSpec(r -> r.addHeader("magic-number", "4"))
@@ -259,7 +271,7 @@ public class StpTrackingSlaveSteps {
     public String getPriceFromExchangePositionPriceCache(String ticker, String type) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
-        Response resCacheNodeZero = cacheApi.getAllEntities()
+        Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
@@ -279,7 +291,7 @@ public class StpTrackingSlaveSteps {
             }
         }
         if ("".equals(price)) {
-            Response resCacheNodeOne = cacheApi.getAllEntities()
+            Response resCacheNodeOne = cacheApiCacheSlaveCreator.get().getAllEntities()
                 .reqSpec(r -> r.addHeader("api-key", "tracking"))
                 .reqSpec(r -> r.addHeader("magic-number", "1"))
                 .cacheNamePath("exchangePositionPriceCache")
@@ -308,7 +320,7 @@ public class StpTrackingSlaveSteps {
     public String getPriceFromExchangePositionPriceCacheAll(String ticker, String type, String tradingClearingAccount) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
-        Response resCacheNodeZero = cacheApi.getAllEntities()
+        Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
@@ -329,7 +341,7 @@ public class StpTrackingSlaveSteps {
             }
         }
         if ("".equals(price)) {
-            Response resCacheNodeOne = cacheApi.getAllEntities()
+            Response resCacheNodeOne = cacheApiCacheSlaveCreator.get().getAllEntities()
                 .reqSpec(r -> r.addHeader("api-key", "tracking"))
                 .reqSpec(r -> r.addHeader("magic-number", "1"))
                 .cacheNamePath("exchangePositionPriceCache")
@@ -832,7 +844,7 @@ public class StpTrackingSlaveSteps {
 
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
-        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -1080,7 +1092,7 @@ public class StpTrackingSlaveSteps {
         //получаем содержимое кеша exchangePositionCache
         String price = "";
 
-        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .cacheNamePath("exchangePositionCache")
@@ -1115,7 +1127,7 @@ public class StpTrackingSlaveSteps {
     public String getDateFromOrderCacheCacheWithSiebel(String ticker, String tradingClearingAccount, String type, String siebelId) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
-        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApi.getAllEntities()
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .cacheNamePath("exchangePositionPriceCache")
@@ -1170,17 +1182,17 @@ public class StpTrackingSlaveSteps {
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
     }
-
-    public void getClientAdjustCurrencyMiof (String clientCodeSlave, String contractId, String tickerCurrency, int quantity) {
-        clientMiofApi.clientAdjustCurrencyGet()
-            .typeQuery("Withdraw")
-            .amountQuery(quantity)
-            .currencyQuery(tickerCurrency)
-            .clientCodeQuery(clientCodeSlave)
-            .agreementIdQuery(contractId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(RuTinkoffTradingMiddlePositionsPositionsResponse.class));
-    }
+//
+//    public void getClientAdjustCurrencyMiof (String clientCodeSlave, String contractId, String tickerCurrency, int quantity) {
+//        clientMiofApi.clientAdjustCurrencyGet()
+//            .typeQuery("Withdraw")
+//            .amountQuery(quantity)
+//            .currencyQuery(tickerCurrency)
+//            .clientCodeQuery(clientCodeSlave)
+//            .agreementIdQuery(contractId)
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(RuTinkoffTradingMiddlePositionsPositionsResponse.class));
+//    }
 
 
     public String getTitleStrategy(){
