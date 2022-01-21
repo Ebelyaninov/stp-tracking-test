@@ -242,7 +242,7 @@ public class HandleUnblockContractCommandTest {
         //проверяем, данные в сообщении tracking.contract.event
         checkTrackingContractEvent(event, "UPDATED", contractIdSlave, Tracking.Contract.State.TRACKED, false);
         //проверяем, данные в сообщении tracking.delay.command
-        checkTrackingDelayCommand(commandKafka, contractIdSlave, "RETRY_SYNCHRONIZATION");
+        checkTrackingDelayCommand(commandKafka, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         assertThat("Время в событии не равно", event.getCreatedAt().getSeconds(), is(commandKafka.getCreatedAt().getSeconds()));
         assertThat("Время в событии не равно", event.getCreatedAt().getNanos(), is(commandKafka.getCreatedAt().getNanos()));
     }
@@ -624,7 +624,7 @@ public class HandleUnblockContractCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на снятие технической блокировки с договора.")
     void C1467169() {
-        String SIEBEL_ID_SLAVE = "4-1XAF19DB";
+        String SIEBEL_ID_SLAVE = "5-DEB7GK19";
 //        String SIEBEL_ID_SLAVE = "5-2MR943679";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -633,8 +633,8 @@ public class HandleUnblockContractCommandTest {
 //        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
 //        UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        UUID investIdSlave = UUID.fromString("cfc614af-67bb-49ee-a147-4bdc60777b04");
-        contractIdSlave = "2000002457";
+        UUID investIdSlave = UUID.fromString("73ec5b62-4550-42f3-b249-b5c9f7683eb3");
+        contractIdSlave = "2000113239";
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -675,7 +675,7 @@ public class HandleUnblockContractCommandTest {
         //отправляем команду на синхронизацию
         steps.createCommandUnBlockContractSlaveCommand(contractIdSlave);
         //получаем портфель slave
-        await().atMost(Duration.ofSeconds(3))
+        await().atMost(Duration.ofSeconds(10))
             .until(() -> contract = contractService.getContract(contractIdSlave),
                 contractIsNotBlockedMatcher());
         assertThat("Версия портфеля slave не равна", contract.getBlocked(), is(false));
@@ -687,9 +687,9 @@ public class HandleUnblockContractCommandTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messageDelay.getValue());
         log.info("Событие  в tracking.contract.event:  {}", commandKafka);
         //проверяем message топика kafka tracking.delay.command
-        checkTrackingDelayCommand(commandKafka, contractIdSlave, "RETRY_SYNCHRONIZATION");
+        checkTrackingDelayCommand(commandKafka, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //находим новую запись по slave портфелю
-        await().atMost(Duration.ofSeconds(3)).until(() ->
+        await().atMost(Duration.ofSeconds(10)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(tickerApple))
@@ -700,7 +700,7 @@ public class HandleUnblockContractCommandTest {
         //проверяем значение по базовой валюте
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("1000"));
         // проверяем значение по позиции
-        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "4");
+        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "5");
         checkPositionParam(positionFB, tickerFB, tradingClearingAccountFB, "1");
     }
 
@@ -724,8 +724,8 @@ public class HandleUnblockContractCommandTest {
 //        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
 //        UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        UUID investIdSlave = UUID.fromString("cfc614af-67bb-49ee-a147-4bdc60777b04");
-        contractIdSlave = "2000002457";
+        UUID investIdSlave = UUID.fromString("73ec5b62-4550-42f3-b249-b5c9f7683eb3");
+        contractIdSlave = "2000113239";
 
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -782,9 +782,9 @@ public class HandleUnblockContractCommandTest {
             .filter(ps -> ps.getTicker().equals(tickerFB))
             .collect(Collectors.toList());
         //проверяем значение по базовой валюте
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("1107.41"));
+        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("1000"));
         // проверяем значение по позиции
-        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "4");
+        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "5");
         checkPositionParam(positionFB, tickerFB, tradingClearingAccountFB, "1");
     }
 
@@ -806,8 +806,8 @@ public class HandleUnblockContractCommandTest {
 //        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
 //        UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        UUID investIdSlave = UUID.fromString("cfc614af-67bb-49ee-a147-4bdc60777b04");
-        contractIdSlave = "2000002457";
+        UUID investIdSlave = UUID.fromString("73ec5b62-4550-42f3-b249-b5c9f7683eb3");
+        contractIdSlave = "2000113239";
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -856,7 +856,7 @@ public class HandleUnblockContractCommandTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messageDelay.getValue());
         log.info("Событие  в tracking.contract.event:  {}", commandKafka);
         //проверяем message топика kafka tracking.delay.command
-        checkTrackingDelayCommand(commandKafka, contractIdSlave, "RETRY_SYNCHRONIZATION");
+        checkTrackingDelayCommand(commandKafka, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //находим новую запись по slave портфелю
         await().atMost(Duration.ofSeconds(3)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
@@ -867,10 +867,10 @@ public class HandleUnblockContractCommandTest {
             .filter(ps -> ps.getTicker().equals(tickerFB))
             .collect(Collectors.toList());
         //проверяем значение по базовой валюте
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("1107.41"));
+        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("1000"));
         assertThat("Количество позиций портфеля slave не равна", slavePortfolio.getPositions().size(), is(2));
         // проверяем значение по позиции
-        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "4");
+        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "5");
         checkPositionParam(positionFB, tickerFB, tradingClearingAccountFB, "1");
     }
 
@@ -893,8 +893,8 @@ public class HandleUnblockContractCommandTest {
 //        UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
 //        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
-        UUID investIdSlave = UUID.fromString("cfc614af-67bb-49ee-a147-4bdc60777b04");
-        contractIdSlave = "2000002457";
+        UUID investIdSlave = UUID.fromString("73ec5b62-4550-42f3-b249-b5c9f7683eb3");
+        contractIdSlave = "2000113239";
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -970,7 +970,7 @@ public class HandleUnblockContractCommandTest {
         //проверяем значение по базовой валюте
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().doubleValue(), is(quantityMiof));
         // проверяем значение по позиции
-        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "4");
+        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "5");
         checkPositionParam(positionFB, tickerFB, tradingClearingAccountFB, "1");
     }
 
@@ -992,8 +992,8 @@ public class HandleUnblockContractCommandTest {
 //        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
 //        UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        UUID investIdSlave = UUID.fromString("cfc614af-67bb-49ee-a147-4bdc60777b04");
-        contractIdSlave = "2000002457";
+        UUID investIdSlave = UUID.fromString("73ec5b62-4550-42f3-b249-b5c9f7683eb3");
+        contractIdSlave = "2000113239";
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1072,7 +1072,7 @@ public class HandleUnblockContractCommandTest {
         //проверяем значение по базовой валюте
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().doubleValue(), is(quantityMiof));
         // проверяем значение по позиции
-        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "4");
+        checkPositionParam(positionAAPL, tickerApple, tradingClearingAccountApple, "5");
         checkPositionParam(positionFB, tickerFB, tradingClearingAccountFB, "1");
         checkPositionParam(positionABBV, tickerABBV, tradingClearingAccountABBV, "0");
     }
