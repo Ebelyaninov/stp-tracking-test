@@ -34,6 +34,7 @@ public enum Topics {
     TRACKING_CONSUMER_COMMAND("tracking.consumer.command"),
     CCYEV("CCYEV"),
     ORIGINATION_TESTING_RISK_NOTIFICATION_RAW("origination.testing.risk.notification.raw"),
+    TARIFF_CHANGE_RAW("tariff.change.raw"),
     ;
     private final String name;
 }

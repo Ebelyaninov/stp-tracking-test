@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.tariff;
+
+import "google/protobuf/timestamp.proto";
+
+/**
+  Событие тарифного модуля о смене тарифа клиента
+ */
+message Event {
+  // Уникальный идентификатор клиента
+  bytes invest_id = 1;
+  // Дата смены тарифа
+  google.protobuf.Timestamp change_date_time = 2;
+
+  oneof domain {
+    // Информация о клиенте
+    Client client = 3;
+  }
+}
+
+message Client {
+  // Контракты клиента
+  repeated Contract contract = 1;
+}
+
+message Contract {
+  // Уникальный идентификатор контракта
+  string id = 1;
+  // Информация о старом тарифе
+  Tariff old_tariff = 2;
+  // Информация о новом тарифе
+  Tariff new_tariff = 3;
+}
+
+message Tariff {
+  // Идентификатор тарифа в siebel
+  string siebel_id = 1;
+  // Тип тарифа
+  TariffType type = 2;
+}
+
+enum TariffType {
+  MASS_MARKET = 0;
+  WEALTH_MANAGEMENT = 1;
+  PRIVATE = 2;
+  TRACKING = 3;
+}
