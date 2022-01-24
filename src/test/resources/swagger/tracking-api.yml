@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.9.0
+  version: 1.11.0
 
 servers:
   - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
@@ -1942,6 +1942,35 @@ components:
           minLength: 1
           example: в управлении
 
+    GetStrategiesCatalogTabsResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogStrategyTab'
+
+    CatalogStrategyTab:
+      description: Вкладка для фильтрации в каталоге стратегий
+      type: object
+      required:
+        - tabId
+        - title
+      properties:
+        tabId:
+          description: Идентификатор вкладки
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          minLength: 1
+          example: conservative-risk-level
+        title:
+          description: Отображаемое наименование
+          type: string
+          minLength: 1
+          example: Низкий риск
+
     GetOrdersResponse:
       type: object
       required:
@@ -1972,6 +2001,7 @@ components:
         - action
         - price
         - exchangePosition
+        - issuer
       properties:
         totalAmount:
           description: Общая сумма заявки
@@ -1997,35 +2027,15 @@ components:
           $ref: '#/components/schemas/Price'
         exchangePosition:
           $ref: '#/components/schemas/ExchangePosition'
-
-    GetStrategiesCatalogTabsResponse:
-      type: object
-      required:
-        - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CatalogStrategyTab'
-
-    CatalogStrategyTab:
-      description: Вкладка для фильтрации в каталоге стратегий
-      type: object
-      required:
-        - tabId
-        - title
-      properties:
-        tabId:
-          description: Идентификатор вкладки
-          type: string
-          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
-          minLength: 1
-          example: conservative-risk-level
-        title:
-          description: Отображаемое наименование
-          type: string
-          minLength: 1
-          example: Низкий риск
+        issuer:
+          description: Эмитент
+          type: object
+          required:
+            - isAffiliated
+          properties:
+            isAffiliated:
+              description: Признак аффилированности
+              type: boolean
 
     ErrorResponse:
       description: Ответ с ошибкой
