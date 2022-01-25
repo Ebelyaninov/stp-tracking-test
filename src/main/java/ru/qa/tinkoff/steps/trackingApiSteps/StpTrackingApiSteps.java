@@ -14,8 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -48,10 +50,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,10 +90,13 @@ public class StpTrackingApiSteps {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final SubscriptionBlockService subscriptionBlockService;
+    private final ExchangePositionService exchangePositionService;
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
     @Autowired(required = false)
     StrategyTailValueDao strategyTailValueDao;
+    @Autowired(required = false)
+    MasterSignalDao masterSignalDao;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -108,9 +110,7 @@ public class StpTrackingApiSteps {
     public Subscription subscription;
     public SubscriptionBlock subscriptionBlock;
     Profile profile;
-//    Client clientSlave;
-//    Contract contractSlave;
-//    Subscription subscription;
+    LocalDateTime localDateTime;
 
 
 
@@ -657,7 +657,7 @@ public class StpTrackingApiSteps {
         return new UUID(buff.getLong(), buff.getLong());
     }
 
-
+    @Step("Получаем значение price по инструменту из кеш exchangePositionPriceCache")
     public String getPriceFromExchangePositionPriceCache(String ticker, String tradingClearingAccount, String type, String siebelId) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
@@ -687,7 +687,7 @@ public class StpTrackingApiSteps {
         return price;
     }
 
-
+    @Step("Получаем значения: aciValue и nominal по инструменту из кеш exchangePositionCache")
     public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
         String aciValue = "";
         String nominal = "";
@@ -815,7 +815,7 @@ public class StpTrackingApiSteps {
             .build());
         return positionList;
     }
-
+    @Step("Рассчитываем price в абсолютном значениепо инструменту типа bond")
     public BigDecimal valuePosBonds(String priceTs, String nominal, BigDecimal minPriceIncrement,
                                     String aciValue) {
         BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
@@ -1083,7 +1083,7 @@ public class StpTrackingApiSteps {
 
 //    }
 
-
+   @Step("Создаем запись в strategy_tail_value по стратегии")
    public void createDateStrategyTailValue(UUID strategyId, Date date, String value) {
         strategyTailValue = StrategyTailValue.builder()
             .strategyId(strategyId)
@@ -1098,6 +1098,35 @@ public class StpTrackingApiSteps {
         String title = "Autotest " + String.valueOf(randomNumber);
         return title;
     }
+
+   //создание записи по сигналу в табл. master_signal
+   @Step("Создаем запись в master_signal по стратегии")
+   public void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
+                                   String price, String quantity, String tailOrderQuantity,int action) {
+       LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
+       Date convertedDatetime = Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
+       MasterSignal masterSignal = MasterSignal.builder()
+           .strategyId(strategyId)
+           .version(version)
+           .ticker(ticker)
+           .tradingClearingAccount(tradingClearingAccount)
+           .action((byte) action)
+           .state((byte) 1)
+           .price(new BigDecimal(price))
+           .quantity(new BigDecimal(quantity))
+           .tailOrderQuantity(new BigDecimal(tailOrderQuantity))
+           .createdAt(convertedDatetime)
+           .build();
+       masterSignalDao.insertIntoMasterSignal(masterSignal);
+   }
+
+
+
+
+
+
+
+
 
 
 }

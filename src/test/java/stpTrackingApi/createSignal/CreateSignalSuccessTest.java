@@ -12,20 +12,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.model.KafkaModelFiregInstrumentWayfairWithRiskEvent;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -43,7 +38,6 @@ import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -52,12 +46,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.FIREG_INSTRUMENT;
+import static org.hamcrest.Matchers.notNullValue;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
@@ -108,6 +103,7 @@ public class CreateSignalSuccessTest {
     UUID strategyId;
     String contractIdMaster;
     int versionNew;
+    MasterSignal masterSignal;
 
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
@@ -351,66 +347,6 @@ public class CreateSignalSuccessTest {
     }
 
 
-//    private static Stream<Arguments> provideRiskLevelOk() {
-//        return Stream.of(
-//            Arguments.of("LEVI", "TKCBM_TCAB", "26.3", StrategyRiskProfile.aggressive),
-//            Arguments.of("LEVI", "TKCBM_TCAB", "26.3", StrategyRiskProfile.moderate),
-//            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.aggressive),
-//            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.moderate),
-//            Arguments.of("PNFP", "TKCBM_TCAB", "96.92", StrategyRiskProfile.conservative)
-//        );
-//    }
-//
-//    @SneakyThrows
-//    @ParameterizedTest
-//    @MethodSource("provideRiskLevelOk")
-//    @AllureId("660682")
-//    @DisplayName("C660682.CreateSignal.Риск-профиль позиции не превышает риск-профиль стратегии")
-//    @Subfeature("Успешные сценарии")
-//    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-//    void C660682(String ticker, String tradingClearingAccount, String price, StrategyRiskProfile strategyRiskProfile) {
-//        int quantityRequest = 3;
-//        int version = 4;
-//        versionNew = version + 1;
-//        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
-//        log.info("Получаем локальное время: {}", now);
-//        //находим данные ведущего в БД сервиса счетов
-//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-//        UUID investIdMaster = resAccountMaster.getInvestId();
-//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-//        strategyId = UUID.randomUUID();
-//        //создаем в БД tracking стратегию на ведущего
-//        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null,contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, strategyRiskProfile,
-//            StrategyStatus.active, 0, LocalDateTime.now(), false);
-//        // создаем портфель ведущего с позицией в кассандре
-//        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-//        Date date = Date.from(utc.toInstant());
-//        // создаем портфель ведущего с позицией в кассандре
-//        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, "12.0");
-//        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
-//        OffsetDateTime cutTime = OffsetDateTime.now();
-//        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
-//        //формируем тело запроса метода CreateSignal
-//        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, new BigDecimal(price), quantityRequest, strategyId,
-//            ticker, tradingClearingAccount, version);
-//        // вызываем метод CreateSignal
-//        signalApi.createSignal()
-//            .xAppNameHeader("invest")
-//            .xAppVersionHeader("4.5.6")
-//            .xPlatformHeader("ios")
-//            .xDeviceIdHeader("new")
-//            .xTcsSiebelIdHeader(SIEBEL_ID)
-//            .body(request)
-//            .respSpec(spec -> spec.expectStatusCode(202))
-//            .execute(ResponseBodyData::asString);
-//
-//    }
-
-
-
     @SneakyThrows
     @Test
     @AllureId("1312630")
@@ -488,6 +424,231 @@ public class CreateSignalSuccessTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1434620")
+    @DisplayName("C1434620.CreateSignal.SignalPreChecks.Расчет количества единиц актива в заявках ведомых.Action=Buy.Type=Share")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1434620() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 6;
+        int version = 1;
+        String tailValue = "6259.17";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем запись в strategy_tail_value
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            ticker, tradingClearingAccount, version);
+        // вызываем метод CreateSignal
+        signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
+        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(money));
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
+        //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "ask", SIEBEL_ID);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
+        //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
+        checkMasterSignal(strategyId, version + 1);
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
+        assertThat("количества единиц актива в заявках ведомых в БД не равен", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+        assertThat("количество единиц актива в событии не равен", commandKafka.getSignal().getTailOrderQuantity().getUnscaled(), is(tailOrderQuantity.longValue()));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1434604")
+    @DisplayName("C1434604.CreateSignal.SignalPreChecks.Расчет количества единиц актива в заявках ведомых.Action=Sell.Type=Share")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1434604() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("108.0");
+        int quantityRequest = 3;
+        int version = 2;
+        String tailValue = "6259.17";
+        double quantityPosMasterPortfolio = 6.0;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, Double.toString(quantityPosMasterPortfolio));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем запись в strategy_tail_value
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //создаем запись о прошлом сигнале в master_signal
+        steps.createMasterSignal(0, 0, version, strategyId, ticker, tradingClearingAccount,
+            "107", "6", "25", 12);
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyId,
+            ticker, tradingClearingAccount, version);
+        // вызываем метод CreateSignal
+        signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //получаем стоимость позиции, которая есть у мастера из  кэша exchangePositionPriceCache
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "last", SIEBEL_ID);
+        //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
+        //сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
+            .multiply(new BigDecimal(priceLast))
+            .add(new BigDecimal(Double.toString(money)));
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
+        //получаем стоимость позиции,  из  кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'sell' price_type = 'bid';
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "bid", SIEBEL_ID);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceBid), 0, RoundingMode.HALF_UP);
+        //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
+        checkMasterSignal(strategyId, version + 1);
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
+        assertThat("количества единиц актива в заявках ведомых не равен", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1434098")
+    @DisplayName("C1434098.CreateSignal.SignalPreChecks.Расчет количества единиц актива в заявках ведомых.Action=Sell.Type=Bond")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1434098() {
+        double money = 1500.0;
+        int quantityRequest = 1;
+        int version = 2;
+        String tailValue = "6259.17";
+        double quantityPosMasterPortfolio = 3.0;
+        BigDecimal minPriceIncrement = new BigDecimal("0.01");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, tickerBond, tradingClearingAccountBond, Double.toString(quantityPosMasterPortfolio));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        steps.createMasterSignal(0, 0, version, strategyId, ticker, tradingClearingAccount,
+            "103.05", "3", "1", 12);
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        getExchangePosition(tickerBond, tradingClearingAccountBond, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrumentBond, "last"));
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            tickerBond, tradingClearingAccountBond, version);
+        // вызываем метод CreateSignal
+        signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "last", SIEBEL_ID);
+        List<String> dateBond = steps.getPriceFromExchangePositionCache(tickerBond, tradingClearingAccountBond, SIEBEL_ID);
+        String aciValue = dateBond.get(0);
+        String nominal = dateBond.get(1);
+        BigDecimal priceLastBond = steps.valuePosBonds(priceLast, nominal, minPriceIncrement, aciValue);
+        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
+            .multiply(priceLastBond)
+            .add(new BigDecimal(Double.toString(money)));
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
+        //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "bid", SIEBEL_ID);
+        //рассчитываем цену по bond в абсолютном значении
+        BigDecimal priceBidBond = steps.valuePosBonds(priceBid, nominal, minPriceIncrement, aciValue);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(priceBidBond, 0, RoundingMode.HALF_UP);
+        //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
+        checkMasterSignal(strategyId, version + 1);
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
+        assertThat("количества единиц актива в заявках ведомых не равен", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+    }
+
 
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
@@ -552,8 +713,8 @@ public class CreateSignalSuccessTest {
 
 
     void assertCommandBond(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
-                       BigDecimal quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, BigDecimal quantityReqBaseMoney, BigDecimal price,
-                       int quantityRequest, String ticker, String tradingClearingAccount) {
+                           BigDecimal quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, BigDecimal quantityReqBaseMoney, BigDecimal price,
+                           int quantityRequest, String ticker, String tradingClearingAccount) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -580,7 +741,6 @@ public class CreateSignalSuccessTest {
     }
 
 
-
     public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, BigDecimal price,
                                                    int quantityRequest, UUID strategyId, String ticker,
                                                    String tradingClearingAccount, int version) {
@@ -595,5 +755,15 @@ public class CreateSignalSuccessTest {
         return request;
     }
 
+    // ожидаем версию портфеля slave
+    void checkMasterSignal(UUID strategyId, int version) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            Thread.sleep(5000);
+            masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
+            if (masterSignal.getVersion() != version) {
+                Thread.sleep(3000);
+            }
+        }
+    }
 
 }
