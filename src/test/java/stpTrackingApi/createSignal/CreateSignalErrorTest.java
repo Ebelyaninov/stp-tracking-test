@@ -55,6 +55,7 @@ import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -63,8 +64,12 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
 @Epic("createSignal - Создание торгового сигнала")
@@ -102,6 +107,8 @@ public class CreateSignalErrorTest {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
     MasterSignalDao masterSignalDao;
+
+
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
