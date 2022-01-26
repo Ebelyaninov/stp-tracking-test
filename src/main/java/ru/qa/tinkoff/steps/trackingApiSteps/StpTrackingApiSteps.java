@@ -1029,18 +1029,6 @@ public class StpTrackingApiSteps {
         contractSlave = contractService.getContract(contractIdSlave);
     }
 
-    //вызываем метод blockContract для slave
-    public void BlockContract(String contractIdSlave) {
-        contractApi.blockContract()
-            .reqSpec(r -> r.addHeader("X-API_KEY", "tracking"))
-            .xAppNameHeader("invest")
-            .xTcsLoginHeader("tracking")
-            .contractIdPath(contractIdSlave)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        contractSlave = contractService.getContract(contractIdSlave);
-
-    }
 
 
 
