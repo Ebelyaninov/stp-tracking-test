@@ -130,7 +130,7 @@ public class GetMasterPortfolioTest {
     public String currency1 = "usd";
 
     public String ticker2 = "XS0191754729";
-    public String tradingClearingAccount2 = "L01+00002F00";
+    public String tradingClearingAccount2 = "L01+00000F00";
     public String quantity2 = "7";
     public String classCode2 = "TQOD";
     public String briefName2 = "Gazprom";
@@ -143,8 +143,8 @@ public class GetMasterPortfolioTest {
     public String quantity3 = "3";
     public String classCode3 = "SPBXM";
     public String instrument3 = ticker3 + "_" + classCode3;
-    public String briefName3 = "Facebook";
-    public String image3 = "US30303M1027.png";
+    public String briefName3 = "Meta Platforms";
+    public String image3 = "metapl.png";
     public String type3 = "share";
     public String currency3 = "usd";
 

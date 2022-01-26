@@ -65,7 +65,7 @@ public class CreateExchangePositionErrorTest {
     }
     String xApiKey = "x-api-key";
     String ticker = "FXGD";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "L01+00000F00";
 
 
 
@@ -73,7 +73,7 @@ public class CreateExchangePositionErrorTest {
     @MethodSource("provideStringsForHeadersCreateExchangePosition")
     @AllureId("520697")
     @DisplayName("C520697.CreateExchangePosition.Валидация запроса: обязательные параметры в headers :x-app-name, x-tcs-login")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520697(String name, String login)  {
         Integer limit = 100;
@@ -113,7 +113,7 @@ public class CreateExchangePositionErrorTest {
     @MethodSource("provideStringsForBodyCreateExchangePosition")
     @AllureId("520826")
     @DisplayName("C520826.CreateExchangePosition.Валидация запроса: обязательные параметры в body: ticker, tradingClearingAccount, exchange, trackingAllowed, orderQuantityLimits, periodId, limit")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520826(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchangeTest, Boolean trackingAllowed, Integer limit, String period)  {
                 //формируем тело запроса
@@ -138,7 +138,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("520851")
     @DisplayName("C520851.CreateExchangePosition.Валидация запроса: ticker < 1 символа")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520851()  {
         String ticker = "";
@@ -166,7 +166,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("520861")
     @DisplayName("C520861.CreateExchangePosition.Валидация запроса: ticker > 12 символов")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520861()  {
         String ticker = "FXGDFXGDFXGDF";
@@ -194,7 +194,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("520878")
     @DisplayName("C520878.CreateExchangePosition.Валидация запроса: tradingClearingAccount < 1 символа")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520878()  {
         String tradingClearingAccount = "";
@@ -222,7 +222,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("520885")
     @DisplayName("C520885.CreateExchangePosition.Валидация запроса: tradingClearingAccount > 12 символов")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C520885()  {
         String tradingClearingAccount = "L01+00002F001";
@@ -250,7 +250,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521188")
     @DisplayName("C521188.CreateExchangePosition.Валидация запроса: dailyQuantityLimit < 1 значения")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521188()  {
         String tradingClearingAccount = "L01+00002F001";
@@ -278,7 +278,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521208")
     @DisplayName("C521208.CreateExchangePosition.Валидация запроса: periodId < 1 значения")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521208() throws Exception {
         String tradingClearingAccount = "L01+00002F001";
@@ -306,7 +306,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521225")
     @DisplayName("C521225.CreateExchangePosition.Валидация запроса: otcTicker < 1 символа")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521225() {
         String ticker = "EUR_RUB__TOM";
@@ -337,7 +337,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521238")
     @DisplayName("C521238.CreateExchangePosition.Валидация запроса: otcTicker > 12 символов")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521238() {
         String ticker = "EUR_RUB__TOM";
@@ -368,7 +368,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521243")
     @DisplayName("C521243.CreateExchangePosition.Валидация запроса: otcClassCode < 1 символа")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521243() {
         String ticker = "EUR_RUB__TOM";
@@ -399,7 +399,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521250")
     @DisplayName("C521250.CreateExchangePosition.Валидация запроса: otcClassCode > 12 символов")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521250() {
         String ticker = "EUR_RUB__TOM";
@@ -430,7 +430,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521257")
     @DisplayName("C521257.CreateExchangePosition.Авторизация: не передаем параметр apiKey")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521257()  {
         Integer limit = 100;
@@ -456,7 +456,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521266")
     @DisplayName("C521266.CreateExchangePosition.Авторизация: передаем неверный параметр apiKey")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521266()  {
         Integer limit = 100;
@@ -483,7 +483,7 @@ public class CreateExchangePositionErrorTest {
     @Test
     @AllureId("521288")
     @DisplayName("C521288.CreateExchangePosition.В orderQuantityLimits > 1 объекта с одинаковым periodId")
-    @Subfeature("Успешные сценарии")
+    @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521288() throws Exception {
         //формируем тело запроса

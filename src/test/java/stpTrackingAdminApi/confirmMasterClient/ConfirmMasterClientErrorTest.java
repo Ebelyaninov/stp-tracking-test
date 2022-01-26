@@ -58,7 +58,7 @@ public class ConfirmMasterClientErrorTest {
     ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    String SIEBEL_ID = "5-34CAI32H";
+    String SIEBEL_ID = "5-GA3OLBWB";
     String xApiKey = "x-api-key";
 
     @Autowired

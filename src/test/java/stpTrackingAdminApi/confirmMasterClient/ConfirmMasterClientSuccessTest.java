@@ -137,7 +137,8 @@ public class ConfirmMasterClientSuccessTest {
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+//            .setImage(profile.getImage().toString())
+            ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -178,7 +179,8 @@ public class ConfirmMasterClientSuccessTest {
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+//            .setImage(profile.getImage().toString())
+            ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -218,7 +220,8 @@ public class ConfirmMasterClientSuccessTest {
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
-            .setImage(profile.getImage().toString());
+//            .setImage(profile.getImage().toString())
+            ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -366,7 +369,7 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
         assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
-        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage()), is(profile.getImage().toString()));
+//        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage()), is(profile.getImage().toString()));
     }
 
     @Test

@@ -116,13 +116,13 @@ public class GetSignalsTest {
     MasterSignal masterSignal;
 
     final String tickerNok = "NOK";
-    final String tradingClearingAccountNok = "TKCBM_TCAB";
+    final String tradingClearingAccountNok = "L01+00000SPB";
     final String briefNameNok = "Nokia";
     final String imageNok = "US6549022043.png";
     final String typeNok = "share";
 
     final String tickerGazprom = "XS0191754729";
-    final String tradingClearingAccountGazprom = "L01+00002F00";
+    final String tradingClearingAccountGazprom = "L01+00000F00";
 
     final String tickerAbbV = "ABBV";
     final String tradingClearingAccountAbbV = "TKCBM_TCAB";
