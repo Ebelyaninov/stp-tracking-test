@@ -126,7 +126,7 @@ public class GetMasterStrategyAnalyticsTest {
     public String quantity1 = "5";
 
     public String ticker2 = "XS1589324075";
-    public String tradingClearingAccount2 = "L01+00002F00";
+    public String tradingClearingAccount2 = "L01+00000F00";
     public String quantity2 = "7";
 
 

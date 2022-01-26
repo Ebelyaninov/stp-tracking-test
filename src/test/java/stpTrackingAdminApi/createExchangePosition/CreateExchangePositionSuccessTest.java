@@ -74,7 +74,7 @@ public class CreateExchangePositionSuccessTest {
 
     String xApiKey = "x-api-key";
     String ticker = "FXGD";
-    String tradingClearingAccount = "NDS000000001";
+    String tradingClearingAccount = "L01+00000F00";
 
 
 
