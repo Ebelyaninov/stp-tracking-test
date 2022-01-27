@@ -2,6 +2,7 @@ package ru.qa.tinkoff.steps.trackingAdminSteps;
 
 
 import io.qameta.allure.Step;
+import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,6 +20,7 @@ import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -40,6 +42,7 @@ import java.util.*;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 
 @Slf4j
 @Service
@@ -294,6 +297,17 @@ public class StpTrackingAdminSteps {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
         contract = contractService.getContract(contractIdSlave);
+
+    }
+
+    public void checkHeaders(Response response, String traceId, String serverTime){
+        assertFalse(response.getHeaders().getValue(traceId).isEmpty());
+        assertFalse(response.getHeaders().getValue(serverTime).isEmpty());
+    }
+
+    public void checkErrors(ErrorResponse errorResponse, String errorCode, String errorMessage ){
+        assertThat("код ошибки не равно", errorResponse.getErrorCode(), is(errorCode));
+        assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is(errorMessage));
 
     }
 
