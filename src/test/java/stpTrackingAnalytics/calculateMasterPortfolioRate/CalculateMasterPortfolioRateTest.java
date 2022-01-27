@@ -1139,9 +1139,10 @@ public class CalculateMasterPortfolioRateTest {
     // ожидаем версию портфеля slave
     void checkMasterPortfolioRate(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(5000);
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId);
             if (masterPortfolioRate.getStrategyId() == null) {
-                Thread.sleep(5000);
+                Thread.sleep(3000);
             }
         }
     }

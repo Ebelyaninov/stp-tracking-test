@@ -87,10 +87,10 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
 
     final String tickerNok = "NOK";
-    final String tradingClearingAccountNok = "TKCBM_TCAB";
+    final String tradingClearingAccountNok = "L01+00000SPB";
 
     final String tickerGazprom = "XS0191754729";
-    final String tradingClearingAccountGazprom = "L01+00002F00";
+    final String tradingClearingAccountGazprom = "L01+00000F00";
 
     final String tickerAbbV = "ABBV";
     final String tradingClearingAccountAbbV = "TKCBM_TCAB";
