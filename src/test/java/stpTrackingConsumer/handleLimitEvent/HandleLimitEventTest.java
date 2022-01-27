@@ -135,7 +135,7 @@ public class HandleLimitEventTest {
     String classCode = "SPBXM";
 
     String tickerSU = "SU29009RMFS6";
-    String tradingClearingAccountSU = "L01+00002F00";
+    String tradingClearingAccountSU = "L01+00000F00";
     String quantitySU = "5";
     String classCodeSU = "TQOB";
     String instrumetSU = tickerSU + "_" + classCodeSU;

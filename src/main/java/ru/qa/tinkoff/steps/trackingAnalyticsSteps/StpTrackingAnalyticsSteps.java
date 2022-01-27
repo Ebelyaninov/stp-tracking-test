@@ -136,7 +136,7 @@ public class StpTrackingAnalyticsSteps {
     public String classCode7 = "CETS";
     public String sector7 = "money";
     public String type7 = "money";
-    public String company7 = "Другое";
+    public String company7 = "Денежные средства";
     public String instrumet7 = ticker7 + "_" + classCode7;
 
 
