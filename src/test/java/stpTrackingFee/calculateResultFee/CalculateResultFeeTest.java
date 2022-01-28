@@ -144,6 +144,11 @@ public class CalculateResultFeeTest {
     String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
     String quantityNotInsPrice = "2";
 
+    String tickerUsd = "USD000UTSTOM";
+    String classCodeUsd = "CETS";
+    String tickerEur = "EUR_RUB__TOM";
+    String classCodeEur = "CETS";
+
     String description = "new test стратегия autotest";
 
     @BeforeAll
@@ -1398,6 +1403,430 @@ public class CalculateResultFeeTest {
 
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1443477")
+    @DisplayName("C1443477.CalculateResultFee. Нашли все записи в slave_adjust с базовой валютой стратегии rub")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1443477() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlaveportfolio();
+        //добавляем записи в result_fee
+        createFeeResultFirst(startSubTime, subscriptionId);
+        //Расчитываем стоимость порфеля на конец второго расчетного периода
+        LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioSecondPeriod = getPorfolioValue("43606.35", "20", "5", "5", lastDayFirstSecondPeriod);
+        LocalDateTime lastDayFirstThirdPeriod = LocalDate.now().minusMonths(0).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
+        BigDecimal highWaterMarkFirstPeriod = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4).getHighWaterMark();
+        BigDecimal highWaterMarkSecondPeriod;
+        BigDecimal highWaterMarkThirdPeriod;
+        //Добавляем заводы RUB
+        //игнорируем завод за первый период
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusDays(1), Long.parseLong(operId),
+           startSubTime.plusDays(1), "rub", false, "1500000.21");
+        //Добавляем несколько заводов за 2 период > чем portfolioValue
+        BigDecimal firstAdjustForSecondPeriod = new BigDecimal("15021.24");
+        BigDecimal secondAdjustForSecondPeriod = new BigDecimal("16021.33");
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +1,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), "rub", false, firstAdjustForSecondPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы)
+        highWaterMarkSecondPeriod =  highWaterMarkFirstPeriod.add(firstAdjustForSecondPeriod).add(secondAdjustForSecondPeriod);
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +2,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), "rub", false, secondAdjustForSecondPeriod.toString());
+        //Добавляем несколько заводов за 3 период > чем portfolioValue
+        BigDecimal firstAdjustForThirdPeriod = new BigDecimal("25021.24");
+        BigDecimal secondAdjustForThirdPeriod = new BigDecimal("26021.33");
+        createsSlaveAdjust(contractIdSlave, strategyId,startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), "rub", false, firstAdjustForThirdPeriod.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), "rub", false, secondAdjustForThirdPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного второго периода + заводы)
+        highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5))
+            .until(
+                () ->  resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
+                notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
+        //К рассчитаному HWM за 2 период добавляем сумму 2 заводов
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1442125")
+    @DisplayName("C1442125.CalculateResultFee. Не нашли записи в таблице slave_adjust если уже была найдена запись в result_fee")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1442125() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlaveportfolio();
+        //добавляем записи в result_fee
+        createFeeResultFirst(startSubTime, subscriptionId);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5))
+            .until(
+                () ->  resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
+                notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        //Расчитываем стоимость порфеля на конец первого расчетного периода
+        BigDecimal valuePortfolioOnePeriod = createPortfolioValueOnePeriod();
+        LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioSecondPeriod = getPorfolioValue("43606.35", "20", "5", "5", lastDayFirstSecondPeriod);
+        LocalDateTime lastDayFirstThirdPeriod = LocalDate.now().minusMonths(0).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
+        BigDecimal highWaterMarkFirstPeriodBefore = new BigDecimal("50000");
+        BigDecimal adjustValueFirstPeriod = highWaterMarkFirstPeriodBefore.add(new BigDecimal("10000"));
+        BigDecimal highWaterMarkFirstPeriod = adjustValueFirstPeriod.max(valuePortfolioOnePeriod);
+        BigDecimal highWaterMarkSecondPeriodBefore = highWaterMarkFirstPeriod;
+        BigDecimal adjustValueSecondPeriod = highWaterMarkSecondPeriodBefore.add(new BigDecimal("15000")) ;
+        BigDecimal highWaterMarkSecondPeriod = adjustValueSecondPeriod.max(valuePortfolioSecondPeriod);
+        BigDecimal highWaterMarkThirdPeriodBefore = highWaterMarkSecondPeriod;
+        BigDecimal highWaterMarkThirdPeriod = highWaterMarkThirdPeriodBefore.max(valuePortfolioThirdPeriod);
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1443460")
+    @DisplayName("C1443460.CalculateResultFee. Отфильтровываем записи у которых у которых slave_adjust.currency = strategy.base_currency")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1443460() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlaveportfolio();
+        //добавляем записи в result_fee
+        createFeeResultFirst(startSubTime, subscriptionId);
+        //Расчитываем стоимость порфеля на конец второго расчетного периода
+        LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioSecondPeriod = getPorfolioValue("43606.35", "20", "5", "5", lastDayFirstSecondPeriod);
+        LocalDateTime lastDayFirstThirdPeriod = LocalDate.now().minusMonths(0).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
+        BigDecimal highWaterMarkFirstPeriod = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4).getHighWaterMark();
+        BigDecimal highWaterMarkSecondPeriod;
+        BigDecimal highWaterMarkThirdPeriod;
+        //Добавляем заводы RUB
+        //Добавляем несколько заводов за 2 период > чем portfolioValue
+        BigDecimal firstAdjustForSecondPeriod = new BigDecimal("15021.24");
+        BigDecimal secondAdjustForSecondPeriod = new BigDecimal("16021.33");
+        BigDecimal adjustForUsd = new BigDecimal("16021.33");
+        BigDecimal adjustForEur = new BigDecimal("26021.33");
+        //Добавляем завод в другой валюте
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +1,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), "usd", false, firstAdjustForSecondPeriod.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +2,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), "usd", false, secondAdjustForSecondPeriod.toString());
+        //Добавить заводы в валюте != базовая валюта и не rub
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(3), "rub", false, adjustForUsd.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +4,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(4), "eur", false, adjustForEur.toString());
+        //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы только базовой валюты)
+        highWaterMarkSecondPeriod =  highWaterMarkFirstPeriod.add(firstAdjustForSecondPeriod).add(secondAdjustForSecondPeriod);
+        //Добавляем несколько заводов за 3 период > чем portfolioValue
+        BigDecimal firstAdjustForThirdPeriod = new BigDecimal("25021.24");
+        BigDecimal secondAdjustForThirdPeriod = new BigDecimal("26021.33");
+        createsSlaveAdjust(contractIdSlave, strategyId,startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +5,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), "rub", false, firstAdjustForThirdPeriod.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +6,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), "eur", false, secondAdjustForThirdPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного второго периода + заводы игнорируем)
+        BigDecimal highWaterMarkThirdPeriodBefore = highWaterMarkSecondPeriod;
+        highWaterMarkThirdPeriod = highWaterMarkThirdPeriodBefore.max(valuePortfolioThirdPeriod);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5))
+            .until(
+                () ->  resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
+                notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
+        //К рассчитаному HWM за 2 период добавляем сумму 2 заводов
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1451384")
+    @DisplayName("C1451384.CalculateResultFee. Первый расчетный период и high water mark еще не рассчитывался")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1451384() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlaveportfolio();
+        //Расчитываем стоимость порфеля на конец второго расчетного периода
+        LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioSecondPeriod = getPorfolioValue("43606.35", "20", "5", "5", lastDayFirstSecondPeriod);
+        LocalDateTime lastDayFirstThirdPeriod = LocalDate.now().minusMonths(0).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
+        BigDecimal highWaterMarkFirstPeriod;
+        BigDecimal highWaterMarkSecondPeriod;
+        BigDecimal highWaterMarkThirdPeriod;
+        //Добавляем заводы RUB
+        BigDecimal firstAdjustForFirstPeriod = new BigDecimal("28021.24");
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusDays(1), Long.parseLong(operId),
+            startSubTime.plusDays(1), "rub", false, firstAdjustForFirstPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы)
+        BigDecimal valuePortfolioOnePeriod = createPortfolioValueOnePeriod();
+        BigDecimal highWaterMarkForFirstPortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 1).getBaseMoneyPosition().getQuantity();
+        highWaterMarkFirstPeriod =  valuePortfolioOnePeriod.max(highWaterMarkForFirstPortfolio.add(firstAdjustForFirstPeriod));
+        //Добавляем несколько заводов за 2 период > чем portfolioValue
+        BigDecimal firstAdjustForSecondPeriod = new BigDecimal("15021.24");
+        BigDecimal secondAdjustForSecondPeriod = new BigDecimal("16021.33");
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +1,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), "rub", false, firstAdjustForSecondPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы)
+        highWaterMarkSecondPeriod =  highWaterMarkFirstPeriod.add(firstAdjustForSecondPeriod).add(secondAdjustForSecondPeriod);
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +2,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), "rub", false, secondAdjustForSecondPeriod.toString());
+        //Добавляем несколько заводов за 3 период > чем portfolioValue
+        BigDecimal firstAdjustForThirdPeriod = new BigDecimal("25021.24");
+        BigDecimal secondAdjustForThirdPeriod = new BigDecimal("26021.33");
+        createsSlaveAdjust(contractIdSlave, strategyId,startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), "rub", false, firstAdjustForThirdPeriod.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), "rub", false, secondAdjustForThirdPeriod.toString());
+        //Получаем новый HWM (HWM уже рассчитаного второго периода + заводы)
+        highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5))
+            .until(
+                () ->  resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4),
+                notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioOnePeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkFirstPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1443488")
+    @DisplayName("C1443488.CalculateResultFee. Перевод валюты заводов в рубли (strategy.base_currency = 'rub' И у какой-то из найденных операций завода currency <> 'rub')")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1443488() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+        createSlaveportfolio();
+        //добавляем записи в result_fee
+        createFeeResultFirst(startSubTime, subscriptionId);
+        //Расчитываем стоимость порфеля на конец второго расчетного периода
+        LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioSecondPeriod = getPorfolioValue("43606.35", "20", "5", "5", lastDayFirstSecondPeriod);
+        LocalDateTime lastDayFirstThirdPeriod = LocalDate.now().minusMonths(0).with(TemporalAdjusters.firstDayOfMonth()).
+            atStartOfDay();
+        BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
+        BigDecimal highWaterMarkFirstPeriod = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4).getHighWaterMark();
+        BigDecimal highWaterMarkSecondPeriod;
+        BigDecimal highWaterMarkThirdPeriod;
+        //Добавляем несколько заводов за 2 период > чем portfolioValue
+        BigDecimal adjustForUsd = new BigDecimal("1024.33");
+        BigDecimal adjustForEur = new BigDecimal("893.33");
+        //Добавляем завод в валюте отличной от rub
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +1,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1), "usd", false, adjustForUsd.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +2,
+            startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), "eur", false, adjustForEur.toString());
+        //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы только базовой валюты)
+        BigDecimal priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, tickerUsd , classCodeUsd);
+        BigDecimal priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, tickerEur , classCodeUsd);
+        highWaterMarkSecondPeriod =  highWaterMarkFirstPeriod.add(priceForUsd).add(priceForEur);
+        //Добавляем несколько заводов за 3 период > чем portfolioValue
+        createsSlaveAdjust(contractIdSlave, strategyId,startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +3,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), "eur", false, adjustForEur.toString());
+        createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +4,
+            startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), "usd", false, adjustForUsd.toString());
+        priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, tickerUsd , classCodeUsd);
+        priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, tickerEur , classCodeUsd);
+        //Получаем новый HWM (HWM уже рассчитаного второго периода + заводы игнорируем)
+        BigDecimal highWaterMarkThirdPeriodBefore = highWaterMarkSecondPeriod;
+        highWaterMarkThirdPeriod = valuePortfolioThirdPeriod.max(highWaterMarkThirdPeriodBefore.add(priceForUsd).add(priceForEur));
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        await().atMost(Duration.ofSeconds(5))
+            .until(
+                () ->  resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
+                notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
+        //К рассчитаному HWM за 2 период добавляем сумму 2 заводов
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
+    }
+
+
+
     // методы для работы тестов*****************************************************************
     void createCommandResult(long subscriptionId) {
         //формируем и отправляем команду на расчет комисии
@@ -1985,7 +2414,7 @@ public class CalculateResultFeeTest {
 
     BigDecimal calculateNotBondPositionValue (LocalDateTime cut, BigDecimal qty, String ticker, String classCode) {
         // формируем список позиций для запроса prices MD
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.ms'Z'");
         String dateTs = fmt.format(cut);
         String ListInst = ticker + "_" + classCode;
         //вызываем метод MD и сохраняем prices в Map
@@ -2049,5 +2478,4 @@ public class CalculateResultFeeTest {
             .build();
         slaveAdjustDao.insertIntoSlaveAdjust(slaveAdjust);
     }
-
 }
