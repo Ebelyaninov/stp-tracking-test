@@ -328,7 +328,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategyFee(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                        UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                        ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield) {
+                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield, String shortDescription, String ownerDescription) {
 
         //находим данные по клиенту в БД social
         String image = "";
@@ -371,7 +371,9 @@ public class StpTrackingApiSteps {
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
             .setExpectedRelativeYield(expectedRelativeYield)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setShortDescription(shortDescription)
+            .setOwnerDescription(ownerDescription);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
