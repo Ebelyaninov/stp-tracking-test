@@ -19,8 +19,10 @@ import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -80,7 +82,7 @@ public class SynchronizePositionResolverTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -95,7 +97,7 @@ public class SynchronizePositionResolverTest {
 
 
     SlavePortfolio slavePortfolio;
-    SlaveOrder slaveOrder;
+    SlaveOrder2 slaveOrder2;
     Client clientSlave;
     Subscription subscription;
     String contractIdMaster;
@@ -194,7 +196,7 @@ public class SynchronizePositionResolverTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
             try {
@@ -271,7 +273,7 @@ public class SynchronizePositionResolverTest {
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerShareQCOM, tradingClearingAccountShareQCOM);
     }
@@ -337,7 +339,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerShareQCOM, tradingClearingAccountShareQCOM);
     }
@@ -402,7 +404,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerUSD, tradingClearingAccountUSD);
     }
@@ -467,7 +469,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerUSD, tradingClearingAccountUSD);
     }
@@ -533,7 +535,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerGBP, tradingClearingAccountGBP);
     }
@@ -628,7 +630,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -715,7 +717,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -776,7 +778,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerBond2, tradingClearingAccountBond2);
     }
@@ -862,7 +864,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -949,7 +951,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -1023,9 +1025,10 @@ public class SynchronizePositionResolverTest {
             tickerPos = slavePortfolio.getPositions().get(1).getTicker();
             tradingClearingAccountPos = slavePortfolio.getPositions().get(1).getTradingClearingAccount();
         }
+
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -1052,10 +1055,10 @@ public class SynchronizePositionResolverTest {
     }
 
     void checkParamSlaveOrder(String action, BigDecimal lots, BigDecimal lot, String ticker, String tradingClearingAccount) {
-        assertThat("Направление заявки Action не равно", slaveOrder.getAction().toString(), is(action));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder.getQuantity(), is(lots.multiply(lot)));
-        assertThat("ticker бумаги не равен", slaveOrder.getTicker(), is(ticker));
-        assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(lots.multiply(lot)));
+        assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(ticker));
+        assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
     }
 
     void checkComparedToMasterVersion(int version) throws InterruptedException {
