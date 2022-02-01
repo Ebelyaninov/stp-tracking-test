@@ -23,8 +23,10 @@ import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -98,8 +100,9 @@ public class AnalyzePortfolioTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
+
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -119,8 +122,10 @@ public class AnalyzePortfolioTest {
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
-    SlaveOrder slaveOrder;
+
+    SlaveOrder2 slaveOrder2;
     UUID strategyId;
+    UUID id;
 
 
     String SIEBEL_ID_MASTER = "1-3Z0IR7O";
@@ -190,7 +195,7 @@ public class AnalyzePortfolioTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
             try {
@@ -279,7 +284,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -361,7 +366,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -450,7 +455,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -525,7 +530,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -621,7 +626,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -713,7 +718,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionUSD.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionUSD.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -805,7 +810,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionGBP.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionGBP.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -913,7 +918,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -1574,6 +1579,7 @@ public class AnalyzePortfolioTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
+        id = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -1606,8 +1612,8 @@ public class AnalyzePortfolioTest {
             new BigDecimal("0"), new BigDecimal("0.0760"), new BigDecimal("4.936"), buy, sell);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlaveOnePos);
-        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 1, 1,
-            0, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+        slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
+            0, classCode, new BigDecimal("0"),id, UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //отправляем команду на актуализацию
         OffsetDateTime time = OffsetDateTime.now();
@@ -1695,8 +1701,8 @@ public class AnalyzePortfolioTest {
             new BigDecimal("0.1342"), new BigDecimal("-0.0577"), new BigDecimal("-4.2986"), buy, sell);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlaveOnePos);
-        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 1, 1,
-            1, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+        slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
+            1, classCode, new BigDecimal("0"),id, UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //отправляем команду на актуализацию
         OffsetDateTime time = OffsetDateTime.now();
@@ -1903,8 +1909,8 @@ public class AnalyzePortfolioTest {
 
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlaveOnePos);
-        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 1, 1,
-            1, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+        slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
+            1, classCode, new BigDecimal("0"),id, UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //отправляем команду на актуализацию
         OffsetDateTime time = OffsetDateTime.now();
@@ -2049,7 +2055,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -2135,7 +2141,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 
@@ -2221,7 +2227,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
 

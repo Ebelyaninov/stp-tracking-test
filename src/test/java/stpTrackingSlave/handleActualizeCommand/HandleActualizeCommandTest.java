@@ -25,8 +25,10 @@ import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -93,6 +95,9 @@ public class HandleActualizeCommandTest {
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
     SlaveOrderDao slaveOrderDao;
+
+    @Autowired
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -108,6 +113,7 @@ public class HandleActualizeCommandTest {
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
     SlaveOrder slaveOrder;
+    SlaveOrder2 slaveOrder2;
     Contract contract;
     Client clientSlave;
     String contractIdMaster;
@@ -159,7 +165,8 @@ public class HandleActualizeCommandTest {
     String contractIdSlave;
     UUID strategyId;
     UUID strategyIdNew;
-    String SIEBEL_ID_MASTER = "1-3Z0IR7O";
+    Date createAt;
+    String SIEBEL_ID_MASTER = "1-F7HJ10R";
     String SIEBEL_ID_SLAVE = "5-JEF71TBN";
 
     public String value;
@@ -218,7 +225,7 @@ public class HandleActualizeCommandTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyIdNew);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
         });
@@ -290,8 +297,8 @@ public class HandleActualizeCommandTest {
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
-        //проверяем значения в slaveOrder
-        slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId);
+        //проверяем значения в slaveOrder2
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         checkOrderParameters(versionMiddle-2, "0", lot, lots, priceOrder, ticker, tradingClearingAccount, classCode);
         steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
     }
@@ -3574,14 +3581,14 @@ public class HandleActualizeCommandTest {
     public void checkOrderParameters(int version, String action, BigDecimal lot, BigDecimal lots,
                                      BigDecimal priceOrder, String ticker, String tradingClearingAccount,
                                      String classCode) {
-        assertThat("Версия портфеля не равно", slaveOrder.getVersion(), is(version));
-        assertThat("Направление заявки Action не равно", slaveOrder.getAction().toString(), is(action));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder.getQuantity(), is(lots.multiply(lot)));
-        assertThat("price бумаги не равен", slaveOrder.getPrice(), is(priceOrder));
-        assertThat("ticker бумаги не равен", slaveOrder.getTicker(), is(ticker));
-        assertThat("classCode бумаги не равен", slaveOrder.getClassCode(), is(classCode));
-        assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
+        assertThat("Версия портфеля не равно", slaveOrder2.getVersion(), is(version));
+        assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(lots.multiply(lot)));
+        assertThat("price бумаги не равен", slaveOrder2.getPrice(), is(priceOrder));
+        assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(ticker));
+        assertThat("classCode бумаги не равен", slaveOrder2.getClassCode(), is(classCode));
+        assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
     }
 
 
