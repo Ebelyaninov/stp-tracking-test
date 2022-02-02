@@ -370,7 +370,7 @@ public class GetLiteStrategiesTest {
         assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield.doubleValue()));
         Allure.step("проверка Characteristics",
             () -> assertAll(
-                () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is("+58% в год")),
+                () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is("58% в год")),
                 () -> assertThat("short-description не равно", liteStrategy.get(0).getCharacteristics().get(4).getValue(), is("TEST")),
                 () -> assertThat("owner-description не равно", liteStrategy.get(0).getCharacteristics().get(5).getValue(), is("TEST11")),
                 () -> assertThat("master-portfolio-top-positions.value не равно", liteStrategy.get(0).getCharacteristics().get(6).getValue(),is("RU0009029540.png,minfin.png")),
