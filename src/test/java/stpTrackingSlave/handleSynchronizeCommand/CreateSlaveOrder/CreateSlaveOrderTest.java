@@ -21,11 +21,9 @@ import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
-import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -91,7 +89,7 @@ public class CreateSlaveOrderTest {
     @Autowired
     MasterSignalDao masterSignalDao;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -105,7 +103,7 @@ public class CreateSlaveOrderTest {
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
-    SlaveOrder slaveOrder;
+    SlaveOrder2 slaveOrder2;
     Client clientSlave;
     Subscription subscription;
     String contractIdMaster;
@@ -120,7 +118,7 @@ public class CreateSlaveOrderTest {
     String tradingClearingAccountSBER = "L01+00002F00";
 
     String tickerTECH = "TUSD";
-    String tradingClearingAccountTECH = "L01+00002F00";
+    String tradingClearingAccountTECH = "L01+00000F00";
     String classCodeTECH = "TQTD";
 
     BigDecimal lot = new BigDecimal("1");
@@ -172,7 +170,7 @@ public class CreateSlaveOrderTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
             try {
@@ -252,7 +250,7 @@ public class CreateSlaveOrderTest {
             .multiply(new BigDecimal("0.01"));
         Thread.sleep(5000);
         await().atMost(TEN_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", classCode, priceOrder, lots, ticker, tradingClearingAccount);
     }
@@ -323,7 +321,7 @@ public class CreateSlaveOrderTest {
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01")));
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", classCode, priceOrder, lots, ticker, tradingClearingAccount);
     }
@@ -390,7 +388,7 @@ public class CreateSlaveOrderTest {
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheAll(tickerUSD, "ask", tradingClearingAccountUSD));
         await().atMost(Duration.ofSeconds(2)).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(1, "1", "0", classCodeUSD, priceAsk, lots, tickerUSD, tradingClearingAccountUSD);
     }
@@ -456,7 +454,7 @@ public class CreateSlaveOrderTest {
        BigDecimal quantityDiff = position.get(0).getQuantityDiff();
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         await().atMost(Duration.ofSeconds(2)).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", classCodeUSD, priceBid, lots, tickerUSD, tradingClearingAccountUSD);
     }
@@ -522,7 +520,7 @@ public class CreateSlaveOrderTest {
         BigDecimal quantityDiff = position.get(0).getQuantityDiff();
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         await().atMost(Duration.ofSeconds(2)).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", classCodeTECH, priceBid, lots, tickerTECH, tradingClearingAccountTECH);
     }
@@ -533,16 +531,16 @@ public class CreateSlaveOrderTest {
     /////////***методы для работы тестов**************************************************************************
     void checkParamSlaveOrder(int version, String attemptsCount, String action, String classCode,
                               BigDecimal price, BigDecimal lots, String ticker, String tradingClearingAccount) {
-        assertThat("Version портфеля slave не равно", slaveOrder.getVersion(), is(version));
-        assertThat("AttemptsCount не равно", slaveOrder.getAttemptsCount().toString(), is(attemptsCount));
-        assertThat("Направление заявки Action не равно", slaveOrder.getAction().toString(), is(action));
-        assertThat("ClassCode не равно", slaveOrder.getClassCode(), is(classCode));
-        assertThat("IdempotencyKey пустой", slaveOrder.getIdempotencyKey(), is(notNullValue()));
-        assertThat("Price не равно", slaveOrder.getPrice(), is(price));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder.getQuantity(), is(lots.multiply(lot)));
-        assertThat("ticker бумаги не равен", slaveOrder.getTicker(), is(ticker));
-        assertThat("TradingClearingAccount бумаги не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("filled_quantity  не равен", slaveOrder.getFilledQuantity(), is(new BigDecimal("0")));
-        assertThat("createAt  не равен", slaveOrder.getCreateAt(), is(notNullValue()));
+        assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(version));
+        assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is(attemptsCount));
+        assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
+        assertThat("ClassCode не равно", slaveOrder2.getClassCode(), is(classCode));
+        assertThat("IdempotencyKey пустой", slaveOrder2.getIdempotencyKey(), is(notNullValue()));
+        assertThat("Price не равно", slaveOrder2.getPrice(), is(price));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(lots.multiply(lot)));
+        assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(ticker));
+        assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
+        assertThat("createAt  не равен", slaveOrder2.getCreateAt(), is(notNullValue()));
     }
 }
