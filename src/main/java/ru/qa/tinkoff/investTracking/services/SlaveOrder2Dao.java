@@ -119,4 +119,16 @@ public class SlaveOrder2Dao {
             .where(QueryBuilder.eq("contract_id", contract));
         cqlTemplate.execute(delete);
     }
+
+
+    public Optional<SlaveOrder2> getLatestSlaveOrder2 (String contractId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "WHERE contract_id = :contract_id " +
+            "ORDER BY created_at DESC " +
+            "LIMIT 1";
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
+        return Optional.of(result.get(0));
+    }
+
 }
