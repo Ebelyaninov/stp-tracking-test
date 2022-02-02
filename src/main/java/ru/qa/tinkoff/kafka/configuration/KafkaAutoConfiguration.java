@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.kafka.configuration;
 
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
@@ -69,7 +70,7 @@ public class KafkaAutoConfiguration {
 
     @Bean
     @Primary
-    public BoostedReceiver<String, byte[]> kafkaByteArrayReceiver(Properties kafkaProperties) {
+    public BoostedReceiverImpl<String, byte[]> kafkaByteArrayReceiver(Properties kafkaProperties) {
         return new BoostedReceiverImpl<>(kafkaProperties) {
         };
     }
@@ -80,4 +81,6 @@ public class KafkaAutoConfiguration {
         return new BoostedReceiverImpl<>(kafkaProperties) {
         };
     }
+
+
 }

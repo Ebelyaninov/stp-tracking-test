@@ -640,6 +640,9 @@ public class StpTrackingApiSteps {
     }
 
 
+
+
+
     //создаем портфель master в cassandra с позицией
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, List<MasterPortfolio.Position> positionList,
                                       int version, String money, Date date) {
