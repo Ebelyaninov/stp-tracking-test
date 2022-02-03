@@ -24,7 +24,10 @@ import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
+import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
+import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionRequest;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -254,6 +257,29 @@ public class StpTrackingAdminSteps {
             .setOtcTicker(otcTicker)
             .setOtcClassCode(otcClassCode);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
+    }
+
+    public void updateExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+                                Boolean trackingAllowed, Integer dailyQuantityLimit, List<OrderQuantityLimit> orderQuantityList){
+        //формируем тело запроса
+        UpdateExchangePositionRequest updateExPos = new UpdateExchangePositionRequest();
+        updateExPos.exchange(exchange);
+        updateExPos.dailyQuantityLimit(dailyQuantityLimit);
+        updateExPos.setOrderQuantityLimits(orderQuantityList);
+        updateExPos.setTicker(ticker);
+        updateExPos.setTrackingAllowed(trackingAllowed);
+        updateExPos.setTradingClearingAccount(tradingClearingAccount);
+        //вызываем метод createExchangePosition
+        exchangePositionApi.updateExchangePosition()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExPos)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
     }
 
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,

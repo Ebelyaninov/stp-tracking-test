@@ -6,6 +6,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
+import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +26,15 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
@@ -38,6 +42,7 @@ import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -68,7 +73,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class
 })
 public class CreateSignalSuccessTest {
 
@@ -94,6 +100,8 @@ public class CreateSignalSuccessTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpTrackingAdminSteps adminSteps;
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.
         api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
@@ -110,6 +118,8 @@ public class CreateSignalSuccessTest {
     String tickerBond = "ALFAperp";
     String tradingClearingAccountBond = "TKCBM_TCAB";
     String instrumentBond = "ALFAperp_SPBBND";
+    String ticker1 = "YNDX";
+    String tradingClearingAccount1 = "Y02+00001F00";
     String SIEBEL_ID = "1-1P424JS";
 
     @AfterEach
@@ -650,6 +660,81 @@ public class CreateSignalSuccessTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1439791")
+    @DisplayName("1439791 Объем заявки. Покупка. period = default. tailOrderQuantity < limit")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1439791() {
+        BigDecimal price = new BigDecimal("5341.8");
+        int quantityRequest = 3;
+        int version = 4;
+        String tailValue = "150000";
+        double money = 100000.0;
+        double quantityPosMasterPortfolio = 0.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "0");*/
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(ticker1, tradingClearingAccount1, ExchangePosition.ExchangeEnum.MOEX,
+            true, 22845, orderQuantityList(100, "default"));
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, ticker1, tradingClearingAccount1, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(response -> response);
+        //рассчёты
+        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
+            .multiply(price)
+            .add(new BigDecimal(Double.toString(money)));
+        //Получаем цену покупки
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(ticker1, tradingClearingAccount1, "ask", SIEBEL_ID);
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
+        //Находим выставленный сигнал в БД
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
+        //проверяем выставленный сигнал
+        assertThat("price", masterSignal.getPrice(), is(price));
+        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("ticker", masterSignal.getTicker(), is(ticker1));
+        assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount1));
+        assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+    }
+
+
+
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
@@ -683,6 +768,16 @@ public class CreateSignalSuccessTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
         }
+    }
+
+    List<OrderQuantityLimit> orderQuantityList(int limit, String period) {
+        List<OrderQuantityLimit> orderQuantityLimitList
+            = new ArrayList<>();
+        OrderQuantityLimit orderQuantityLimit = new OrderQuantityLimit();
+        orderQuantityLimit.setLimit(limit);
+        orderQuantityLimit.setPeriodId(period);
+        orderQuantityLimitList.add(orderQuantityLimit);
+        return orderQuantityLimitList;
     }
 
 
