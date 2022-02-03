@@ -435,6 +435,19 @@ public class StpTrackingSlaveSteps {
         return event;
     }
 
+    //отправляем команду на включение синхронизации
+    public Tracking.PortfolioCommand createCommandEnableSynchronize(String contractIdSlave, OffsetDateTime time) {
+        Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractIdSlave)
+            .setOperation(Tracking.PortfolioCommand.Operation.ENABLE_SYNCHRONIZATION)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .build();
+        return command;
+    }
+
     public List<MasterPortfolio.Position> createListMasterPositionWithOnePos(String ticker, String tradingClearingAccount,
                                                                              String quantityPos, Date date,
                                                                              int lastChangeDetectedVersion,
@@ -840,6 +853,18 @@ public class StpTrackingSlaveSteps {
         byte[] eventBytes = command.toByteArray();
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
+    }
+
+    //  метод отправляет команду с operation = 'ENABLE_SYNCHRONIZATION'.
+    public void createCommandEnableSynchronization(String contractIdSlave)  {
+        //создаем команду
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandEnableSynchronize(contractIdSlave, time);
+        log.info("Команда в tracking.slave.command:  {}", command);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
 
