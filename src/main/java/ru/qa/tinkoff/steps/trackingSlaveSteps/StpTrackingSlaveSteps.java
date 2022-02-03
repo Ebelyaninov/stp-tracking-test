@@ -322,7 +322,7 @@ public class StpTrackingSlaveSteps {
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
         Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
-            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            //.reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")

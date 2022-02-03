@@ -17,11 +17,9 @@ import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
-import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
+import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -96,7 +94,7 @@ public class CreateSlaveOrderErrorTest {
     @Autowired
     MasterSignalDao masterSignalDao;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -108,7 +106,7 @@ public class CreateSlaveOrderErrorTest {
     @Autowired
     StpTrackingSlaveSteps steps;
     Subscription subscription;
-    SlaveOrder slaveOrder;
+    SlaveOrder2 slaveOrder2;
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
@@ -158,7 +156,7 @@ public class CreateSlaveOrderErrorTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
             try {
@@ -183,7 +181,7 @@ public class CreateSlaveOrderErrorTest {
         String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
         contractIdSlave = "2047111824";
         String ticker = "BANEP";
-        String tradingClearingAccount = "L01+00002F00";
+        String tradingClearingAccount = "L01+00000F00";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -281,9 +279,9 @@ public class CreateSlaveOrderErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
-        assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
+        assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(31));
         Pair<String, byte[]> message = messages.stream()
@@ -341,9 +339,10 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave).getState(), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры SlaveOrder
-        assertThat("State не равно", slaveOrder.getState().toString(), is("0"));
+        assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND);
         if (messages.isEmpty()) {
             throw new RuntimeException("Нет сообщений todo");
@@ -401,7 +400,7 @@ public class CreateSlaveOrderErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -460,7 +459,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder = slaveOrderDao.getSlaveOrder(contractIdSlave, strategyId), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()

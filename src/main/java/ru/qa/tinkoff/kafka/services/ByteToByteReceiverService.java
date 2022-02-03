@@ -4,13 +4,15 @@ import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiver;
+import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.awaitility.Awaitility.await;
 
@@ -21,7 +23,7 @@ public class ByteToByteReceiverService {
     public static final Duration TIMEOUT_MILLS = Duration.ofMillis(1500);
 
     private final BoostedReceiver<byte[], byte[]> boostedReceiver;
-
+//    private final BoostedReceiverImpl<byte[], byte[]> receiver;
 
     public void resetOffsetToLatest(Topics topic) {
         resetOffsetToLatest(topic, TIMEOUT_MILLS);
@@ -44,13 +46,31 @@ public class ByteToByteReceiverService {
     public List<Pair<byte[], byte[]>> receiveBatch(Topics topic, Duration pollTimeout) {
         log.info("Поступил запрос на поиск новых сообщений в Kafka топике {}", topic.getName());
         String topicName = topic.getName();
-        List<Pair<byte[],byte[]>> result = boostedReceiver
+        List<Pair<byte[], byte[]>> result = boostedReceiver
             .receiveBatchWithKeys(topicName, pollTimeout);
         log.info("Из Kafka топика {} получено сообщений: {}", topicName, result.size());
         return result;
-
-
     }
+
+
+//        @Step("Переместить offset для всех партиций Kafka топика {topic.name} в конец очереди")
+//        public void resetOffsetToEnd(Topics topic) {
+//            log.info("Сброс offset для топика {}", topic.getName());
+//            receiver.getKafkaConsumer().subscribe(Collections.singletonList(topic.getName()));
+//            receiver.getKafkaConsumer().poll(Duration.ofSeconds(5));
+//            Map<TopicPartition, Long> endOffsets = receiver.getKafkaConsumer()
+//                .endOffsets(receiver.getKafkaConsumer().assignment());
+//            HashMap<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+//            endOffsets.forEach((p, o) -> {
+//                log.info("Для partition: {} последний offset: {}", p.partition(), o);
+//                offsets.put(p, new OffsetAndMetadata(o));
+//            });
+//            receiver.getKafkaConsumer().commitSync(offsets);
+//
+//            log.info("Offset для всех партиций Kafka топика {} перемещены в конец очереди", topic.getName());
+//            receiver.getKafkaConsumer().unsubscribe();
+//
+//    }
 
     /**
      * Вычитывает сообщения из Kafka до тех пор пока не получит необходимое количество
@@ -73,4 +93,7 @@ public class ByteToByteReceiverService {
         log.info("Из Kafka топика {} получено {} сообщений", topic.getName(), result.size());
         return result;
     }
+
+
+
 }
