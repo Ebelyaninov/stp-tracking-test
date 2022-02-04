@@ -1,0 +1,102 @@
+{
+    "httpRequest": {
+        "method": "POST",
+        "path": "/api/miof/order/execute",
+        "body": {
+            "type": "JSON",
+            "json": {
+                "ticker": "{{ticker}}",
+                "lots": "${json-unit.ignore-element}",
+                "price": "${json-unit.ignore-element}",
+                "side": "{{action}}",
+                "agreementId": "{{contractId}}",
+                "classCode": "{{classCode}}",
+                "timeInForce": "{{timeInForce}}",
+                "orderType": "Limit",
+                "isPurchaseFromCard": false,
+                "appName": "tracking",
+                "orderRequestId": "${json-unit.ignore-element}"
+            }
+        }
+    },
+    "httpResponse": {
+        "statusCode": 200,
+        "body": {
+            "payload": {
+                "id": "566690320",
+                "executionReportStatus": "{{executionReportStatus}}",
+                "lotsRequested": {{lotsRequested}},
+                "lotsExecuted": {{lotsExecuted}},
+                "initialOrderPrice": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 108.55
+                },
+                "executedOrderPrice": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 108.33
+                },
+                "totalOrderAmount": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 108.33
+                },
+                "averagePositionPrice": 108.33,
+                "initialCommission": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 0.33
+                },
+                "executedCommission": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 0
+                },
+                "ticker": "{{ticker}}",
+                "classCode": "{{classCode}}",
+                "side": "{{action}}",
+                "clientCode": "{{clientCode}}",
+                "initialSecurityPrice": {
+                    "currency": {
+                        "name": "USD",
+                        "code": "840"
+                    },
+                    "value": 108.55
+                },
+                "stages": [
+                    {
+                        "price": 108.33,
+                        "quantity": 1,
+                        "tradeId": "233485540"
+                    }
+                ],
+                "currency": {
+                    "name": "USD",
+                    "code": "840"
+                },
+                "commissionCurrency": {
+                    "name": "USD",
+                    "code": "840"
+                },
+                "orderType": "Limit",
+                "orderDate": "2021-04-19T18:40:58.089228",
+                "expirationTime": "2021-04-20T02:00:00",
+                "timeInForceType": "FillOrKill"
+            },
+            "trackingId": "HLuq3HJ3VI",
+            "time": "2021-04-19T18:40:58.385725+03:00",
+            "status": "Ok"
+        }
+    }
+}
