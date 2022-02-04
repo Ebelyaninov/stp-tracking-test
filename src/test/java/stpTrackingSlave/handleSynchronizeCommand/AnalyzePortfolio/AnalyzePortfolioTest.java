@@ -18,8 +18,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
@@ -32,6 +30,8 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.model.InvestmentAccount.GetBrokerAccountBySiebelTemplateEnhancer;
+import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
@@ -208,6 +208,30 @@ public class AnalyzePortfolioTest {
             }
         });
     }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("681845")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("C681845.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C681845_111() {
+//        //получаем данные по клиенту master в api сервиса счетов
+//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+//        UUID investIdMaster = resAccountMaster.getInvestId();
+//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+//        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+//        UUID investIdSlave = resAccountSlave.getInvestId();
+//        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+//        strategyId = UUID.randomUUID();
+        String resource = TextResourceEnhancer.enhance(
+            new GetBrokerAccountBySiebelTemplateEnhancer("test-path", "test-invest-id", "test-contract"));
+        System.out.println(resource);
+    }
+
+
 
     @SneakyThrows
     @Test
