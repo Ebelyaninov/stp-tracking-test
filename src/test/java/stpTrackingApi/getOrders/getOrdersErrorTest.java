@@ -18,8 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -38,8 +37,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -79,7 +77,7 @@ public class getOrdersErrorTest {
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StpInstrument instrument;
 
@@ -343,27 +341,13 @@ public class getOrdersErrorTest {
 
     //метод для создания вставки заявки
     void createSlaveOrder(int minusDays, int minusHours, String contractId, UUID strategyId, int version, int attemptsCount,
-                          int action, String classCode, int filledQuantity,
-                          UUID idempotencyKey, String price, String quantity, int state, String ticker, String tradingClearingAccount) {
-        LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
-        Date convertedDatetime = Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
-        SlaveOrder slaveOrder = SlaveOrder.builder()
-            .contractId(contractId)
-            .strategyId(strategyId)
-            .version(version)
-            .attemptsCount((byte) attemptsCount)
-            .action((byte) action)
-            .classCode(classCode)
-            .filledQuantity(new BigDecimal(filledQuantity))
-            .idempotencyKey(idempotencyKey)
-            .price(new BigDecimal(price))
-            .quantity(new BigDecimal(quantity))
-            .state((byte) 0)
-            .tradingClearingAccount(tradingClearingAccount)
-            .ticker(ticker)
-            .createAt(convertedDatetime)
-            .build();
-        slaveOrderDao.insertSlaveOrder(slaveOrder);
+                          int action, String classCode, BigDecimal filledQuantity,
+                          UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+        OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
+        slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
+            action, classCode, filledQuantity, idempotencyKey,
+            UUID.randomUUID(), price, quantity, state,
+            ticker, tradingClearingAccount);
     }
 
     //метод создает записи по заявкам в рамках одной стратегии
@@ -371,7 +355,7 @@ public class getOrdersErrorTest {
         idempotencyKey = UUID.randomUUID();
         for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
-            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, 0, idempotencyKey, "173", "10", 0, ticker, tradingClearingAccount);
+            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("10"), (byte) 0, ticker, tradingClearingAccount);
         }
     }
 }

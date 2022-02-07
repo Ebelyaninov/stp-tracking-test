@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
+import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -35,12 +35,11 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.math.BigDecimal;
+import java.util.*;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -82,7 +81,7 @@ public class getOrdersTest {
     @Autowired
     StpTrackingSlaveSteps slaveSteps;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StpInstrument instrument;
 
@@ -129,7 +128,7 @@ public class getOrdersTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
         });
@@ -173,13 +172,14 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 127, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 16, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 16, 16, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getOrdersResponse = getOrders();
-        List<SlaveOrder> getListFromSlaveOrder = slaveOrderDao.findSlaveOrderLimit(contractIdSlave, strategyId, 30);
+        List<SlaveOrder2> getListFromSlaveOrder = slaveOrder2Dao.findSlaveOrder2Limit(contractIdSlave, 30);
 
         List<ru.qa.tinkoff.swagger.tracking.model.Order> getItemsList = new ArrayList<>();
-        List<SlaveOrder> getItemsListFromDb = new ArrayList<>();
+        List<SlaveOrder2> getItemsListFromDb = new ArrayList<>();
 
         String action;
 
@@ -236,7 +236,7 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 127, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+       createTestDataSlaveOrder2(1, 102, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         GetOrdersResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -298,13 +298,16 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 125, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
-        createTestDataSlaveOrder(2, 3, 0, 1, instrument.classCodeSBERT, instrument.tickerSBERT, instrument.tradingClearingAccountSBERT);
+        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeSBERT, instrument.tickerSBERT, instrument.tradingClearingAccountSBERT);
+        createTestDataSlaveOrder2(1, 1, 2, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
+        //для значения курсора используется результат до фильтрации позиций, по которым не были найдены данные, хотя в сам ответ они не попадают
+        long nextCursor = getNextCursore(getOrderByAttemptsCount(contractIdSlave, 2));
+        //Игнорируем записи с ticker1
         assertThat("items не равно", getDataOrders.getItems().size(), is(1));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
-        assertThat("cursor не равен", getDataOrders.getNextCursor(), is("1_126"));
+        assertThat("cursor не равен", getDataOrders.getNextCursor(), is(String.valueOf(nextCursor)));
     }
 
     @SneakyThrows
@@ -345,7 +348,13 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 10, 1, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 10, 1, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        //Получаем курсор 8'ой записи
+        Optional<SlaveOrder2> getSlaveOrderNumberEight = getOrderByAttemptsCount(contractIdSlave, 8);
+        String cursoreForOrderEight = String.valueOf(getNextCursore(getSlaveOrderNumberEight));
+        //Получаем курсор для крайней записи
+        Optional<SlaveOrder2> getFirstSlaveOrder = getOrderByAttemptsCount(contractIdSlave, 2);
+        String cursoreForFirstOrder = String.valueOf(getNextCursore(getFirstSlaveOrder));
         //вызываем метод getOrders
         GetOrdersResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -353,11 +362,11 @@ public class getOrdersTest {
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader(siebelIdSlave)
             .contractIdPath(contractIdSlave)
-            .cursorQuery("1_8")
+            .cursorQuery(cursoreForOrderEight)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetOrdersResponse.class));
         //получаем ответ и проверяем
-        assertThat("cursor не равен", getOrdersResponse.getNextCursor(), is("1_2"));
+        assertThat("cursor не равен", getOrdersResponse.getNextCursor(), is(cursoreForFirstOrder));
         assertThat("items не равен", getOrdersResponse.getItems().size(), is(6));
         assertThat("hasNext не равен", getOrdersResponse.getHasNext(), is(false));
     }
@@ -381,10 +390,14 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 10, 1, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 10,1,0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
-        assertThat("cursor не равен", getDataOrders.getNextCursor(), is("1_2"));
+        Optional<SlaveOrder2> getSlaveOrders = slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave).stream()
+                                            .filter(v -> v.getVersion().equals(1) && v.getAttemptsCount().equals(2))
+                                            .findFirst();
+        long nextCursor = getNextCursore(getSlaveOrders);
+        assertThat("cursor не равен", getDataOrders.getNextCursor(), is(String.valueOf(nextCursor)));
         assertThat("items не равен", getDataOrders.getItems().size(), is(10));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
     }
@@ -408,11 +421,12 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 10, 1, 1, instrument.classCodeAFX, instrument.tickerAFX, instrument.tradingClearingAccountAFX);
-        createTestDataSlaveOrder(2, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 10,0,1, instrument.classCodeAFX, instrument.tickerAFX, instrument.tradingClearingAccountAFX);
+        createTestDataSlaveOrder2(2, 1,1,1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
-        assertThat("cursor не равен", getDataOrders.getNextCursor(), is("1_2"));
+        String nextCursore = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
+        assertThat("cursor не равен", getDataOrders.getNextCursor(), is(nextCursore));
         assertThat("items не равен", getDataOrders.getItems().size(), is(1));
         assertThat("ticker не равен", getDataOrders.getItems().get(0).getExchangePosition().getTicker(), is(instrument.tickerAAPL));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
@@ -437,11 +451,12 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
-        createTestDataSlaveOrder(2, 1, 0, 3, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 1,0,1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(2, 1,1,3, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
-        assertThat("cursor не равен", getDataOrders.getNextCursor(), is("1_1"));
+        String nextCursor = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
+        assertThat("cursor не равен", getDataOrders.getNextCursor(), is(nextCursor));
         assertThat("items не равен", getDataOrders.getItems().size(), is(1));
         assertThat("ticker не равен", getDataOrders.getItems().get(0).getExchangePosition().getTicker(), is(instrument.tickerAAPL));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
@@ -466,12 +481,13 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeTCSG, instrument.tickerTCSG, instrument.tradingClearingAccountTCSG);
-        createTestDataSlaveOrder(2, 1, 0, 1, instrument.classCodeTBIO, instrument.tickerTBIO, instrument.tradingClearingAccountTBIO);
-        createTestDataSlaveOrder(3, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        createTestDataSlaveOrder2(1, 1, 0, 1, instrument.classCodeTCSG, instrument.tickerTCSG, instrument.tradingClearingAccountTCSG);
+        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeTBIO, instrument.tickerTBIO, instrument.tradingClearingAccountTBIO);
+        createTestDataSlaveOrder2(3, 1, 2, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
-        assertThat("cursor не равен", getDataOrders.getNextCursor(), is("1_1"));
+        String nextCursore = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
+        assertThat("cursor не равен", getDataOrders.getNextCursor(), is(nextCursore));
         assertThat("items не равен", getDataOrders.getItems().size(), is(3));
         assertThat("isAffiliated не равен", getDataOrders.getItems().get(0).getIssuer().getIsAffiliated(), is(false));
         assertThat("isAffiliated не равен", getDataOrders.getItems().get(1).getIssuer().getIsAffiliated(), is(true));
@@ -489,36 +505,26 @@ public class getOrdersTest {
     }
 
     //метод для создания вставки заявки
-    void createSlaveOrder(int minusDays, int minusHours, String contractId, UUID strategyId, int version, int attemptsCount,
-                          int action, String classCode, int filledQuantity,
-                          UUID idempotencyKey, String price, String quantity, int state, String ticker, String tradingClearingAccount) {
-        LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
-        Date convertedDatetime = Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
-        SlaveOrder slaveOrder = SlaveOrder.builder()
-            .contractId(contractId)
-            .strategyId(strategyId)
-            .version(version)
-            .attemptsCount((byte) attemptsCount)
-            .action((byte) action)
-            .classCode(classCode)
-            .filledQuantity(new BigDecimal(filledQuantity))
-            .idempotencyKey(idempotencyKey)
-            .price(new BigDecimal(price))
-            .quantity(new BigDecimal(quantity))
-            .state((byte) 0)
-            .tradingClearingAccount(tradingClearingAccount)
-            .ticker(ticker)
-            .createAt(convertedDatetime)
-            .build();
-        slaveOrderDao.insertSlaveOrder(slaveOrder);
+    void createSlaveOrder2(int minusDays, int minusHours, String contractId, UUID strategyId, int version, Integer attemptsCount,
+                            int action, String classCode, BigDecimal filledQuantity,
+                            UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+
+        OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
+        slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
+                                             action, classCode, filledQuantity, idempotencyKey,
+                                             UUID.randomUUID(), price, quantity, state,
+                                             ticker, tradingClearingAccount);
     }
 
     //метод создает записи по заявкам в рамках одной стратегии
-    void createTestDataSlaveOrder(int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount) {
+    @SneakyThrows
+    void createTestDataSlaveOrder2 (int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount) {
         idempotencyKey = UUID.randomUUID();
         for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
-            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, 0, idempotencyKey, "173", "1", 0, ticker, tradingClearingAccount);
+            createSlaveOrder2(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode,
+                new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("1"), (byte) 0, ticker, tradingClearingAccount);
+            Thread.sleep(500);
         }
     }
 
@@ -533,5 +539,17 @@ public class getOrdersTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetOrdersResponse.class));
         return getOrdersResponse;
+    }
+
+    long getNextCursore(Optional<SlaveOrder2> slaveOrder){
+        //C getTime получим  МИЛЛИсекунды, значит нужно умножить на 1000 и получим микросекунду
+        return slaveOrder.get().getCreateAt().getTime() * 1000;
+    }
+
+    Optional<SlaveOrder2> getOrderByAttemptsCount (String contractId, int attemptsCount){
+         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave).stream()
+            .filter(filteredByAttemptsCount -> filteredByAttemptsCount.getAttemptsCount().equals(attemptsCount))
+             .findFirst();
+        return getSlaveOrder;
     }
 }

@@ -7,10 +7,12 @@ import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.SlaveOrder2RowMapper;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -129,6 +131,27 @@ public class SlaveOrder2Dao {
             "LIMIT 1";
         List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
         return Optional.of(result.get(0));
+    }
+
+    public List<SlaveOrder2> findSlaveOrder2Limit(String contractId, int limit) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "order by created_at  DESC " +
+            "limit ?";
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId, limit);
+        return result;
+    }
+
+
+    @Step("Проверяем запись о выставленной заявке в slave_order_2")
+    public List<SlaveOrder2> getAllSlaveOrder2ByContract(String contractId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "order by created_at DESC ";
+         List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
+        return result;
     }
 
 }
