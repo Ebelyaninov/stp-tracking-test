@@ -18,7 +18,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -29,7 +28,9 @@ import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.tinkoff.trading.tracking.Tracking;
 
@@ -69,7 +70,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CalculateMasterPortfolioTopPositionsTest {
 
@@ -81,23 +83,11 @@ public class CalculateMasterPortfolioTopPositionsTest {
     MasterPortfolioTopPositionsDao masterPortfolioTopPositionsDao;
     @Autowired
     StpTrackingAnalyticsSteps steps;
+    @Autowired
+    StpInstrument instrument;
 
     UUID strategyId;
     MasterPortfolioTopPositions masterPortfolioTopPositions;
-
-
-    final String tickerNok = "NOK";
-    final String tradingClearingAccountNok = "L01+00000SPB";
-
-    final String tickerGazprom = "XS0191754729";
-    final String tradingClearingAccountGazprom = "L01+00000F00";
-
-    final String tickerAbbV = "ABBV";
-    final String tradingClearingAccountAbbV = "TKCBM_TCAB";
-
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
-
 
 
     @AfterEach
@@ -285,16 +275,16 @@ public class CalculateMasterPortfolioTopPositionsTest {
                 .ticker(position.getTicker())
                 .tradingClearingAccount(position.getTradingClearingAccount())
                 .signalsCount(position.getSignalsCount())
-            .build())
+                .build())
             .collect(Collectors.toList());
         assertThat("списки по позициям не равны", true, is(actual.equals(expectedList)));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //добавляем данные
-        createMasterSignal(30, 2, 6, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 6, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 7, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 7, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 8, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 8, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
         //создаем команду для пересчета топа-позиций master-портфеля
         Tracking.AnalyticsCommand commandNew = steps.createCommandAnalytics(createTime, cutTime,
@@ -380,11 +370,11 @@ public class CalculateMasterPortfolioTopPositionsTest {
         assertThat("списки по позициям не равны", true, is(actual.equals(expectedList)));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //добавляем данные
-        createMasterSignal(30, 2, 6, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 6, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 7, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 7, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 8, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 8, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
         //создаем команду для пересчета топа-позиций master-портфеля
         Tracking.AnalyticsCommand commandNew = steps.createCommandAnalytics(createTime, cutTime,
@@ -444,71 +434,71 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(91, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(91, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.06", "2", 12);
-        createMasterSignal(90, 0, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(90, 0, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "1", 12);
-        createMasterSignal(89, 7, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(89, 7, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.06", "1", 11);
-        createMasterSignal(31, 1, 5, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 5, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 6, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 6, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 7, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 7, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 8, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 8, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(4, 2, 9, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 9, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 10, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 10, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 11, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 11, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 12, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(1, 4, 12, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 13, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 13, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 14, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 14, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
     }
 
 
     void createTestDateToMasterSignalRepeat(UUID strategyId) {
-        createMasterSignal(91, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(91, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.06", "2", 12);
-        createMasterSignal(90, 0, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(90, 0, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "1", 12);
-        createMasterSignal(89, 7, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(89, 7, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.06", "1", 11);
-        createMasterSignal(31, 1, 5, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 5, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(4, 2, 9, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 9, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 10, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 10, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 11, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 11, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 12, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(1, 4, 12, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 13, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 13, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 14, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 14, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
     }
 
 
     void createTestDateToMasterSignalNotPeriodTopPos(UUID strategyId) {
-        createMasterSignal(94, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(94, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.06", "2", 12);
-        createMasterSignal(93, 3, 3, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(93, 3, 3, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "90.18", "1", 12);
-        createMasterSignal(2, 1, 4, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 4, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(1, 4, 5, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(1, 4, 5, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 6, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 6, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 7, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 7, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
     }
 
@@ -549,7 +539,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
             }
         }
     }
-
 
 
 }

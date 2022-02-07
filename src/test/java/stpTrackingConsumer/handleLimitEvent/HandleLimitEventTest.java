@@ -33,7 +33,9 @@ import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingConsumerSteps.StpTrackingConsumerSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -77,7 +79,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     KafkaAutoConfiguration.class,
     StpTrackingConsumerSteps.class,
     GrpcServicesAutoConfiguration.class,
-    KafkaOldConfiguration.class
+    KafkaOldConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 
 public class HandleLimitEventTest {
@@ -111,6 +114,8 @@ public class HandleLimitEventTest {
     ByteToByteSenderService kafkaSender;
     @Autowired
     ManagementFeeDao managementFeeDao;
+    @Autowired
+    StpInstrument instrument;
 
 
     Client clientSlave;
@@ -123,38 +128,38 @@ public class HandleLimitEventTest {
     SlavePortfolio slavePortfolio;
     String siebelIdMaster = "1-51Q76AT";
 
-
-    String tickerSBER = "SBER";
-    String tradingClearingAccountSBER = "L01+00002F00";
-    String classCodeSBER = "TQBR";
-    String instrumet1 = tickerSBER + "_" + classCodeSBER;
+//
+//    String tickerSBER = "SBER";
+//    String tradingClearingAccountSBER = "L01+00002F00";
+//    String classCodeSBER = "TQBR";
+//    String instrumet1 = tickerSBER + "_" + classCodeSBER;
     String quantitySBER = "20";
-
-    String ticker = "AAPL";
-    String tradingClearingAccount = "TKCBM_TCAB";
-    String classCode = "SPBXM";
-
-    String tickerSU = "SU29009RMFS6";
-    String tradingClearingAccountSU = "L01+00000F00";
-    String quantitySU = "5";
-    String classCodeSU = "TQOB";
-    String instrumetSU = tickerSU + "_" + classCodeSU;
+//
+//    String ticker = "AAPL";
+//    String tradingClearingAccount = "TKCBM_TCAB";
+//    String classCode = "SPBXM";
+//
+//    String tickerSU = "SU29009RMFS6";
+//    String tradingClearingAccountSU = "L01+00000F00";
+    String quantitySU29009RMFS6 = "5";
+//    String classCodeSU = "TQOB";
+//    String instrumetSU = tickerSU + "_" + classCodeSU;
     BigDecimal minPriceIncrement = new BigDecimal("0.001");
-
-
-    String tickerUSD = "USDRUB";
-    String tradingClearingAccountUSD = "MB9885503216";
-    String classCodeUSD = "CETS";
+//
+//
+//    String tickerUSD = "USDRUB";
+//    String tradingClearingAccountUSD = "MB9885503216";
+//    String classCodeUSD = "CETS";
     String quantityUSD = "2000";
-
-    String tickerGBP = "GBPRUB";
-    String tradingClearingAccountGBP = "MB9885503216";
-
-    String tickerJPY = "JPYRUB";
-    String tradingClearingAccountJPY = "MB9885503216";
-
-    String tickerRUB = "RUB";
-    String tradingClearingAccountRUB = "MB9885503216";
+//
+//    String tickerGBP = "GBPRUB";
+//    String tradingClearingAccountGBP = "MB9885503216";
+//
+//    String tickerJPY = "JPYRUB";
+//    String tradingClearingAccountJPY = "MB9885503216";
+//
+//    String tickerRUB = "RUB";
+//    String tradingClearingAccountRUB = "MB9885503216";
 
     String description = "description test стратегия autotest consumer";
 
@@ -331,7 +336,7 @@ public class HandleLimitEventTest {
         String baseMoney = Double.toString(middleQuantityBaseMoney);
         //сохраняем данные по бумаге из ответа miof в список
         List<ru.tinkoff.invest.miof.Client.SecurityPosition> listSecurities = clientPositionsBefore.getResponse().getClientPositions().getSecuritiesList().stream()
-            .filter(ls -> ls.getTicker().equals(tickerSU))
+            .filter(ls -> ls.getTicker().equals(instrument.tickerSU29009RMFS6))
             .filter(ls -> ls.getKind().name().equals("T365"))
             .collect(Collectors.toList());
         //расчитываем значение количество бумаг
@@ -343,7 +348,7 @@ public class HandleLimitEventTest {
         //создаем портфель мастера
 //        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, quantity1, ticker2, tradingClearingAccount2, quantity2);
 
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, tickerSU, tradingClearingAccountSU, quantityMaster);
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, quantityMaster);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
 //        //создаем подписку на стратегию
 //       steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
@@ -356,7 +361,7 @@ public class HandleLimitEventTest {
             null, false);
 //        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //создаем список позиций в портфеле slave
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(tickerSU, tradingClearingAccountSU,
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             quantitySlave, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
@@ -366,7 +371,7 @@ public class HandleLimitEventTest {
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //изменяем позицию по бумаге в miof
-        steps.getClientAdjustSecurityMiof(clientCodeSlave, contractIdSlave, tickerSU, 1);
+        steps.getClientAdjustSecurityMiof(clientCodeSlave, contractIdSlave, instrument.tickerSU29009RMFS6, 1);
         //Смотрим, сообщение, которое поймали в топике kafka
         Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
         double quantitySecurityCommand = portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled()
@@ -374,7 +379,7 @@ public class HandleLimitEventTest {
         CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
         int versionMiddleAfter = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         List<ru.tinkoff.invest.miof.Client.SecurityPosition> listSecuritiesNew = clientPositions.getResponse().getClientPositions().getSecuritiesList().stream()
-            .filter(ls -> ls.getTicker().equals(tickerSU))
+            .filter(ls -> ls.getTicker().equals(instrument.tickerSU29009RMFS6))
             .filter(ls -> ls.getKind().name().equals("T365"))
             .collect(Collectors.toList());
         double quantitySecurityMiofNew = listSecuritiesNew.get(0).getBalance().getUnscaled()
@@ -383,7 +388,7 @@ public class HandleLimitEventTest {
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddleAfter));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(tickerSU));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(instrument.tickerSU29009RMFS6));
         assertThat("trading_clearing_account не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(),
             is(listSecurities.get(0).getAccountId()));
         assertThat("quantity по бумагам  не равен", (quantitySecurityMiofNew), is(quantitySecurityCommand));
@@ -436,7 +441,7 @@ public class HandleLimitEventTest {
         String quantityMaster = Integer.toString(valueMaster);
         String quantitySlave = Double.toString(quantityMiof);
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, tickerUSD, tradingClearingAccountUSD, quantityMaster);
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerUSD, instrument.tradingClearingAccountUSD, quantityMaster);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -444,7 +449,7 @@ public class HandleLimitEventTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //создаем список позиций в портфеле slave
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(tickerUSD, tradingClearingAccountUSD,
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerUSD, instrument.tradingClearingAccountUSD,
             quantitySlave, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
@@ -480,7 +485,7 @@ public class HandleLimitEventTest {
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddleAfter));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(tickerUSD));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(instrument.tickerUSDRUB));
         assertThat("trading_clearing_account не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(),
             is(listMoney.get(0).getAccountId()));
         assertThat("quantity по бумагам  не равен", (quantityCurrencyMiof), is(quantitySecurityCommand));
@@ -533,7 +538,7 @@ public class HandleLimitEventTest {
         String quantityMaster = Integer.toString(valueMaster);
         String quantitySlave = Double.toString(quantityMiof);
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, tickerSBER, tickerSBER, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -541,7 +546,7 @@ public class HandleLimitEventTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //создаем список позиций в портфеле slave
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(tickerGBP, tradingClearingAccountGBP,
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerGBP, instrument.tradingClearingAccountGBP,
             quantitySlave, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
@@ -577,7 +582,7 @@ public class HandleLimitEventTest {
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddleAfter));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(tickerGBP));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(instrument.tickerGBP));
         assertThat("trading_clearing_account не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(),
             is(listMoney.get(0).getAccountId()));
         assertThat("quantity по бумагам  не равен", (quantityCurrencyMiof), is(quantitySecurityCommand));
@@ -716,7 +721,8 @@ public class HandleLimitEventTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, tickerSBER, tradingClearingAccountSBER, quantitySBER, tickerSU, tradingClearingAccountSU, quantitySU);
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, quantitySBER, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, quantitySU29009RMFS6);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем удаленную подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -872,7 +878,8 @@ public class HandleLimitEventTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, tickerSBER, tradingClearingAccountSBER, quantitySBER, tickerSU, tradingClearingAccountSU, quantitySU);
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, quantitySBER,
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, quantitySU29009RMFS6);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -935,7 +942,8 @@ public class HandleLimitEventTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, tickerSBER, tradingClearingAccountSBER, quantitySBER, tickerSU, tradingClearingAccountSU, quantitySU);
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, quantitySBER,
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, quantitySU29009RMFS6);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -995,7 +1003,7 @@ public class HandleLimitEventTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, tickerSBER, tradingClearingAccountSBER, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1020,8 +1028,8 @@ public class HandleLimitEventTest {
         assertThat("версия не равна", slavePortfolio.getVersion(), is(versionMiddleAfter));
         assertThat("версия мастера не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("quantity baseMoney не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("0"));
-        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(tickerSBER));
-        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccountSBER));
+        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
         assertThat("rate позиции не равен", slavePortfolio.getPositions().get(0).getRate().toString(), is("0"));
         assertThat("quantityDiff позиции не равен", slavePortfolio.getPositions().get(0).getQuantityDiff().toString(), is("0.0000"));
@@ -1056,7 +1064,7 @@ public class HandleLimitEventTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, ticker, tradingClearingAccount, "1");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "1");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1093,8 +1101,8 @@ public class HandleLimitEventTest {
         assertThat("версия не равна", slavePortfolio.getVersion(), is(1));
         assertThat("версия мастера не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("quantity baseMoney не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("0"));
-        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
+        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
         assertThat("rate позиции не равен", slavePortfolio.getPositions().get(0).getRate().toString(), is("0"));
         assertThat("quantityDiff позиции не равен", slavePortfolio.getPositions().get(0).getQuantityDiff().toString(), is("0.0000"));
@@ -1131,7 +1139,7 @@ public class HandleLimitEventTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, ticker, tradingClearingAccount, "1");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "1");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1197,8 +1205,8 @@ public class HandleLimitEventTest {
         assertThat("версия не равна", slavePortfolio.getVersion(), is(1));
         assertThat("версия мастера не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("quantity baseMoney не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("50.17"));
-        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
+        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
         assertThat("rate позиции не равен", slavePortfolio.getPositions().get(0).getRate().toString(), is("0"));
         assertThat("quantityDiff позиции не равен", slavePortfolio.getPositions().get(0).getQuantityDiff().toString(), is("0.0000"));
@@ -1233,7 +1241,7 @@ public class HandleLimitEventTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, tickerSBER, tradingClearingAccountSBER, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1285,8 +1293,8 @@ public class HandleLimitEventTest {
         assertThat("версия не равна", slavePortfolio.getVersion(), is(1));
         assertThat("версия мастера не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("quantity baseMoney не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("-3"));
-        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(tickerSBER));
-        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccountSBER));
+        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
         assertThat("rate позиции не равен", slavePortfolio.getPositions().get(0).getRate().toString(), is("0"));
         assertThat("quantityDiff позиции не равен", slavePortfolio.getPositions().get(0).getQuantityDiff().toString(), is("0.0000"));
@@ -1321,7 +1329,7 @@ public class HandleLimitEventTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(3));
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, ticker, tradingClearingAccount, "1");
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "1");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "151.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1344,11 +1352,11 @@ public class HandleLimitEventTest {
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddle));
         assertThat("delayed_correction не равен", portfolioCommand.getPortfolio().getDelayedCorrection(), is(false));
         assertThat("Action не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getAction().getAction().name(), is("TRACKING_STATE_UPDATE"));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(tickerRUB));
-        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(), is(tradingClearingAccountRUB));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(instrument.tickerRUB));
+        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountRUB));
         assertThat("Quantity не равен", portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled(), is(0L));
-        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(1).getTicker(), is(ticker));
-        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(1).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(1).getTicker(), is(instrument.tickerAAPL));
+        assertThat("tradingClearingAccount не равен", portfolioCommand.getPortfolio().getPosition(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("Quantity не равен", portfolioCommand.getPortfolio().getPosition(1).getQuantity().getUnscaled(), is(2L));
         assertThat("Quantity BaseMoney не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled(), is(5017L));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
@@ -1359,8 +1367,8 @@ public class HandleLimitEventTest {
 //            .filter(ps -> ps.getTicker().equals(tickerRUB))
 //            .collect(Collectors.toList());
         //RUB отфильтруем в slave
-        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker позиции не равен", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
+        assertThat("tradingClearingAccount позиции не равен", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("quantity позиции не равен", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
     }
 
@@ -1438,8 +1446,8 @@ public class HandleLimitEventTest {
         Limit.DepoLimit depoLimit = Limit.DepoLimit.newBuilder()
             .setLoadDate(18949)
             .setClientCode(clientCodeSlave)
-            .setSecCode(ticker)
-            .setAccountId(tradingClearingAccount)
+            .setSecCode(instrument.tickerAAPL)
+            .setAccountId(instrument.tradingClearingAccountAAPL)
             .setFirmId("MC0253200000")
             .setOpenBalance(2.0)
             .setOpenLimit(2.0)

@@ -26,7 +26,9 @@ import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -68,7 +70,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CreateSignalSuccessTest {
 
@@ -94,6 +97,8 @@ public class CreateSignalSuccessTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpInstrument instrument;
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.
         api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
@@ -105,11 +110,14 @@ public class CreateSignalSuccessTest {
     int versionNew;
     MasterSignal masterSignal;
 
-    String ticker = "AAPL";
-    String tradingClearingAccount = "TKCBM_TCAB";
-    String tickerBond = "ALFAperp";
-    String tradingClearingAccountBond = "TKCBM_TCAB";
-    String instrumentBond = "ALFAperp_SPBBND";
+//    String ticker = "AAPL";
+//    String tradingClearingAccount = "TKCBM_TCAB";
+//
+//    String tickerBond = "ALFAperp";
+//    String tradingClearingAccountBond = "TKCBM_TCAB";
+//    String instrumentBond = "ALFAperp_SPBBND";
+
+
     String SIEBEL_ID = "1-1P424JS";
 
     @AfterEach
@@ -167,12 +175,12 @@ public class CreateSignalSuccessTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -208,7 +216,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, ticker, tradingClearingAccount);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
     }
 
 
@@ -235,17 +243,17 @@ public class CreateSignalSuccessTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, Double.toString(quantityPosMasterPortfolio));
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Double.toString(quantityPosMasterPortfolio));
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -275,7 +283,7 @@ public class CreateSignalSuccessTest {
         // проверяем значения в полученной команде
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, ticker, tradingClearingAccount);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
     }
 
 
@@ -303,17 +311,17 @@ public class CreateSignalSuccessTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, Double.toString(quantityPosMasterPortfolio));
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Double.toString(quantityPosMasterPortfolio));
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -343,7 +351,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, ticker, tradingClearingAccount);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
     }
 
 
@@ -373,13 +381,13 @@ public class CreateSignalSuccessTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(tickerBond, tradingClearingAccountBond, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
-        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrumentBond, "last"));
+        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrument.instrumentALFAperp, "last"));
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            tickerBond, tradingClearingAccountBond, version);
+            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -396,7 +404,7 @@ public class CreateSignalSuccessTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
-        List<String> dateBond = steps.getPriceFromExchangePositionCache(tickerBond, tradingClearingAccountBond, SIEBEL_ID);
+        List<String> dateBond = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, SIEBEL_ID);
         String aciValue = dateBond.get(0);
         BigDecimal priceBond = price.add(new BigDecimal(aciValue));
         Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
@@ -420,7 +428,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommandBond(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, priceBond,
-            quantityRequest, tickerBond, tradingClearingAccountBond);
+            quantityRequest, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp);
     }
 
 
@@ -453,12 +461,12 @@ public class CreateSignalSuccessTest {
         //создаем запись в strategy_tail_value
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -485,7 +493,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "ask", SIEBEL_ID);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
@@ -522,21 +530,21 @@ public class CreateSignalSuccessTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount, Double.toString(quantityPosMasterPortfolio));
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Double.toString(quantityPosMasterPortfolio));
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         //создаем запись в strategy_tail_value
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
         //создаем запись о прошлом сигнале в master_signal
-        steps.createMasterSignal(0, 0, version, strategyId, ticker, tradingClearingAccount,
+        steps.createMasterSignal(0, 0, version, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107", "6", "25", 12);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -548,7 +556,7 @@ public class CreateSignalSuccessTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(ResponseBodyData::asString);
         //получаем стоимость позиции, которая есть у мастера из  кэша exchangePositionPriceCache
-        String priceLast = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "last", SIEBEL_ID);
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID);
         //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
         //сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
         BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
@@ -561,7 +569,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции,  из  кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'sell' price_type = 'bid';
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,"bid", SIEBEL_ID);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceBid), 0, RoundingMode.HALF_UP);
         //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
@@ -596,20 +604,20 @@ public class CreateSignalSuccessTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, tickerBond, tradingClearingAccountBond, Double.toString(quantityPosMasterPortfolio));
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Double.toString(quantityPosMasterPortfolio));
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
-        steps.createMasterSignal(0, 0, version, strategyId, ticker, tradingClearingAccount,
+        steps.createMasterSignal(0, 0, version, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "103.05", "3", "1", 12);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(tickerBond, tradingClearingAccountBond, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
-        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrumentBond, "last"));
+        BigDecimal price = new BigDecimal(steps.getPriceFromMarketData(instrument.instrumentALFAperp, "last"));
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            tickerBond, tradingClearingAccountBond, version);
+            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
         // вызываем метод CreateSignal
         signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -621,8 +629,8 @@ public class CreateSignalSuccessTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(ResponseBodyData::asString);
         //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
-        String priceLast = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "last", SIEBEL_ID);
-        List<String> dateBond = steps.getPriceFromExchangePositionCache(tickerBond, tradingClearingAccountBond, SIEBEL_ID);
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID);
+        List<String> dateBond = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, SIEBEL_ID);
         String aciValue = dateBond.get(0);
         String nominal = dateBond.get(1);
         BigDecimal priceLastBond = steps.valuePosBonds(priceLast, nominal, minPriceIncrement, aciValue);
@@ -637,7 +645,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(ticker, tradingClearingAccount, "bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID);
         //рассчитываем цену по bond в абсолютном значении
         BigDecimal priceBidBond = steps.valuePosBonds(priceBid, nominal, minPriceIncrement, aciValue);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
