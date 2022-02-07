@@ -50,7 +50,7 @@ import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
 @Epic("handleSocialEvent - Обработка событий об изменении социального профиля в Пульсе")
 @Feature("TAP-7386")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-@DisplayName("Kafka")
+@DisplayName("SocialEvent")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
 //    BillingDatabaseAutoConfiguration.class,

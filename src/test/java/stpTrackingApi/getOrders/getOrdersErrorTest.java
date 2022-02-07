@@ -18,13 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
+import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -37,7 +39,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -57,7 +60,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 
 public class getOrdersErrorTest {
@@ -76,6 +80,8 @@ public class getOrdersErrorTest {
     StpTrackingApiSteps steps;
     @Autowired
     SlaveOrderDao slaveOrderDao;
+    @Autowired
+    StpInstrument instrument;
 
     String siebelIdMaster = "5-F6VT91I0";
     String siebelIdSlave = "4-M3KKMT7";
@@ -91,10 +97,6 @@ public class getOrdersErrorTest {
 
     String title;
     String description;
-
-    String ticker = "AAPL";
-    String classCode = "SPBXM";
-    String tradingClearingAccount = "TKCBM_TCAB";
 
 
     ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
@@ -142,8 +144,8 @@ public class getOrdersErrorTest {
     }
 
     @BeforeEach
-    void getStrategyData(){
-        title = "Autotest" + randomNumber(0,100);
+    void getStrategyData() {
+        title = "Autotest" + randomNumber(0, 100);
         description = "Autotest getOrders";
         strategyId = UUID.randomUUID();
     }
@@ -176,7 +178,7 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1,0,1, classCode, ticker, tradingClearingAccount);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         ContractApi.GetOrdersOper getOrdersResponse = contractApi.getOrders()
             .xTcsSiebelIdHeader(siebelIdSlave)
@@ -218,7 +220,7 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1,0,1, classCode, ticker, tradingClearingAccount);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -253,7 +255,7 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1,0,1, classCode, ticker, tradingClearingAccount);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -281,7 +283,7 @@ public class getOrdersErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1,0,1, classCode, ticker, tradingClearingAccount);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -315,7 +317,7 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1,0,1, classCode, ticker, tradingClearingAccount);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApi.getOrders()
             .xAppNameHeader("invest")
@@ -329,7 +331,6 @@ public class getOrdersErrorTest {
         assertThat("код ошибки не равно", getOrdersResponse.getErrorCode(), is("Error"));
         assertThat("Сообщение об ошибке не равно", getOrdersResponse.getErrorMessage(), is("Сервис временно недоступен"));
     }
-
 
 
     ///// методы для тестов getOrders /////
@@ -353,7 +354,7 @@ public class getOrdersErrorTest {
             .attemptsCount((byte) attemptsCount)
             .action((byte) action)
             .classCode(classCode)
-            .filledQuantity(new BigDecimal (filledQuantity))
+            .filledQuantity(new BigDecimal(filledQuantity))
             .idempotencyKey(idempotencyKey)
             .price(new BigDecimal(price))
             .quantity(new BigDecimal(quantity))
@@ -368,7 +369,7 @@ public class getOrdersErrorTest {
     //метод создает записи по заявкам в рамках одной стратегии
     void createTestDataSlaveOrder(int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount) {
         idempotencyKey = UUID.randomUUID();
-        for(int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
             createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, 0, idempotencyKey, "173", "10", 0, ticker, tradingClearingAccount);
         }

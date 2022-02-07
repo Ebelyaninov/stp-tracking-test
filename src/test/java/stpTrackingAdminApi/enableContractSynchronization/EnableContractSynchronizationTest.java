@@ -22,8 +22,10 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -67,7 +69,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    StpTrackingAdminStepsConfiguration.class
+    StpTrackingAdminStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 
 public class EnableContractSynchronizationTest {
@@ -92,6 +95,8 @@ public class EnableContractSynchronizationTest {
     StpTrackingSlaveSteps slaveSteps;
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
+    @Autowired
+    StpInstrument instrument;
 
 
     String siebelIdMaster = "5-23AZ65JU2";
@@ -111,9 +116,6 @@ public class EnableContractSynchronizationTest {
     String description;
     String xApiKey = "x-api-key";
     String key = "tracking";
-
-    String ticker = "AAPL";
-    String tradingClearingAccount = "TKCBM_TCAB";
 
     @BeforeAll
     void getDataClients() {
@@ -158,8 +160,8 @@ public class EnableContractSynchronizationTest {
     }
 
     @BeforeEach
-    void getStrategyData(){
-        title = "Autotest" + randomNumber(0,100);
+    void getStrategyData() {
+        title = "Autotest" + randomNumber(0, 100);
         description = "Autotest getOrders";
         strategyId = UUID.randomUUID();
     }
@@ -178,7 +180,7 @@ public class EnableContractSynchronizationTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "5", date, 2, slaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -188,7 +190,7 @@ public class EnableContractSynchronizationTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000.0";
-        List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+        List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "2", date);
         slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
@@ -215,8 +217,6 @@ public class EnableContractSynchronizationTest {
         //Проверяем, данные в сообщении
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
     }
-
-
 
 
     //метод рандомайза для номера теста

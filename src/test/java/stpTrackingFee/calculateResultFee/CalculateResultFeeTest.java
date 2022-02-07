@@ -25,7 +25,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -45,6 +47,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
+import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -62,7 +65,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    SptTrackingFeeStepsConfiguration.class
+    SptTrackingFeeStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CalculateResultFeeTest {
     @Autowired
@@ -93,6 +97,8 @@ public class CalculateResultFeeTest {
     ResultFeeDao resultFeeDao;
     @Autowired
     SlaveAdjustDao slaveAdjustDao;
+    @Autowired
+    StpInstrument instrument;
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
@@ -110,44 +116,44 @@ public class CalculateResultFeeTest {
     String siebelIdMaster = "1-51Q76AT";
     String siebelIdSlave = "5-1P87U0B13";
 
-    String ticker1 = "SBER";
-    String tradingClearingAccount1 = "L01+00002F00";
-    String classCode1 = "TQBR";
-    String instrumet1 = ticker1 + "_" + classCode1;
-    String quantity1 = "20";
-
-    public String ticker2 = "SU29009RMFS6";
-    public String tradingClearingAccount2 = "L01+00002F00";
-    public String quantity2 = "5";
-    public String classCode2 = "TQOB";
-    public String instrumet2 = ticker2 + "_" + classCode2;
+//    String ticker1 = "SBER";
+//    String tradingClearingAccount1 = "L01+00002F00";
+//    String classCode1 = "TQBR";
+//    String instrumet1 = ticker1 + "_" + classCode1;
+    String quantitySBER = "20";
+//
+//    public String ticker2 = "SU29009RMFS6";
+//    public String tradingClearingAccount2 = "L01+00002F00";
+    public String quantitySU29009RMFS6 = "5";
+//    public String classCode2 = "TQOB";
+//    public String instrumet2 = ticker2 + "_" + classCode2;
     BigDecimal minPriceIncrement = new BigDecimal("0.001");
-
-
-    String ticker3 = "YNDX";
-    String tradingClearingAccount3 = "Y02+00001F00";
-    String classCode3 = "TQBR";
-    String instrumet3 = ticker3 + "_" + classCode3;
-    String quantity3 = "5";
-
-
-    String tickerNoteXPosCache = "TEST";
-    String tradingClearingAccountNoteXPosCache = "L01+00002F00";
-    String classCodeNoteXPosCache = "TQBR";
-    String instrumetNoteXPosCache = tickerNoteXPosCache + "_" + classCodeNoteXPosCache;
-    String quantityNoteXPosCache = "2";
-
-
-    String tickerNotInsPrice = "FXITTEST";
-    String tradingClearingAccountNotInsPrice = "L01+00002F00";
-    String classCodeNotInsPrice = "TQBR";
-    String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
-    String quantityNotInsPrice = "2";
-
-    String tickerUsd = "USD000UTSTOM";
-    String classCodeUsd = "CETS";
-    String tickerEur = "EUR_RUB__TOM";
-    String classCodeEur = "CETS";
+//
+//
+//    String ticker3 = "YNDX";
+//    String tradingClearingAccount3 = "Y02+00001F00";
+//    String classCode3 = "TQBR";
+//    String instrumet3 = ticker3 + "_" + classCode3;
+    String quantityYNDX = "5";
+//
+//
+//    String tickerNoteXPosCache = "TEST";
+//    String tradingClearingAccountNoteXPosCache = "L01+00002F00";
+//    String classCodeNoteXPosCache = "TQBR";
+//    String instrumetNoteXPosCache = tickerNoteXPosCache + "_" + classCodeNoteXPosCache;
+    String quantityTEST = "2";
+//
+//
+//    String tickerNotInsPrice = "FXITTEST";
+//    String tradingClearingAccountNotInsPrice = "L01+00002F00";
+//    String classCodeNotInsPrice = "TQBR";
+//    String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
+    String quantityFXITTEST = "2";
+//
+//    String tickerUsd = "USD000UTSTOM";
+//    String classCodeUsd = "CETS";
+//    String tickerEur = "EUR_RUB__TOM";
+//    String classCodeEur = "CETS";
 
     String description = "new test стратегия autotest";
 
@@ -245,10 +251,12 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
-        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4).minusMinutes(5);
         steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
@@ -259,6 +267,7 @@ public class CalculateResultFeeTest {
         createSlaveportfolio();
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
+
         //Расчитываем стоимость порфеля на конец первого расчетного периода
         BigDecimal valuePortfolioOnePeriod = createPortfolioValueOnePeriod();
         LocalDateTime lastDayFirstSecondPeriod = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).
@@ -268,6 +277,7 @@ public class CalculateResultFeeTest {
             atStartOfDay();
         BigDecimal valuePortfolioThirdPeriod = getPorfolioValue("31367.25", "10", "5", "8", lastDayFirstThirdPeriod);
        BigDecimal highWaterMarkFirstPeriodBefore = new BigDecimal("50000");
+
        BigDecimal adjustValueFirstPeriod = highWaterMarkFirstPeriodBefore.add(new BigDecimal("10000"));
        BigDecimal highWaterMarkFirstPeriod = adjustValueFirstPeriod.max(valuePortfolioOnePeriod);
         BigDecimal highWaterMarkSecondPeriodBefore = highWaterMarkFirstPeriod;
@@ -314,8 +324,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
@@ -329,18 +340,21 @@ public class CalculateResultFeeTest {
         //создаем портфели slave
         createSlaveportfolio();
         //обавляем еще пару версий за текущий месяц
-        List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "8", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4",
+            Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTen = steps.createBaseMoney("31051.38",
             Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()), (byte) 12);
 
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 10,
             3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
 
-        List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "8", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEleven = steps.createBaseMoney("34051.38",
             Date.from(OffsetDateTime.now().minusMonths(0).minusDays(1).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 11,
@@ -386,8 +400,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
@@ -449,8 +464,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
@@ -464,18 +480,20 @@ public class CalculateResultFeeTest {
         //создаем портфели slave
         createSlaveportfolio();
         //обавляем еще пару версий за текущий месяц
-        List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveListVersionTen = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "8", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTen = steps.createBaseMoney("31051.38",
             Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()), (byte) 12);
 
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 10,
             3, baseMoneyVersionTen, positionSlaveListVersionTen, Date.from(OffsetDateTime.now().minusMonths(0).minusDays(3).toInstant()));
 
-        List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "8", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveListVersionEleven = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "8", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEleven = steps.createBaseMoney("34051.38",
             Date.from(OffsetDateTime.now().minusMonths(0).minusDays(2).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 11,
@@ -530,8 +548,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(5);
@@ -613,8 +632,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
@@ -657,7 +677,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
@@ -677,19 +699,19 @@ public class CalculateResultFeeTest {
         List<SlavePortfolio.Position> twoPositionSlaveList = twoSlavePositionsNoBond(Date.from(OffsetDateTime.now().minusDays(1).toInstant()));
         steps.createSlavePortfolio(contractIdSlave, strategyId, 3, 3, "8974.42",
             twoPositionSlaveList, Date.from(OffsetDateTime.now().minusDays(27).toInstant()));
-        Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
-        Date endFirst = Date.from(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
+        Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(UTC));
+        Date endFirst = Date.from(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
         List<Context.Positions> positionListEmpty = new ArrayList<>();
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("297.73"))
             .priceTs(startFirst)
             .build());
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1088.91000"))
             .priceTs(startFirst)
@@ -739,7 +761,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -755,14 +779,15 @@ public class CalculateResultFeeTest {
             Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
-        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "20","285.51", tickerNoteXPosCache, tradingClearingAccountNoteXPosCache, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20","285.51", instrument.tickerTEST, instrument.tradingClearingAccountTEST, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
             Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
             2, baseMoneyVersionFive, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
-       List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+       List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(instrument.tickerSBER,
+           instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
@@ -804,7 +829,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -821,14 +848,15 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "20","285.51", tickerNotInsPrice, tradingClearingAccountNotInsPrice, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20","285.51", instrument.tickerFXITTEST, instrument.tradingClearingAccountFXITTEST, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
             Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
             2, baseMoneyVersionFive, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
-        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
@@ -870,7 +898,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -920,7 +950,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -981,7 +1013,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
@@ -1000,7 +1034,8 @@ public class CalculateResultFeeTest {
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()));
 
         List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()));
 
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
@@ -1058,7 +1093,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
@@ -1078,7 +1115,8 @@ public class CalculateResultFeeTest {
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(1).toInstant()));
 
         List<SlavePortfolio.Position> positionListVersionTwo = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "5",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()));
 
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionFour = steps.createBaseMoney(baseMoneyPositionForLastVersion.toString(),
@@ -1093,8 +1131,8 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Расчитываем стоимость порфеля на конец первого расчетного периода
-        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
-        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), ticker2, classCode2);
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), instrument.tickerSBER, instrument.classCodeSBER);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6);
         BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForLastVersion);
 
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 2);
@@ -1124,7 +1162,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
 
         //создаем подписку на стратегию
@@ -1202,7 +1242,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
 
@@ -1223,7 +1265,8 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("44898",
             Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
@@ -1231,7 +1274,8 @@ public class CalculateResultFeeTest {
             2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(2).plusMinutes(2).toInstant()));
 
         List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "5",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
 
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
@@ -1252,15 +1296,15 @@ public class CalculateResultFeeTest {
 
         List<Context.Positions> positionListEmpty = new ArrayList<>();
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("297.73"))
             .priceTs(Date.from(startSubTime.toInstant()))
             .build());
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1088.91000"))
             .priceTs(Date.from(startSubTime.toInstant()))
@@ -1270,7 +1314,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(ZoneOffset.UTC)), context, hWM);
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM);
 
         //Добавляем заводы на сумму baseMoneyPositionForFirstVersion + baseMoneyPositionForLastVersion
         createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
@@ -1279,8 +1323,8 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Расчитываем стоимость порфеля на конец первого расчетного периода
-        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
-        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), ticker2, classCode2);
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), instrument.tickerSBER, instrument.classCodeSBER);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(5), instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6);
         //c отрицательным BaseMoneyPosition
         BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForFirstVersion);
 
@@ -1317,7 +1361,9 @@ public class CalculateResultFeeTest {
         Date date = Date.from(utc.toInstant());
 
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
 
         //создаем подписку на стратегию
@@ -1338,7 +1384,8 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(1).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("44898",
             Date.from(OffsetDateTime.now().minusMonths(1).plusDays(1).toInstant()), (byte) 12);
@@ -1346,7 +1393,8 @@ public class CalculateResultFeeTest {
             2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).plusMinutes(2).plusMinutes(2).toInstant()));
 
         List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "15",
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "15",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(2).plusDays(1).toInstant()));
 
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
@@ -1367,15 +1415,15 @@ public class CalculateResultFeeTest {
 
         List<Context.Positions> positionListEmpty = new ArrayList<>();
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("297.73"))
             .priceTs(Date.from(startSubTime.toInstant()))
             .build());
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1088.91000"))
             .priceTs(Date.from(startSubTime.toInstant()))
@@ -1385,13 +1433,13 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(ZoneOffset.UTC)), context, hWM);
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM);
 
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Расчитываем стоимость порфеля на конец первого расчетного периода
-        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), ticker1, classCode1);
-        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(15), ticker2, classCode2);
+        BigDecimal valueOfFirstPosition = calculateNotBondPositionValue(dateOfEndFirstPeriod, BigDecimal.valueOf(20), instrument.tickerSU29009RMFS6, instrument.classCodeSBER);
+        BigDecimal valueOfSecondPosition = calculatePositionBondValue(dateOfEndFirstPeriod, BigDecimal.valueOf(15), instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6);
         //c отрицательным BaseMoneyPosition
         BigDecimal porfolioValue = valueOfFirstPosition.add(valueOfSecondPosition).add(baseMoneyPositionForFirstVersion);
 
@@ -1427,7 +1475,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -1513,7 +1563,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -1582,7 +1634,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -1674,7 +1728,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -1764,7 +1820,9 @@ public class CalculateResultFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);;
@@ -1797,16 +1855,16 @@ public class CalculateResultFeeTest {
         createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +2,
             startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2), "eur", false, adjustForEur.toString());
         //Получаем новый HWM (HWM уже рассчитаного первого периода + заводы только базовой валюты)
-        BigDecimal priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, tickerUsd , classCodeUsd);
-        BigDecimal priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, tickerEur , classCodeUsd);
+        BigDecimal priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, instrument.tickerUSD , instrument.classCodeUSD);
+        BigDecimal priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(1).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, instrument.tickerEURRUBTOM , instrument.classCodeEURRUBTOM);
         highWaterMarkSecondPeriod =  highWaterMarkFirstPeriod.add(priceForUsd).add(priceForEur);
         //Добавляем несколько заводов за 3 период > чем portfolioValue
         createsSlaveAdjust(contractIdSlave, strategyId,startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), Long.parseLong(operId) +3,
             startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1), "eur", false, adjustForEur.toString());
         createsSlaveAdjust(contractIdSlave, strategyId, startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), Long.parseLong(operId) +4,
             startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2), "usd", false, adjustForUsd.toString());
-        priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, tickerUsd , classCodeUsd);
-        priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, tickerEur , classCodeUsd);
+        priceForUsd = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(2).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForUsd, instrument.tickerUSD , instrument.classCodeUSD);
+        priceForEur = calculateNotBondPositionValue(startSubTime.plusMonths(2).withDayOfMonth(1).plusDays(1).toInstant().atOffset(ZoneOffset.ofHours(0)).toLocalDateTime(), adjustForEur, instrument.tickerEURRUBTOM , instrument.classCodeEURRUBTOM);
         //Получаем новый HWM (HWM уже рассчитаного второго периода + заводы игнорируем)
         BigDecimal highWaterMarkThirdPeriodBefore = highWaterMarkSecondPeriod;
         highWaterMarkThirdPeriod = valuePortfolioThirdPeriod.max(highWaterMarkThirdPeriodBefore.add(priceForUsd).add(priceForEur));
@@ -1938,11 +1996,13 @@ public class CalculateResultFeeTest {
     void createSlaveportfolio() {
         List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionOne = steps.createBaseMoney("50000.0",
-            Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()), (byte) 4);
-        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
-            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+            Date.from(OffsetDateTime.now().minusMonths(3).minusDays(4).toInstant()), (byte) 4);
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
+            1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(4).toInstant()));
+
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
             Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()), (byte) 12);
@@ -1950,7 +2010,8 @@ public class CalculateResultFeeTest {
             2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()));
 
          List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+             instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51",
+             instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(3).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
             Date.from(OffsetDateTime.now().minusMonths(3).minusDays(1).toInstant()), (byte) 12);
@@ -1964,9 +2025,10 @@ public class CalculateResultFeeTest {
             3, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(0).toInstant()));
 
 
-        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
             Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 5,
@@ -1984,17 +2046,19 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 7,
             3, baseMoneyVersionSeven, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(0).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionEight = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionEight = threeSlavePositions111(
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEight = steps.createBaseMoney("46461.45",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(3).toInstant()), (byte) 11);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 8,
             3, baseMoneyVersionEight, positionListVersionEight, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
 
-        List<SlavePortfolio.Position> positionSlaveVersionNine = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveVersionNine = threeSlavePositions111(
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionNine = steps.createBaseMoney("31367.25",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 9,
@@ -2012,7 +2076,8 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 1,
             1, baseMoneyVersionOne, positionListVersionOne, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(3).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(ticker1, tradingClearingAccount1, "20",
+        List<SlavePortfolio.Position> positionListVersionTwo = oneSlavePositions111(
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20",
             "285.51",Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionTwo = steps.createBaseMoney("442898",
             Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()), (byte) 12);
@@ -2020,7 +2085,8 @@ public class CalculateResultFeeTest {
             2, baseMoneyVersionTwo, positionListVersionTwo, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(2).toInstant()));
 
         List<SlavePortfolio.Position> positionListVersionThree = twoSlavePositions111(
-            ticker1, tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5",
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "20","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5",
             "105.29", Date.from(OffsetDateTime.now().minusMonths(3).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionThree = steps.createBaseMoney("43763.35",
             Date.from(OffsetDateTime.now().minusMonths(3).minusDays(1).toInstant()), (byte) 12);
@@ -2034,9 +2100,11 @@ public class CalculateResultFeeTest {
             3, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().minusMonths(3).minusDays(0).toInstant()));
 
 
-        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "20","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionFive = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "20","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4",
+            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
 //        SlavePortfolio.BaseMoneyPosition baseMoneyVersionFive = steps.createBaseMoney("28606.35",
 //            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()), (byte) 12);
 //        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 5,
@@ -2052,23 +2120,29 @@ public class CalculateResultFeeTest {
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionSeven = steps.createBaseMoney("43606.35",
             Date.from(OffsetDateTime.now().minusMonths(2).minusDays(0).toInstant()), (byte) 4);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 7,
-            3, baseMoneyVersionSeven, positionListVersionFive, Date.from(OffsetDateTime.now().minusMonths(2).minusDays(0).toInstant()));
+            3, baseMoneyVersionSeven, positionListVersionFive,
+            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(0).toInstant()));
 
-        List<SlavePortfolio.Position> positionListVersionEight = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "5","5031.4", Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
+        List<SlavePortfolio.Position> positionListVersionEight = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5","5031.4",
+            Date.from(OffsetDateTime.now().minusMonths(2).minusDays(2).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionEight = steps.createBaseMoney("46461.45",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 11);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 8,
             3, baseMoneyVersionEight, positionListVersionEight, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()));
 
-        List<SlavePortfolio.Position> positionSlaveVersionNine = threeSlavePositions111(ticker1,
-            tradingClearingAccount1, "10","285.51", ticker2, tradingClearingAccount2, "5", "105.29",
-            ticker3,  tradingClearingAccount3, "8","5031.4", Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
+        List<SlavePortfolio.Position> positionSlaveVersionNine = threeSlavePositions111(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "10","285.51",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "5", "105.29",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "8","5031.4",
+            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
         SlavePortfolio.BaseMoneyPosition baseMoneyVersionNine = steps.createBaseMoney("31367.25",
             Date.from(OffsetDateTime.now().minusMonths(1).minusDays(2).toInstant()), (byte) 12);
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 9,
-            3, baseMoneyVersionNine, positionSlaveVersionNine, Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
+            3, baseMoneyVersionNine, positionSlaveVersionNine,
+            Date.from(OffsetDateTime.now().minusMonths(1).minusDays(1).toInstant()));
 
     }
 
@@ -2079,17 +2153,19 @@ public class CalculateResultFeeTest {
         LocalDateTime lastDayFirstPeriod = LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).
             atStartOfDay();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(lastDayFirstPeriod);
-        String ListInst = instrumet1 + "," + instrumet2;
+
+        String dateTs = fmt.format(lastDayFirstPeriod.atZone(UTC));
+
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(lastDayFirstPeriod);
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(ticker2)
+            .instrumentIdPath(instrument.tickerSU29009RMFS6)
             .idKindQuery("ticker")
-            .classCodeQuery(classCode2)
+            .classCodeQuery(instrument.classCodeSU29009RMFS6)
             .startDateQuery(dateFireg)
             .endDateQuery(dateFireg)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -2105,14 +2181,14 @@ public class CalculateResultFeeTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(instrumet1)) {
-                valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(quantitySBER).multiply((BigDecimal) pair.getValue());
                 price1 = (BigDecimal) pair.getValue();
             }
-            if (pair.getKey().equals(instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantity2);
-                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantity2);
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantitySU29009RMFS6);
+                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantitySU29009RMFS6);
                 ;
             }
         }
@@ -2127,17 +2203,18 @@ public class CalculateResultFeeTest {
         LocalDateTime lastDayFirstPeriod = LocalDate.now().minusMonths(monts).with(TemporalAdjusters.firstDayOfMonth()).
             atStartOfDay();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(lastDayFirstPeriod);
-        String ListInst = instrumet1 + "," + instrumet2 + "," + instrumet3;
+        String dateTs = fmt.format(lastDayFirstPeriod.atZone(UTC));
+
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentYNDX;
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
         // получаем данные для расчета по облигациям
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(lastDayFirstPeriod);
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(ticker2)
+            .instrumentIdPath(instrument.tickerSU29009RMFS6)
             .idKindQuery("ticker")
-            .classCodeQuery(classCode2)
+            .classCodeQuery(instrument.classCodeSU29009RMFS6)
             .startDateQuery(dateFireg)
             .endDateQuery(dateFireg)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -2155,17 +2232,17 @@ public class CalculateResultFeeTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(instrumet1)) {
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
                 valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
                 price1 = (BigDecimal) pair.getValue();
             }
-            if (pair.getKey().equals(instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantity2);
-                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantity2);
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantitySU29009RMFS6);
+                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantitySU29009RMFS6);
             }
-            if (pair.getKey().equals(instrumet3)) {
-                valuePos3 = new BigDecimal(quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentYNDX)) {
+                valuePos3 = new BigDecimal(quantityYNDX).multiply((BigDecimal) pair.getValue());
                 price3 = (BigDecimal) pair.getValue();
             }
         }
@@ -2179,8 +2256,8 @@ public class CalculateResultFeeTest {
 
         // формируем список позиций для запроса prices MD
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutDate);
-        String ListInst = instrumet1 + "," + instrumet2 + "," + instrumet3;
+        String dateTs = fmt.format(cutDate.atZone(UTC));
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentYNDX;
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
 
@@ -2189,9 +2266,9 @@ public class CalculateResultFeeTest {
         String dateFireg = fmtFireg.format(cutDate);
 
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(ticker2)
+            .instrumentIdPath(instrument.tickerSU29009RMFS6)
             .idKindQuery("ticker")
-            .classCodeQuery(classCode2)
+            .classCodeQuery(instrument.classCodeSU29009RMFS6)
             .startDateQuery(dateFireg)
             .endDateQuery(dateFireg)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -2212,16 +2289,16 @@ public class CalculateResultFeeTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(instrumet1)) {
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
                 valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
                 price1 = (BigDecimal) pair.getValue();
             }
-            if (pair.getKey().equals(instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantity2);
                 price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantity2);
             }
-            if (pair.getKey().equals(instrumet3)) {
+            if (pair.getKey().equals(instrument.instrumentYNDX)) {
                 valuePos3 = new BigDecimal(quantity3).multiply((BigDecimal) pair.getValue());
                 price3 = (BigDecimal) pair.getValue();
             }
@@ -2233,19 +2310,19 @@ public class CalculateResultFeeTest {
 
 
     void createFeeResultFirst(OffsetDateTime updateTime, long subscriptionId) {
-        Date startFirst = Date.from(updateTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
-        Date endFirst = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
+        Date startFirst = Date.from(updateTime.toLocalDate().atStartOfDay().toInstant(UTC));
+        Date endFirst = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
         List<Context.Positions> positionListEmpty = new ArrayList<>();
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("297.73"))
             .priceTs(startFirst)
             .build());
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1088.91000"))
             .priceTs(startFirst)
@@ -2259,19 +2336,19 @@ public class CalculateResultFeeTest {
     }
 
     void createTwoPeriodFeeResult ( OffsetDateTime startSubTime, long subscriptionId) {
-        Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
-        Date endFirst = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
+        Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(UTC));
+        Date endFirst = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
         List<Context.Positions> positionListEmpty = new ArrayList<>();
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("297.73"))
             .priceTs(startFirst)
             .build());
         positionListEmpty.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1088.91000"))
             .priceTs(startFirst)
@@ -2283,26 +2360,26 @@ public class CalculateResultFeeTest {
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
             startFirst, endFirst, context, new BigDecimal("65162.5"));
 
-        Date startSecond = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
-        Date endSecond = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
+        Date startSecond = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
+        Date endSecond = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
         List<Context.Positions> positionListEmptySecond = new ArrayList<>();
         positionListEmptySecond.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("310.79"))
             .priceTs(startFirst)
             .build());
         positionListEmptySecond.add(Context.Positions.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("1069.65000"))
             .priceTs(startFirst)
             .build());
         positionListEmptySecond.add(Context.Positions.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
+            .ticker(instrument.tickerYNDX)
+            .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
             .quantity(new BigDecimal("5"))
             .price(new BigDecimal("4942"))
             .priceTs(startFirst)
@@ -2349,8 +2426,8 @@ public class CalculateResultFeeTest {
     List<SlavePortfolio.Position> oneSlavePositions(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -2366,9 +2443,9 @@ public class CalculateResultFeeTest {
     List<SlavePortfolio.Position> twoSlavePositionsNoBond(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
             .rate(new BigDecimal("0.0"))
@@ -2377,9 +2454,9 @@ public class CalculateResultFeeTest {
             .changedAt(date)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerYNDX)
+            .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
+            .quantity(new BigDecimal(quantityYNDX))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("4862.8"))
             .rate(new BigDecimal("0.0"))
@@ -2415,7 +2492,7 @@ public class CalculateResultFeeTest {
     BigDecimal calculateNotBondPositionValue (LocalDateTime cut, BigDecimal qty, String ticker, String classCode) {
         // формируем список позиций для запроса prices MD
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.ms'Z'");
-        String dateTs = fmt.format(cut);
+        String dateTs = fmt.format(cut.atZone(UTC));
         String ListInst = ticker + "_" + classCode;
         //вызываем метод MD и сохраняем prices в Map
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
@@ -2430,7 +2507,7 @@ public class CalculateResultFeeTest {
     BigDecimal calculatePositionBondValue (LocalDateTime cutDate, BigDecimal qty, String ticker, String classCode) {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutDate);
+        String dateTs = fmt.format(cutDate.atZone(UTC));
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutDate);
         String ListInst = ticker + "_" + classCode;
@@ -2440,9 +2517,9 @@ public class CalculateResultFeeTest {
         BigDecimal pricePosition = pricesPos.values().stream().findFirst().get();
         // получаем данные для расчета по облигациям
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(ticker2)
+            .instrumentIdPath(instrument.tickerSU29009RMFS6)
             .idKindQuery("ticker")
-            .classCodeQuery(classCode2)
+            .classCodeQuery(instrument.classCodeSU29009RMFS6)
             .startDateQuery(dateFireg)
             .endDateQuery(dateFireg)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -2478,4 +2555,5 @@ public class CalculateResultFeeTest {
             .build();
         slaveAdjustDao.insertIntoSlaveAdjust(slaveAdjust);
     }
+
 }

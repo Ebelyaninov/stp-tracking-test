@@ -15,8 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.Context;
 import ru.qa.tinkoff.investTracking.entities.ManagementFee;
@@ -29,7 +27,9 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -53,6 +53,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
+import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -71,7 +72,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    SptTrackingFeeStepsConfiguration.class
+    SptTrackingFeeStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CalculateManagementFeeTest {
     @Autowired
@@ -98,6 +100,8 @@ public class CalculateManagementFeeTest {
     ByteToByteSenderService kafkaSender;
     @Autowired
     ManagementFeeDao managementFeeDao;
+    @Autowired
+    StpInstrument instrument;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -116,39 +120,12 @@ public class CalculateManagementFeeTest {
     String siebelIdMaster = "1-51Q76AT";
     String siebelIdSlave = "5-1P87U0B13";
 
-    String ticker1 = "SBER";
-    String tradingClearingAccount1 = "L01+00002F00";
-    String classCode1 = "TQBR";
-    String instrumet1 = ticker1 + "_" + classCode1;
-    String quantity1 = "20";
-
-    String ticker2 = "SU29009RMFS6";
-    String tradingClearingAccount2 = "L01+00002F00";
-    String quantity2 = "5";
-    String classCode2 = "TQOB";
-    String instrumet2 = ticker2 + "_" + classCode2;
+    String quantitySBER = "20";
+    String quantitySU29009RMFS6 = "5";
     BigDecimal minPriceIncrement = new BigDecimal("0.001");
-
-
-    String ticker3 = "YNDX";
-    String tradingClearingAccount3 = "Y02+00001F00";
-    String classCode3 = "TQBR";
-    String instrumet3 = ticker3 + "_" + classCode3;
-    String quantity3 = "2";
-
-
-    String tickerNoteXPosCache = "TEST";
-    String tradingClearingAccountNoteXPosCache = "L01+00002F00";
-    String classCodeNoteXPosCache = "TQBR";
-    String instrumetNoteXPosCache = tickerNoteXPosCache + "_" + classCodeNoteXPosCache;
-    String quantityNoteXPosCache = "2";
-
-
-    String tickerNotInsPrice = "FXITTEST";
-    String tradingClearingAccountNotInsPrice = "L01+00002F00";
-    String classCodeNotInsPrice = "TQBR";
-    String instrumetNotInsPrice = tickerNotInsPrice + "_" + classCodeNotInsPrice;
-    String quantityNotInsPrice = "2";
+    String quantityYNDX = "2";
+    String quantityTEST = "2";
+    String quantityFXITTEST = "2";
 
 
     String description = "new test стратегия autotest";
@@ -228,12 +205,13 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -244,7 +222,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -277,8 +255,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -295,7 +274,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -330,8 +309,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -347,7 +326,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeLast(subscriptionId);
@@ -379,8 +358,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -398,7 +377,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeLastNoBond(subscriptionId, Date.from(endSubTime.toInstant()));
@@ -429,8 +408,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -445,13 +424,14 @@ public class CalculateManagementFeeTest {
         //создаем записи о расчете комиссии за управление
         createManagemetFee(subscriptionId);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -513,7 +493,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
 //        //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -527,7 +508,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         Optional<ManagementFee> portfolioValue = managementFeeDao.findManagementFee(contractIdSlave, strategyId, subscriptionId, 0);
@@ -560,7 +541,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -574,16 +556,16 @@ public class CalculateManagementFeeTest {
         createManagemetFee(subscriptionId);
         List<Context.Positions> positionListWithPosTwo = new ArrayList<>();
         positionListWithPosTwo.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .price(new BigDecimal("335.04"))
             .priceTs(Date.from(OffsetDateTime.now().minusDays(2).toInstant()))
             .build());
         positionListWithPosTwo.add(Context.Positions.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerYNDX)
+            .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
+            .quantity(new BigDecimal(quantityYNDX))
             .price(new BigDecimal("4821.4"))
             .priceTs(Date.from(OffsetDateTime.now().minusDays(2).toInstant()))
             .build());
@@ -592,10 +574,11 @@ public class CalculateManagementFeeTest {
             .positions(positionListWithPosTwo)
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 3,
-            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)),
-            Date.from(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithPosTwo);
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)),
+            Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)), contextWithPosTwo);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
@@ -605,6 +588,8 @@ public class CalculateManagementFeeTest {
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         // проверяем, что команда в tracking.fee.calculate.command не улетает
+        //        Смотрим, сообщение,  в топике kafka tracking.fee.command
+        List<Pair<String, byte[]>> messagesFee = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(10));
         await().atMost(Duration.ofSeconds(20))
             .until(
                 () -> kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND),
@@ -621,7 +606,7 @@ public class CalculateManagementFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1418659() {
-         strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -637,12 +622,13 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
 //        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
@@ -661,7 +647,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -696,7 +682,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -720,7 +708,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -757,7 +745,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -773,7 +763,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -806,7 +796,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -822,7 +814,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -856,14 +848,15 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
         steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId,false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
@@ -874,7 +867,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOne(subscriptionId);
@@ -908,7 +901,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40", ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -924,7 +919,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOneBlocked(subscriptionId, "contractBlocked");
@@ -957,8 +952,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -973,7 +969,8 @@ public class CalculateManagementFeeTest {
         //создаем записи о расчете комиссии за управление
         createManagemetFee(subscriptionId);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
@@ -1041,8 +1038,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1059,7 +1057,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeOneBlocked(subscriptionId, "subscriptionBlocked");
@@ -1093,8 +1091,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker2, tradingClearingAccount2, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1113,7 +1112,7 @@ public class CalculateManagementFeeTest {
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         checkManagementFeeLastBlocked(subscriptionId, "subscriptionBlocked");
@@ -1190,8 +1189,9 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, "40",
-            ticker3, tradingClearingAccount3, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1206,13 +1206,14 @@ public class CalculateManagementFeeTest {
         //создаем записи о расчете комиссии за управление
         createManagemetFeeWithBlocked(subscriptionId);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
         Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
         log.info("Команда в tracking.fee.command:  {}", command);
         byte[] eventBytes = command.toByteArray();
-        //отправляем команду в топик kafka tracking.master.command
+        //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -1281,9 +1282,9 @@ public class CalculateManagementFeeTest {
     List<SlavePortfolio.Position> twoSlavePositions(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
             .rate(new BigDecimal("0.0"))
@@ -1292,9 +1293,9 @@ public class CalculateManagementFeeTest {
             .changedAt(date)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("105.796"))
             .rate(new BigDecimal("0.0"))
@@ -1309,9 +1310,9 @@ public class CalculateManagementFeeTest {
     List<SlavePortfolio.Position> twoSlavePositionsNoBond(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
             .rate(new BigDecimal("0.0"))
@@ -1320,9 +1321,9 @@ public class CalculateManagementFeeTest {
             .changedAt(date)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerYNDX)
+            .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
+            .quantity(new BigDecimal(quantityYNDX))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("4862.8"))
             .rate(new BigDecimal("0.0"))
@@ -1337,9 +1338,9 @@ public class CalculateManagementFeeTest {
     List<SlavePortfolio.Position> twoSlavePositionsExchangePositionCache(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
             .rate(new BigDecimal("0.0"))
@@ -1348,9 +1349,9 @@ public class CalculateManagementFeeTest {
             .changedAt(date)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(tickerNoteXPosCache)
-            .tradingClearingAccount(tradingClearingAccountNoteXPosCache)
-            .quantity(new BigDecimal(quantityNoteXPosCache))
+            .ticker(instrument.tickerTEST)
+            .tradingClearingAccount(instrument.tradingClearingAccountTEST)
+            .quantity(new BigDecimal(quantityTEST))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("4862.8"))
             .rate(new BigDecimal("0.0"))
@@ -1365,9 +1366,9 @@ public class CalculateManagementFeeTest {
     List<SlavePortfolio.Position> twoSlavePositionsInstrumentPriceCache(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
             .rate(new BigDecimal("0.0"))
@@ -1376,9 +1377,9 @@ public class CalculateManagementFeeTest {
             .changedAt(date)
             .build());
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(tickerNotInsPrice)
-            .tradingClearingAccount(tradingClearingAccountNotInsPrice)
-            .quantity(new BigDecimal(quantityNotInsPrice))
+            .ticker(instrument.tickerFXITTEST)
+            .tradingClearingAccount(instrument.tradingClearingAccountFXITTEST)
+            .quantity(new BigDecimal(quantityFXITTEST))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("4862.8"))
             .rate(new BigDecimal("0.0"))
@@ -1392,8 +1393,8 @@ public class CalculateManagementFeeTest {
     List<SlavePortfolio.Position> oneSlavePositions(Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -1437,7 +1438,7 @@ public class CalculateManagementFeeTest {
 
     void checkManagementFeeOne(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(2).atStartOfDay();
-        Date cutDate = Date.from(endPerid.toInstant(ZoneOffset.UTC));
+        Date cutDate = Date.from(endPerid.toInstant(UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal basemoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         log.info("valuePortfolio:  {}", basemoney);
@@ -1446,9 +1447,9 @@ public class CalculateManagementFeeTest {
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(basemoney));
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("positions не равно", managementFee.getContext().getPositions().size(), is(0));
 
     }
@@ -1459,9 +1460,9 @@ public class CalculateManagementFeeTest {
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is(reasonBlocked));
     }
@@ -1472,9 +1473,9 @@ public class CalculateManagementFeeTest {
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is(reasonBlocked));
     }
@@ -1486,9 +1487,9 @@ public class CalculateManagementFeeTest {
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is(reasonBlocked));
     }
@@ -1496,12 +1497,12 @@ public class CalculateManagementFeeTest {
 
     void checkManagementFeeTwo(long subscriptionId) throws InterruptedException {
         LocalDateTime endPerid = LocalDate.now().minusDays(1).atStartOfDay();
-        Date cutDate = Date.from(endPerid.toInstant(ZoneOffset.UTC));
+        Date cutDate = Date.from(endPerid.toInstant(UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal basemoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = fmt.format(endPerid);
-        String ListInst = instrumet1;
+        String ListInst = instrument.instrumentSBER;
         //вызываем метод MD и сохраняем prices в Mapinst
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
         //выполняем расчеты стоимости портфеля
@@ -1510,8 +1511,8 @@ public class CalculateManagementFeeTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(instrumet1)) {
-                valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(quantitySBER).multiply((BigDecimal) pair.getValue());
                 price1 = (BigDecimal) pair.getValue();
             }
         }
@@ -1527,24 +1528,24 @@ public class CalculateManagementFeeTest {
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker1));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity1));
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantitySBER));
         assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price1));
     }
 
 
     void checkManagementFeeLast(long subscriptionId) throws InterruptedException {
         LocalDateTime today = LocalDate.now().atStartOfDay();
-        Date cutDate = Date.from(today.toInstant(ZoneOffset.UTC));
+        Date cutDate = Date.from(today.toInstant(UTC));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal baseMoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = fmt.format(today);
-        String ListInst = instrumet1 + "," + instrumet2;
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
         //вызываем метод MD и сохраняем prices в Mapinst
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
@@ -1552,9 +1553,9 @@ public class CalculateManagementFeeTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(today);
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
-            .instrumentIdPath(ticker2)
+            .instrumentIdPath(instrument.tickerSU29009RMFS6)
             .idKindQuery("ticker")
-            .classCodeQuery(classCode2)
+            .classCodeQuery(instrument.classCodeSU29009RMFS6)
             .startDateQuery(dateFireg)
             .endDateQuery(dateFireg)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -1570,14 +1571,14 @@ public class CalculateManagementFeeTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(instrumet1)) {
-                valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(quantitySBER).multiply((BigDecimal) pair.getValue());
                 price1 = (BigDecimal) pair.getValue();
             }
-            if (pair.getKey().equals(instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
-                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantity2);
-                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantity2);
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, quantitySU29009RMFS6);
+                price2 = steps.valuePrice(priceTs, nominal, minPriceIncrement, aciValue, valuePos2, quantitySU29009RMFS6);
                 ;
             }
         }
@@ -1593,16 +1594,16 @@ public class CalculateManagementFeeTest {
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker2));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount2));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity2));
+            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(UTC).toString()));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(instrument.tickerSU29009RMFS6));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountSU29009RMFS6));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantitySU29009RMFS6));
         assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price2));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker1));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity1));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantitySBER));
         assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
     }
 
@@ -1610,30 +1611,31 @@ public class CalculateManagementFeeTest {
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, cutDate);
         BigDecimal baseMoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         String dateTs = formatter.format(cutDate);
-        String ListInst = instrumet1 + "," + instrumet3;
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentYNDX;
         //вызываем метод MD и сохраняем prices в Mapinst
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
-        BigDecimal valuePortfolio = steps.getPorfolioValueTwoInstruments(instrumet1, instrumet3, dateTs,
-            quantity1, quantity3, baseMoney);
-        BigDecimal price1 = steps.getPrice(pricesPos, instrumet1);
-        BigDecimal price3 = steps.getPrice(pricesPos, instrumet3);
+        BigDecimal valuePortfolio = steps.getPorfolioValueTwoInstruments(instrument.instrumentSBER, instrument.instrumentYNDX, dateTs,
+            quantitySBER, quantityYNDX, baseMoney);
+        BigDecimal price1 = steps.getPrice(pricesPos, instrument.instrumentSBER);
+        BigDecimal price3 = steps.getPrice(pricesPos, instrument.instrumentYNDX);
         checkComparedToMasterFeeVersion(3, subscriptionId);
         await().atMost(TEN_SECONDS).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(ticker3));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount3));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantity3));
+            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(UTC).toString()));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(instrument.tickerYNDX));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountYNDX));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantityYNDX));
         assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price3));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(ticker1));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantity1));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantitySBER));
         assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
     }
 
@@ -1644,12 +1646,12 @@ public class CalculateManagementFeeTest {
             .positions(positionListEmpty)
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 1,
-            Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(ZoneOffset.UTC)),
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)), context);
+            Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(UTC)),
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context);
         List<Context.Positions> positionListWithPos = new ArrayList<>();
         positionListWithPos.add(Context.Positions.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal("20"))
             .price(new BigDecimal("335.04"))
             .priceTs(Date.from(OffsetDateTime.now().minusDays(2).toInstant()))
@@ -1659,8 +1661,8 @@ public class CalculateManagementFeeTest {
             .positions(positionListWithPos)
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)),
-            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithPos);
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)),
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithPos);
     }
 
 
@@ -1671,8 +1673,8 @@ public class CalculateManagementFeeTest {
             .positions(positionListEmpty)
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 1,
-            Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(ZoneOffset.UTC)),
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)), context);
+            Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(UTC)),
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context);
 
 
         List<String> contractBlocked = new ArrayList<>();
@@ -1681,8 +1683,8 @@ public class CalculateManagementFeeTest {
             .notChargedReasons(contractBlocked)
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)),
-            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)), contextWithBlocked);
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)),
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithBlocked);
     }
 
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
@@ -1698,9 +1700,9 @@ public class CalculateManagementFeeTest {
 
     void checkParamManagementFee() {
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("settlement_period_ended_at не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
-            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(ZoneOffset.UTC).toString()));
+            is(LocalDate.now().minusDays(2).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is("contractBlocked"));
     }

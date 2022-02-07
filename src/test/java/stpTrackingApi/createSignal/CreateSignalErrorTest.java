@@ -38,7 +38,9 @@ import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -84,7 +86,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CreateSignalErrorTest {
     @Autowired
@@ -107,7 +110,8 @@ public class CreateSignalErrorTest {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
     MasterSignalDao masterSignalDao;
-
+    @Autowired
+    StpInstrument instrument;
 
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
@@ -117,12 +121,11 @@ public class CreateSignalErrorTest {
 
     String contractId;
     UUID strategyId;
-    String ticker = "AAPL";
-    String tradingClearingAccount = "TKCBM_TCAB";
-
-     String SIEBEL_ID = "1-3L0X4M1";
-//    String SIEBEL_ID = "1-7UY6DEL";
+    String SIEBEL_ID = "1-3L0X4M1";
     String contractIdMaster = "2000001772";
+
+
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -177,7 +180,7 @@ public class CreateSignalErrorTest {
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xDeviceIdHeader("new")
@@ -219,7 +222,7 @@ public class CreateSignalErrorTest {
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId,
-            ticker, tradingClearingAccount, version);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -308,11 +311,10 @@ public class CreateSignalErrorTest {
 //        contractId = findValidAccountWithSiebleId.get(0).getId();
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -352,7 +354,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, ticker, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -390,7 +392,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, tradingClearingAccount, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -430,7 +432,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -461,7 +463,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -494,7 +496,7 @@ public class CreateSignalErrorTest {
         String contractOther = contractService.findOneContract().get().getId();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -527,7 +529,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -566,7 +568,7 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -606,12 +608,12 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 3, "3556.78", date);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -651,7 +653,7 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -831,8 +833,9 @@ public class CreateSignalErrorTest {
         BigDecimal price = new BigDecimal("10.0");
         int quantityRequest = 3;
         int version = 4;
-        String ticker = "XS0424860947";
-        String tradingClearingAccount = "L01+00002F00";
+//        String ticker = "XS0424860947";
+//        String tradingClearingAccount = "L01+00002F00";
+
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
         //получаем данные по клиенту master в api сервиса счетов
@@ -846,14 +849,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -892,14 +895,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -939,14 +942,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -986,14 +989,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1022,8 +1025,8 @@ public class CreateSignalErrorTest {
         BigDecimal price = new BigDecimal("6.3825");
         int quantityRequest = 3;
         int version = 2;
-        String ticker = "TRUR";
-        String tradingClearingAccount = "L01+00002F00";
+//        String instrument.tickerTRUR = "TRUR";
+//        String tradingClearingAccount = "L01+00002F00";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1035,16 +1038,16 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerTRUR, instrument.tradingClearingAccountTRUR,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, false, 1000);
+        getExchangePosition(instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, ExchangePosition.ExchangeEnum.SPB, false, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1084,14 +1087,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1252,14 +1255,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1301,14 +1304,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
 //        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")
@@ -1348,14 +1351,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "5");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "10259.17", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApi.createSignal()
             .xAppNameHeader("invest")

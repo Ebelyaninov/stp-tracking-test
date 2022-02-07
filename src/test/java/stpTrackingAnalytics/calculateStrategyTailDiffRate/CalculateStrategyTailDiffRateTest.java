@@ -19,13 +19,14 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailDiffRate;
-import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -61,7 +62,8 @@ import static org.hamcrest.Matchers.notNullValue;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CalculateStrategyTailDiffRateTest {
     @Autowired
@@ -92,11 +94,11 @@ public class CalculateStrategyTailDiffRateTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StrategyTailDiffRateDao strategyTailDiffRateDao;
+    @Autowired
+    StpInstrument instrument;
 
     StrategyTailDiffRate strategyTailDiffRate;
     String contractIdMaster;
-
-
     SlavePortfolio slavePortfolio;
     Client clientSlave;
     String SIEBEL_ID_MASTER = "5-192WBUXCI";
@@ -772,21 +774,21 @@ public class CalculateStrategyTailDiffRateTest {
         steps.createSlavePortfolioWithPosition(contractIdSlaveOne, strategyId, 1, 1,
             baseMoneySlave, date, positionList);
         String baseMoneySlaveOne = "26710.3";
-        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(steps.ticker1, steps.tradingClearingAccount1,
+        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "10", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), new BigDecimal("328.97"), new BigDecimal("26.5669"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveOne, strategyId, 2, 2,
             baseMoneySlaveOne, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), positionListOnePos);
         String baseMoneySlaveTwo = "13525.969";
-        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(steps.ticker1, steps.tradingClearingAccount1,
-            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
+        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             "3", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("4.7578"), new BigDecimal("-2.9997"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveOne, strategyId, 3, 3,
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "871.169";
-        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(steps.ticker1, steps.tradingClearingAccount1,
-            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            "3", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), steps.ticker3, steps.tradingClearingAccount3,
+        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()),instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            "3", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
             "2", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-9.2838"), new BigDecimal("-3.0003"),
             new BigDecimal("-1.9935"));
@@ -805,22 +807,22 @@ public class CalculateStrategyTailDiffRateTest {
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 1, 1,
             baseMoneySlave, date, positionList);
         String baseMoneySlaveOne = "28126.23";
-        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), new BigDecimal("321.6"), new BigDecimal("-0.8132"));
+        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), new BigDecimal("321.6"), new BigDecimal("-0.8132"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 2, 2,
             baseMoneySlaveOne, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), positionListOnePos);
         String baseMoneySlaveTwo = "27806.13";
-        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), new BigDecimal("321.6"),
+        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("-0.0392"), new BigDecimal("-0.003"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 3, 3,
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "4193.13";
-        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), steps.ticker3, steps.tradingClearingAccount3,
-            steps.quantity3, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.99"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 4, 4,
@@ -835,22 +837,22 @@ public class CalculateStrategyTailDiffRateTest {
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 1, 1,
             baseMoneySlave, date, positionList);
         String baseMoneySlaveOne = "28126.23";
-        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), new BigDecimal("321.6"), new BigDecimal("-0.8132"));
+        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), new BigDecimal("321.6"), new BigDecimal("-0.8132"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 2, 2,
             baseMoneySlaveOne, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), positionListOnePos);
         String baseMoneySlaveTwo = "27806.13";
-        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), new BigDecimal("321.6"),
+        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("-0.0392"), new BigDecimal("-0.003"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 3, 3,
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "4193.13";
-        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), steps.ticker3, steps.tradingClearingAccount3,
-            steps.quantity3, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.33"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 4, 4,

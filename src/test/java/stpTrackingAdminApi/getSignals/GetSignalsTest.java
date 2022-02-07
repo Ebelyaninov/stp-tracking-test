@@ -19,7 +19,9 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -50,7 +52,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class GetSignalsTest {
 
@@ -68,20 +71,11 @@ public class GetSignalsTest {
     StrategyService strategyService;
     @Autowired
     MasterSignalDao masterSignalDao;
+    @Autowired
+    StpInstrument instrument;
 
     String xApiKey = "x-api-key";
     String key= "tracking";
-
-
-    String tickerSBER = "SBER";
-    String tradingClearingAccountSber = "L01+00002F00";
-    String tickerAAPL = "AAPL";
-    String tradingClearingAccountAAPL = "TKCBM_TCAB";
-    String tickerFB = "FB";
-    String tradingClearingAccountFB = "TKCBM_TCAB";
-    String tickerNok = "NOK";
-    String tradingClearingAccountNok = "L01+00000SPB";
-
 
     SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
 
@@ -143,11 +137,11 @@ public class GetSignalsTest {
     @Description("Получение списка сигналов на стратегии")
     void C1458345() {
 
-        createMasterSignal(0, 3, 1, strategyId, tickerSBER, tradingClearingAccountSber,
+        createMasterSignal(0, 3, 1, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "4289.37", "10", 11);
-        createMasterSignal(0, 2, 2, strategyId, tickerAAPL, tradingClearingAccountAAPL,
+        createMasterSignal(0, 2, 2, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "128.37", "3", 12);
-        createMasterSignal(0, 1, 3, strategyId, tickerFB, tradingClearingAccountFB,
+        createMasterSignal(0, 1, 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "500.37", "10", 13);
 
         List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
@@ -159,19 +153,19 @@ public class GetSignalsTest {
 
         //Получаем items из ответа метода и БД, для инструментов
         List<Signal> getItemsForSBER = getdataFromResponce.getItems().stream()
-            .filter(res -> res.getExchangePosition().getTicker().equals(tickerSBER))
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
             .collect(Collectors.toList());
 
         Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
-            .filter(signals -> signals.getTicker().equals(tickerSBER))
+            .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
             .findFirst();
 
         List<Signal> getItemsForAAPL = getdataFromResponce.getItems().stream()
-            .filter(res -> res.getExchangePosition().getTicker().equals(tickerAAPL))
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
 
         Optional<MasterSignal> getDataFromDaoForAPPL =  getAllMasterSignals.stream()
-            .filter(signals -> signals.getTicker().equals(tickerAAPL))
+            .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
             .findFirst();
 
         assertThat("nextCursor != 1", getdataFromResponce.getNextCursor(),
@@ -195,13 +189,13 @@ public class GetSignalsTest {
 
         GetSignalsResponse getSignalsResponse;
 
-        createMasterSignal(0, 3, 1, strategyId, tickerSBER, tradingClearingAccountSber,
+        createMasterSignal(0, 3, 1, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "4289.37", "10", 11);
-        createMasterSignal(0, 2, 2, strategyId, tickerAAPL, tradingClearingAccountAAPL,
+        createMasterSignal(0, 2, 2, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "128.37", "3", 12);
-        createMasterSignal(0, 1, 3, strategyId, tickerFB, tradingClearingAccountFB,
+        createMasterSignal(0, 1, 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "500.37", "10", 11);
-        createMasterSignal(0, 0, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 0, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "500.37", "10", 12);
 
         List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
@@ -222,11 +216,11 @@ public class GetSignalsTest {
         checkCursoreAndHasNextCursor(getSignalsResponse, "1", false);
         //Получаем items из ответа метода и БД, для инструмента
         List<Signal> getItemsForSBER = getSignalsResponse.getItems().stream()
-            .filter(res -> res.getExchangePosition().getTicker().equals(tickerSBER))
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
             .collect(Collectors.toList());
 
         Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
-            .filter(signals -> signals.getTicker().equals(tickerSBER))
+            .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
             .findFirst();
 
         //Проверяем items
@@ -238,11 +232,11 @@ public class GetSignalsTest {
         checkCursoreAndHasNextCursor(getSignalsResponse, "2", true);
         //Получаем items из ответа метода и БД, для инструмента
         List<Signal> getItemsForAAPL = getSignalsResponse.getItems().stream()
-            .filter(res -> res.getExchangePosition().getTicker().equals(tickerAAPL))
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
 
         Optional<MasterSignal> getDataFromDaoForAAPL =  getAllMasterSignals.stream()
-            .filter(signals -> signals.getTicker().equals(tickerAAPL))
+            .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
             .findFirst();
         //Проверяем items
         checkItemsFromResponce(getItemsForAAPL, getDataFromDaoForAAPL, "buy", StrategyCurrency.usd);
@@ -273,7 +267,7 @@ public class GetSignalsTest {
         GetSignalsResponse getSignalsResponse;
 
         for (int i = 0; i < 110; i++){
-            createMasterSignal(0, 3, i, strategyId, tickerSBER, tradingClearingAccountSber,
+            createMasterSignal(0, 3, i, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
                 "4289.37", "10", 11);
         }
         getSignalsResponse = getSignalsResponse(strategyId);
