@@ -268,13 +268,14 @@ public class GetStrategiesCatalogTest {
             Arguments.of(3)
         );
     }
+
     @ParameterizedTest
     @MethodSource("provideLimit")
     @AllureId("1098182")
     @DisplayName("C1098182.GetStrategiesCatalog.Получение каталога торговых стратегий, передан limit")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
-    void C1098182(Integer limit)  {
+    void C1098182(Integer limit) {
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
             .xAppNameHeader("invest")
@@ -354,9 +355,8 @@ public class GetStrategiesCatalogTest {
                 .collect(Collectors.toList());
             //Получаем 10 запись из настройки max-slaves-count-limit: 10
             if (liteStrategies.get(9).getCharacteristics().get(0).getId().equals("slaves-count")) {
-                 getSlaveCountFromTenStrategy = Long.parseLong(liteStrategies.get(9).getCharacteristics().get(0).getValue());
-            }
-            else {
+                getSlaveCountFromTenStrategy = Long.parseLong(liteStrategies.get(9).getCharacteristics().get(0).getValue());
+            } else {
                 getSlaveCountFromTenStrategy = Long.parseLong(liteStrategies.get(9).getCharacteristics().get(1).getValue());
             }
             //Получаем записи >= value(slave-count) 10-ой записи
@@ -391,37 +391,37 @@ public class GetStrategiesCatalogTest {
     @DisplayName("C1105850.GetStrategiesCatalog.Получение каталога торговых стратегий, фильтр conservative-risk-profile")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
-    void C1105850()  {
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .tabIdQuery("conservative-risk-profile")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            //выбираем из списка только те стратерии у которых риск-профиль консервативный
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .filter(liteStrategy -> liteStrategy.getRiskProfile() == StrategyRiskProfile.CONSERVATIVE)
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
-            //записываем stratedyId в множества и сравниваем их
-            Set<UUID> listStrategyIdsFromApi = new HashSet<>();
-            for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
-                listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
-            }
-            Set<UUID> listStrategyIdsFromSocialApi = new HashSet<>();
-            for (int i = 0; i < liteStrategies.size(); i++) {
-                listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
-            }
-            assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
+    void C1105850() {
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .tabIdQuery("conservative-risk-profile")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        //выбираем из списка только те стратерии у которых риск-профиль консервативный
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .filter(liteStrategy -> liteStrategy.getRiskProfile() == StrategyRiskProfile.CONSERVATIVE)
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .collect(Collectors.toList());
+        //записываем stratedyId в множества и сравниваем их
+        Set<UUID> listStrategyIdsFromApi = new HashSet<>();
+        for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
+            listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
+        }
+        Set<UUID> listStrategyIdsFromSocialApi = new HashSet<>();
+        for (int i = 0; i < liteStrategies.size(); i++) {
+            listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
+        }
+        assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
     }
 
 
@@ -451,38 +451,38 @@ public class GetStrategiesCatalogTest {
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .tabIdQuery(currencyFilter)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            //выбираем из списка только те стратерии у соответствующая валюта и ограничиваем limit из настройки:
-            //get-strategies-catalog.default-limit: 30
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .filter(liteStrategy -> liteStrategy.getBaseCurrency() == currency)
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .limit(30)
-                .collect(Collectors.toList());
-            //записываем stratedyId в множества и сравниваем их
-            Set<UUID> listStrategyIdsFromApi = new HashSet<>();
-            for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
-                listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
-            }
-            Set<UUID> listStrategyIdsFromSocialApi = new HashSet<>();
-            for (int i = 0; i < liteStrategies.size(); i++) {
-                listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
-            }
-            assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .tabIdQuery(currencyFilter)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        //выбираем из списка только те стратерии у соответствующая валюта и ограничиваем limit из настройки:
+        //get-strategies-catalog.default-limit: 30
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .filter(liteStrategy -> liteStrategy.getBaseCurrency() == currency)
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .limit(30)
+            .collect(Collectors.toList());
+        //записываем stratedyId в множества и сравниваем их
+        Set<UUID> listStrategyIdsFromApi = new HashSet<>();
+        for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
+            listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
+        }
+        Set<UUID> listStrategyIdsFromSocialApi = new HashSet<>();
+        for (int i = 0; i < liteStrategies.size(); i++) {
+            listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
+        }
+        assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
 
     }
 
@@ -568,7 +568,7 @@ public class GetStrategiesCatalogTest {
             //определяем значение 2-го элемента
             LiteStrategy targetStrategy = liteStrategies.get(valueInPercentile.intValue() - 1);
             double targetQuantity = RecommendedBaseMoneyPositionQuantityComparator
-                .getRecommendedBaseMoneyPositionQuantity(targetStrategy,courseUSD);
+                .getRecommendedBaseMoneyPositionQuantity(targetStrategy, courseUSD);
             //берем все значения, которые <= значение 2-го элемента
             List<LiteStrategy> liteStrategiesNew = liteStrategies.stream()
                 .filter(liteStrategy -> RecommendedBaseMoneyPositionQuantityComparator
@@ -599,50 +599,50 @@ public class GetStrategiesCatalogTest {
     @DisplayName("C1110593.GetStrategiesCatalog.Получение каталога торговых стратегий, hasNext, nextCursor")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
-    void C1110593()  {
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
-            //определяем значение курсора
-            UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .cursorQuery(cursor)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+    void C1110593() {
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .collect(Collectors.toList());
+        //определяем значение курсора
+        UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .cursorQuery(cursor)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
 //            проверяем, данные в сообщении
-            assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getId()));
-            assertThat("HasNext не равно", getStrategiesCatalog.getHasNext(),
-                is(false));
-            assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getId().toString()));
-            //определяем значение курсора
-            UUID cursorNew = liteStrategies.get(liteStrategies.size() - 3).getId();
-            GetStrategiesCatalogResponse getStrategiesCatalogNew = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .cursorQuery(cursorNew)
-                .limitQuery(1)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getId()));
+        assertThat("HasNext не равно", getStrategiesCatalog.getHasNext(),
+            is(false));
+        assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getId().toString()));
+        //определяем значение курсора
+        UUID cursorNew = liteStrategies.get(liteStrategies.size() - 3).getId();
+        GetStrategiesCatalogResponse getStrategiesCatalogNew = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .cursorQuery(cursorNew)
+            .limitQuery(1)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
 //            проверяем, данные в сообщении
-            assertThat("HasNext не равно", getStrategiesCatalogNew.getHasNext(),
-                is(true));
-            assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalogNew.getNextCursor(),
-                is(liteStrategies.get(liteStrategies.size() - 2).getId().toString()));
+        assertThat("HasNext не равно", getStrategiesCatalogNew.getHasNext(),
+            is(true));
+        assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalogNew.getNextCursor(),
+            is(liteStrategies.get(liteStrategies.size() - 2).getId().toString()));
     }
 
 
@@ -652,29 +652,29 @@ public class GetStrategiesCatalogTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
     void C1110503() {
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
-            //определяем значение курсора
-            UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .cursorQuery(cursor)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .collect(Collectors.toList());
+        //определяем значение курсора
+        UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .cursorQuery(cursor)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
 //            проверяем, данные в сообщении
-            assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getId()));
+        assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getId()));
     }
 
     @Test
@@ -682,56 +682,59 @@ public class GetStrategiesCatalogTest {
     @DisplayName("C1110525.GetStrategiesCatalog.Получение каталога торговых стратегий, параметры ответа")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
-    void C1110525()  {
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
-            //определяем значение курсора
-            UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .cursorQuery(cursor)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-            // проверяем, данные в ответе
-            assertThat("HasNext не равно", getStrategiesCatalog.getHasNext(),
-                is(false));
-            assertThat("Идентификатор сдедующей стратегии nextCursor не равно", getStrategiesCatalog.getNextCursor(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getId().toString()));
-            assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getId()));
-            assertThat("title стратегии не равно", getStrategiesCatalog.getItems().get(0).getTitle(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getTitle()));
-            assertThat("baseCurrency стратегии не равно", getStrategiesCatalog.getItems().get(0).getBaseCurrency().getValue(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getBaseCurrency().getValue()));
-            assertThat("riskProfile стратегии не равно", getStrategiesCatalog.getItems().get(0).getRiskProfile().getValue(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getRiskProfile().getValue()));
-            assertThat("score стратегии не равно", getStrategiesCatalog.getItems().get(0).getScore(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getScore()));
-            assertThat("socialProfile.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getId(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getId()));
-            assertThat("socialProfile.nickname стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getNickname(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getNickname()));
-            assertThat("relativeYield стратегии не равно", getStrategiesCatalog.getItems().get(0).getRelativeYield(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield()));
-            assertThat("portfolioValues стратегии не равно", getStrategiesCatalog.getItems().get(0).getPortfolioValues(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getPortfolioValues()));
-            assertThat("characteristics.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getId(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getId()));
-            assertThat("characteristics.value стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getValue(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getValue()));
-            assertThat("characteristics.subtitle стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getSubtitle(),
-                is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getSubtitle()));
+    void C1110525() {
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .collect(Collectors.toList());
+        //определяем значение курсора
+        UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .cursorQuery(cursor)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        // проверяем, данные в ответе
+        assertThat("HasNext не равно", getStrategiesCatalog.getHasNext(),
+            is(false));
+        assertThat("Идентификатор сдедующей стратегии nextCursor не равно", getStrategiesCatalog.getNextCursor(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getId().toString()));
+        assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getId()));
+        assertThat("title стратегии не равно", getStrategiesCatalog.getItems().get(0).getTitle(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getTitle()));
+        assertThat("baseCurrency стратегии не равно", getStrategiesCatalog.getItems().get(0).getBaseCurrency().getValue(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getBaseCurrency().getValue()));
+        assertThat("riskProfile стратегии не равно", getStrategiesCatalog.getItems().get(0).getRiskProfile().getValue(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getRiskProfile().getValue()));
+        assertThat("score стратегии не равно", getStrategiesCatalog.getItems().get(0).getScore(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getScore()));
+        assertThat("socialProfile.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getId(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getId()));
+        assertThat("socialProfile.nickname стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getNickname(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getNickname()));
+        assertThat("relativeYield стратегии не равно", getStrategiesCatalog.getItems().get(0).getRelativeYield(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield()));
+        assertThat("portfolioValues стратегии не равно", getStrategiesCatalog.getItems().get(0).getPortfolioValues(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getPortfolioValues()));
+        assertThat("characteristics.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getId(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getId()));
+        assertThat("characteristics.value стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getValue(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getValue()));
+        assertThat("characteristics.subtitle стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getSubtitle(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getSubtitle()));
+
+        assertThat("characteristics.expected-relative-yield стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(2).getValue(),
+            is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(2).getValue()));
 
     }
 
@@ -741,30 +744,30 @@ public class GetStrategiesCatalogTest {
     @DisplayName("C1111769.GetStrategiesCatalog.Получение каталога торговых стратегий, hasNext is null")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
-    void C1111769()  {
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
-            //определяем значение курсора
-            UUID cursor = liteStrategies.get(liteStrategies.size() - 1).getId();
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .cursorQuery(cursor)
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+    void C1111769() {
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .collect(Collectors.toList());
+        //определяем значение курсора
+        UUID cursor = liteStrategies.get(liteStrategies.size() - 1).getId();
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .cursorQuery(cursor)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
 //            проверяем, данные в сообщении
-            assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
-                is(nullValue()));
+        assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
+            is(nullValue()));
 
     }
 
@@ -859,8 +862,7 @@ public class GetStrategiesCatalogTest {
                         createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
                         createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
                         iForInsert++;
-                    }
-                    else {
+                    } else {
                         //создаем стратегию
                         steps.createClientWintContractAndStrategyWithProfile(siebelId, investId, null, contractId, null, ContractState.untracked,
                             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -876,7 +878,6 @@ public class GetStrategiesCatalogTest {
                         createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(4800, 4999)).toString());
                         iForInsert++;
                     }
-
 
 
                 } catch (Exception e) {
@@ -909,14 +910,13 @@ public class GetStrategiesCatalogTest {
                     .collect(Collectors.toList());
 
                 var getStrategy = liteStrategies.stream()
-                        .filter(s -> s.getId().equals(strategyIdList.get(1)))
-                        .collect(Collectors.toList());
+                    .filter(s -> s.getId().equals(strategyIdList.get(1)))
+                    .collect(Collectors.toList());
                 if (getStrategy.size() == 1) {
                     i = 31;
                     Thread.sleep(10000);
                     log.info("Задержка 10с");
-                }
-                else {
+                } else {
                     Thread.sleep(31000);
                     log.info("Ожидаем обновление кэша");
                 }
