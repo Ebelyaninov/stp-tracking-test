@@ -721,7 +721,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 3,
-            startFirst, endFirst, context, new BigDecimal("65162.5"));
+            startFirst, endFirst, context, new BigDecimal("65162.5"), endFirst);
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
         createCommandResult(subscriptionId);
@@ -1314,7 +1314,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM);
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM, Date.from(dateOfEndFirstPeriod.toInstant(UTC)));
 
         //Добавляем заводы на сумму baseMoneyPositionForFirstVersion + baseMoneyPositionForLastVersion
         createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
@@ -1433,7 +1433,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM);
+            Date.from(startSubTime.toInstant()), Date.from(dateOfEndFirstPeriod.toInstant(UTC)), context, hWM, Date.from(dateOfEndFirstPeriod.toInstant(UTC)));
 
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
@@ -2332,7 +2332,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            startFirst, endFirst, context, new BigDecimal("65162.5"));
+            startFirst, endFirst, context, new BigDecimal("65162.5"),endFirst );
     }
 
     void createTwoPeriodFeeResult ( OffsetDateTime startSubTime, long subscriptionId) {
@@ -2358,7 +2358,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmpty)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 4,
-            startFirst, endFirst, context, new BigDecimal("65162.5"));
+            startFirst, endFirst, context, new BigDecimal("65162.5"), endFirst);
 
         Date startSecond = Date.from(LocalDate.now().minusMonths(2).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
         Date endSecond = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(UTC));
@@ -2389,7 +2389,7 @@ public class CalculateResultFeeTest {
             .positions(positionListEmptySecond)
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 7,
-            startSecond, endSecond, contextSec, new BigDecimal("79880.4"));
+            startSecond, endSecond, contextSec, new BigDecimal("79880.4"),endSecond);
     }
 
 

@@ -78,7 +78,8 @@ public class ManagementFeeDao {
 
     @SneakyThrows
     public void insertIntoManagementFee(String contractId, UUID strategyId, long subscriptionId, int version,
-                                        Date settlementPeriodStartedAt, Date settlementPeriodEndedAt, Context context) {
+                                        Date settlementPeriodStartedAt, Date settlementPeriodEndedAt, Context context,
+                                        Date createdAt) {
         String contextAsText = contextMapper.writeValueAsString(context);
         Insert insertQueryBuider = QueryBuilder.insertInto("management_fee")
             .value("contract_id", contractId)
@@ -87,7 +88,8 @@ public class ManagementFeeDao {
             .value("version", version)
             .value("settlement_period_started_at", settlementPeriodStartedAt)
             .value("settlement_period_ended_at", settlementPeriodEndedAt)
-            .value("context", contextAsText);
+            .value("context", contextAsText)
+            .value("created_at", createdAt);
         cqlTemplate.execute(insertQueryBuider);
     }
 
@@ -112,6 +114,21 @@ public class ManagementFeeDao {
         return Optional.of(result.get(0));
 
     }
+
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public List<ManagementFee>  findListManagementFeeByCreateAt(String contractId, UUID strategyId, Date createAt) {
+        String query = "select * " +
+            "FROM invest_tracking.created_at_management_fee " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and created_at < ? " +
+            "order by created_at DESC, subscription_id ASC, version DESC, settlement_period_started_at DESC " ;
+        List<ManagementFee> result = cqlTemplate.query(query, managementFeeRowMapper, contractId, strategyId, createAt);
+        return result;
+    }
+
 
 
 

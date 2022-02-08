@@ -354,18 +354,18 @@ public class StpTrackingFeeSteps {
 
     public void createManagementFee(String contractIdSlave, UUID strategyId, long subscriptionId,
                                     int version, Date settlementPeriodStartedAt, Date settlementPeriodEndedAt,
-                                    Context context) {
+                                    Context context, Date createdAt) {
         managementFeeDao.insertIntoManagementFee(contractIdSlave, strategyId, subscriptionId, version,
-            settlementPeriodStartedAt,settlementPeriodEndedAt, context);
+            settlementPeriodStartedAt,settlementPeriodEndedAt, context, createdAt);
     }
 
 
 
     public void createResultFee(String contractIdSlave, UUID strategyId, long subscriptionId,
                                     int version, Date settlementPeriodStartedAt, Date settlementPeriodEndedAt,
-                                    Context context, BigDecimal highWaterMark) {
+                                    Context context, BigDecimal highWaterMark, Date createAt) {
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, version,
-            settlementPeriodStartedAt,settlementPeriodEndedAt, context, highWaterMark);
+            settlementPeriodStartedAt,settlementPeriodEndedAt, context, highWaterMark, createAt);
     }
 
 

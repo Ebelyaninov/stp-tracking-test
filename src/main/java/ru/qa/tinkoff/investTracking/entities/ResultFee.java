@@ -17,4 +17,5 @@ public class ResultFee {
     private Date settlementPeriodEndedAt;
     private Context context;
     private BigDecimal highWaterMark;
+    private Date  createdAt;
 }
