@@ -686,6 +686,19 @@ public class StpTrackingSlaveSteps {
             baseMoneyPosition, positionList, date);
     }
 
+    public void createSlavePortfolioWithoutPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
+                                                 String money,Date date) {
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithoutPosition(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, date);
+    }
+
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
