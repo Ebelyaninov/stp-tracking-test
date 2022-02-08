@@ -575,7 +575,7 @@ public class CalculateManagementFeeTest {
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 3,
             Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)),
-            Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)), contextWithPosTwo);
+            Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)), contextWithPosTwo, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
         //вычитываем все события из топика tracking.fee.calculate.command
 //        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
@@ -1647,7 +1647,7 @@ public class CalculateManagementFeeTest {
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 1,
             Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(UTC)),
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context);
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
         List<Context.Positions> positionListWithPos = new ArrayList<>();
         positionListWithPos.add(Context.Positions.builder()
             .ticker(instrument.tickerSBER)
@@ -1662,7 +1662,7 @@ public class CalculateManagementFeeTest {
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
             Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)),
-            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithPos);
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithPos, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
     }
 
 
@@ -1674,7 +1674,7 @@ public class CalculateManagementFeeTest {
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 1,
             Date.from(LocalDate.now().minusDays(3).atStartOfDay().toInstant(UTC)),
-            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context);
+            Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)), context, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
 
 
         List<String> contractBlocked = new ArrayList<>();
@@ -1684,7 +1684,7 @@ public class CalculateManagementFeeTest {
             .build();
         steps.createManagementFee(contractIdSlave, strategyId, subscriptionId, 2,
             Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(UTC)),
-            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithBlocked);
+            Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)), contextWithBlocked, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
     }
 
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {

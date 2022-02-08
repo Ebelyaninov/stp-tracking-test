@@ -1,6 +1,8 @@
 package ru.qa.tinkoff.steps.trackingAdminSteps;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
@@ -23,8 +25,11 @@ import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
+import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -62,6 +67,11 @@ public class StpTrackingAdminSteps {
     public Strategy strategy;
     public Subscription subscription;
     Profile profile;
+    public Contract contractSlave;
+    public Client clientSlave;
+
+    public String xApiKey = "x-api-key";
+    public String key ="tracking";
 
     ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
@@ -74,6 +84,8 @@ public class StpTrackingAdminSteps {
 
     SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
+
+    TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -310,5 +322,55 @@ public class StpTrackingAdminSteps {
         assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is(errorMessage));
 
     }
+
+    public String getTitleStrategy() {
+        int randomNumber = 0 + (int) (Math.random() * 1000);
+        String title = "Autotest " + String.valueOf(randomNumber);
+        return title;
+    }
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создаем подписку для slave")
+    public void createSubcription(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                   UUID strategyId,Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                   java.sql.Timestamp dateEnd, Boolean blockedSub) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(blockedContract);
+        contractSlave = contractService.saveContract(contractSlave);
+        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blockedSub);
+        //.setPeriod(localDateTimeRange);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+    @Step("Вызываем метод getimeline")
+    public GetTimelineResponse getimeline( GetTimelineRequest request) {
+        GetTimelineResponse responseExep = timelineApi.getTimeline()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetTimelineResponse.class));
+        return responseExep;
+    }
+
 
 }
