@@ -127,6 +127,19 @@ public class SlavePortfolioDao {
         cqlTemplate.execute(insertQueryBuilder);
     }
 
+    public void insertIntoSlavePortfolioWithoutPosition(String contractId, UUID strategyId, int version,
+                                         int comparedToMasterVersion,
+                                         SlavePortfolio.BaseMoneyPosition baseMoneyPosition,Date time) {
+        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("compared_to_master_version", comparedToMasterVersion)
+            .value("changed_at", time)
+            .value("base_money_position", baseMoneyPosition);
+        cqlTemplate.execute(insertQueryBuilder);
+    }
+
     public void insertIntoSlavePortfolioWithChangedAt(String contractId, UUID strategyId, int version,
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,
