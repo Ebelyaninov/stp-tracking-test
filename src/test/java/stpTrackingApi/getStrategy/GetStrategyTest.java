@@ -1557,7 +1557,7 @@ public class GetStrategyTest {
         //Проверяем, что нашли expected-relative-yield
         assertThat("id не равно", strategyCharacteristics.get(0).getItems().get(0).getId(), is(expectedRelativeYieldName));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Прогноз автора"));
-        assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("+" + expectedRelativeYield.toString() + "% годовых"));
+        assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is( expectedRelativeYield.toString() + "% в год"));
 
     }
 
