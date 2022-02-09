@@ -29,6 +29,7 @@ public class SlaveOrder2RowMapper implements RowMapper<SlaveOrder2> {
             .ticker(row.getString("ticker"))
             .tradingClearingAccount(row.getString("trading_clearing_account"))
             .version(row.getInt("version"))
+            .comparedToMasterVersion(row.get("compared_to_master_version", Integer.class))
             .build();
     }
 }

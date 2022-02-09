@@ -24,7 +24,7 @@ public class SlaveOrder2 {
     private final String ticker;
     private final String tradingClearingAccount;
     private final Integer version;
-
+    private final Integer comparedToMasterVersion;
 
 
 
