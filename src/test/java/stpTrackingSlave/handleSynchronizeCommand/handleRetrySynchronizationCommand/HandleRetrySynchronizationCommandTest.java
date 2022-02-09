@@ -13,8 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.support.NullValue;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -54,8 +56,7 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 @Epic("handleSynchronizeCommand - Обработка команд на повторную синхронизацию")
@@ -738,7 +739,7 @@ public class HandleRetrySynchronizationCommandTest {
         assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("1"));
         assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
         assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
-        assertThat("getTicker != " + instrument.tickerAAPL , getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
+        assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
         assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
     }
 
@@ -1117,13 +1118,13 @@ public class HandleRetrySynchronizationCommandTest {
             instrument.classCodeAAPL);
     }
 
-
+    @NullAndEmptySource
     private Stream<Arguments> provideActionTickerTradingClearingAccountAndAttemptsCount() {
         return Stream.of(
-            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2),
-            Arguments.of(1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1),
-            Arguments.of(0, instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1),
-            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1)
+            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2, null, null),
+            Arguments.of(1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1, "0", 3),
+            Arguments.of(0, instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1, "1", 3),
+            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1, "1", 3)
         );
     }
 
@@ -1135,11 +1136,10 @@ public class HandleRetrySynchronizationCommandTest {
         "найденной неисполненной заявки в slave_order_2 совпали/не совпали с ticker,trading_clearing_account и action найденной позиции на этапе Выбора позиции для синхронизации")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
-    void C1656925(int actionSlave, String tickerSlave, String tradingClearingAccountSlave, int attemptsCount) {
+    void C1656925(int actionSlave, String tickerSlave, String tradingClearingAccountSlave, int attemptsCount, Byte state, Integer comparedToMasterVersion) {
         Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.SYNCHRONIZE;
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        Byte state = 0;
         BigDecimal orderQty = new BigDecimal("33");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
@@ -1159,9 +1159,9 @@ public class HandleRetrySynchronizationCommandTest {
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "20", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
-        List<MasterPortfolio.Position> masterPos2 = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos1 = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "12", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
-        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.1", masterPos2);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.1", masterPos1);
         //создаем подписку для  slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -1190,8 +1190,10 @@ public class HandleRetrySynchronizationCommandTest {
         //проверяем, что  выставилась новая заявка
         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
 
+        Integer expectedComparedToMasterVersion = getSlaveOrder.get().getComparedToMasterVersion();
 
-        assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount(), is(attemptsCount));
+        assertThat("getAttemptsCount != " + attemptsCount, getSlaveOrder.get().getAttemptsCount(), is(attemptsCount));
+        assertThat("compared_to_master_version != " + comparedToMasterVersion, expectedComparedToMasterVersion, is(comparedToMasterVersion));
 
     }
 
