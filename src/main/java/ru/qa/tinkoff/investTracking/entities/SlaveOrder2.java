@@ -14,6 +14,7 @@ public class SlaveOrder2 {
     private final Byte action;
     private final Integer attemptsCount;
     private final String classCode;
+    private final Integer comparedToMasterVersion;
     private final BigDecimal filledQuantity;
     private final UUID id;
     private final UUID idempotencyKey;
@@ -24,7 +25,7 @@ public class SlaveOrder2 {
     private final String ticker;
     private final String tradingClearingAccount;
     private final Integer version;
-    private final Integer comparedToMasterVersion;
+
 
 
 

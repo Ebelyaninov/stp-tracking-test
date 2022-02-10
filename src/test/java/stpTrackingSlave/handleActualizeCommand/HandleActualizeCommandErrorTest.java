@@ -861,7 +861,7 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         // создаем запись на выставленную заявку state= null
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, classCode, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            0, classCode, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //создаем команду с несколькими позициями
         OffsetDateTime time = OffsetDateTime.now();
@@ -968,7 +968,7 @@ public class HandleActualizeCommandErrorTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, classCode, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            0, classCode, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, ticker, tradingClearingAccount);
         //создаем команду с  позицией отличной от той, что в заявке
         OffsetDateTime time = OffsetDateTime.now();

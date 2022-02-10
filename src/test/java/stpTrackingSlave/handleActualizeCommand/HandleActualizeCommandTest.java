@@ -248,7 +248,7 @@ public class HandleActualizeCommandTest {
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder2
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
-        checkOrderParameters(versionMiddle - 2, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
+        checkOrderParameters(versionMiddle - 2, 3,"0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
         steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
     }
 
@@ -403,7 +403,7 @@ public class HandleActualizeCommandTest {
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
-        checkOrderParameters(versionMiddle, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
+        checkOrderParameters(versionMiddle, 2,"0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
     }
 
     //д.б. USD=7000, AAPL=2
@@ -1068,7 +1068,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
         // создаем застрявшую заявку на прошлу подпску
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, versionMiddle - 4, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"),
+            0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"),
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2039,7 +2039,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2127,7 +2127,7 @@ public class HandleActualizeCommandTest {
         BigDecimal positionQuantity = new BigDecimal("0");
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 1, 1,
-            1, instrument.classCodeUSDRUB, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
+            1, instrument.classCodeUSDRUB, 2, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
             null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2201,7 +2201,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 1, 1,
-            1, instrument.classCodeGBP, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
+            1, instrument.classCodeGBP, 2, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
             null, instrument.tickerGBP, instrument.tradingClearingAccountGBP);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2274,7 +2274,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeUSDRUB, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.71"), new BigDecimal("275"),
+            0, instrument.classCodeUSDRUB, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.71"), new BigDecimal("275"),
             null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
         //формируем команду на актуализацию для slave с количеством по позиции меншь сеи по выставленой заявке
         BigDecimal positionQuantityCommand = new BigDecimal("200");
@@ -2342,7 +2342,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave, но с меньшим количеством по позиции чем выставили в заявке
         BigDecimal positionQuantityCommand = new BigDecimal("2");
@@ -2429,7 +2429,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave по позиции с выставленной ранее заявкой
         OffsetDateTime time = OffsetDateTime.now();
@@ -2502,7 +2502,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //блокируем договор slave
         contract = contractService.updateBlockedContract(contractIdSlave, true);
@@ -2573,7 +2573,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной и исполненной заявке state  1
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("3"),
+            0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("3"),
             (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2600,7 +2600,7 @@ public class HandleActualizeCommandTest {
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
-        checkOrderParameters(4, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
+        checkOrderParameters(4, 4, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
         assertThat("attempts_count  не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
     }
 
@@ -2646,7 +2646,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            1, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("1"),
+            1, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("1"),
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -2672,7 +2672,7 @@ public class HandleActualizeCommandTest {
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
-        checkOrderParameters(4, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
+        checkOrderParameters(4, 4, "0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
         assertThat("attempts_count  не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
     }
 
@@ -2718,7 +2718,7 @@ public class HandleActualizeCommandTest {
         //делаем запись о выставленной заявке у которой state = 0
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 3, 125,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"),
+            0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"),
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave c позицией и Action совпадающей по выставленной ранее заявке
         OffsetDateTime time = OffsetDateTime.now();
@@ -2817,7 +2817,7 @@ public class HandleActualizeCommandTest {
         BigDecimal priceBid = new BigDecimal(steps.getPriceFromExchangePositionPriceCache(instrument.tickerHKD, "bid"));
         //проверяем значения в slaveOrder
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
-        checkOrderParameters(4, "1", lot, lots, priceBid, instrument.tickerHKD, instrument.tradingClearingAccountHKD, instrument.classCodeHKD);
+        checkOrderParameters(4, 4,"1", lot, lots, priceBid, instrument.tickerHKD, instrument.tradingClearingAccountHKD, instrument.classCodeHKD);
     }
 
 
@@ -2864,7 +2864,7 @@ public class HandleActualizeCommandTest {
         // создаем запись на выставленную заявку state= null
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
@@ -3056,16 +3056,11 @@ public class HandleActualizeCommandTest {
             new BigDecimal("0.076"), new BigDecimal("5"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
-//        slaveOrderDao.insertIntoSlaveOrderWithFilledQuantity(contractIdSlave, strategyId, 2, 1,
-//            0, classCode, new BigDecimal("0"), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
-//            null, ticker, tradingClearingAccount);
-
         //делаем запись о выставленной заявке
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
-
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 3,
@@ -3603,10 +3598,11 @@ public class HandleActualizeCommandTest {
     }
 
 
-    public void checkOrderParameters(int version, String action, BigDecimal lot, BigDecimal lots,
+    public void checkOrderParameters(int version, int masterVersion, String action, BigDecimal lot, BigDecimal lots,
                                      BigDecimal priceOrder, String ticker, String tradingClearingAccount,
                                      String classCode) {
         assertThat("Версия портфеля не равно", slaveOrder2.getVersion(), is(version));
+        assertThat("Версия портфеля  мастера не равно", slaveOrder2.getComparedToMasterVersion(), is(masterVersion));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
         assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(lots.multiply(lot)));
 //        assertThat("price бумаги не равен", slaveOrder2.getPrice(), is(priceOrder));

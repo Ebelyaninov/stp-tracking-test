@@ -511,7 +511,7 @@ public class getOrdersTest {
 
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
-                                             action, classCode, filledQuantity, idempotencyKey,
+                                             action, classCode, 3, filledQuantity, idempotencyKey,
                                              UUID.randomUUID(), price, quantity, state,
                                              ticker, tradingClearingAccount);
     }
