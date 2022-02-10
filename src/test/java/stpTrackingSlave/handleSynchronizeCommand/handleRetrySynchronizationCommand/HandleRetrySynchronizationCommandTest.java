@@ -111,12 +111,7 @@ public class HandleRetrySynchronizationCommandTest {
     UUID strategyId;
     long subscriptionId;
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    //    String SIEBEL_ID_MASTER = "4-1V1UVPX8";
     String SIEBEL_ID_SLAVE = "1-556WLMK";
-//    String ticker = instrument.tickerAAPL;
-//    String tradingClearingAccount = instrument.tradingClearingAccountAAPL;
-//    String classCode = instrument.classCodeAAPL;
-
     public String value;
 
     String description = "description test стратегия autotest update adjust base currency";
@@ -693,7 +688,7 @@ public class HandleRetrySynchronizationCommandTest {
     @DisplayName("С1575130. Запись не найдена - портфель не синхронизируется")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
-    void С1575130() {
+    void C1575130() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
@@ -790,7 +785,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 1, 1,
-            0, instrument.classCodeAAPL, null, orderKey, orderKey, priceOrder, orderQty,
+            0, instrument.classCodeAAPL, 3,null, orderKey, orderKey, priceOrder, orderQty,
             (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
@@ -857,7 +852,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), orderKey, priceOrder, orderQty,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), orderKey, priceOrder, orderQty,
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
@@ -934,7 +929,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
-            action, instrument.classCodeAAPL, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
+            action, instrument.classCodeAAPL,3, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
         if (command == Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION) {
@@ -963,10 +958,10 @@ public class HandleRetrySynchronizationCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1499847")
-    @DisplayName("С1499847. Ограничиваем выставление заявки настройкой order-execute.max-attempts-count")
+    @DisplayName("C1499847. Ограничиваем выставление заявки настройкой order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
-    void С1499847() {
+    void C1499847() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
@@ -1010,7 +1005,7 @@ public class HandleRetrySynchronizationCommandTest {
         if (getSlaveOrder.get().getAttemptsCount() < 123) {
             OffsetDateTime dateOfSlaveOrder = OffsetDateTime.ofInstant(getSlaveOrder.get().getCreateAt().toInstant(), ZoneId.of("UTC")).plusSeconds(2);
             slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, dateOfSlaveOrder, strategyId, 2, 123,
-                0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), getSlaveOrder.get().getPrice(), getSlaveOrder.get().getQuantity(),
+                0, instrument.classCodeAAPL,3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), getSlaveOrder.get().getPrice(), getSlaveOrder.get().getQuantity(),
                 (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
             getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
             Thread.sleep(30000);
@@ -1042,7 +1037,7 @@ public class HandleRetrySynchronizationCommandTest {
     @DisplayName("С1652853. Новое рассчитанное значение attempts_count > значения настройки order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
-    void С1652853() {
+    void C1652853() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -1080,13 +1075,13 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(90), strategyId, 2, 124,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(60), strategyId, 2, 125,
-            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
+            0, instrument.classCodeAAPL,3,  new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(30), strategyId, 2, 126,
-            1, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
+            1, instrument.classCodeAAPL,3,  new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
@@ -1176,7 +1171,7 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date);
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
-            actionSlave, instrument.classCodeAAPL, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
+            actionSlave, instrument.classCodeAAPL, 3, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
             state, tickerSlave, tradingClearingAccountSlave);
 
         //отправляем команду на  повторную синхронизацию

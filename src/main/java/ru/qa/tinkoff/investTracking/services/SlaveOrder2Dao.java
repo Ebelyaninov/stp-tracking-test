@@ -68,7 +68,7 @@ public class SlaveOrder2Dao {
 
     @Step("Создаем запись о выставленной заявке в slave_order_2")
     public void insertIntoSlaveOrder2(String contractId, OffsetDateTime createAt, UUID strategyId, int version, int attemptsCount,
-                                                       int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
+                                                       int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
                                                        BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
         Insert insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
@@ -78,6 +78,7 @@ public class SlaveOrder2Dao {
             .value("attempts_count", attemptsCount)
             .value("action", action)
             .value("class_code", classCode)
+            .value("compared_to_master_version", comparedToMasterVersion)
             .value("filled_quantity", filledQuantity)
             .value("id", id)
             .value("idempotency_key", idempotencyKey)
