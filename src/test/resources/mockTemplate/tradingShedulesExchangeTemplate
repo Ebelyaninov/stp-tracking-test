@@ -1,0 +1,68 @@
+{
+    "httpRequest": {
+        "method": "GET",
+        "path": "/v1/fireg/trading-schedules/{{exchange}}"
+    },
+    "httpResponse": {
+        "body": {
+            "exchange": "{{exchange}}",
+            "zone_name": "Europe/Moscow",
+            "list": [
+                   {
+                     "start_time": "07:00:00",
+                     "end_time": "01:45:00",
+                     "premarket_start_time": "07:00:00",
+                     "premarket_end_time": "10:00:00",
+                     "market_order_start_time": "07:00:00",
+                     "market_order_end_time": "00:00:00",
+                     "main_trading_start_time": "07:00:00",
+                     "main_trading_end_time": "00:00:00",
+                     "additional_liquidity_start_time": "15:30:00",
+                     "additional_liquidity_end_time": "19:00:00",
+                     "primary_start_time": "17:30:00",
+                     "primary_end_time": "00:00:00",
+                     "date": "{{currentDate}}",
+                     "trading_flag": true,
+                     "trading_all_time_flag": false,
+                     "weekend_trade_flag": false
+                   },
+                   {
+                     "start_time": "07:00:00",
+                     "end_time": "01:45:00",
+                     "premarket_start_time": "07:00:00",
+                     "premarket_end_time": "10:00:00",
+                     "market_order_start_time": "07:00:00",
+                     "market_order_end_time": "00:00:00",
+                     "main_trading_start_time": "07:00:00",
+                     "main_trading_end_time": "00:00:00",
+                     "additional_liquidity_start_time": "15:30:00",
+                     "additional_liquidity_end_time": "19:00:00",
+                     "primary_start_time": "17:30:00",
+                     "primary_end_time": "00:00:00",
+                     "date": "{{currentDatePlusOne}}",
+                     "trading_flag": true,
+                     "trading_all_time_flag": false,
+                     "weekend_trade_flag": false
+                   },
+                   {
+                     "start_time": "07:00:00",
+                     "end_time": "01:45:00",
+                     "premarket_start_time": "07:00:00",
+                     "premarket_end_time": "10:00:00",
+                     "market_order_start_time": "07:00:00",
+                     "market_order_end_time": "00:00:00",
+                     "main_trading_start_time": "07:00:00",
+                     "main_trading_end_time": "00:00:00",
+                     "additional_liquidity_start_time": "15:30:00",
+                     "additional_liquidity_end_time": "19:00:00",
+                     "primary_start_time": "17:30:00",
+                     "primary_end_time": "00:00:00",
+                     "date": "{{currentDatePlusTwo}}",
+                     "trading_flag": true,
+                     "trading_all_time_flag": false,
+                     "weekend_trade_flag": false
+                   }
+            ]
+        }
+    }
+}

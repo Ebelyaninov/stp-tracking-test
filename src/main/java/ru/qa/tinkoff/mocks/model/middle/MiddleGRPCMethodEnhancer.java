@@ -9,11 +9,17 @@ import java.util.Map;
 public class MiddleGRPCMethodEnhancer implements TextResourceInfo {
 
     private final String agreementId;
+    private final String eurUnscaledPrice;
+    private final String rubUnscaledPrice;
     private final String usdUnscaledPrice;
+    private final String quantityAAPL;
 
-    public MiddleGRPCMethodEnhancer (String agreementId, String usdUnscaledPrice) {
+    public MiddleGRPCMethodEnhancer (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String quantityAAPL) {
         this.agreementId = agreementId;
+        this.eurUnscaledPrice = eurUnscaledPrice;
+        this.rubUnscaledPrice = rubUnscaledPrice;
         this.usdUnscaledPrice = usdUnscaledPrice;
+        this.quantityAAPL = quantityAAPL;
     }
 
     @Override
@@ -23,6 +29,7 @@ public class MiddleGRPCMethodEnhancer implements TextResourceInfo {
 
     @Override
     public Map<String, String> params() {
-        return Map.of("agreementId", agreementId, "usdUnscaledPrice", usdUnscaledPrice);
+        return Map.of("agreementId", agreementId, "eurUnscaledPrice", eurUnscaledPrice, "rubUnscaledPrice", rubUnscaledPrice,
+                      "usdUnscaledPrice", usdUnscaledPrice, "quantityAAPL", quantityAAPL);
     }
 }

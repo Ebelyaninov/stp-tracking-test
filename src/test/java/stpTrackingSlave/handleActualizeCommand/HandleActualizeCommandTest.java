@@ -128,6 +128,10 @@ public class HandleActualizeCommandTest {
 
     String description = "description test стратегия autotest update adjust base currency";
 
+    @BeforeAll void createDataForTests() {
+        mocksBasicSteps.createDataForMasterMock(SIEBEL_ID_MASTER);
+    }
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -193,7 +197,7 @@ public class HandleActualizeCommandTest {
     void C731513() {
         String SIEBEL_ID_SLAVE = "1-FRT3HXX";
         BigDecimal lot = new BigDecimal("1");
-        mocksBasicSteps.createDataForMocksTestC731513();
+        mocksBasicSteps.createDataForMocksTestC731513(SIEBEL_ID_SLAVE, "5460884c-be7d-400e-842d-059d0c689a55", "2000075370", instrument.tickerAAPL, instrument.classCodeAAPL, "7000");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -233,6 +237,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(0, 7000,
             contractIdSlave, versionMiddle - 2, time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
+
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
@@ -261,6 +266,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1366344() {
         String SIEBEL_ID_SLAVE = "5-3NRSEZFX";
+        mocksBasicSteps.createDataForMocksTestC1366344(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -334,6 +340,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C741543() {
         String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "7000", "2");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -415,6 +422,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1416943() {
         String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "7000", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -524,6 +532,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C748732() {
         String SIEBEL_ID_SLAVE = "1-4ILVF6E";
+        mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -599,6 +608,7 @@ public class HandleActualizeCommandTest {
         " Action = 'MORNING_UPDATE',version из команды < version из ответа ")
     void C1053004() {
         String SIEBEL_ID_SLAVE = "1-1IE1IUG";
+        mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
