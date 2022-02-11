@@ -106,7 +106,11 @@ public class StpTrackingMasterSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

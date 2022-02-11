@@ -179,7 +179,7 @@ public class GetTimelineTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -216,7 +216,7 @@ public class GetTimelineTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -258,7 +258,7 @@ public class GetTimelineTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -294,7 +294,7 @@ public class GetTimelineTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,

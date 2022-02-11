@@ -103,7 +103,8 @@ public class StpTrackingAdminSteps {
     public void createClientWithContractAndStrategy(UUID investId, SocialProfile socialProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                                     UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score, BigDecimal expectedRelativeYield, String shortDescription, String ownerDescription) {
+                                                    StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score, BigDecimal expectedRelativeYield,
+                                                    String shortDescription, String ownerDescription, Boolean buyEnabled, Boolean sellEnabled) {
         //создаем запись о клиенте в tracking.client
         client = clientService.createClient(investId, ClientStatusType.registered, socialProfile, null);
         // создаем запись о договоре клиента в tracking.contract
@@ -138,7 +139,9 @@ public class StpTrackingAdminSteps {
             .setShortDescription(shortDescription)
             .setOwnerDescription(ownerDescription)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(buyEnabled)
+            .setSellEnabled(sellEnabled);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -191,7 +194,9 @@ public class StpTrackingAdminSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -246,7 +251,9 @@ public class StpTrackingAdminSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setScore(score)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 
