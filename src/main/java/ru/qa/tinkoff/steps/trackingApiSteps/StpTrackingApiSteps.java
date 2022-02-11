@@ -259,7 +259,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -317,7 +319,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -373,7 +377,9 @@ public class StpTrackingApiSteps {
             .setExpectedRelativeYield(expectedRelativeYield)
             .setTestsStrategy(testsStrategiesList)
             .setShortDescription(shortDescription)
-            .setOwnerDescription(ownerDescription);
+            .setOwnerDescription(ownerDescription)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -427,7 +433,9 @@ public class StpTrackingApiSteps {
             .setScore(score)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overload)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -471,7 +479,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -534,7 +544,9 @@ public class StpTrackingApiSteps {
             .setScore(score)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -583,8 +595,9 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

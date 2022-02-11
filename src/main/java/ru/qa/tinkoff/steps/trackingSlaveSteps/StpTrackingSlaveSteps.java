@@ -168,7 +168,9 @@ public class StpTrackingSlaveSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 

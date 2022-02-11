@@ -159,7 +159,7 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -207,7 +207,7 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         Integer position = strategys.get(size - 1).getPosition();
@@ -242,7 +242,7 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys

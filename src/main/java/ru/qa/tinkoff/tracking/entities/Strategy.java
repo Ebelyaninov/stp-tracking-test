@@ -94,4 +94,10 @@ public class Strategy {
     @Type( type = "jsonb" )
     @Column(name = "tests", columnDefinition = "jsonb")
     List<TestsStrategy> testsStrategy;
+
+    @Column(name = "buy_enabled")
+    Boolean buyEnabled;
+
+    @Column(name = "sell_enabled")
+    Boolean sellEnabled;
 }
