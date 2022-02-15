@@ -32,6 +32,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
@@ -179,7 +180,8 @@ public class BlockContractTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId)
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
@@ -210,7 +212,8 @@ public class BlockContractTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract 2 раза

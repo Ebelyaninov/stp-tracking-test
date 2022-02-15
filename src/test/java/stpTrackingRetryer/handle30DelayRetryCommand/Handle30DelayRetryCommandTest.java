@@ -378,24 +378,6 @@ public class Handle30DelayRetryCommandTest {
     }
 
 
-    //вызываем метод CreateSubscription для slave
-    void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
-        subscriptionApi.createSubscription()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebleIdSlave)
-            .contractIdQuery(contractIdSlave)
-            .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        contractSlave = contractService.getContract(contractIdSlave);
-    }
-
-
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,

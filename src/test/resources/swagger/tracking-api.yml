@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.11.0
+  version: 1.12.0
 
 servers:
   - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
@@ -414,37 +414,6 @@ paths:
       - $ref: '#/components/parameters/B3SpanId'
       - $ref: '#/components/parameters/B3ParentSpanId'
       - $ref: '#/components/parameters/B3Sampled'
-
-    post:
-      tags:
-        - subscription
-      summary: createSubscription
-      description: Создаёт подписку договора {contractId} на торговую стратегию {strategyId}
-      operationId: createSubscription
-      parameters:
-        - $ref: '#/components/parameters/StrategyId'
-        - name: contractId
-          description: Номер договора
-          in: query
-          required: true
-          schema:
-            $ref: '#/components/schemas/ContractId'
-      responses:
-        200:
-          description: OK
-          headers:
-            x-trace-id:
-              $ref: '#/components/headers/XTraceId'
-            x-server-time:
-              $ref: '#/components/headers/XServerTime'
-        400:
-          $ref: '#/components/responses/Error'
-        401:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
 
     delete:
       tags:
