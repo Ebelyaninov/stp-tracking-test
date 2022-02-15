@@ -198,7 +198,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1098642() {
         //находим в активных подписках договор и стратегию
-        String title = "тест стратегия autotest";
+        String title = steps.getTitleStrategy();
         String description = "new test стратегия autotest";
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов

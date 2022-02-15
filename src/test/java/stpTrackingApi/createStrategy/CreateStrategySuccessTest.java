@@ -422,6 +422,7 @@ public class CreateStrategySuccessTest {
         return Stream.of("days", "weeks", "months", "forever");
     }
 
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("retentionForStrategy")
     @AllureId("920608")

@@ -33,7 +33,10 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
@@ -162,7 +165,8 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -191,7 +195,8 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
