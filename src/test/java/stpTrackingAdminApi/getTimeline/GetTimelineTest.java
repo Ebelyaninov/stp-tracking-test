@@ -58,7 +58,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @Slf4j
-@Epic("getStrategy - Получение ленты событий")
+@Epic("getTimeline - Получение ленты событий")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-admin")
 @Tags({@Tag("stp-tracking-admin"), @Tag("getTimeline")})
@@ -73,8 +73,6 @@ import static org.hamcrest.Matchers.is;
 })
 public class GetTimelineTest {
     TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
-
-
     @Autowired
     ClientService clientService;
     @Autowired
