@@ -52,6 +52,20 @@ public class ResultFeeDao {
         return cqlTemplate.queryForObject(query, resultFeeRowMapper, contractId, strategyId, subscriptionId);
     }
 
+    public List<ResultFee> findListResultFee(String contractId, UUID strategyId, Long subscriptionId) {
+        String query = "select * " +
+            "FROM invest_tracking.result_fee " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " +
+            "  and subscription_id = ? " +
+            "ORDER BY subscription_id, version DESC, " +
+            "settlement_period_started_at DESC ";
+        List<ResultFee> result = cqlTemplate.query(query, resultFeeRowMapper, contractId, strategyId, subscriptionId);
+        return  result;
+    }
+
+
+
 
 
     @Step("Поиск портфеля в cassandra по contractId и strategyId")

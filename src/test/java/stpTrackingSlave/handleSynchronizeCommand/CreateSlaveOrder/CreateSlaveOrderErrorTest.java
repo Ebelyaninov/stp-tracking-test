@@ -46,10 +46,8 @@ import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
@@ -280,17 +278,27 @@ public class CreateSlaveOrderErrorTest {
         Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
+        Instant createdAtSlaveOrder = createdAt.toInstant();
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         //смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(31));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+
+
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
-        //проверяем message топика kafka
-        assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
-        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
+            is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
+
+
+
     }
 
 
@@ -303,7 +311,7 @@ public class CreateSlaveOrderErrorTest {
     void C849688() {
         contractIdSlave = "2092721501";
         String SIEBEL_ID_SLAVE = "5-2IMV74EF5";
-        String ticker = "ABBV";
+        String ticker = "AAPL";
         String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
@@ -350,7 +358,7 @@ public class CreateSlaveOrderErrorTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
-        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+        assertThat("Операция не равна", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
     }
 
 

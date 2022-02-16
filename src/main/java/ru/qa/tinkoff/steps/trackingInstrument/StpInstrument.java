@@ -97,9 +97,6 @@ public class StpInstrument {
     public String instrumentSNGSP = tickerSNGSP + "_" + classCodeSNGSP;
 
 
-
-
-
     public String tickerTRNFP = "TRNFP";
     public String tradingClearingAccountTRNFP = "L01+00000F00";
     public String classCodeTRNFP = "TQBR";
@@ -143,7 +140,7 @@ public class StpInstrument {
     public String tickerEURRUBTOM = "EUR_RUB__TOM";
     public String tradingClearingAccountEURRUBTOM = "MB9885503216";
     public String classCodeEURRUBTOM = "CETS";
-
+    public String instrumentEURRUBTOM = tickerEURRUBTOM + "_" + classCodeEURRUBTOM;
 
 
     public String tickerXS0587031096 = "XS0587031096";
@@ -219,5 +216,17 @@ public class StpInstrument {
     public String classCodeFXITTEST = "TQBR";
     public String instrumentFXITTEST = tickerFXITTEST + "_" + classCodeFXITTEST;
 
+
+    public String tickerXS0088543190 = "XS0088543190";
+    public String tradingClearingAccountXS0088543190 = "L01+00002F00";
+
+    public String tickerNMR = "NMR";
+    public String tradingClearingAccountNMR = "NDS000000001";
+
+    public String tickerBCR = "BCR";
+    public String tradingClearingAccountBCR = "L01+00000SPB";
+
+    public String tickerBRJ1 = "BRJ1";
+    public String tradingClearingAccountBRJ1 = "U800";
 
 }

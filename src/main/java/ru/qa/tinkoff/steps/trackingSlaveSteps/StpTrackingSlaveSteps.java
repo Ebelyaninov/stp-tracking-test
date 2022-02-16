@@ -693,6 +693,8 @@ public class StpTrackingSlaveSteps {
     }
 
 
+
+
     public Tracking.PortfolioCommand createRetrySynchronizationCommand(String contractIdSlave) {
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
