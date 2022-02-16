@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiver;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
+import ru.tinkoff.invest.sdet.kafka.prototype.reciever.dto.GenericMessage;
 
 import java.time.Duration;
 import java.util.*;
@@ -52,6 +53,18 @@ public class ByteArrayReceiverService {
         log.info("Из Kafka топика {} получено сообщений: {}", topicName, result.size());
         return result;
     }
+
+    @Step("Получить сообщения из Kafka топика {topic.name} c заголовками")
+    public List<GenericMessage<String, byte[]>> receiveBatchVerbose(Topics topic, Duration pollTimeout) {
+        String topicName = topic.getName();
+        List<GenericMessage<String, byte[]>> result = boostedReceiver
+            .receiveBatchVerbose(topicName, pollTimeout);
+        log.info("Из Kafka топика {} получено сообщений: {}", topicName, result.size());
+        return result;
+    }
+
+
+
 
     @Step("Переместить offset для всех партиций Kafka топика {topic.name} в конец очереди")
     public void resetOffsetToEnd(Topics topic) {

@@ -57,6 +57,15 @@ public class SlavePortfolioDao {
             " compared_to_master_version desc limit 1";;
         return cqlTemplate.queryForObject(query, slavePortfolioRowMapper, contractId, strategyId, cutDate);
     }
+    public SlavePortfolio getLatestSlavePortfolioAfter(String contractId, UUID strategyId, Date cutDate) {
+        String query = "select * from invest_tracking.changed_at_slave_portfolio" +
+            " where contract_id = ? " +
+            " and strategy_id = ? " +
+            " and changed_at >= ? " +
+            "order by changed_at ASC, version ASC," +
+            " compared_to_master_version ASC limit 1";;
+        return cqlTemplate.queryForObject(query, slavePortfolioRowMapper, contractId, strategyId, cutDate);
+    }
 
 
     public SlavePortfolio getLatestSlavePortfolio(String contractId, UUID strategyId, Date start, Date end) {

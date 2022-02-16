@@ -23,6 +23,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -73,6 +74,9 @@ public class StpTrackingFeeSteps {
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.Config.apiConfig()).cache();
+    InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
+        .api(ru.qa.tinkoff.swagger.fireg.invoker.ApiClient.Config.apiConfig()).instruments();
+
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -260,7 +264,6 @@ public class StpTrackingFeeSteps {
             .tradeTsQuery(date)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
-
         Map<String, BigDecimal> pricesPos = new HashMap<>();
         for (int i = 0; i < size; i++) {
             pricesPos.put(res.getBody().jsonPath().getString("instrument_id[" + i + "]"),
@@ -268,6 +271,22 @@ public class StpTrackingFeeSteps {
         }
         return pricesPos;
     }
+
+    public   String getPriceFromMarketData(String instrumentId, String type,  String date) {
+        Response res = pricesApi.mdInstrumentsPrices()
+            .instrumentsIdsQuery(instrumentId)
+            .requestIdQuery("111")
+            .systemCodeQuery("111")
+            .typesQuery(type)
+            .tradeTsQuery(date)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String price = res.getBody().jsonPath().getString("prices.price_value[0]");
+        price = price.substring(1);
+        price = price.substring(0, price.length() - 1);
+        return price;
+    }
+
 
 
     public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
@@ -502,6 +521,24 @@ public class StpTrackingFeeSteps {
             //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
 
+    }
+
+
+    public List<String> getDateBondFromInstrument (String ticker, String classCode, String dateFireg) {
+        List<String> dateBond = new ArrayList<>();
+        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
+            .instrumentIdPath(ticker)
+            .idKindQuery("ticker")
+            .classCodeQuery(classCode)
+            .startDateQuery(dateFireg)
+            .endDateQuery(dateFireg)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String aciValue = resp.getBody().jsonPath().getString("[0].value");
+        String nominal = resp.getBody().jsonPath().getString("[0].nominal");
+        dateBond.add(aciValue);
+        dateBond.add(nominal);
+        return dateBond;
     }
 
 
