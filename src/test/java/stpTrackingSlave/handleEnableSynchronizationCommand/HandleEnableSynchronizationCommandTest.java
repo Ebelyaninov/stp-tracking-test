@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.support.NullValue;
@@ -48,6 +51,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -162,6 +166,10 @@ public class HandleEnableSynchronizationCommandTest {
                 clientService.deleteClient(clientService.getClient(investIdMaster));
             } catch (Exception e) {
             }
+            try {
+                slaveOrderDao.deleteSlaveOrder2(contractIdSlave);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -220,7 +228,6 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
-            .sorted(Collections.reverseOrder())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
@@ -238,7 +245,7 @@ public class HandleEnableSynchronizationCommandTest {
         //Проверяем данные заявки
         assertThat("ticker не равен", slaveOrder.getTicker(), is(ticker1));
         assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount1));
-        assertThat("version не равна", slaveOrder.getVersion(), is(1));
+        assertThat("version не равна", slaveOrder.getVersion(), is(2));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity()));
     }
 
@@ -279,17 +286,15 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
-            .sorted(Collections.reverseOrder())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //получаем портфель slave
-        //await().atMost(TEN_SECONDS).until(() ->
-        Thread.sleep(10000);
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
+        await().atMost(TEN_SECONDS).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем выставленную заявку
         Thread.sleep(10000);
-        slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave);
+        slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
         //Проверяем, данные в сообщении
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем данные портфеля
@@ -370,8 +375,164 @@ public class HandleEnableSynchronizationCommandTest {
     }
 
 
+    private static Stream<Arguments> provideRequiredParam() {
+        return Stream.of(
+            Arguments.of(1),
+            Arguments.of(125),
+            Arguments.of(126)
+        );
+    }
 
 
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideRequiredParam")
+    @AllureId("1654359")
+    @DisplayName("1654359 handleEnableSynchronizationCommand. state = 0. ticker + trading_clearing_account + action из slave_order = значению ticker + trading_clearing_account + action выставляемой заявки")
+    @Subfeature("Успешные сценарии")
+    @Description("Обработка команды на включение синхронизации в обе стороны")
+    void C1654359(int attempts_count) {
+        //создаем клиента, контракт и стратегию
+        steps.createClientWintContractAndStrategy(investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку на стратегию
+        OffsetDateTime startTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker1, tradingClearingAccount1,
+            "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        //добавляем запись в таблицу slave_order_2
+        slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
+            2, attempts_count, 1, "SPBMX", new BigDecimal(1), idempotencyKey,
+            id, new BigDecimal(500), new BigDecimal(2), (byte) 0, ticker1, tradingClearingAccount1);
+        //Вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandEnableSynchronization(contractIdSlave);
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //получаем портфель slave
+        Thread.sleep(10000);
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
+        //получаем выставленную заявку
+        //Thread.sleep(10000);
+        slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
+        //Проверяем данные портфеля
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
+        //Проверяем данные заявки
+        assertThat("ticker не равен", slaveOrder.getTicker(), is(ticker1));
+        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount1));
+        assertThat("action не равен", slaveOrder.getAction().intValue(), is(1));
+        assertThat("version не равна", slaveOrder.getVersion(), is(2));
+        assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
+        if (attempts_count == 1) {
+            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(1));
+        }
+        if (attempts_count == 125) {
+            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(126));
+            //проверяем, что контракт заблокирован
+            assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+        }
+        else {
+            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(126));
+        }
+
+
+    }
+
+    private static Stream<Arguments> Params() {
+        return Stream.of(
+            Arguments.of("AAPL", "TKCBM_TCAB", 1),
+            Arguments.of("ALFAperp", "TKCBM_TCAB", 0)
+        );
+    }
+
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("Params")
+    @AllureId("1654361")
+    @DisplayName("1654361 handleEnableSynchronizationCommand. state = 0. ticker + trading_clearing_account + action из slave_order != значению ticker + trading_clearing_account + action выставляемой заявки")
+    @Subfeature("Успешные сценарии")
+    @Description("Обработка команды на включение синхронизации в обе стороны")
+    void C1654361(String tickerA, String tradingClearingAccountA, int action) {
+        //создаем клиента, контракт и стратегию
+        steps.createClientWintContractAndStrategy(investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку на стратегию
+        OffsetDateTime startTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+            "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        //добавляем запись в таблицу slave_order_2
+        slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
+            2, 100, action, "SPBMX", new BigDecimal(1), idempotencyKey,
+            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA);
+        //Вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandEnableSynchronization(contractIdSlave);
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //получаем портфель slave
+        Thread.sleep(10000);
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
+        //получаем выставленную заявку
+        Thread.sleep(10000);
+        slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
+        //Проверяем данные портфеля
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
+        //Проверяем данные заявки
+        assertThat("ticker не равен", slaveOrder.getTicker(), is(ticker));
+        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("action не равен", slaveOrder.getAction().intValue(), is(0));
+        assertThat("version не равна", slaveOrder.getVersion(), is(2));
+        assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
+        assertThat("attempts_count не равно", slaveOrder.getAttemptsCount().intValue(), is(1));
+    }
 
 
     //методы
@@ -388,4 +549,5 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("Operation не равен", portfolioCommand.getOperation(), is(Tracking.PortfolioCommand.Operation.ENABLE_SYNCHRONIZATION));
 
     }
+
 }

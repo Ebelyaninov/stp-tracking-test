@@ -7,6 +7,7 @@ import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.SlaveOrder2RowMapper;
 
@@ -129,6 +130,28 @@ public class SlaveOrder2Dao {
             "LIMIT 1";
         List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
         return Optional.of(result.get(0));
+    }
+
+    @Step("Получаем запись о выставленной заявке в slave_order_2 по стратегии")
+    public SlaveOrder2 getSlaveOrder2ByStrategy(String contractId, UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "and strategy_id = ? " +
+            "LIMIT 1 " +
+            "ALLOW FILTERING";
+        return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, strategyId);
+    }
+
+    @Step("Получаем список записей о выставленной заявке в slave_order_2 по стратегии")
+    public List<SlaveOrder2> getSlaveOrder2WithStrategy(String contractId, UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "and strategy_id = ? " +
+            "ALLOW FILTERING";
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId, strategyId);
+        return result;
     }
 
 }

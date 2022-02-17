@@ -66,7 +66,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class,
+    //StpTrackingAdminStepsConfiguration.class
 })
 
 public class HandleEnableSynchronizationCommandErrorTest {
@@ -97,6 +98,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
+   // @Autowired
+   // StpTrackingAdminSteps adminSteps;
 
 
     SlavePortfolio slavePortfolio;
@@ -200,6 +203,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
             "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySl, date, createListSlaveOnePos);
+        //Вычитываем из топика кафка tracking.contract.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -207,14 +212,11 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(10));
         Pair<String, byte[]> messageSlave = messages.stream()
-            .sorted(Collections.reverseOrder())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messageSlave.getValue());
-        //Вычитываем из топика кафка tracking.contract.event все offset
-        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages1 = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(30));
+        List<Pair<String, byte[]>> messages1 = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
         Pair<String, byte[]> messageEvent = messages1.stream()
             .sorted(Collections.reverseOrder())
             .findFirst()
@@ -226,10 +228,10 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем, данные в сообщении из tracking.contract.event
-        checkEvent(event, contractIdSlave, "UPDATED", "UNTRACKED", true);
+        checkEvent(event, contractIdSlave, "UPDATED", "TRACKED", true);
         //Проверяем портфель slave
-        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(null));
-        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(null));
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(nullValue()));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(nullValue()));
         //Проверяем contractSlave
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
     }
@@ -436,7 +438,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySl, date, createListSlaveOnePos);
         //Блокируем контракт slave
-       // adminSteps.BlockContract(contractIdSlave);
+        //adminSteps.BlockContract(contractIdSlave);
         //Вычитываем из топика кафка tracking.contract.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вычитываем из топика кафка tracking.slave.command все offset
@@ -504,12 +506,10 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //получаем портфель slave
-        //await().atMost(TEN_SECONDS).until(() ->
-        Thread.sleep(10000);
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
+        await().atMost(TEN_SECONDS).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем выставленную заявку
-        Thread.sleep(10000);
-        slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave);
+        slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
         //Проверяем данные портфеля
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
@@ -582,6 +582,160 @@ public class HandleEnableSynchronizationCommandErrorTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1378834")
+    @DisplayName("1378834 При выборе позиции для синхронизации получили null для slave'а из команды на включение синхронизации в обе стороны")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Обработка команды на включение синхронизации в обе стороны")
+    void C1378834() {
+        //создаем клиента, контракт и стратегию
+        steps.createClientWintContractAndStrategy(investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку на стратегию
+        OffsetDateTime startTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "5732.2";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+            "4", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        //Вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandEnableSynchronization(contractIdSlave);
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Thread.sleep(10000);
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
+        //Получаем список заявок в рамках стратегии
+        List<SlaveOrder2> getListFromSlaveOrder = slaveOrderDao.getSlaveOrder2WithStrategy(contractIdSlave, strategyId);
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //Проверяем данные портфеля
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
+        //Проверяем, что заявок нет
+        assertThat("появилась новая заявка", getListFromSlaveOrder.size(), is(0));
+
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1378822")
+    @DisplayName("1378822 Состояние подписки slave'а blocked = true из команды на включение синхронизации в обе стороны")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Обработка команды на включение синхронизации в обе стороны")
+    void C1378822() {
+        //создаем клиента, контракт и стратегию
+        steps.createClientWintContractAndStrategy(investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        //создаем подписку на стратегию
+        OffsetDateTime startTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, true);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+            "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        //Вычитываем из топика кафка tracking.contract.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //Вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandEnableSynchronization(contractIdSlave);
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //Проверяем contractSlave
+        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1378786")
+    @DisplayName("1378786 Статус договора state != 'tracked' из команды на включение синхронизации в обе стороны")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Обработка команды на включение синхронизации в обе стороны")
+    void C1378786() {
+        //создаем клиента, контракт и стратегию
+        steps.createClientWintContractAndStrategy(investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку на стратегию
+        OffsetDateTime startTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //удаляем подписку на стратегию
+        subscriptionService.deleteSubscription(subscription);
+        //создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        //создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+            "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySl, date, createListSlaveOnePos);
+        //Вычитываем из топика кафка tracking.slave.command все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandEnableSynchronization(contractIdSlave);
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Получаем портфель slave
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //Проверяем данные портфеля
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(nullValue()));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(nullValue()));
+
+    }
+
+
 
 
     //методы
@@ -641,6 +795,19 @@ public class HandleEnableSynchronizationCommandErrorTest {
         assertThat("Action не равен", event.getAction().toString(), is(action));
         assertThat("State не равен", event.getContract().getState().toString(), is(state));
         assertThat("Blocked не равен", (event.getContract().getBlocked()), is(blocked));
+
+    }
+
+    @Test
+    void insertContractAndBlock(){
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.createClientWithContract(investIdSlave, ClientRiskProfile.aggressive,
+            contractIdSlave, null, ContractState.untracked, null);
+        //adminSteps.BlockContract(contractIdSlave);
+
 
     }
 
