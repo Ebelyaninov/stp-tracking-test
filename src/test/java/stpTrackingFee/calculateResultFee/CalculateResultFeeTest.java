@@ -7,6 +7,7 @@ import io.restassured.response.Response;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1990,6 +1991,68 @@ public class CalculateResultFeeTest {
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
             assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(valueHighWaterMarkList.get(i + 1)));
         }
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1696489")
+    @DisplayName("C1696489.CalculateResultFee Не нашли портфель во время расчета комиссии за результат")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1696489() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //ожидаем записи в result_fee
+        await().atMost(Duration.ofSeconds(5)).until(() ->
+            resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0), notNullValue());
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        //Проверяем отправку нулевой комисси
+        assertThat("HWM не равен 0", feeCommand.getResult().getHighWaterMark().getScale(), is(0));
+        assertThat("HWM не равен 0", feeCommand.getResult().getHighWaterMark().getUnscaled(), is(0L));
+        assertThat("portfolio_value не равен 0", feeCommand.getResult().getPortfolioValue().getScale(), is(0));
+        assertThat("portfolio_value не равен 0", feeCommand.getResult().getPortfolioValue().getUnscaled(), is(0L));
+        //проверяем комисию
+        assertThat("version комиссии не равно", resultFee.getVersion(), is(0));
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(new BigDecimal("0")));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(new BigDecimal("0")));
     }
 
 
