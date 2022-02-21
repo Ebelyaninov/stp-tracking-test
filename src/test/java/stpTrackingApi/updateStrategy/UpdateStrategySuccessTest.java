@@ -271,7 +271,7 @@ public class UpdateStrategySuccessTest {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);

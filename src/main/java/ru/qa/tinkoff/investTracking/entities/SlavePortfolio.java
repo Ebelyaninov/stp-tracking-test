@@ -20,6 +20,8 @@ public class SlavePortfolio {
     private List<Position> positions;
     private BaseMoneyPosition baseMoneyPosition;
     private Date changedAt;
+    private  BigDecimal targetFeeReserveQuantity;
+    private  BigDecimal actualFeeReserveQuantity;
 
     @UDT(keyspace = "invest_tracking", name = "slave_portfolio_position")
     @NoArgsConstructor

@@ -191,6 +191,7 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("731513")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C731513.HandleActualizeCommand.Определяем текущий портфель slave'a.Инициализация slave-портфеля с базовой валютой")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
@@ -867,7 +868,7 @@ public class HandleActualizeCommandTest {
         List<SlavePortfolio.Position> positionYNDX = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerYNDX))
             .collect(Collectors.toList());
-        checkPosition(positionYNDX, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+        checkPosition(positionYNDX, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5");
     }
 
 
@@ -934,7 +935,7 @@ public class HandleActualizeCommandTest {
         List<SlavePortfolio.Position> positionYNDX = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerYNDX))
             .collect(Collectors.toList());
-        checkPosition(positionYNDX, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+        checkPosition(positionYNDX, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "5");
     }
 
 
@@ -1027,7 +1028,7 @@ public class HandleActualizeCommandTest {
     }
 
 
-    //AAPL=4 USD=5855.6
+    //AAPL=4 USD=11710.6
     @SneakyThrows
     @Test
     @AllureId("1516525")
@@ -1082,7 +1083,7 @@ public class HandleActualizeCommandTest {
             null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
-        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 117106, contractIdSlave,
             versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE),
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
@@ -1097,7 +1098,7 @@ public class HandleActualizeCommandTest {
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5855.6"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("11710.6"));
         assertThat("lastСhangeAction базовой валюты в портфеле slave не равно",
             slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is(nullValue()));
         //проверяем позиции
@@ -1127,7 +1128,7 @@ public class HandleActualizeCommandTest {
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
         assertThat("ClassCode не равно", slaveOrder2.getClassCode(), is(instrument.classCodeAAPL));
         assertThat("IdempotencyKey пустой", slaveOrder2.getIdempotencyKey(), is(notNullValue()));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("1")));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("4")));
         assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(instrument.tickerABBV));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(instrument.tradingClearingAccountABBV));
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
@@ -1137,7 +1138,7 @@ public class HandleActualizeCommandTest {
     }
 
 
-    //AAPL=4 USD=5855.6
+    //AAPL=4 USD=11710.6
     @SneakyThrows
     @Test
     @AllureId("1517499")
@@ -1188,7 +1189,7 @@ public class HandleActualizeCommandTest {
 
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
-        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 117106, contractIdSlave,
             versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE),
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
@@ -1203,7 +1204,7 @@ public class HandleActualizeCommandTest {
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5855.6"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("11710.6"));
 //        assertThat("lastСhangeAction базовой валюты в портфеле slave не равно",
 //            slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) 39));
 //        assertThat("changed_at базовой валюты в портфеле slave не равен",
@@ -1234,7 +1235,7 @@ public class HandleActualizeCommandTest {
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
         assertThat("ClassCode не равно", slaveOrder2.getClassCode(), is(instrument.classCodeAAPL));
         assertThat("IdempotencyKey пустой", slaveOrder2.getIdempotencyKey(), is(notNullValue()));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("1")));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("4")));
         assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(instrument.tickerABBV));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(instrument.tradingClearingAccountABBV));
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
@@ -1291,7 +1292,7 @@ public class HandleActualizeCommandTest {
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
 
-        Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(1, 58556,
+        Tracking.PortfolioCommand command = createCommandActualizeOnlyBaseMoney(1, 117106,
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
 
@@ -1306,7 +1307,7 @@ public class HandleActualizeCommandTest {
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5855.6"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("11710.6"));
 //        assertThat("lastСhangeAction базовой валюты в портфеле slave не равно",
 //            slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) 39));
 //        assertThat("changed_at базовой валюты в портфеле slave не равен",
@@ -1336,7 +1337,7 @@ public class HandleActualizeCommandTest {
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
         assertThat("ClassCode не равно", slaveOrder2.getClassCode(), is(instrument.classCodeABBV));
         assertThat("IdempotencyKey пустой", slaveOrder2.getIdempotencyKey(), is(notNullValue()));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("1")));
+        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(new BigDecimal("4")));
         assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(instrument.tickerABBV));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(instrument.tradingClearingAccountABBV));
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
@@ -1407,7 +1408,7 @@ public class HandleActualizeCommandTest {
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5855.6"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("11710.6"));
 //        assertThat("lastСhangeAction базовой валюты в портфеле slave не равно",
 //            slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is(nullValue()));
 //        assertThat("changed_at базовой валюты в портфеле slave не равен",
@@ -1488,7 +1489,7 @@ public class HandleActualizeCommandTest {
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //проверяем базовую валюту
         assertThat("базовая валюта в портфеле slave не равно",
-            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5855.6"));
+            slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("11710.6"));
         assertThat("lastСhangeAction базовой валюты в портфеле slave не равно",
             slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is(nullValue()));
         assertThat("changed_at базовой валюты в портфеле slave не равен",
@@ -3309,7 +3310,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1596739() {
         String SIEBEL_ID_SLAVE = "5-3CGSIDQR";
-        String baseMoneyPositionSlave = "1078.97";
+        String baseMoneyPositionSlave = "2156";
         String quantityPos = "10";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);

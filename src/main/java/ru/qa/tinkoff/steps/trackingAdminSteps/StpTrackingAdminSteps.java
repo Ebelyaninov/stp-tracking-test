@@ -111,7 +111,7 @@ public class StpTrackingAdminSteps {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -170,7 +170,7 @@ public class StpTrackingAdminSteps {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -231,7 +231,7 @@ public class StpTrackingAdminSteps {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -330,7 +330,7 @@ public class StpTrackingAdminSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(blockedContract);

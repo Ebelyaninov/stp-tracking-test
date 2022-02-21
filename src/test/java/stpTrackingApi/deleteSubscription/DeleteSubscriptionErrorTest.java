@@ -564,7 +564,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("статус подписки не равен", subscription.getStatus().toString(), is(status));
         assertThat("время удаления подписки не равно", subscription.getEndTime(), is(IsNull.nullValue()));
         //находим запись по контракту ведомого и проверяем значения
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+//        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
         assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));

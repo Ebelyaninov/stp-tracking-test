@@ -58,9 +58,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.collect.Comparators.max;
+import static com.google.common.collect.Comparators.min;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -132,7 +135,7 @@ public class AnalyzePortfolioTest {
     String SIEBEL_ID_SLAVE = "1-BXDUEON";
     long subscriptionId;
 
-
+    BigDecimal targetFeeReserveRate = new BigDecimal("0.03");
     String description = "description test стратегия autotest analyzeSlavePortfolio";
 
     @AfterEach
@@ -252,19 +255,29 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "0", nullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -334,21 +347,31 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "2.0", notNullValue());
         assertThat("ChangedAt позиции в портфеле slave не равен", position.get(0).getChangedAt().toInstant(), is(date.toInstant()));
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+
     }
 
 
@@ -422,13 +445,24 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         //проверяем параметры позиции с расчетами
         checkPosition(positionABBV, priceMaster, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
             instrument.tradingClearingAccountABBV, "0", nullValue());
@@ -588,7 +622,7 @@ public class AnalyzePortfolioTest {
         BigDecimal price = roundPrice
             .add(aciValue);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
@@ -596,19 +630,31 @@ public class AnalyzePortfolioTest {
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerALFAperp))
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerALFAperp,
             instrument.tradingClearingAccountALFAperp, "0", nullValue());
@@ -696,13 +742,24 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionSBER.get(0).getQuantity().multiply(priceSBER)).add(positionUSD.get(0).getQuantity().multiply(priceNewUSD));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
         //проверяем параметры позиции с расчетами
         checkPosition(positionSBER, priceSBER, slavePortfolioValue, slavePositionsValue, masterPositionRateSBER, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "0", nullValue());
@@ -792,13 +849,24 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionSBER.get(0).getQuantity().multiply(priceSBER)).add(positionGBP.get(0).getQuantity().multiply(priceNewGBP));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
         //проверяем параметры позиции с расчетами
         checkPosition(positionSBER, priceSBER, slavePortfolioValue, slavePositionsValue, masterPositionRateSBER, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "0", nullValue());
@@ -1884,11 +1952,22 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6445.55"));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         assertThat("Проверяем флаг buy_enabled ", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(false));
         assertThat("Проверяем флаг sell_enabled", slavePortfolio.getPositions().get(0).getSellEnabled(), is(false));
@@ -1974,13 +2053,24 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7421.64"));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "6", notNullValue());
@@ -2078,11 +2168,22 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6779.70"));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         assertThat("Проверяем флаг buy_enabled ", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", slavePortfolio.getPositions().get(0).getSellEnabled(), is(sellRes));
@@ -2170,11 +2271,22 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7211.24"));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "8", notNullValue());
@@ -2285,11 +2397,22 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(4));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6445.55"));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "5", notNullValue());
@@ -2399,11 +2522,22 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(4));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7211.24"));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "8", notNullValue());
@@ -2492,13 +2626,27 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        if (baseMoneyPositionQuantity.compareTo(BigDecimal.ZERO) < 0){
+            baseMoneyPositionQuantity=BigDecimal.ZERO;
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "6", notNullValue());
@@ -2595,13 +2743,28 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        if (baseMoneyPositionQuantity.compareTo(BigDecimal.ZERO) < 0){
+            baseMoneyPositionQuantity=BigDecimal.ZERO;
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
@@ -2686,13 +2849,28 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        if (baseMoneyPositionQuantity.compareTo(BigDecimal.ZERO) < 0){
+            baseMoneyPositionQuantity=BigDecimal.ZERO;
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
@@ -2767,13 +2945,28 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = positionAAPL.get(0).getQuantity().multiply(priceAAPL);
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        if (baseMoneyPositionQuantity.compareTo(BigDecimal.ZERO) < 0){
+            baseMoneyPositionQuantity=BigDecimal.ZERO;
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
         BigDecimal slavePositionRate = BigDecimal.ZERO;
         BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
@@ -2849,13 +3042,28 @@ public class AnalyzePortfolioTest {
             .collect(Collectors.toList());
         BigDecimal slavePositionsValue = BigDecimal.ZERO;
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
-        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity);
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        if (baseMoneyPositionQuantity.compareTo(BigDecimal.ZERO) < 0){
+            baseMoneyPositionQuantity=BigDecimal.ZERO;
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
         BigDecimal slavePositionRate = BigDecimal.ZERO;
         BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
@@ -2868,6 +3076,100 @@ public class AnalyzePortfolioTest {
         assertThat("Rate позиции в портфеле slave не равен", positionAAPL.get(0).getRate().doubleValue(), is(slavePositionRate.doubleValue()));
         assertThat("RateDiff позиции в портфеле slave не равен", positionAAPL.get(0).getRateDiff(), is(slavePositionRateDiff));
         assertThat("QuantityDiff позиции в портфеле slave не равен", positionAAPL.get(0).getQuantityDiff(), is(slavePositionQuantityDiff));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1698354")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("C1698354.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio." +
+        "Минимальное значение targetFeeReserveQuantity")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C1698354() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked, null,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        // создаем портфель мастера с позицией в кассандре
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build()).build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "108", date, 2, positionAction);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "259.17", masterPos);
+        //получаем идентификатор подписки
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave в cassandra c пустой позицией по бумаге
+        //создаем портфель для ведомого
+        String baseMoneySlave = "100";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "50", date, 1, new BigDecimal("107"),
+            new BigDecimal("0.981700"), new BigDecimal("-0.003600"), new BigDecimal("-0.1779"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            baseMoneySlave, date, createListSlaveOnePos);
+        //отправляем команду на синхронизацию
+        OffsetDateTime time = OffsetDateTime.now();
+        createCommandSynTrackingSlaveCommand(contractIdSlave, time);
+        //получаем значение price из кеша exchangePositionPriceCache
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
+        //получаем портфель slave
+        checkComparedToMasterVersion(2);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //выполняем расчеты
+        BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
+        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
+        BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        //сохраняем в список значения по позиции в портфеле
+        List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
+            .collect(Collectors.toList());
+        BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
+        BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = BigDecimal.ZERO;
+        if (slavePortfolioTotal.compareTo(BigDecimal.ZERO) > 0) {
+            targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+        }
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
+        //проверяем расчеты и содержимое позиции slave
+        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
+
+        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
+        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
+            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
+        assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
+        //проверяем параметры позиции с расчетами
+        checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "50", notNullValue());
+        assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
+
     }
 
 
@@ -2908,6 +3210,8 @@ public class AnalyzePortfolioTest {
             slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePortfolioValue)
                 .divide(price, 4, BigDecimal.ROUND_HALF_UP);
         }
+
+
         if (slavePortfolioValue.compareTo(BigDecimal.ZERO) <= 0) {
             slavePositionRate = (position.get(0).getQuantity().multiply(price)).divide(slavePositionsValue, 4, RoundingMode.HALF_UP);
             slavePositionRateDiff = slavePositionRate.negate();
