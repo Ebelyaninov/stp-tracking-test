@@ -271,7 +271,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
-            2, 1, 0, "SPBMX", new BigDecimal(1), idempotencyKey,
+            2, 1, 0, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
             id, new BigDecimal(107), new BigDecimal(1), (byte) 1, ticker, tradingClearingAccount);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);

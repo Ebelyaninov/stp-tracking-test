@@ -166,4 +166,14 @@ public class SlaveOrder2Dao {
         return result;
     }
 
+    @Step("Проверяем запись о выставленной заявке в slave_order_2")
+    public SlaveOrder2 getSlaveOrder2ByStrategy(String contractId, UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "and strategy_id = ?" +
+            "LIMIT 1" +
+            "ALLOW FILTERING";
+        return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, strategyId);
+    }
 }

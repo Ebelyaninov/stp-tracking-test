@@ -246,7 +246,7 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("ticker не равен", slaveOrder.getTicker(), is(ticker1));
         assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(tradingClearingAccount1));
         assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity()));
+        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
     }
 
 
@@ -340,7 +340,7 @@ public class HandleEnableSynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
-            2, 1, 1, "SPBMX", new BigDecimal(1), idempotencyKey,
+            2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
             id, new BigDecimal(500), new BigDecimal(3), (byte) 0, ticker2, tradingClearingAccount2);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
@@ -416,7 +416,7 @@ public class HandleEnableSynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
-            2, attempts_count, 1, "SPBMX", new BigDecimal(1), idempotencyKey,
+            2, attempts_count, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
             id, new BigDecimal(500), new BigDecimal(2), (byte) 0, ticker1, tradingClearingAccount1);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
@@ -501,7 +501,7 @@ public class HandleEnableSynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
-            2, 100, action, "SPBMX", new BigDecimal(1), idempotencyKey,
+            2, 100, action, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
             id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
