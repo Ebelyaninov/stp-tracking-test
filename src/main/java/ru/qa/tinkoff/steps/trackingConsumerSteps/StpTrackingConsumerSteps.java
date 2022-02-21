@@ -199,7 +199,7 @@ public class StpTrackingConsumerSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -241,7 +241,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -272,7 +272,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -303,7 +303,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -323,7 +323,7 @@ public class StpTrackingConsumerSteps {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+//        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
         assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("untracked"));
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(IsNull.nullValue()));
     }
@@ -380,7 +380,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);

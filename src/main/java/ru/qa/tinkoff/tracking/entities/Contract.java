@@ -23,9 +23,9 @@ public class Contract {
     @Id
     String id;
 
-    @Type( type = "pgsql_enum" )
-    @Enumerated(EnumType.STRING)
-    ContractRole role;
+//    @Type( type = "pgsql_enum" )
+//    @Enumerated(EnumType.STRING)
+//    ContractRole role;
 
     @Type( type = "pgsql_enum" )
     @Enumerated(EnumType.STRING)

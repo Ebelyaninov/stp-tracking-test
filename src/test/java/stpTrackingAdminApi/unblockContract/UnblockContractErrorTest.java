@@ -191,7 +191,7 @@ public class UnblockContractErrorTest {
             contract = new Contract()
                 .setId(contractIdSlave)
                 .setClientId(clientSlave.getId())
-                .setRole(null)
+//                .setRole(null)
                 .setState(contractState)
                 .setBlocked(blocked);
 

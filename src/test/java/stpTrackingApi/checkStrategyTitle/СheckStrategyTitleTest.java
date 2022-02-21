@@ -149,7 +149,7 @@ public class СheckStrategyTitleTest {
        Contract insertContract = new Contract()
             .setId(contractId)
             .setClientId(investId)
-            .setRole(null)
+//            .setRole(null)
             .setState(ContractState.untracked)
             .setStrategyId(null)
             .setBlocked(false);

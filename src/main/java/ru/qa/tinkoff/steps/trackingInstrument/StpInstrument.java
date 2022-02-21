@@ -142,6 +142,10 @@ public class StpInstrument {
     public String classCodeEURRUBTOM = "CETS";
     public String instrumentEURRUBTOM = tickerEURRUBTOM + "_" + classCodeEURRUBTOM;
 
+    public String tickerEURRUB = "EURRUB";
+    public String tradingClearingAccountEURRUB = "MB9885503216";
+    public String classCodeEURRUB = "EES_CETS";
+
 
     public String tickerXS0587031096 = "XS0587031096";
     public String tradingClearingAccountXS0587031096 = "L01+00000SPB";
@@ -228,5 +232,10 @@ public class StpInstrument {
 
     public String tickerBRJ1 = "BRJ1";
     public String tradingClearingAccountBRJ1 = "U800";
+
+
+    public String tickerQCOM = "QCOM";
+    public String tradingClearingAccountQCOM = "L01+00000SPB";
+    public String classCodeQCOM = "SPBXM";
 
 }

@@ -97,7 +97,7 @@ public class ContractService {
     @Step("Изменение роли контракта")
     public Contract updateRoleContract(String id, ContractRole role) throws JsonProcessingException {
         Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
-        contract.setRole(role);
+//        contract.setRole(role);
         contractRepository.save(contract);
         log.info("Successfully update contract {}", contract);
         Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(contract));
