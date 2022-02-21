@@ -1,0 +1,24 @@
+{
+    "httpRequest": {
+        "method": "GET",
+        "path": "{{path}}",
+        "queryStringParameters": {
+            "types": [
+                "{{type}}"
+            ]
+        }
+    },
+    "httpResponse": {
+        "body": {
+            "instrument_id": "{{instrumentId}}",
+            "prices": [
+                {
+                    "ts": "{{ts}}",
+                    "price_type": "{{type}}",
+                    "price_value": {{priceValue}}
+                }
+            ]
+        }
+    },
+    "priority": 0
+}

@@ -405,7 +405,7 @@ public class HandleAccountRegistrationEventTest {
         contractSlave = new Contract()
             .setId(contractIdAgressive)
             .setClientId(clientSlave.getId())
-            .setRole(null)
+//            .setRole(null)
             .setState(ContractState.untracked)
             .setStrategyId(null)
             .setBlocked(false);
@@ -709,7 +709,7 @@ public class HandleAccountRegistrationEventTest {
         Contract getDataFromContract = contractService.getContract(contractId);
         assertThat("id != " + contractIdMedium, getDataFromContract.getId(), equalTo(contractId));
         assertThat("client_id  != " + investId, getDataFromContract.getClientId(), equalTo(investId));
-        assertThat("role != null", getDataFromContract.getRole(), equalTo(null));
+//        assertThat("role != null", getDataFromContract.getRole(), equalTo(null));
         assertThat("state != " + state, getDataFromContract.getState(), equalTo(state));
         assertThat("strategy_id != " + strategyId, getDataFromContract.getStrategyId(), equalTo(strategyId));
         //assertThat("blocked != false", getDataFromContract.getBlocked(), equalTo(false));

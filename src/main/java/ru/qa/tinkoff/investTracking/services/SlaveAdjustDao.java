@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
@@ -26,11 +27,17 @@ public class SlaveAdjustDao {
 
 
     @Step("Поиск завода в cassandra по contractId и strategyId")
-
     public List<SlaveAdjust> getSlaveAdjustByStrategyIdAndContract(String contractId, UUID strategyId) {
         String query  = "SELECT * FROM invest_tracking.slave_adjust WHERE " +
             "contract_id = ? AND strategy_id = ? ";
         return cqlTemplate.query(query, slaveAdjustRowMapper,contractId, strategyId);
+    }
+
+    @Step("Поиск завода в cassandra по contractId и strategyId")
+    public List<SlaveAdjust> getSlaveAdjustByPeriod(String contractId, UUID strategyId, Date from, Date to) {
+        String query  = "SELECT * FROM invest_tracking.slave_adjust WHERE " +
+            "contract_id = ? AND strategy_id = ?  AND created_at >= ? AND created_at < ?";
+        return cqlTemplate.query(query, slaveAdjustRowMapper,contractId, strategyId, from, to);
     }
 
 

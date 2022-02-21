@@ -17,11 +17,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
-import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
@@ -31,14 +28,13 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetSignsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetSignalsResponse;
-import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponse;
-import ru.qa.tinkoff.swagger.tracking.model.MasterPortfolioPosition;
 import ru.qa.tinkoff.swagger.tracking.model.Signal;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -52,7 +48,10 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,7 +70,8 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class GetSignalsTest {
 
@@ -97,6 +97,8 @@ public class GetSignalsTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     MasterSignalDao masterSignalDao;
+    @Autowired
+    StpInstrument instrument;
 
     Client clientSlave;
 
@@ -115,60 +117,30 @@ public class GetSignalsTest {
 
     MasterSignal masterSignal;
 
-    final String tickerNok = "NOK";
-    final String tradingClearingAccountNok = "L01+00000SPB";
-    final String briefNameNok = "Nokia";
-    final String imageNok = "US6549022043.png";
-    final String typeNok = "share";
 
-    final String tickerGazprom = "XS0191754729";
-    final String tradingClearingAccountGazprom = "L01+00000F00";
-
-    final String tickerAbbV = "ABBV";
-    final String tradingClearingAccountAbbV = "TKCBM_TCAB";
-
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
-
+    //
     final String tickerNotFound = "TESTTEST";
     final String tradingClearingAccountNotFound = "TKCBM_TCAB";
 
-
-    String tickerEtf = "FXDE";
-    String tradingClearingAccountEtf = "L01+00002F00";
-    String quantityEtf = "5";
-    final String briefNameEtf = "FinEx Акции немецких компаний";
-    final String imageEtf = "IE00BD3QJN10.png";
-    final String typeEtf = "etf";
-
-    String tickerBond = "SU29009RMFS6";
-    String tradingClearingAccountBond = "L01+00002F00";
-    String quantityBond = "7";
-    final String briefNameBond = "ОФЗ 29009";
-    final String imageBond = "minfin.png";
-    final String typeBond = "bond";
-
-    String tickerMoney = "USD000UTSTOM";
-    String tradingClearingAccountMoney = "MB9885503216";
+    String quantityFXDE = "5";
+    String quantitySU29009RMFS6 = "7";
     String quantityMoney = "2000";
-    final String briefNameMoney = "Доллар США";
-    final String imageMoney = "USD.png";
-    final String typeMoney = "money";
+
 
     @BeforeEach
     void createClient() {
-            int randomNumber = 0 + (int) (Math.random() * 100);
-            String title = "Autotest" +String.valueOf(randomNumber);
-            String description = "new test стратегия autotest";
-            strategyId = UUID.randomUUID();
-            //получаем данные по клиенту master в api сервиса счетов
-            GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-            UUID investIdMaster = resAccountMaster.getInvestId();
-            contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-            //создаем в БД tracking данные: client, contract, strategy в статусе active
-            steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-                strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                StrategyStatus.active, 0, LocalDateTime.now().minusDays(32), 1, false);
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(32), 1, false);
     }
 
 
@@ -253,7 +225,6 @@ public class GetSignalsTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
-
 
 
     @SneakyThrows
@@ -368,7 +339,7 @@ public class GetSignalsTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(2);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcriptionDraftOrInActive(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.untracked,
-            strategyId, SubscriptionStatus.inactive,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
@@ -386,7 +357,6 @@ public class GetSignalsTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
-
 
 
     @SneakyThrows
@@ -435,7 +405,7 @@ public class GetSignalsTest {
             .execute(response -> response.as(GetSignalsResponse.class));
         //смотрим сигналы в master_signal
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
-        List<MasterSignal> signal = masterSignal.stream().filter(res -> res.getTicker().equals(tickerNok))
+        List<MasterSignal> signal = masterSignal.stream().filter(res -> res.getTicker().equals(instrument.tickerNOK))
             .collect(Collectors.toList());
         //получаем ответ и проверяем
         assertThat("размер items не равно", getSignals.getItems().size(), is(1));
@@ -450,7 +420,6 @@ public class GetSignalsTest {
         assertThat("ticker последнего сигнала не равно", getSignals.getItems().get(0).getExchangePosition().getTicker(),
             is(signal.get(0).getTicker()));
     }
-
 
 
     @SneakyThrows
@@ -468,7 +437,7 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-       //вызываем метод для получения списка сделок (сигналов) стратегии
+        //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -478,9 +447,9 @@ public class GetSignalsTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetSignalsResponse.class));
         //смотрим сигналы в master_signal
-       List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
+        List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
-        checkParam (masterSignal,  getSignals);
+        checkParam(masterSignal, getSignals);
     }
 
     @SneakyThrows
@@ -505,7 +474,7 @@ public class GetSignalsTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
@@ -519,7 +488,7 @@ public class GetSignalsTest {
         //смотрим сигналы в master_signal
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
-        checkParam (masterSignal,  getSignals);
+        checkParam(masterSignal, getSignals);
     }
 
 
@@ -546,7 +515,7 @@ public class GetSignalsTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(2);
         steps.createSubcriptionDraftOrInActive(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.untracked,
             strategyId, SubscriptionStatus.draft, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
-           null, false);
+            null, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
             .strategyIdPath(strategyId)
@@ -559,10 +528,8 @@ public class GetSignalsTest {
         //смотрим сигналы в master_signal
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
-        checkParam (masterSignal,  getSignals);
+        checkParam(masterSignal, getSignals);
     }
-
-
 
 
     @SneakyThrows
@@ -600,23 +567,23 @@ public class GetSignalsTest {
             .execute(response -> response.as(GetSignalsResponse.class));
         //смотрим сигналы в master_signal
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
-        List<MasterSignal> signalBondDB = masterSignal.stream().filter(res -> res.getTicker().equals(tickerBond))
+        List<MasterSignal> signalBondDB = masterSignal.stream().filter(res -> res.getTicker().equals(instrument.tickerSU29009RMFS6))
             .collect(Collectors.toList());
-        List<MasterSignal> signalEtfDB = masterSignal.stream().filter(res -> res.getTicker().equals(tickerEtf))
+        List<MasterSignal> signalEtfDB = masterSignal.stream().filter(res -> res.getTicker().equals(instrument.tickerFXDE))
             .collect(Collectors.toList());
-        List<MasterSignal> signalMoneyDB = masterSignal.stream().filter(res -> res.getTicker().equals(tickerMoney))
+        List<MasterSignal> signalMoneyDB = masterSignal.stream().filter(res -> res.getTicker().equals(instrument.tickerUSD))
             .collect(Collectors.toList());
         List<Signal> signalBondReq = getSignals.getItems()
-            .stream().filter(res -> res.getExchangePosition().getTicker().equals(tickerBond))
+            .stream().filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSU29009RMFS6))
             .collect(Collectors.toList());
         List<Signal> signalEtfReq = getSignals.getItems()
-            .stream().filter(res -> res.getExchangePosition().getTicker().equals(tickerEtf))
+            .stream().filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerFXDE))
             .collect(Collectors.toList());
         List<Signal> signalMoneyReq = getSignals.getItems()
-            .stream().filter(res -> res.getExchangePosition().getTicker().equals(tickerMoney))
+            .stream().filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerUSD))
             .collect(Collectors.toList());
-        checkInstrumentParam(signalBondDB, signalBondReq, briefNameBond, imageBond, typeBond, 3);
-        checkInstrumentParam(signalEtfDB, signalEtfReq, briefNameEtf, imageEtf, typeEtf, 2);
+        checkInstrumentParam(signalBondDB, signalBondReq, instrument.briefNameSU29009RMFS6, instrument.imageSU29009RMFS6, instrument.typeSU29009RMFS6, 3);
+        checkInstrumentParam(signalEtfDB, signalEtfReq, instrument.briefNameFXDE, instrument.imageFXDE, instrument.typeFXDE, 2);
 //        checkInstrumentParam(signalMoneyDB, signalMoneyReq, briefNameMoney, imageMoney, typeMoney, 4);
     }
 
@@ -665,15 +632,14 @@ public class GetSignalsTest {
         assertThat("ticker последнего сигнала не равно", getSignals.getItems().get(0).getExchangePosition().getTicker(),
             is(masterSignal.get(0).getTicker()));
         assertThat("briefName последнего сигнала не равно", getSignals.getItems().get(0).getExchangePosition().getBriefName(),
-            is(briefNameNok));
+            is(instrument.briefNameNOK));
         assertThat("image последнего сигнала не равно", getSignals.getItems().get(0).getExchangePosition().getImage(),
-            is(imageNok));
+            is(instrument.imageNOK));
         assertThat("type последнего сигнала не равно", getSignals.getItems().get(0).getExchangePosition().getType().getValue(),
-            is(typeNok));
+            is(instrument.typeNOK));
         assertThat("version последнего сигнала не равно", getSignals.getItems().get(0).getVersion(),
             is(10));
     }
-
 
 
     private static Stream<Arguments> provideLimitParam() {
@@ -684,6 +650,7 @@ public class GetSignalsTest {
             Arguments.of(9, false)
         );
     }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideLimitParam")
@@ -723,6 +690,7 @@ public class GetSignalsTest {
             Arguments.of(9, false)
         );
     }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideCursorParam")
@@ -765,6 +733,7 @@ public class GetSignalsTest {
             Arguments.of(10, 3)
         );
     }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideCursorLimitParam")
@@ -832,7 +801,7 @@ public class GetSignalsTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
         GetSignalsResponse getSignals = strategyApi.getSignals()
@@ -853,77 +822,65 @@ public class GetSignalsTest {
     }
 
 
+    void checkParam(List<MasterSignal> masterSignal, GetSignalsResponse getSignals) {
+        assertThat("nextCursor не равно", getSignals.getNextCursor(), is(masterSignal.get(masterSignal.size() - 1).getVersion().toString()));
+        assertThat("hasNext не равно", getSignals.getHasNext(), is(false));
+        assertThat("размер items не равно", getSignals.getItems().size(), is(masterSignal.size()));
+    }
 
-
-
-
-
-
-
-
-
-   void checkParam ( List<MasterSignal> masterSignal, GetSignalsResponse getSignals) {
-       assertThat("nextCursor не равно", getSignals.getNextCursor(), is(masterSignal.get(masterSignal.size()-1).getVersion().toString()));
-       assertThat("hasNext не равно", getSignals.getHasNext(), is(false));
-       assertThat("размер items не равно", getSignals.getItems().size(), is(masterSignal.size()));
-   }
-
-   void checkInstrumentParam(List<MasterSignal> masterSignal, List<Signal> signal, String briefName, String image, String type, int version) {
-       //получаем ответ и проверяем
-       assertThat("totalAmount последнего сигнала не равно", signal.get(0).getTotalAmount(),
-           is(masterSignal.get(0).getPrice().multiply(masterSignal.get(0).getQuantity()).setScale(2, RoundingMode.HALF_UP)));
-       assertThat("createdAt последнего сигнала не равно", signal.get(0).getCreatedAt().toInstant(),
-           is(masterSignal.get(0).getCreatedAt().toInstant()));
-       assertThat("quantity последнего сигнала не равно", signal.get(0).getQuantity(),
-           is(masterSignal.get(0).getQuantity().doubleValue()));
-       assertThat("action последнего сигнала не равно", signal.get(0).getAction().getValue(),
-           is("buy"));
-       assertThat("price последнего сигнала не равно", signal.get(0).getPrice().getValue(),
-           is(masterSignal.get(0).getPrice().setScale(2, RoundingMode.HALF_UP)));
-       assertThat("currency последнего сигнала не равно", signal.get(0).getPrice().getCurrency().getValue(),
-           is("rub"));
-       assertThat("ticker последнего сигнала не равно", signal.get(0).getExchangePosition().getTicker(),
-           is(masterSignal.get(0).getTicker()));
-       assertThat("briefName последнего сигнала не равно", signal.get(0).getExchangePosition().getBriefName(),
-           is(briefName));
-       assertThat("image последнего сигнала не равно", signal.get(0).getExchangePosition().getImage(),
-           is(image));
-       assertThat("type последнего сигнала не равно", signal.get(0).getExchangePosition().getType().getValue(),
-           is(type));
-       assertThat("version последнего сигнала не равно", signal.get(0).getVersion(),
-           is(version));
-      }
-
+    void checkInstrumentParam(List<MasterSignal> masterSignal, List<Signal> signal, String briefName, String image, String type, int version) {
+        //получаем ответ и проверяем
+        assertThat("totalAmount последнего сигнала не равно", signal.get(0).getTotalAmount(),
+            is(masterSignal.get(0).getPrice().multiply(masterSignal.get(0).getQuantity()).setScale(2, RoundingMode.HALF_UP)));
+        assertThat("createdAt последнего сигнала не равно", signal.get(0).getCreatedAt().toInstant(),
+            is(masterSignal.get(0).getCreatedAt().toInstant()));
+        assertThat("quantity последнего сигнала не равно", signal.get(0).getQuantity(),
+            is(masterSignal.get(0).getQuantity().doubleValue()));
+        assertThat("action последнего сигнала не равно", signal.get(0).getAction().getValue(),
+            is("buy"));
+        assertThat("price последнего сигнала не равно", signal.get(0).getPrice().getValue(),
+            is(masterSignal.get(0).getPrice().setScale(2, RoundingMode.HALF_UP)));
+        assertThat("currency последнего сигнала не равно", signal.get(0).getPrice().getCurrency().getValue(),
+            is("rub"));
+        assertThat("ticker последнего сигнала не равно", signal.get(0).getExchangePosition().getTicker(),
+            is(masterSignal.get(0).getTicker()));
+        assertThat("briefName последнего сигнала не равно", signal.get(0).getExchangePosition().getBriefName(),
+            is(briefName));
+        assertThat("image последнего сигнала не равно", signal.get(0).getExchangePosition().getImage(),
+            is(image));
+        assertThat("type последнего сигнала не равно", signal.get(0).getExchangePosition().getType().getValue(),
+            is(type));
+        assertThat("version последнего сигнала не равно", signal.get(0).getVersion(),
+            is(version));
+    }
 
 
     //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(31, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 5, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 5, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(4, 2, 6, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 6, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 7, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 7, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 8, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 9, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 9, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 10, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 10, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
     }
 
 
-
-
     //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignalNotFoundExPosCac(UUID strategyId) {
-        createMasterSignal(0, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "19", 12);
         createMasterSignal(0, 1, 3, strategyId, tickerNotFound, tradingClearingAccountNotFound,
             "3.09", "3", 12);
@@ -931,13 +888,12 @@ public class GetSignalsTest {
     }
 
 
-
     //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignalOther(UUID strategyId) {
-        createMasterSignal(31, 1, 2, strategyId, tickerEtf, tradingClearingAccountEtf,
-            "4.07", quantityEtf, 12);
-        createMasterSignal(30, 2, 3, strategyId, tickerBond, tradingClearingAccountBond,
-            "90.18", quantityBond, 12);
+        createMasterSignal(31, 1, 2, strategyId, instrument.tickerFXDE, instrument.tradingClearingAccountFXDE,
+            "4.07", quantityFXDE, 12);
+        createMasterSignal(30, 2, 3, strategyId, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            "90.18", quantitySU29009RMFS6, 12);
 //        createMasterSignal(29, 2, 4, strategyId, tickerMoney, tradingClearingAccountMoney,
 //            "3.98", quantityMoney, 12);
     }
@@ -961,35 +917,35 @@ public class GetSignalsTest {
     }
 
 
-    public List<MasterPortfolio.Position> createListMasterPosition(                                                                             Tracking.Portfolio.Position position) {
+    public List<MasterPortfolio.Position> createListMasterPosition(Tracking.Portfolio.Position position) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerNok)
-            .tradingClearingAccount(tradingClearingAccountNok)
+            .ticker(instrument.tickerNOK)
+            .tradingClearingAccount(instrument.tradingClearingAccountNOK)
             .quantity(new BigDecimal("19"))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerAbbV)
-            .tradingClearingAccount(tradingClearingAccountAbbV)
+            .ticker(instrument.tickerABBV)
+            .tradingClearingAccount(instrument.tradingClearingAccountABBV)
             .quantity(new BigDecimal("3"))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerApple)
-            .tradingClearingAccount(tradingClearingAccountApple)
+            .ticker(instrument.tickerAAPL)
+            .tradingClearingAccount(instrument.tradingClearingAccountAAPL)
             .quantity(new BigDecimal("2"))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(4).minusHours(2).toInstant()))
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerGazprom)
-            .tradingClearingAccount(tradingClearingAccountGazprom)
+            .ticker(instrument.tickerXS0191754729)
+            .tradingClearingAccount(instrument.tradingClearingAccountXS0191754729)
             .quantity(new BigDecimal("1"))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(2).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(2)
@@ -999,20 +955,20 @@ public class GetSignalsTest {
     }
 
 
-    public List<MasterPortfolio.Position> createListMasterPositionOther(                                                                             Tracking.Portfolio.Position position) {
+    public List<MasterPortfolio.Position> createListMasterPositionOther(Tracking.Portfolio.Position position) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerEtf)
-            .tradingClearingAccount(tradingClearingAccountEtf)
-            .quantity(new BigDecimal(quantityEtf))
+            .ticker(instrument.tickerFXDE)
+            .tradingClearingAccount(instrument.tradingClearingAccountFXDE)
+            .quantity(new BigDecimal(quantityFXDE))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerBond)
-            .tradingClearingAccount(tradingClearingAccountBond)
-            .quantity(new BigDecimal(quantityBond))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) position.getAction().getActionValue())
@@ -1028,11 +984,11 @@ public class GetSignalsTest {
         return positionList;
     }
 
-    public List<MasterPortfolio.Position> createListMasterPositionNotFoundExPosCach(                                                                             Tracking.Portfolio.Position position) {
+    public List<MasterPortfolio.Position> createListMasterPositionNotFoundExPosCach(Tracking.Portfolio.Position position) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerNok)
-            .tradingClearingAccount(tradingClearingAccountNok)
+            .ticker(instrument.tickerNOK)
+            .tradingClearingAccount(instrument.tradingClearingAccountNOK)
             .quantity(new BigDecimal("19"))
             .changedAt(Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusHours(1).toInstant()))
             .lastChangeDetectedVersion(4)

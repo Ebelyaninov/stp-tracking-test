@@ -128,7 +128,7 @@ public class TrackingService {
     @Step("Изменение роли, статуса и Id стратегии контракта")
     public Contract updateRoleStateStrategyContract(String id, ContractRole role, ContractState state, UUID strategyId) throws JsonProcessingException {
         Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
-        contract.setRole(role);
+//        contract.setRole(role);
         contract.setState(state);
         contract.setStrategyId(strategyId);
         contractRepository.save(contract);
@@ -140,7 +140,7 @@ public class TrackingService {
     @Step("Изменение роли контракта")
     public Contract updateRoleContract(String id, ContractRole role) throws JsonProcessingException {
         Contract contract = contractRepository.findById(id).orElseThrow(() -> new RuntimeException("Contract not found"));
-        contract.setRole(role);
+//        contract.setRole(role);
         contractRepository.save(contract);
         log.info("Successfully update contract {}", contract);
         Allure.addAttachment("Контракт", "application/json", objectMapper.writeValueAsString(contract));

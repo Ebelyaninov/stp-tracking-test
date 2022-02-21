@@ -19,6 +19,7 @@ public class SlaveOrder2RowMapper implements RowMapper<SlaveOrder2> {
             .action(row.getByte("action"))
             .attemptsCount(row.getInt("attempts_count"))
             .classCode(row.getString("class_code"))
+            .comparedToMasterVersion(row.getInt("compared_to_master_version"))
             .filledQuantity(row.getDecimal("filled_quantity"))
             .id(row.getUUID("id"))
             .idempotencyKey(row.getUUID("idempotency_key"))

@@ -16,6 +16,7 @@ import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
@@ -50,6 +51,8 @@ public class StpTrackingAnalyticsSteps {
     private final ClientService clientService;
     private final SubscriptionService subscriptionService;
     private final SlavePortfolioDao slavePortfolioDao;
+
+
     public Client clientMaster;
     public Contract contractMaster;
     public Strategy strategy;
@@ -63,92 +66,91 @@ public class StpTrackingAnalyticsSteps {
 
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
+    @Autowired(required = false)
+    StpInstrument instrument;
 
 
+//    public String ticker1 = "SBER";
+//    public String tradingClearingAccount1 = "L01+00002F00";
 
-    public String ticker1 = "SBER";
-    public String tradingClearingAccount1 = "L01+00002F00";
-//    public String tradingClearingAccount1 = "L01+00000F00";
-    public String quantity1 = "50";
-    public String sector1 = "financial";
-    public String type1 = "share";
-    public String company1 = "Сбербанк";
-    public String classCode1 = "TQBR";
-    public String instrumet1 = ticker1 + "_" + classCode1;
-    public String quantityDiff1  = "-0.1247";
+    public String quantitySBER = "50";
 
-    public String ticker2 = "SU29009RMFS6";
-   public String tradingClearingAccount2 = "L01+00000F00";
+//    public String sector1 = "financial";
+//    public String type1 = "share";
+//    public String company1 = "Сбербанк";
+//    public String classCode1 = "TQBR";
+//    public String instrumet1 = ticker1 + "_" + classCode1;
+    public String quantityDiffSBER  = "-0.1247";
+
+//    public String tickerSU29009RMFS6 = "SU29009RMFS6";
+//   public String tradingClearingAccount2 = "L01+00000F00";
 //    public String tradingClearingAccount2 = "L01+00002F00";
-   public String quantity2 = "3";
-   public String classCode2 = "TQOB";
-   public String sector2 = "government";
-   public String type2 = "bond";
-   public String company2 = "ОФЗ";
-   public String instrumet2 = ticker2 + "_" + classCode2;
+   public String quantitySU29009RMFS6 = "3";
+//   public String classCode2 = "TQOB";
+//   public String sector2 = "government";
+//   public String type2 = "bond";
+//   public String company2 = "ОФЗ";
+//   public String instrumet2 = ticker2 + "_" + classCode2;
    public String quantityDiff2  = "-0.0069";
     //
-    public String ticker3 = "LKOH";
+//    public String ticker3 = "LKOH";
 //    public String tradingClearingAccount3 = "L01+00002F00";
-    public String tradingClearingAccount3 = "L01+00000F00";
-    public String quantity3 = "7";
-    public String classCode3 = "TQBR";
-    public String sector3 = "energy";
-    public String type3 = "share";
-    public String company3 = "Лукойл";
-    public String instrumet3 = ticker3 + "_" + classCode3;
-    public String quantityDiff3  = "0.0";
+//    public String tradingClearingAccount3 = "L01+00000F00";
+    public String quantityLKOH = "7";
+//    public String classCode3 = "TQBR";
+//    public String sector3 = "energy";
+//    public String type3 = "share";
+//    public String company3 = "Лукойл";
+//    public String instrumet3 = ticker3 + "_" + classCode3;
+    public String quantityDiffLKOH  = "0.0";
 
-    public String ticker4 = "SNGSP";
-//    public String tradingClearingAccount4 = "L01+00002F00";
-    public String tradingClearingAccount4 = "L01+00000F00";
-    public String quantity4 = "100";
-    public String classCode4 = "TQBR";
-    public String sector4 = "energy";
-    public String type4 = "share";
-    public String company4 = "Сургутнефтегаз";
-    public String instrumet4 = ticker4 + "_" + classCode4;
+//    public String ticker4 = "SNGSP";
+////    public String tradingClearingAccount4 = "L01+00002F00";
+//    public String tradingClearingAccount4 = "L01+00000F00";
+    public String quantitySNGSP = "100";
+//    public String classCode4 = "TQBR";
+//    public String sector4 = "energy";
+//    public String type4 = "share";
+//    public String company4 = "Сургутнефтегаз";
+//    public String instrumet4 = ticker4 + "_" + classCode4;
 
-    public String ticker5 = "TRNFP";
-//    public String tradingClearingAccount5 = "L01+00002F00";
-    public String tradingClearingAccount5 = "L01+00000F00";
-    public String quantity5 = "4";
-    public String classCode5 = "TQBR";
-    public String sector5 = "energy";
-    public String type5 = "share";
-    public String company5 = "Транснефть";
-    public String instrumet5 = ticker5 + "_" + classCode5;
-
-
-    public String ticker6 = "ESGR";
-//    public String tradingClearingAccount6 = "L01+00002F00";
-    public String tradingClearingAccount6 = "L01+00000F00";
-    public String quantity6 = "5";
-    public String classCode6 = "TQTF";
-    public String sector6 = "other";
-    public String type6 = "etf";
-    public String company6 = "РСХБ Управление Активами";
-    public String instrumet6 = ticker6 + "_" + classCode6;
-
-    public String ticker7 = "USD000UTSTOM";
-    public String tradingClearingAccount7 = "MB9885503216";
-    public String quantity7 = "1000";
-    public String classCode7 = "CETS";
-    public String sector7 = "money";
-    public String type7 = "money";
-    public String company7 = "Денежные средства";
-    public String instrumet7 = ticker7 + "_" + classCode7;
+//    public String ticker5 = "TRNFP";
+//    public String tradingClearingAccount5 = "L01+00000F00";
+    public String quantityTRNFP = "4";
+//    public String classCode5 = "TQBR";
+//    public String sector5 = "energy";
+//    public String type5 = "share";
+//    public String company5 = "Транснефть";
+//    public String instrumet5 = ticker5 + "_" + classCode5;
 
 
-    public String ticker8 = "YNDX";
-//    public String tradingClearingAccount8 = "L01+00000F00";
-    public String tradingClearingAccount8 = "Y02+00001F00";
-    public String quantity8 = "3";
-    public String classCode8 = "TQBR";
-    public String sector8 = "telecom";
-    public String type8 = "share";
-    public String company8= "Яндекс";
-    public String instrumet8 = ticker8 + "_" + classCode8;
+//    public String ticker6 = "ESGR";
+//    public String tradingClearingAccount6 = "L01+00000F00";
+    public String quantityESGR = "5";
+//    public String classCode6 = "TQTF";
+//    public String sector6 = "other";
+//    public String type6 = "etf";
+//    public String company6 = "РСХБ Управление Активами";
+//    public String instrumet6 = ticker6 + "_" + classCode6;
+
+//    public String ticker7 = "USD000UTSTOM";
+//    public String tradingClearingAccount7 = "MB9885503216";
+    public String quantityUSD = "1000";
+//    public String classCode7 = "CETS";
+//    public String sector7 = "money";
+//    public String type7 = "money";
+//    public String company7 = "Денежные средства";
+//    public String instrumet7 = ticker7 + "_" + classCode7;
+
+
+//    public String ticker8 = "YNDX";//
+//    public String tradingClearingAccount8 = "Y02+00001F00";
+    public String quantityYNDX = "3";
+//    public String classCode8 = "TQBR";
+//    public String sector8 = "telecom";
+//    public String type8 = "share";
+//    public String company8= "Яндекс";
+//    public String instrumet8 = ticker8 + "_" + classCode8;
 
 
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
@@ -175,7 +177,7 @@ public class StpTrackingAnalyticsSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -199,7 +201,9 @@ public class StpTrackingAnalyticsSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -216,9 +220,9 @@ public class StpTrackingAnalyticsSteps {
 
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(1)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -239,17 +243,17 @@ public class StpTrackingAnalyticsSteps {
 
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -281,25 +285,25 @@ public class StpTrackingAnalyticsSteps {
 
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -319,33 +323,33 @@ public class StpTrackingAnalyticsSteps {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker4)
-            .tradingClearingAccount(tradingClearingAccount4)
-            .quantity(new BigDecimal(quantity4))
+            .ticker(instrument.tickerSNGSP)
+            .tradingClearingAccount(instrument.tradingClearingAccountSNGSP)
+            .quantity(new BigDecimal(quantitySNGSP))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -365,41 +369,41 @@ public class StpTrackingAnalyticsSteps {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker4)
-            .tradingClearingAccount(tradingClearingAccount4)
-            .quantity(new BigDecimal(quantity4))
+            .ticker(instrument.tickerSNGSP)
+            .tradingClearingAccount(instrument.tradingClearingAccountSNGSP)
+            .quantity(new BigDecimal(quantitySNGSP))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker5)
-            .tradingClearingAccount(tradingClearingAccount5)
-            .quantity(new BigDecimal(quantity5))
+            .ticker(instrument.tickerTRNFP)
+            .tradingClearingAccount(instrument.tradingClearingAccountTRNFP)
+            .quantity(new BigDecimal(quantityTRNFP))
             .changedAt(date)
             .lastChangeDetectedVersion(5)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -419,49 +423,49 @@ public class StpTrackingAnalyticsSteps {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker4)
-            .tradingClearingAccount(tradingClearingAccount4)
-            .quantity(new BigDecimal(quantity4))
+            .ticker(instrument.tickerSNGSP)
+            .tradingClearingAccount(instrument.tradingClearingAccountSNGSP)
+            .quantity(new BigDecimal(quantitySNGSP))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker5)
-            .tradingClearingAccount(tradingClearingAccount5)
-            .quantity(new BigDecimal(quantity5))
+            .ticker(instrument.tickerTRNFP)
+            .tradingClearingAccount(instrument.tradingClearingAccountTRNFP)
+            .quantity(new BigDecimal(quantityTRNFP))
             .changedAt(date)
             .lastChangeDetectedVersion(5)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker6)
-            .tradingClearingAccount(tradingClearingAccount6)
-            .quantity(new BigDecimal(quantity6))
+            .ticker(instrument.tickerESGR)
+            .tradingClearingAccount(instrument.tradingClearingAccountESGR)
+            .quantity(new BigDecimal(quantityESGR))
             .changedAt(date)
             .lastChangeDetectedVersion(6)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -482,57 +486,57 @@ public class StpTrackingAnalyticsSteps {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker1)
-            .tradingClearingAccount(tradingClearingAccount1)
-            .quantity(new BigDecimal(quantity1))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker2)
-            .tradingClearingAccount(tradingClearingAccount2)
-            .quantity(new BigDecimal(quantity2))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker3)
-            .tradingClearingAccount(tradingClearingAccount3)
-            .quantity(new BigDecimal(quantity3))
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker4)
-            .tradingClearingAccount(tradingClearingAccount4)
-            .quantity(new BigDecimal(quantity4))
+            .ticker(instrument.tickerSNGSP)
+            .tradingClearingAccount(instrument.tradingClearingAccountSNGSP)
+            .quantity(new BigDecimal(quantitySNGSP))
             .changedAt(date)
             .lastChangeDetectedVersion(4)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker5)
-            .tradingClearingAccount(tradingClearingAccount5)
-            .quantity(new BigDecimal(quantity5))
+            .ticker(instrument.tickerTRNFP)
+            .tradingClearingAccount(instrument.tradingClearingAccountTRNFP)
+            .quantity(new BigDecimal(quantityTRNFP))
             .changedAt(date)
             .lastChangeDetectedVersion(5)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker6)
-            .tradingClearingAccount(tradingClearingAccount6)
-            .quantity(new BigDecimal(quantity6))
+            .ticker(instrument.tickerESGR)
+            .tradingClearingAccount(instrument.tradingClearingAccountESGR)
+            .quantity(new BigDecimal(quantityESGR))
             .changedAt(date)
             .lastChangeDetectedVersion(6)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
             .build());
         positionListMaster.add(MasterPortfolio.Position.builder()
-            .ticker(ticker7)
-            .tradingClearingAccount(tradingClearingAccount7)
-            .quantity(new BigDecimal(quantity7))
+            .ticker(instrument.tickerUSD)
+            .tradingClearingAccount(instrument.tradingClearingAccountUSD)
+            .quantity(new BigDecimal(quantityUSD))
             .changedAt(date)
             .lastChangeDetectedVersion(7)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -612,10 +616,10 @@ public class StpTrackingAnalyticsSteps {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
-            if (pair.getKey().equals(instrumet1)) {
-                valuePos1 = new BigDecimal(quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
                     .scaleByPowerOfTen(-2);
@@ -626,22 +630,22 @@ public class StpTrackingAnalyticsSteps {
                     .multiply(minPriceIncrementNew);
                 BigDecimal price =roundPrice
                     .add(new BigDecimal(aciValue));
-                valuePos2 = new BigDecimal(quantity2).multiply(price);
+                valuePos2 = new BigDecimal(quantitySU29009RMFS6).multiply(price);
             }
-            if (pair.getKey().equals(instrumet3)) {
-                valuePos3 = new BigDecimal(quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(instrumet4)) {
-                valuePos4 = new BigDecimal(quantity4).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(quantitySNGSP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(instrumet5)) {
-                valuePos5 = new BigDecimal(quantity5).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentTRNFP)) {
+                valuePos5 = new BigDecimal(quantityTRNFP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(instrumet6)) {
-                valuePos6 = new BigDecimal(quantity6).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentESGR)) {
+                valuePos6 = new BigDecimal(quantityESGR).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(instrumet7)) {
-                valuePos7 = new BigDecimal(quantity7).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentUSD)) {
+                valuePos7 = new BigDecimal(quantityUSD).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1
@@ -668,7 +672,7 @@ public class StpTrackingAnalyticsSteps {
             .multiply(minPriceIncrementNew);
         BigDecimal price =roundPrice
             .add(new BigDecimal(aciValue));
-        valuePos = new BigDecimal(quantity2).multiply(price);
+        valuePos = new BigDecimal(quantitySU29009RMFS6).multiply(price);
         return valuePos;
     }
 
@@ -721,7 +725,7 @@ public class StpTrackingAnalyticsSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -751,7 +755,7 @@ public class StpTrackingAnalyticsSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);

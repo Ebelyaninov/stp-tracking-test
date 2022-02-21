@@ -12,6 +12,7 @@ import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.SlaveOrder2RowMapper;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -67,7 +68,7 @@ public class SlaveOrder2Dao {
 
     @Step("Создаем запись о выставленной заявке в slave_order_2")
     public void insertIntoSlaveOrder2(String contractId, OffsetDateTime createAt, UUID strategyId, int version, int attemptsCount,
-                                                       int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
+                                                       int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
                                                        BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
         Insert insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
@@ -77,6 +78,7 @@ public class SlaveOrder2Dao {
             .value("attempts_count", attemptsCount)
             .value("action", action)
             .value("class_code", classCode)
+            .value("compared_to_master_version", comparedToMasterVersion)
             .value("filled_quantity", filledQuantity)
             .value("id", id)
             .value("idempotency_key", idempotencyKey)
@@ -132,25 +134,24 @@ public class SlaveOrder2Dao {
         return Optional.of(result.get(0));
     }
 
-    @Step("Получаем запись о выставленной заявке в slave_order_2 по стратегии")
-    public SlaveOrder2 getSlaveOrder2ByStrategy(String contractId, UUID strategyId) {
+    public List<SlaveOrder2> findSlaveOrder2Limit(String contractId, int limit) {
         String query = "select * " +
             "from invest_tracking.slave_order_2 " +
             "where contract_id = ? " +
-            "and strategy_id = ? " +
-            "LIMIT 1 " +
-            "ALLOW FILTERING";
-        return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, strategyId);
+            "order by created_at  DESC " +
+            "limit ?";
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId, limit);
+        return result;
     }
 
-    @Step("Получаем список записей о выставленной заявке в slave_order_2 по стратегии")
-    public List<SlaveOrder2> getSlaveOrder2WithStrategy(String contractId, UUID strategyId) {
+
+    @Step("Проверяем запись о выставленной заявке в slave_order_2")
+    public List<SlaveOrder2> getAllSlaveOrder2ByContract(String contractId) {
         String query = "select * " +
             "from invest_tracking.slave_order_2 " +
             "where contract_id = ? " +
-            "and strategy_id = ? " +
-            "ALLOW FILTERING";
-        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId, strategyId);
+            "order by created_at DESC ";
+         List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
         return result;
     }
 

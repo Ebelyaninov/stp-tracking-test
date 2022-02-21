@@ -422,6 +422,7 @@ public class CreateStrategySuccessTest {
         return Stream.of("days", "weeks", "months", "forever");
     }
 
+    @SneakyThrows
     @ParameterizedTest
     @MethodSource("retentionForStrategy")
     @AllureId("920608")
@@ -532,7 +533,7 @@ public class CreateStrategySuccessTest {
         assertThat("Объем позиции в базовой валюте мастера: scaled не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition()
             .getQuantity().getScale(), is(1));
         contract = contractService.getContract(contractId);
-        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
+//        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));
         strategy = strategyService.getStrategy(strategyId);
         checkParamStrategy(contractId, title, Currency.RUB, description, "draft", StrategyRiskProfile.CONSERVATIVE,
@@ -607,7 +608,7 @@ public class CreateStrategySuccessTest {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -636,8 +637,8 @@ public class CreateStrategySuccessTest {
                     contract.getId(), is(equalTo(contractId))),
                 () -> assertThat("Номер клиента не совпадает с ожидаемым номером",
                     contract.getClientId(), is(equalTo(investId))),
-                () -> assertThat("Роль клиента отлична от null",
-                    contract.getRole(), is(nullValue())),
+//                () -> assertThat("Роль клиента отлична от null",
+//                    contract.getRole(), is(nullValue())),
                 () -> assertThat("Статус клиента не совпадает с ожидаемым статусом",
                     contract.getState().toString(), is(equalTo(state))),
                 () -> assertThat("Номер стратегии клиента отличен от null",

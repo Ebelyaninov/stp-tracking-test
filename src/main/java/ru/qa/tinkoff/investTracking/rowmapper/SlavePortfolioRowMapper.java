@@ -21,6 +21,8 @@ public class SlavePortfolioRowMapper implements RowMapper<SlavePortfolio> {
             .changedAt(row.get("changed_at", java.util.Date.class))
             .positions(row.getList("positions", SlavePortfolio.Position.class))
             .baseMoneyPosition(row.get("base_money_position", SlavePortfolio.BaseMoneyPosition.class))
+            .targetFeeReserveQuantity(row.getDecimal("target_fee_reserve_quantity"))
+            .actualFeeReserveQuantity(row.getDecimal("actual_fee_reserve_quantity"))
             .build();
     }
 }

@@ -254,7 +254,8 @@ public class HandleAdjustEventTest {
             .portfolioValue(new BigDecimal("25000.0"))
             .positions(positionListEmpty)
             .build();
-        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"));
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst,
+            endFirst, context, new BigDecimal("25000.0"), endFirst);
         LocalDateTime dateTime = LocalDateTime.now();
         String event = CcyevEvent.getKafkaTemplate(action, dateTime,
             "+12.79", "RUB", dateTime, operCode, operId, contractIdSlave, dateTime.minusMinutes(30));
@@ -306,7 +307,7 @@ public class HandleAdjustEventTest {
             .portfolioValue(new BigDecimal("25000.0"))
             .positions(positionListEmpty)
             .build();
-        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"));
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"), endFirst);
         LocalDateTime dateTime = LocalDateTime.now();
         LocalDateTime entryDateTime = LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).minusDays(1);
         String event = CcyevEvent.getKafkaTemplate("INSERT", dateTime,
@@ -448,7 +449,7 @@ public class HandleAdjustEventTest {
             .portfolioValue(new BigDecimal("25000.0"))
             .positions(positionListEmpty)
             .build();
-        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"));
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"), endFirst);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "13.67");
         LocalDateTime dateTime = LocalDateTime.now();
@@ -685,7 +686,7 @@ public class HandleAdjustEventTest {
             .portfolioValue(new BigDecimal("25000.0"))
             .positions(positionListEmpty)
             .build();
-        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"));
+        resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscription.getId(), 35, startFirst, endFirst, context, new BigDecimal("25000.0"), endFirst);
         LocalDateTime dateTime = LocalDateTime.now();
         LocalDateTime actionDateTime = LocalDateTime.now().minusMinutes(7);
         String event = CcyevEvent.getKafkaTemplate("DELETE", actionDateTime,
@@ -830,9 +831,9 @@ public class HandleAdjustEventTest {
 
     public void createResultFee(String contractIdSlave, UUID strategyId, long subscriptionId,
                                 int version, Date settlementPeriodStartedAt, Date settlementPeriodEndedAt,
-                                Context context, BigDecimal highWaterMark) {
+                                Context context, BigDecimal highWaterMark, Date createAt) {
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, version,
-            settlementPeriodStartedAt, settlementPeriodEndedAt, context, highWaterMark);
+            settlementPeriodStartedAt, settlementPeriodEndedAt, context, highWaterMark, createAt);
     }
 
 }

@@ -15,4 +15,5 @@ public class ManagementFee {
     private Date settlementPeriodStartedAt;
     private Date settlementPeriodEndedAt;
     private Context context;
+    private Date  createdAt;
 }

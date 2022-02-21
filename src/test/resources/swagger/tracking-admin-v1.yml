@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.11.0
+  version: 1.14.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
@@ -448,7 +448,7 @@ paths:
       description: Включить синхронизацию позиций в портфеле ведомого {contractId} в обе стороны
       operationId: enableContractSynchronization
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/ContractId'
       responses:
@@ -975,6 +975,18 @@ components:
               minLength: 1
               nullable: true
               example: 15 лет опыта, инвест. советник
+        buyEnabled:
+          $ref: '#/components/schemas/StrategyBuyEnabled'
+        sellEnabled:
+          $ref: '#/components/schemas/StrategySellEnabled'
+
+    StrategyBuyEnabled:
+      description: Признак доступности покупки на стратегии
+      type: boolean
+
+    StrategySellEnabled:
+      description: Признак доступности продажи на стратегии
+      type: boolean
 
     StrategyTest:
       description: Тестирование
@@ -1119,6 +1131,8 @@ components:
         - owner
         - tests
         - load
+        - buyEnabled
+        - sellEnabled
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1162,6 +1176,10 @@ components:
           type: string
           minLength: 1
           example: Получение доходности в валюте
+        buyEnabled:
+          $ref: '#/components/schemas/StrategyBuyEnabled'
+        sellEnabled:
+          $ref: '#/components/schemas/StrategySellEnabled'
 
     StrategyPreview:
       description: Торговая стратегия
@@ -1462,7 +1480,7 @@ components:
         domain:
           description: Домен сущности
           type: string
-          enum: [master-portfolio, master-signal, slave-portfolio, slave-order]
+          enum: [master-portfolio, master-signal, slave-portfolio, slave-order, slave-adjust, management-fee, result-fee]
       discriminator:
         propertyName: domain
         mapping:
@@ -1470,6 +1488,9 @@ components:
           master-signal: '#/components/schemas/SignalItem'
           slave-portfolio: '#/components/schemas/SlavePortfolioItem'
           slave-order: '#/components/schemas/SlaveOrderItem'
+          slave-adjust: '#/components/schemas/SlaveAdjustItem'
+          management-fee: '#/components/schemas/ManagementFeeItem'
+          result-fee: '#/components/schemas/ResultFeeItem'
 
     MasterPortfolioItem:
       description: Элемент события с типом MasterPortfolio
@@ -1494,6 +1515,24 @@ components:
       allOf:
         - $ref: '#/components/schemas/TimelineItemContent'
         - $ref: '#/components/schemas/SlaveOrder'
+
+    SlaveAdjustItem:
+      description: Элемент события с типом SlaveAdjust
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/SlaveAdjust'
+
+    ManagementFeeItem:
+      description: Элемент события с типом ManagementFee
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/ManagementFee'
+
+    ResultFeeItem:
+      description: Элемент события с типом ResultFee
+      allOf:
+        - $ref: '#/components/schemas/TimelineItemContent'
+        - $ref: '#/components/schemas/ResultFee'
 
     MasterPortfolio:
       description: Виртуальный портфель ведущего
@@ -1600,9 +1639,7 @@ components:
         price:
           $ref: '#/components/schemas/Price'
         priceTimestamp:
-          description: Метка времени, на которую была актуальна использованная цена
-          type: string
-          format: date-time
+          $ref: '#/components/schemas/PriceTimestamp'
         rate:
           description: Доля позиции от всего портфеля ведомого
           type: number
@@ -1640,6 +1677,11 @@ components:
         changedAt:
           $ref: '#/components/schemas/PositionChangedAt'
 
+    PriceTimestamp:
+      description: Метка времени, на которую была актуальна использованная цена
+      type: string
+      format: date-time
+
     SlaveOrder:
       description: Заявка, выставляемая от лица ведомого
       type: object
@@ -1676,6 +1718,38 @@ components:
           type: integer
           format: int32
 
+    SlaveAdjust:
+      description: Завод ведомого на договор, подключенный к автоследованию
+      type: object
+      required:
+        - quantity
+        - currency
+        - deleted
+        - lastChange
+      properties:
+        quantity:
+          description: Сумма завода
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          description: Валюта завода
+          type: string
+          enum: [rub, usd, eur]
+        deleted:
+          description: Признак удаленного завода
+          type: boolean
+        lastChange:
+          description: Последнее изменение
+          type: object
+          required:
+            - changedAt
+          properties:
+            changedAt:
+              description: Метка времени изменения операции завода
+              type: string
+              format: date-time
+
     PortfolioVersion:
       description: Версия портфеля
       type: integer
@@ -1692,6 +1766,94 @@ components:
       type: integer
       format: int32
       minimum: 0
+
+    ManagementFee:
+      description: Комиссия за управление
+      type: object
+      required:
+        - version
+        - settlementPeriod
+        - context
+      properties:
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+        settlementPeriod:
+          $ref: '#/components/schemas/SettlementPeriod'
+        context:
+          $ref: '#/components/schemas/FeeContext'
+
+    ResultFee:
+      description: Комиссия за результат
+      type: object
+      required:
+        - version
+        - settlementPeriod
+        - highWaterMark
+        - context
+      properties:
+        version:
+          $ref: '#/components/schemas/PortfolioVersion'
+        settlementPeriod:
+          $ref: '#/components/schemas/SettlementPeriod'
+        highWaterMark:
+          description: Максимальная стоимость slave-портфеля среди всех стоимостей на конец предыдущих расчетных периодов (HWM)
+          type: number
+          format: decimal
+          minimum: 0
+        context:
+          $ref: '#/components/schemas/FeeContext'
+
+    SettlementPeriod:
+      description: Расчетный период
+      type: object
+      required:
+        - startedAt
+        - endedAt
+      properties:
+        startedAt:
+          description: Начало расчетного периода
+          type: string
+          format: date-time
+        endedAt:
+          description: Конец расчетного периода
+          type: string
+          format: date-time
+
+    FeeContext:
+      description: Контекст начисления комиссии
+      type: object
+      required:
+        - portfolioValue
+        - positions
+      properties:
+        portfolioValue:
+          description: Стоимость slave-портфеля на конец расчетного периода
+          type: number
+          format: decimal
+          minimum: 0
+        positions:
+          description: Позиции slave-портфеля на конец расчетного периода
+          type: array
+          items:
+            $ref: '#/components/schemas/FeeContextPosition'
+
+    FeeContextPosition:
+      description: Позиция портфеля для контекста начисления комиссии
+      type: object
+      required:
+        - exchangePositionId
+        - quantity
+        - price
+        - priceTimestamp
+      properties:
+        exchangePositionId:
+          $ref: '#/components/schemas/ExchangePositionId'
+        quantity:
+          $ref: '#/components/schemas/AssetQuantity'
+        price:
+          $ref: '#/components/schemas/Price'
+        priceTimestamp:
+          $ref: '#/components/schemas/PriceTimestamp'
 
     ErrorResponse:
       description: Ответ с ошибкой

@@ -149,7 +149,7 @@ public class СheckStrategyTitleTest {
        Contract insertContract = new Contract()
             .setId(contractId)
             .setClientId(investId)
-            .setRole(null)
+//            .setRole(null)
             .setState(ContractState.untracked)
             .setStrategyId(null)
             .setBlocked(false);
@@ -175,8 +175,9 @@ public class СheckStrategyTitleTest {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
 
         Response checkStrategyTitleResponse = checkStrategyTitle(SIEBEL_ID, title, traceId);

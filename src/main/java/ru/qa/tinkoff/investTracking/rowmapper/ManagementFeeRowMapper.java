@@ -30,6 +30,9 @@ public class ManagementFeeRowMapper implements RowMapper<ManagementFee> {
             .settlementPeriodStartedAt(row.get("settlement_period_started_at", java.util.Date.class))
             .context(context)
             .settlementPeriodEndedAt(row.get("settlement_period_ended_at", java.util.Date.class))
+            .createdAt(row.get("created_at", java.util.Date.class))
+
             .build();
+
     }
 }

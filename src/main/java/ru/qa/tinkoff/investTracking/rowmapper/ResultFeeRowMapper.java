@@ -29,6 +29,7 @@ public class ResultFeeRowMapper implements RowMapper<ResultFee> {
             .context(context)
             .highWaterMark(row.getDecimal("high_water_mark"))
             .settlementPeriodEndedAt(row.get("settlement_period_ended_at", java.util.Date.class))
+            .createdAt(row.get("created_at", java.util.Date.class))
             .build();
     }
 }
