@@ -89,6 +89,7 @@ public class Tariff {
         INVEST_LAB,
         INSURANCE,
         PRIVATE,
-        TRACKING
+        TRACKING,
+        TINKOV_FAMILY_FUND
     }
 }

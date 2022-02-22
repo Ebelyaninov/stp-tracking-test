@@ -20,7 +20,8 @@ public class ContractTariffService {
     @Step("Обновить id тарифа в БД тарифного модуля")
     @SneakyThrows
     public void  updateTariffIdByContract (Integer tariffId, String contractId, OffsetDateTime endDate) {
-        ContractTariff contract = contractTariffRepository.findContractTariffByContractIdAndEndDateGreaterThan (contractId, endDate);
+        ContractTariff contract = contractTariffRepository.findContractTariffByContractIdOrderByEndDateDesc (contractId).stream()
+                                        .findFirst().get();
         log.info("Successfully find  contract  {}", contract);
         contract.setTariffId(tariffId);
         contractTariffRepository.save(contract);

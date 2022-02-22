@@ -2,6 +2,11 @@ swagger: '2.0'
 info:
   description: API тарифного модуля по расчету комиссии
   version: 1.15.0
+
+  servers:
+    - url: http://tariff.invest-stp-tariff.v2.dev2.k8s.tcsbank.ru/tariff/v1/
+      description: тестовый стенд
+
   title: Tariff module API
   contact:
     email: v.klapatnyuk@tinkoff.ru
