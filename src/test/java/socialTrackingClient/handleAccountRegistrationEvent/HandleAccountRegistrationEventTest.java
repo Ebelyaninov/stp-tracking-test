@@ -599,8 +599,6 @@ public class HandleAccountRegistrationEventTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
 
-        //updateTariffId(70, contractIdConservative);
-
         //Изменить тариф клиенту в БД тарифов
         contractTariffService.updateTariffIdByContract(getTariffIdByTariffType("WM"), contractIdConservative, time);
 

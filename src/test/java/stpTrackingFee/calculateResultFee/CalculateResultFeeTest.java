@@ -820,7 +820,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         List<SlavePortfolio.Position> positionListVersionOne = new ArrayList<>();
