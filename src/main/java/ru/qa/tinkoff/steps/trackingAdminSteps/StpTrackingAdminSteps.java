@@ -12,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.entities.Profile;
@@ -69,6 +71,7 @@ public class StpTrackingAdminSteps {
     Profile profile;
     public Contract contractSlave;
     public Client clientSlave;
+    private final SlavePortfolioDao slavePortfolioDao;
 
     public String xApiKey = "x-api-key";
     public String key ="tracking";
@@ -362,5 +365,29 @@ public class StpTrackingAdminSteps {
         return responseExep;
     }
 
+    @Step("Вызываем метод getimeline и получаем ошибку")
+    public ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse getimelineWithError (GetTimelineRequest request, int statusCode) {
+        ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse responseExep = timelineApi.getTimeline()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(statusCode))
+            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse.class));
+        return responseExep;
+    }
+
+    public void createSlavePortfolioWithPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
+                                                 String money,Date date, List<SlavePortfolio.Position> positionList) {
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, positionList, date);
+    }
 
 }

@@ -23,6 +23,7 @@ import ru.qa.tinkoff.investTracking.entities.ManagementFee;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.ResultFee;
 import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -53,11 +54,9 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
@@ -116,6 +115,10 @@ public class GetTimelineTest {
     SlaveAdjustDao slaveAdjustDao;
     @Autowired
     OldKafkaService oldKafkaService;
+    @Autowired
+    StpTrackingSlaveSteps stpTrackingSlaveSteps;
+    @Autowired
+    MasterSignalDao masterSignalDao;
 
     String xApiKey = "x-api-key";
 
@@ -198,6 +201,10 @@ public class GetTimelineTest {
             }
             try {
                 slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                slaveAdjustDao.deleteSlaveAdjustByStrategyAndContract(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
         });
@@ -360,6 +367,318 @@ public class GetTimelineTest {
         List<ResultFee> resultFees = resultFeeDao.findListResultFeeByCreateAt(contractIdSlave, strategyId, dateAt);
         //проверяем, данные в сообщении
         checkResultFeeParam(responseExep, resultFees);
+    }
+
+    @Test
+    @AllureId("1584715")
+    @DisplayName("C1584715.GetTimeline. Получаем ленту событий передав на вход только strategyId")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1584715() throws JsonProcessingException {
+        strategyId = UUID.randomUUID();
+        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //Создаем сигнал
+        LocalDateTime masterSignalTime = LocalDateTime.now();
+        Date convertedDatetime = Date.from(masterSignalTime.atZone(ZoneId.systemDefault()).toInstant());
+        MasterSignal masterSignal = MasterSignal.builder()
+            .strategyId(strategyId)
+            .version(3)
+            .ticker(instrument.tickerAAPL)
+            .tradingClearingAccount(instrument.tradingClearingAccountAAPL)
+            .action((byte) 12)
+            .state((byte) 1)
+            .price(new BigDecimal("108.68"))
+            .quantity(new BigDecimal(1))
+            .tailOrderQuantity(new BigDecimal("100"))
+            .createdAt(convertedDatetime)
+            .build();
+        masterSignalDao.insertIntoMasterSignal(masterSignal);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            "3657.23", date, positionList);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем записи в табл. management_fee
+        createFeeResult(startSubTime, subscriptionId);
+        //Добавляем запись в slave_order
+        slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
+            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        //создаем записи в табл. management_fee
+        createManagemetFee(subscriptionId);
+        //создаем body post запроса
+        GetTimelineRequest request = new GetTimelineRequest();
+        request.setStrategyId(strategyId);
+        //вызываем метод getTimeline
+        GetTimelineResponse responseExep = steps.getimeline(request);
+        MasterPortfolioItem getMasterPorfolioItems = ((MasterPortfolioItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("master-portfolio"))
+            .collect(Collectors.toList()).get(0).getContent());
+        SignalItem getMasterSignalItems = ((SignalItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("master-signal"))
+            .collect(Collectors.toList()).get(0).getContent());
+        MasterPortfolio getMasterPorfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        List<MasterPortfolio.Position> position = getMasterPorfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
+                .collect(Collectors.toList());
+        MasterSignal masterSignal1 = masterSignalDao.getAllMasterSignal(strategyId).get(0);
+        //проверяем, данные в методе
+        checkParamMasterPortfolio(getMasterPorfolioItems, getMasterPorfolio, position);
+        checkParamMasterSignal(getMasterSignalItems, masterSignal1);
+        assertThat("В ответе метода вернули больше 2 сущностей", responseExep.getItems().size(), is(2));
+    }
+
+    @Test
+    @AllureId("1584771")
+    @SneakyThrows
+    @DisplayName("С1584771.GetTimeline. Получаем ленту событий передав на вход strategyId и slaveContractId")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void С1584771() {
+        strategyId = UUID.randomUUID();
+        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //Создаем сигнал
+        LocalDateTime masterSignalTime = LocalDateTime.now();
+        Date convertedDatetime = Date.from(masterSignalTime.atZone(ZoneId.systemDefault()).toInstant());
+        MasterSignal masterSignal = MasterSignal.builder()
+            .strategyId(strategyId)
+            .version(3)
+            .ticker(instrument.tickerAAPL)
+            .tradingClearingAccount(instrument.tradingClearingAccountAAPL)
+            .action((byte) 12)
+            .state((byte) 1)
+            .price(new BigDecimal("108.68"))
+            .quantity(new BigDecimal(1))
+            .tailOrderQuantity(new BigDecimal("100"))
+            .createdAt(convertedDatetime)
+            .build();
+        masterSignalDao.insertIntoMasterSignal(masterSignal);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(instrument.tickerYNDX)
+            .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
+            .quantity(new BigDecimal("10"))
+            .changedAt(date)
+            .lastChangeAction((byte) 4)
+            .synchronizedToMasterVersion(2)
+            .price(new BigDecimal("3800.44"))
+            .price_ts(date)
+            .rate(new BigDecimal("0.5432"))
+            .rateDiff(new BigDecimal("0.2221"))
+            .quantityDiff(new BigDecimal("-10.2212"))
+            .changedAt(date)
+            .lastChangeAction((byte) 12)
+            .buyEnabled(true)
+            .sellEnabled(false)
+            .build());
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            "3657.23", date, positionList);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем записи в табл. management_fee
+        createFeeResult(startSubTime, subscriptionId);
+        //Добавляем запись в slave_order
+        slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
+            0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        //создаем записи в табл. management_fee
+        createManagemetFee(subscriptionId);
+        createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
+            OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, "1000.00");
+        //создаем body post запроса
+        GetTimelineRequest request = new GetTimelineRequest();
+        request.setStrategyId(strategyId);
+        request.setSlaveContractId(contractIdSlave);
+        //вызываем метод getTimeline
+        GetTimelineResponse responseExep = steps.getimeline(request);
+        MasterPortfolioItem getMasterPorfolioItems = ((MasterPortfolioItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("master-portfolio"))
+            .collect(Collectors.toList()).get(0).getContent());
+        SignalItem getMasterSignalItems = ((SignalItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("master-signal"))
+            .collect(Collectors.toList()).get(0).getContent());
+        MasterPortfolio getMasterPorfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        List<MasterPortfolio.Position> position = getMasterPorfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
+            .collect(Collectors.toList());
+        MasterSignal masterSignal1 = masterSignalDao.getAllMasterSignal(strategyId).get(0);
+        //проверяем, данные в методе
+        checkParamMasterPortfolio(getMasterPorfolioItems, getMasterPorfolio, position);
+        checkParamMasterSignal(getMasterSignalItems, masterSignal1);
+
+        Optional<SlavePortfolio> getSlavePorfolio = slavePortfolioDao.findLatestSlavePortfolio(contractIdSlave,strategyId);
+        SlavePortfolioItem getSlavePortfolioItems = ((SlavePortfolioItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-portfolio"))
+            .collect(Collectors.toList()).get(0).getContent());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        SlavePortfolio.BaseMoneyPosition slavePortfolioBaseMoneyPosition = slavePortfolio.getBaseMoneyPosition();
+        List<SlavePortfolio.Position> slavePortfolioPosition = slavePortfolio.getPositions().stream()
+                .filter(position1 -> position1.getTicker().equals(instrument.tickerYNDX))
+                    .collect(Collectors.toList());
+        checkParamsSlavePortfolio(getSlavePortfolioItems, getSlavePorfolio, slavePortfolioBaseMoneyPosition, slavePortfolioPosition);
+
+        SlaveOrderItem getSlaveOrderItems = ((SlaveOrderItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-order"))
+            .collect(Collectors.toList()).get(0).getContent());
+        SlaveOrder2 getSlaveOrder = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
+        checkParamsSlaveOrder(getSlaveOrderItems, getSlaveOrder);
+
+        List<ManagementFeeItem> managementFeeItemList = getManagemetFeeItemsList(responseExep, 3);
+        assertThat("Не получили сущность management-fee", managementFeeItemList.size(), is(3));
+        List<ResultFeeItem> getResultFeeItems = getResultFeeItemsList(responseExep, 3);
+        assertThat("Не получили сущность result-fee", getResultFeeItems.size(), is(3));
+        List<SlaveAdjustItem> getSlaveAdhustItems = getSlaveAdjustItemsList(responseExep, 1);
+        assertThat("Не получили сущность slave-adjust", getSlaveAdhustItems.size(), is(1));
+    }
+
+    @Test
+    @AllureId("1584886")
+    @SneakyThrows
+    @DisplayName("C1584886.GetTimeline. Передан cursor")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1584886() {
+        strategyId = UUID.randomUUID();
+        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+
+        for (int i = 1; i < 4; i++){
+            steps.createMasterPortfolio(contractIdMaster, strategyId, i, "6551.1", masterPos);
+            utc = OffsetDateTime.now(ZoneOffset.UTC);
+            date = Date.from(utc.toInstant());
+            List<SlavePortfolio.Position> positionList = new ArrayList<>();
+            steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, i, i,
+                "3657.23", date, positionList);
+            Thread.sleep(2000);
+        }
+        //C getTime получим  МИЛЛИсекунды, значит нужно умножить на 1000 и получим микросекунду
+        SlavePortfolio getLastMasterPorfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        String cursor = String.valueOf(getLastMasterPorfolio.getChangedAt().getTime() * 1000);
+        //создаем body post запроса
+        GetTimelineRequest request = new GetTimelineRequest();
+        request.setStrategyId(strategyId);
+        request.setSlaveContractId(contractIdSlave);
+        //вызываем метод getTimeline
+        GetTimelineResponse responseExep = timelineApi.getTimeline()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .cursorQuery(cursor)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetTimelineResponse.class));
+        //Исключаем 3-ю версию из slavePortfolio выборки (Больше чем курсор).
+        assertThat("Получили больше чем 6 записей", responseExep.getItems().size(), is(5));
+        SlavePortfolioItem getSlavePortfolioItems = ((SlavePortfolioItem) responseExep.getItems().stream()
+            .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-portfolio"))
+            .collect(Collectors.toList()).get(0).getContent());
+        assertThat("Получили больше ", getSlavePortfolioItems.getVersion(), is(2));
+    }
+
+
+    private static Stream<Arguments> provideLimit() {
+        return Stream.of(
+            Arguments.of(1, 1),
+            Arguments.of(102, 100),
+            Arguments.of(32, 30)
+        );
+    }
+
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideLimit")
+    @DisplayName("С1584889.GetTimeline. Передан limit")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void С1584889(Integer limit, Integer expectedLimit) {
+        strategyId = UUID.randomUUID();
+        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            "3657.23", date, positionList);
+        //Добавляем запись в slave_order
+        for (int i = 1; i < limit; i++) {
+            slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, i,
+                0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
+                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            Thread.sleep(500);
+        }
+        //создаем body post запроса
+        GetTimelineRequest request = new GetTimelineRequest();
+        request.setStrategyId(strategyId);
+        request.setSlaveContractId(contractIdSlave);
+        //вызываем метод getTimeline
+        GetTimelineResponse responseExep;
+        //Проверка дефотного лимита
+        if (limit.equals(32)) {
+            responseExep = steps.getimeline(request);
+        }
+        else {
+            responseExep = timelineApi.getTimeline()
+                .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+                .xAppNameHeader("invest")
+                .xTcsLoginHeader("tracking_admin")
+                .limitQuery(limit)
+                .body(request)
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response.as(GetTimelineResponse.class));
+        }
+        //MaxLimit 100, default limit 30
+        assertThat("Size items не равен лимиту", responseExep.getItems().size(), is(expectedLimit));
     }
 
 
@@ -847,4 +1166,122 @@ public class GetTimelineTest {
             startSecond2, endSecond2, contextSec2, new BigDecimal("79880.4"), endSecond2);
     }
 
+    void checkParamMasterPortfolio(MasterPortfolioItem getMasterPorfolioContent, MasterPortfolio masterPortfolio, List<MasterPortfolio.Position> position) {
+        assertThat("domain  не равен", getMasterPorfolioContent.getDomain().toString(), is("master-portfolio"));
+        assertThat("версия портфеля в managementFee  не равен", getMasterPorfolioContent.getVersion(), is(masterPortfolio.getVersion()));
+        assertThat("baseMoneyPosition.quantity не равен", getMasterPorfolioContent.getBaseMoneyPosition().getQuantity(), is(masterPortfolio.getBaseMoneyPosition().getQuantity()));
+        assertThat("baseMoneyPosition.lastChange.changedAt не равен", getMasterPorfolioContent.getBaseMoneyPosition().getLastChange().getChangedAt().toInstant(), is(masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant()));
+        assertThat("positions.exchangePositionId.ticker не равен", getMasterPorfolioContent.getPositions().get(0).getExchangePositionId().getTicker(), is(position.get(0).getTicker()));
+        assertThat("positions.exchangePositionId.tradingClearingAccount не равен", getMasterPorfolioContent.getPositions().get(0).getExchangePositionId().getTradingClearingAccount(), is(position.get(0).getTradingClearingAccount()));
+        assertThat("positions.quantity не равен", getMasterPorfolioContent.getPositions().get(0).getQuantity(), is(position.get(0).getQuantity()));
+        assertThat("positions.lastChange.changedAt не равен", getMasterPorfolioContent.getPositions().get(0).getLastChange().getChangedAt().toInstant(), is(position.get(0).getChangedAt().toInstant()));
+    }
+
+    void checkParamMasterSignal(SignalItem signalItem, MasterSignal masterSignal) {
+        assertThat("domain  не равен", signalItem.getDomain().toString(), is("master-signal"));
+        assertThat("версия портфеля в managementFee  не равен", signalItem.getVersion(), is(masterSignal.getVersion()));
+        assertThat("exchangePosition.ticker не равен", signalItem.getExchangePosition().getTicker(), is(masterSignal.getTicker()));
+        assertThat("exchangePosition.tradingClearingAccount не равен", signalItem.getExchangePosition().getTradingClearingAccount(), is(masterSignal.getTradingClearingAccount()));
+        assertThat("createdAt не равен", signalItem.getCreatedAt().toInstant(), is(masterSignal.getCreatedAt().toInstant()));
+        assertThat("quantity не равен", signalItem.getQuantity(), is(masterSignal.getQuantity()));
+        assertThat("price.value не равен", signalItem.getPrice().getValue(), is(masterSignal.getPrice()));
+        assertThat("price.currency не равен", signalItem.getPrice().getCurrency().toString(), is(strategyService.getStrategy(strategyId).getBaseCurrency().toString()));
+        String action = null;
+        if (masterSignal.getAction().equals((byte) 12)){
+            action = "buy";
+        }
+        if(masterSignal.getAction().equals((byte) 11)) {
+            action = "sell";
+        }
+        assertThat("action не равен", signalItem.getAction().toString(), is(action));
+    }
+
+    void checkParamsSlavePortfolio(SlavePortfolioItem slavePortfolioItem, Optional<SlavePortfolio> slavePortfolio, SlavePortfolio.BaseMoneyPosition baseMoneyPosition, List<SlavePortfolio.Position> slavePortfolioPosition) {
+        assertThat("domain  не равен", slavePortfolioItem.getDomain().toString(), is("slave-portfolio"));
+        assertThat("версия портфеля в slavePortfolio  не равен", slavePortfolioItem.getVersion(), is(slavePortfolio.get().getVersion()));
+        assertThat("comparedToMasterVersion портфеля в slavePortfolio  не равен", slavePortfolioItem.getComparedToMasterVersion(), is(slavePortfolio.get().getComparedToMasterVersion()));
+        assertThat("baseMoneyPosition.quantity не равен", slavePortfolioItem.getBaseMoneyPosition().getQuantity(), is(baseMoneyPosition.getQuantity()));
+        assertThat("baseMoneyPosition.lastChange.action не равен", slavePortfolioItem.getBaseMoneyPosition().getLastChange().getAction(), is(baseMoneyPosition.getLastChangeAction()));
+        assertThat("baseMoneyPosition.lastChange.changedAt не равен", slavePortfolioItem.getBaseMoneyPosition().getLastChange().getChangedAt().toInstant(), is(baseMoneyPosition.getChangedAt().toInstant()));
+        assertThat("positions.exchangePositionId.ticker не равен", slavePortfolioItem.getPositions().get(0).getExchangePositionId().getTicker(), is(slavePortfolioPosition.get(0).getTicker()));
+        assertThat("positions.exchangePositionId.tradingClearingAccount не равен", slavePortfolioItem.getPositions().get(0).getExchangePositionId().getTradingClearingAccount(), is(slavePortfolioPosition.get(0).getTradingClearingAccount()));
+        assertThat("positions.quantity не равен", slavePortfolioItem.getPositions().get(0).getQuantity(), is(slavePortfolioPosition.get(0).getQuantity()));
+        assertThat("positions.price.value не равен", slavePortfolioItem.getPositions().get(0).getPrice().getValue(), is(slavePortfolioPosition.get(0).getPrice()));
+        assertThat("positions.price.currency не равен", slavePortfolioItem.getPositions().get(0).getPrice().getCurrency().toString(), is(strategyService.getStrategy(strategyId).getBaseCurrency().toString()));
+        assertThat("priceTimestamp не равен", slavePortfolioItem.getPositions().get(0).getPriceTimestamp().toInstant(), is(slavePortfolioPosition.get(0).getPrice_ts().toInstant()));
+        assertThat("rate не равен", slavePortfolioItem.getPositions().get(0).getRate(), is(slavePortfolioPosition.get(0).getRate()));
+        assertThat("rateDiff не равен", slavePortfolioItem.getPositions().get(0).getRateDiff(), is(slavePortfolioPosition.get(0).getRateDiff()));
+        assertThat("quantityDiff не равен", slavePortfolioItem.getPositions().get(0).getQuantityDiff(), is(slavePortfolioPosition.get(0).getQuantityDiff()));
+        assertThat("buyEnabled не равен", slavePortfolioItem.getPositions().get(0).getBuyEnabled(), is(slavePortfolioPosition.get(0).getBuyEnabled()));
+        assertThat("sellEnabled не равен", slavePortfolioItem.getPositions().get(0).getSellEnabled(), is(slavePortfolioPosition.get(0).getSellEnabled()));
+        assertThat("lastChange.action не равен", slavePortfolioItem.getPositions().get(0).getLastChange().getAction().toString(), is(slavePortfolioPosition.get(0).getLastChangeAction().toString()));
+        assertThat("lastChange.changedAt не равен", slavePortfolioItem.getPositions().get(0).getLastChange().getChangedAt().toInstant(), is(slavePortfolioPosition.get(0).getChangedAt().toInstant()));
+    }
+
+    void checkParamsSlaveOrder (SlaveOrderItem slaveOrderItem, SlaveOrder2 slaveOrder) {
+        assertThat("domain  не равен", slaveOrderItem.getDomain().toString(), is("slave-order"));
+        assertThat("версия портфеля в slaveOrder  не равен", slaveOrderItem.getVersion(), is(slaveOrder.getVersion()));
+        assertThat("attemptsCount не равен", slaveOrderItem.getAttemptsCount().toString(), is(slaveOrder.getAttemptsCount().toString()));
+        assertThat("exchangePositionId.ticker не равен", slaveOrderItem.getExchangePositionId().getTicker(), is(slaveOrder.getTicker()));
+        assertThat("exchangePositionId.tradingClearingAccount не равен", slaveOrderItem.getExchangePositionId().getTradingClearingAccount(), is(slaveOrder.getTradingClearingAccount()));
+        String action = null;
+        if (slaveOrder.getAction().equals((byte) 0)){
+            action = "buy";
+        }
+        if(slaveOrder.getAction().equals((byte) 1)) {
+            action = "sell";
+        }
+        assertThat("action не равен", slaveOrderItem.getAction().toString(), is(action));
+        assertThat("quantity не равен", slaveOrderItem.getQuantity(), is(slaveOrder.getQuantity()));
+        assertThat("filledQuantity не равен", slaveOrderItem.getFilledQuantity(), is(slaveOrder.getFilledQuantity()));
+        assertThat("price.value не равен", slaveOrderItem.getPrice().getValue(), is(slaveOrder.getPrice()));
+        assertThat("price.currency не равен", slaveOrderItem.getPrice().getCurrency().toString(), is(strategyService.getStrategy(strategyId).getBaseCurrency().toString()));
+        assertThat("state не равен", slaveOrderItem.getState().toString(), is(slaveOrder.getState().toString()));
+    }
+
+    @Step("Cоздаем запись по заводу в slave_adjust: ")
+    void createsSlaveAdjust(String contractId, UUID strategyId, OffsetDateTime createDate, long operationId,
+                            OffsetDateTime changedAt, String currency, Boolean deleted, String quantity) {
+        slaveAdjust = SlaveAdjust.builder()
+            .contractId(contractId)
+            .strategyId(strategyId)
+            .createdAt(Date.from(createDate.toInstant()))
+            .operationId(operationId)
+            .quantity(new BigDecimal(quantity))
+            .currency(currency)
+            .deleted(deleted)
+            .changedAt(Date.from(changedAt.toInstant()))
+            .build();
+        slaveAdjustDao.insertIntoSlaveAdjust(slaveAdjust);
+    }
+
+    List<ManagementFeeItem> getManagemetFeeItemsList (GetTimelineResponse responseExep, int size) {
+        List<ManagementFeeItem> managementFeeItemList = new ArrayList<>();
+        for (int i = 0; i < size; i++){
+            managementFeeItemList.add((ManagementFeeItem) responseExep.getItems().stream()
+                .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("management-fee"))
+                .collect(Collectors.toList()).get(i).getContent());
+        }
+        return managementFeeItemList;
+    }
+
+    List<ResultFeeItem> getResultFeeItemsList (GetTimelineResponse responseExep, int size) {
+        List<ResultFeeItem> managementFeeItemList = new ArrayList<>();
+        for (int i = 0; i < size; i++){
+            managementFeeItemList.add((ResultFeeItem) responseExep.getItems().stream()
+                .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("result-fee"))
+                .collect(Collectors.toList()).get(i).getContent());
+        }
+        return managementFeeItemList;
+    }
+
+    List<SlaveAdjustItem> getSlaveAdjustItemsList (GetTimelineResponse responseExep, int size) {
+        List<SlaveAdjustItem> managementFeeItemList = new ArrayList<>();
+        for (int i = 0; i < size; i++){
+            managementFeeItemList.add((SlaveAdjustItem) responseExep.getItems().stream()
+                .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-adjust"))
+                .collect(Collectors.toList()).get(i).getContent());
+        }
+        return managementFeeItemList;
+    }
 }
