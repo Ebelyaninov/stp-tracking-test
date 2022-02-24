@@ -34,6 +34,8 @@ import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
+import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -66,11 +68,13 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class,
-    //StpTrackingAdminStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class
 })
 
 public class HandleEnableSynchronizationCommandErrorTest {
+
+    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
+        .ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     StringToByteSenderService kafkaSender;
@@ -98,8 +102,6 @@ public class HandleEnableSynchronizationCommandErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
-   // @Autowired
-   // StpTrackingAdminSteps adminSteps;
 
 
     SlavePortfolio slavePortfolio;
@@ -118,11 +120,13 @@ public class HandleEnableSynchronizationCommandErrorTest {
     // String siebelIdSlave = "4-LQB8FKN";
     String siebelIdMaster = "1-9X6NHTJ";
     String siebelIdSlave = "5-6UTY74RE";
+    Contract contractSlave;
 
     Subscription subscription;
     UUID strategyId;
     String description;
     String title;
+    long subscriptionId;
 
     String ticker = "AAPL";
     String tradingClearingAccount = "TKCBM_TCAB";
@@ -161,6 +165,14 @@ public class HandleEnableSynchronizationCommandErrorTest {
             }
             try {
                 clientService.deleteClient(clientService.getClient(investIdMaster));
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
             } catch (Exception e) {
             }
         });
@@ -313,6 +325,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -373,6 +387,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -428,17 +444,28 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+        steps.createSubcriptionWithBlockedContract(investIdSlave, ClientRiskProfile.aggressive,
+            contractIdSlave, null, ContractState.tracked, strategyId,SubscriptionStatus.active,
+            new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
+/*        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, true);*/
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
             "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySl, date, createListSlaveOnePos);
-        //Блокируем контракт slave
-        //adminSteps.BlockContract(contractIdSlave);
+        //блокируем договор slave
+        contractApi.blockContract()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
         //Вычитываем из топика кафка tracking.contract.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вычитываем из топика кафка tracking.slave.command все offset
@@ -454,7 +481,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем contractSlave
-        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+        contractSlave = contractService.getContract(contractIdSlave);
+        assertThat("blocked не равен", contractSlave.getBlocked(), is(true));
 
     }
 
@@ -483,6 +511,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель slave с позицией в кассандре
         String baseMoneySl = "4320.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker2, tradingClearingAccount2,
@@ -541,6 +571,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -599,6 +631,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -621,10 +655,9 @@ public class HandleEnableSynchronizationCommandErrorTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
-        Thread.sleep(10000);
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);//, notNullValue());
         //Получаем список заявок в рамках стратегии
-        List<SlaveOrder2> getListFromSlaveOrder = slaveOrderDao.getSlaveOrder2WithStrategy(contractIdSlave, strategyId);
+        List<SlaveOrder2> getListFromSlaveOrder = slaveOrderDao.getSlaveOrders2WithStrategy(contractIdSlave, strategyId);
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем данные портфеля
@@ -634,6 +667,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
         assertThat("появилась новая заявка", getListFromSlaveOrder.size(), is(0));
 
     }
+
 
     @SneakyThrows
     @Test
@@ -658,6 +692,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, true);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
         //создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
@@ -676,10 +712,13 @@ public class HandleEnableSynchronizationCommandErrorTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //получаем портфель slave
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
-        //Проверяем contractSlave
-        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+        //Проверяем данные портфеля
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(nullValue()));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(nullValue()));
 
     }
 
@@ -696,13 +735,6 @@ public class HandleEnableSynchronizationCommandErrorTest {
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        //создаем подписку на стратегию
-        OffsetDateTime startTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startTime.toInstant().toEpochMilli()), null, false);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        //удаляем подписку на стратегию
-        subscriptionService.deleteSubscription(subscription);
         //создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -746,42 +778,6 @@ public class HandleEnableSynchronizationCommandErrorTest {
         return number;
     }
 
-/*
-    //метод для создания вставки заявки
-    void createSlaveOrder(int minusDays, int minusHours, String contractId, UUID strategyId, int version, int attemptsCount,
-                          int action, String classCode, int filledQuantity, UUID id,
-                          UUID idempotencyKey, String price, String quantity, int state, String ticker, String tradingClearingAccount) {
-        LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
-        Date convertedDatetime = Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
-        SlaveOrder2 slaveOrder = SlaveOrder2.builder()
-            .contractId(contractId)
-            .strategyId(strategyId)
-            .version(version)
-            .attemptsCount(attemptsCount)
-            .action((byte) action)
-            .classCode(classCode)
-            .filledQuantity(new BigDecimal(filledQuantity))
-            .id(id)
-            .idempotencyKey(idempotencyKey)
-            .price(new BigDecimal(price))
-            .quantity(new BigDecimal(quantity))
-            .state((byte) 0)
-            .tradingClearingAccount(tradingClearingAccount)
-            .ticker(ticker)
-            .createAt(convertedDatetime)
-            .build();
-        slaveOrder2Dao.insertSlaveOrder(slaveOrder);
-    }
-
-    //метод создает записи по заявкам в рамках одной стратегии
-    void createTestDataSlaveOrder(int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount) {
-        idempotencyKey = UUID.randomUUID();
-        for(int i=0; i<count; i++) {
-            attemptsCounts = attemptsCounts + 1;
-            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, 0, idempotencyKey, "173", "1", 0, ticker, tradingClearingAccount);
-        }
-    }
-*/
 
     //Проверяем параметры события
     void checkEventParams(Tracking.PortfolioCommand portfolioCommand, String contractId, String operation) {
@@ -795,19 +791,6 @@ public class HandleEnableSynchronizationCommandErrorTest {
         assertThat("Action не равен", event.getAction().toString(), is(action));
         assertThat("State не равен", event.getContract().getState().toString(), is(state));
         assertThat("Blocked не равен", (event.getContract().getBlocked()), is(blocked));
-
-    }
-
-    @Test
-    void insertContractAndBlock(){
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        steps.createClientWithContract(investIdSlave, ClientRiskProfile.aggressive,
-            contractIdSlave, null, ContractState.untracked, null);
-        //adminSteps.BlockContract(contractIdSlave);
-
 
     }
 

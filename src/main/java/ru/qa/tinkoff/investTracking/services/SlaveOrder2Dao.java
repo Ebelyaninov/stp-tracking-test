@@ -134,6 +134,7 @@ public class SlaveOrder2Dao {
         return Optional.of(result.get(0));
     }
 
+
     public List<SlaveOrder2> findSlaveOrder2Limit(String contractId, int limit) {
         String query = "select * " +
             "from invest_tracking.slave_order_2 " +
@@ -156,13 +157,14 @@ public class SlaveOrder2Dao {
     }
 
     @Step("Проверяем запись о выставленной заявке в slave_order_2")
-    public List<SlaveOrder2> getSlaveOrder2WithStrategy(String contractId, UUID strategyId) {
+    public List<SlaveOrder2> getSlaveOrders2WithStrategy(String contractId, UUID strategyId) {
         String query = "select * " +
             "from invest_tracking.slave_order_2 " +
             "where contract_id = ? " +
             "and strategy_id = ?" +
+            "order by created_at DESC " +
             "ALLOW FILTERING";
-        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId, strategyId);
         return result;
     }
 
@@ -172,8 +174,9 @@ public class SlaveOrder2Dao {
             "from invest_tracking.slave_order_2 " +
             "where contract_id = ? " +
             "and strategy_id = ?" +
-            "LIMIT 1" +
-            "ALLOW FILTERING";
+            "order by created_at DESC " +
+            "LIMIT 1 " +
+            "ALLOW FILTERING ";
         return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, strategyId);
     }
 }
