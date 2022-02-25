@@ -89,7 +89,7 @@ public class CreateExchangePositionSuccessTest {
         resetOffsetToLate(EXCHANGE_POSITION);
         //формируем тело запроса
         var сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
-            limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
+            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //вызываем метод createExchangePosition
         var expecResponse = exchangePositionApi.createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -111,7 +111,7 @@ public class CreateExchangePositionSuccessTest {
         assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(instrument.tradingClearingAccountFXGD));
         assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
-        assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit(), is(IsNull.nullValue()));
+        assertThat("Лимит количества единиц по сессии не равен", expecResponse.getDailyQuantityLimit(), is(1000));
         assertThat("Идентификатор периода не равен", expecResponse.getOrderQuantityLimits().get(0).getPeriodId(), is(period));
         assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
         assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(IsNull.nullValue()));
@@ -127,7 +127,7 @@ public class CreateExchangePositionSuccessTest {
         assertThat("Торгово-клиринговый счет не равен", exchangePositionKafka.getTradingClearingAccount(), is(instrument.tradingClearingAccountFXGD));
         assertThat("Код биржи не равен", exchangePositionKafka.getExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePositionKafka.getTrackingAllowed(), is(true));
-        assertThat("Лимит количества единиц по сессии не равен", exchangePositionKafka.getDailyQuantityLimit().getValue(), is(0));
+        assertThat("Лимит количества единиц по сессии не равен", exchangePositionKafka.getDailyQuantityLimit().getValue(), is(1000));
         assertThat("Идентификатор периода не равен", exchangePositionKafka.getOrderQuantityLimit(0).getPeriodId(), is(period));
         assertThat("Лимит количества единиц актива по заявке не равен", exchangePositionKafka.getOrderQuantityLimit(0).getLimit(), is(limit));
         assertThat("Внебиржевой тикер инструмента не равен", exchangePositionKafka.getOtcTicker().getValue(), is(""));
@@ -136,7 +136,7 @@ public class CreateExchangePositionSuccessTest {
         exchangePosition = exchangePositionService.getExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
         assertThat("Код биржи не равен", exchangePosition.getExchangePositionExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePosition.getTrackingAllowed(), is(true));
-        assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit(), is(IsNull.nullValue()));
+        assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit(), is(1000));
         assertThat("Лимит и период количества единиц актива по заявке не равен",
             exchangePosition.getOrderQuantityLimits().get(period), is(limit));
         assertThat("Тикер внебиржевого инструмента не равен", exchangePosition.getOtcTicker(), is(IsNull.nullValue()));
@@ -316,7 +316,7 @@ public class CreateExchangePositionSuccessTest {
         String period = "additional_liquidity";
         //формируем тело запроса
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
-            limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
+            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -332,7 +332,7 @@ public class CreateExchangePositionSuccessTest {
         exchangePosition = exchangePositionService.getExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
         assertThat("Код биржи не равен", exchangePosition.getExchangePositionExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePosition.getTrackingAllowed(), is(true));
-        assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit(), is(IsNull.nullValue()));
+        assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit(), is(1000));
         assertThat("Лимит и период количества единиц актива по заявке не равен",
             exchangePosition.getOrderQuantityLimits().get(period), is(limit));
         assertThat("Тикер внебиржевого инструмента не равен", exchangePosition.getOtcTicker(), is(IsNull.nullValue()));
@@ -356,7 +356,7 @@ public class CreateExchangePositionSuccessTest {
 
     //body запроса метода updateExchangePosition обязательные парамерты
     public CreateExchangePositionRequest createBodyRequestRequiredParam(String ticker, String tradingClearingAccount, Integer limit, String period,
-                                                                        ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed) {
+                                                                        ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed, int dailyQuantityLimit) {
         ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit orderQuantityLimit
             = new ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit();
         orderQuantityLimit.setLimit(limit);
@@ -367,6 +367,7 @@ public class CreateExchangePositionSuccessTest {
         createExPosition.setTicker(ticker);
         createExPosition.setTrackingAllowed(trackingAllowed);
         createExPosition.setTradingClearingAccount(tradingClearingAccount);
+        createExPosition.setDailyQuantityLimit(dailyQuantityLimit);
         return createExPosition;
     }
 

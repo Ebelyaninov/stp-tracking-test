@@ -77,6 +77,8 @@ public class GetStrategyTest {
 
     String SIEBEL_ID = "1-1XHHA7S";
     String xApiKey = "x-api-key";
+    String key = "tracking";
+    String keyRead = "tcrm";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String title;
     String description;
@@ -137,7 +139,7 @@ public class GetStrategyTest {
         Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -158,6 +160,44 @@ public class GetStrategyTest {
 
 
     @Test
+    @AllureId("1705741")
+    @DisplayName("C1705741.GetStrategy.Получение данных торговой стратегии стратегия активна с api-key доступом read")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1705741() {
+        UUID strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+        Client clientDB = clientService.getClient(investId);
+        String nickname = clientDB.getSocialProfile().getNickname();
+        String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
+        BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
+        Integer score = strategyService.getStrategy(strategyId).getScore();
+        //вызываем метод getStrategy
+        GetStrategyResponse responseExep = strategyApi.getStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .xAppNameHeader("invest")
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        //проверяем, данные в сообщении
+        assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("ownerDescription не равно", responseExep.getOwner().getDescription(), is(ownerDescription));
+        assertThat("short_description не равно", responseExep.getShortDescription().toString(), is("TEST"));
+        assertThat("expectedRelativeYield не равено", responseExep.getExpectedRelativeYield(), is(expectedRelativeYield));
+        assertThat("status не равен", responseExep.getStatus().toString(), is("draft"));
+        assertThat("title не равен", responseExep.getTitle(), is(title));
+        assertThat("baseCurrency не равен", responseExep.getBaseCurrency().toString(), is("rub"));
+        assertThat("riskProfile не равно", responseExep.getRiskProfile().toString(), is("conservative"));
+        assertThat("description не равно", responseExep.getDescription(), is(description));
+        assertThat("score не равно", responseExep.getScore(), is(score));
+        assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04") );
+    }
+
+
+
+    @Test
     @AllureId("536280")
     @DisplayName("C536280.GetStrategy.Получение данных торговой стратегии статегия активна")
     @Subfeature("Успешные сценарии")
@@ -174,7 +214,7 @@ public class GetStrategyTest {
         Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
         GetStrategyResponse responseExep = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -208,7 +248,7 @@ public class GetStrategyTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response);
@@ -270,7 +310,7 @@ public class GetStrategyTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApi.getStrategy()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyIdTest)
             .respSpec(spec -> spec.expectStatusCode(422))

@@ -86,7 +86,8 @@ public class GetTimeLineErrorTest {
     MasterPortfolioDao masterPortfolioDao;
 
     String xApiKey = "x-api-key";
-
+    String key = "tracking";
+    String keyRead = "tcrm";
     String siebelIdMaster = "5-F6VT91I0";
     String siebelIdSlave = "4-M3KKMT7";
 
@@ -160,7 +161,7 @@ public class GetTimeLineErrorTest {
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
         ErrorResponse errorResponse = timelineApi.getTimeline()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .cursorQuery("CursorIsNotNumber")
@@ -179,6 +180,22 @@ public class GetTimeLineErrorTest {
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
         timelineApi.getTimeline()
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(401));
+    }
+
+    @Test
+    @AllureId("1705744")
+    @DisplayName("C1705744.GetTimeline. Заголовок X-API-KEY не передан")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1705744() {
+        strategyId = UUID.randomUUID();
+        GetTimelineRequest request = createBody(strategyId, contractIdSlave);
+        //вызываем метод getTimeline
+        timelineApi.getTimeline()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .body(request)

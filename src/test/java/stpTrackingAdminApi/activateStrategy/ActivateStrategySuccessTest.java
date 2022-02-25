@@ -3,7 +3,9 @@ package stpTrackingAdminApi.activateStrategy;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.*;
+import io.qameta.allure.AllureId;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -23,7 +23,7 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
@@ -31,9 +31,7 @@ import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -41,7 +39,6 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -52,12 +49,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -105,8 +99,8 @@ public class ActivateStrategySuccessTest {
     String contractId;
     UUID strategyId;
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
-
-
+    String description = "Autotest  - ActivateStrategy";
+    Integer score = 5;
 
 
     @AfterEach
@@ -137,10 +131,7 @@ public class ActivateStrategySuccessTest {
     @DisplayName("C457274.ActivateStrategy. Успешная активация стратегии")
     @Description("Метод для администратора для активации (публикации) стратегии.")
     void C457274() throws Exception {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "Тест стратегия Autotest 001 - Описание";
-        Integer score = 5;
+        String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -189,10 +180,7 @@ public class ActivateStrategySuccessTest {
     @DisplayName("C457351.ActivateStrategy. Успешный ответ при повторной активации")
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457351() throws Exception {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "Тест стратегия Autotest 003 - Описание";
-        Integer score = 5;
+        String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);

@@ -69,6 +69,7 @@ public class EnableContractSynchronizationErrorTest {
     String xApiKey = "x-api-key";
     String key = "tracking";
     String notKey = "counter";
+    String keyRead = "tcrm";
 
 
     @BeforeAll
@@ -100,6 +101,24 @@ public class EnableContractSynchronizationErrorTest {
         //вызываем метод enableContractSynchronization
         contractApi.enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1705484")
+    @DisplayName("C1705484.enabledContractSynchronization. Передан некорректный x-api-key")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C1705484() {
+        //вызываем метод enableContractSynchronization
+        contractApi.enableContractSynchronization()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .contractIdPath(contractIdSlave)

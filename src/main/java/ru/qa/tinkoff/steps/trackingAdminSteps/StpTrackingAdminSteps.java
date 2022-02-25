@@ -85,10 +85,7 @@ public class StpTrackingAdminSteps {
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
         .ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
-    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker
-        .ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
-
-    TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
+     TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
@@ -297,7 +294,7 @@ public class StpTrackingAdminSteps {
         contractApi.blockContract()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .xAppNameHeader("invest")
-            .xTcsLoginHeader("tracking")
+            .xTcsLoginHeader(key)
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
