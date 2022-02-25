@@ -449,7 +449,7 @@ public class GetTimelineTest {
     @DisplayName("С1584771.GetTimeline. Получаем ленту событий передав на вход strategyId и slaveContractId")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
-    void С1584771() {
+    void C1584771() {
         strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -629,7 +629,7 @@ public class GetTimelineTest {
     @DisplayName("С1584889.GetTimeline. Передан limit")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
-    void С1584889(Integer limit, Integer expectedLimit) {
+    void C1584889(Integer limit, Integer expectedLimit) {
         strategyId = UUID.randomUUID();
         SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active

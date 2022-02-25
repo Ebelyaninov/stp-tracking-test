@@ -68,6 +68,7 @@ public class CreateExchangePositionErrorTest {
     }
 
     String xApiKey = "x-api-key";
+    String keyRead = "tcrm";
 
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateExchangePosition")
@@ -467,6 +468,34 @@ public class CreateExchangePositionErrorTest {
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(сreateExchangePositionRequest)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(ResponseBodyData::asString);
+        //проверяем запись в tracking.exchange_position
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
+    }
+
+
+    @Test
+    @AllureId("1705481")
+    @DisplayName("C1705481.CreateExchangePosition.Авторизация: передаем параметр apiKeyс доступом read")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
+    void C1705481() {
+        Integer limit = 100;
+        String period = "additional_liquidity";
+        //формируем тело запроса
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
+            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
+        //вызываем метод createExchangePosition
+        exchangePositionApi.createExchangePosition()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")

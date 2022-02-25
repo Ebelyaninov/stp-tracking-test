@@ -60,6 +60,7 @@ public class ConfirmMasterClientErrorTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     String SIEBEL_ID = "5-GA3OLBWB";
     String xApiKey = "x-api-key";
+    String keyRead = "tcrm";
 
     @Autowired
     ProfileService profileService;
@@ -192,6 +193,34 @@ public class ConfirmMasterClientErrorTest {
         //вызываем метод confirmMasterClient с неверным значением api-key
         clientApi.confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "trackidngc"))
+            .xAppNameHeader("invest")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .clientIdPath(investId)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response.asString());
+        Optional<Client> clientOpt = clientService.findClient(investId);
+        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+    }
+
+
+    @Test
+    @AllureId("1705432")
+    @DisplayName("C1705432.ConfirmMasterClient.Авторизация: Значение X-API-KEYс доступом read")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
+    void C1705432() {
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        //вызываем метод confirmMasterClient с неверным значением api-key
+        clientApi.confirmMasterClient()
+            .reqSpec(r->r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")

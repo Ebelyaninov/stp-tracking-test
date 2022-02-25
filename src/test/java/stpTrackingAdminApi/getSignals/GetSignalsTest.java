@@ -76,6 +76,7 @@ public class GetSignalsTest {
 
     String xApiKey = "x-api-key";
     String key= "tracking";
+    String keyRead = "tcrm";
 
     SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
 
@@ -178,6 +179,65 @@ public class GetSignalsTest {
         checkItemsFromResponce(getItemsForAAPL, getDataFromDaoForAPPL, "buy", StrategyCurrency.usd);
         checkItemsFromResponce(getItemsForSBER, getDataFromDaoForSBER, "sell", StrategyCurrency.usd);
     }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1705734")
+    @DisplayName("C1705734.GetSignals.Получение списка сигналов c api-key доступом read")
+    @Subfeature("Успешные сценарии")
+    @Description("Получение списка сигналов на стратегии")
+    void C1705734() {
+        createMasterSignal(0, 3, 1, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            "4289.37", "10", 11);
+        createMasterSignal(0, 2, 2, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "128.37", "3", 12);
+        createMasterSignal(0, 1, 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500.37", "10", 13);
+        List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
+        GetSignalsResponse getdataFromResponce = signalApi.getSignals()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .strategyIdPath(strategyId)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("login")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetSignalsResponse.class));
+        //Сортируем версию по убыванию
+        getAllMasterSignals.stream()
+            .sorted(Comparator.comparing(MasterSignal::getVersion).reversed())
+            .collect(Collectors.toList());
+
+        //Получаем items из ответа метода и БД, для инструментов
+        List<Signal> getItemsForSBER = getdataFromResponce.getItems().stream()
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
+            .collect(Collectors.toList());
+
+        Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
+            .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
+            .findFirst();
+
+        List<Signal> getItemsForAAPL = getdataFromResponce.getItems().stream()
+            .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
+            .collect(Collectors.toList());
+
+        Optional<MasterSignal> getDataFromDaoForAPPL =  getAllMasterSignals.stream()
+            .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
+            .findFirst();
+
+        assertThat("nextCursor != 1", getdataFromResponce.getNextCursor(),
+            is(getAllMasterSignals.get(2).getVersion().toString()));
+        assertThat("hasNext != false", getdataFromResponce.getHasNext(), is(false));
+        //Проверяем выгрузку 2 items c action = 13 игнорируем
+        assertThat("получили больше 2 items в ответе метода", getdataFromResponce.getItems().size(),
+            is(2));
+
+        checkItemsFromResponce(getItemsForAAPL, getDataFromDaoForAPPL, "buy", StrategyCurrency.usd);
+        checkItemsFromResponce(getItemsForSBER, getDataFromDaoForSBER, "sell", StrategyCurrency.usd);
+    }
+
+
 
     @SneakyThrows
     @Test

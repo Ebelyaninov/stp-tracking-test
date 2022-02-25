@@ -62,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 
 public class ConfirmMasterClientSuccessTest {
-//    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
+
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
