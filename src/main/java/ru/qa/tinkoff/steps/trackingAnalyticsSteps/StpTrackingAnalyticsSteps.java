@@ -586,22 +586,46 @@ public class StpTrackingAnalyticsSteps {
 
 
     // получаем данные от ценах от MarketData
-    public Map<String, BigDecimal> getPriceFromMarketAllDataWithDate(String ListInst, String type, String date, int size) {
-        Response res = pricesApi.mdInstrumentsPrices()
-            .instrumentsIdsQuery(ListInst)
-            .requestIdQuery("111")
-            .systemCodeQuery("111")
-            .typesQuery(type)
-            .tradeTsQuery(date)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response);
+    public Map<String, BigDecimal> getPriceFromMarketAllDataWithDate(List<String> instrumentList, String type, String date, int size) {
+//        Response res = pricesApi.mdInstrumentsPrices()
+//            .instrumentsIdsQuery(ListInst)
+//            .requestIdQuery("111")
+//            .systemCodeQuery("111")
+//            .typesQuery(type)
+//            .tradeTsQuery(date)
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response);
 
-        Map<String, BigDecimal> pricesPos = new HashMap<>();
+//        List<String> instrumentList = new ArrayList<>();
+//        instrumentList.add(instrument.instrumentSBER);
+//        instrumentList.add(instrument.instrumentSU29009RMFS6);
+//        instrumentList.add(instrument.instrumentLKOH);
+//        instrumentList.add(instrument.instrumentSNGSP);
+//        instrumentList.add(instrument.instrumentTRNFP);
+//        instrumentList.add(instrument.instrumentESGR);
+//        instrumentList.add(instrument.instrumentUSD);
+
+        Map<String, BigDecimal> pricesPos2 = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            pricesPos.put(res.getBody().jsonPath().getString("instrument_id[" + i + "]"),
-                new BigDecimal(res.getBody().jsonPath().getString("prices[" + i + "].price_value[0]")));
+            Response res2 = pricesApi.mdInstrumentPrices()
+                .instrumentIdPath(instrumentList.get(i))
+                .typesQuery(type)
+                .tradeTsQuery(date)
+                .systemCodeQuery("111")
+                .requestIdQuery("111")
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response);
+
+            pricesPos2.put(res2.getBody().jsonPath().getString("instrument_id"),
+                new BigDecimal(res2.getBody().jsonPath().getString("prices[" + 0 + "].price_value")));
         }
-        return pricesPos;
+        return pricesPos2;
+//        Map<String, BigDecimal> pricesPos = new HashMap<>();
+//        for (int i = 0; i < size; i++) {
+//            pricesPos.put(res.getBody().jsonPath().getString("instrument_id[" + i + "]"),
+//                new BigDecimal(res.getBody().jsonPath().getString("prices[" + i + "].price_value[0]")));
+//        }
+//        return pricesPos;
     }
 
     public BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,

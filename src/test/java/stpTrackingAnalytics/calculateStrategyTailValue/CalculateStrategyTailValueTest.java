@@ -221,15 +221,19 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentLKOH;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
+
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 3);
         // получаем данные для расчета по облигациям
         List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
@@ -248,7 +252,7 @@ public class CalculateStrategyTailValueTest {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
-            if (pair.getKey().equals(instrument.tickerLKOH)) {
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
                 valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
         }
@@ -302,15 +306,17 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
         List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
@@ -379,15 +385,17 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
         List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
