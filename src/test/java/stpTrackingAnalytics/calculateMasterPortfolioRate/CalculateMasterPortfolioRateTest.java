@@ -169,6 +169,7 @@ public class CalculateMasterPortfolioRateTest {
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
+        OffsetDateTime cutTimeForMd = cutTime.minusHours(3);
         //создаем команду
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_RATE, strategyIdByte);
@@ -181,13 +182,19 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTimeForMd);
         String dateFireg = fmtFireg.format(cutTime);
 
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        instrumentList.add(instrument.instrumentTRNFP);
+        instrumentList.add(instrument.instrumentESGR);
+        instrumentList.add(instrument.instrumentUSD);
 
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentLKOH + "," + instrument.instrumentSNGSP + "," +
-            instrument.instrumentTRNFP + "," + instrument.instrumentESGR + "," + instrument.instrumentUSD;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 7);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 7);
         //получаем параметры для расчета стоимости портфеля bonds
 
         List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
@@ -261,10 +268,13 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentLKOH;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 3);
         //получаем параметры для расчета стоимости портфеля bonds
         List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
@@ -361,10 +371,12 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         //получаем параметры для расчета стоимости портфеля bonds
         List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
@@ -462,10 +474,12 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         //получаем параметры для расчета стоимости портфеля bonds
         List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
@@ -521,7 +535,9 @@ public class CalculateMasterPortfolioRateTest {
         //расчитываем новые доли
         String baseMoneyNew = "73445.55";
         String ListInstNew = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentLKOH + "," + instrument.instrumentSNGSP;
-        Map<String, BigDecimal> pricesPosNew = steps.getPriceFromMarketAllDataWithDate(ListInstNew, "last", dateTs, 4);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        Map<String, BigDecimal> pricesPosNew = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 4);
         BigDecimal valuePosNew1 = BigDecimal.ZERO;
         BigDecimal valuePosNew2 = BigDecimal.ZERO;
         BigDecimal valuePosNew3 = BigDecimal.ZERO;
@@ -675,10 +691,10 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
-        String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = instrument.instrumentSBER;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
@@ -755,10 +771,10 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
-        String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = instrument.instrumentSBER;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
