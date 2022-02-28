@@ -25,7 +25,9 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
@@ -64,7 +66,8 @@ import static org.hamcrest.Matchers.notNullValue;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 
 })
 public class CalculateMasterPortfolioValueTest {
@@ -95,6 +98,8 @@ public class CalculateMasterPortfolioValueTest {
     StpTrackingAnalyticsSteps steps;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
+    @Autowired
+    StpInstrument instrument;
 
     MasterPortfolioValue masterPortfolioValue;
     String contractIdMaster;
@@ -224,16 +229,20 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 4);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 4);
         // получаем данные для расчета по облигациям
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
@@ -244,18 +253,18 @@ public class CalculateMasterPortfolioValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet4)) {
-                valuePos4 = new BigDecimal(steps.quantity4).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3).add(valuePos4)
@@ -309,15 +318,21 @@ public class CalculateMasterPortfolioValueTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4 + "," +
-            steps.instrumet5 + "," + steps.instrumet6 + "," + steps.instrumet7;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        instrumentList.add(instrument.instrumentTRNFP);
+        instrumentList.add(instrument.instrumentESGR);
+        instrumentList.add(instrument.instrumentUSD);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 7);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 7);
         // получаем данные для расчета по облигациям
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
@@ -436,16 +451,18 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
@@ -454,10 +471,10 @@ public class CalculateMasterPortfolioValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -476,7 +493,6 @@ public class CalculateMasterPortfolioValueTest {
         steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster, strategyId);
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        Thread.sleep(5000);
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
@@ -521,16 +537,18 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //выполняем расчеты стоимости портфеля
@@ -539,10 +557,10 @@ public class CalculateMasterPortfolioValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -562,9 +580,9 @@ public class CalculateMasterPortfolioValueTest {
         steps.createMasterPortfolioThreePosition(15, 4, "77545.55", contractIdMaster, strategyId);
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        BigDecimal pricePos3 = new BigDecimal(steps.getPriceFromMarketDataWithDate(steps.instrumet3, "last", dateTs));
+        BigDecimal pricePos3 = new BigDecimal(steps.getPriceFromMarketDataWithDate(instrument.instrumentLKOH, "last", dateTs));
         //выполняем расчеты
-        BigDecimal valuePos3 = new BigDecimal(steps.quantity3).multiply(pricePos3);
+        BigDecimal valuePos3 = new BigDecimal(steps.quantityLKOH).multiply(pricePos3);
         BigDecimal valuePortfolioNew = valuePos1.add(valuePos2).add(valuePos3).add(new BigDecimal(baseMoneyNew));
         ;
         log.info("valuePortfolioNew:{}", valuePortfolioNew);
@@ -595,7 +613,7 @@ public class CalculateMasterPortfolioValueTest {
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, steps.ticker8, steps.tradingClearingAccount8, steps.quantity8);
+        createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, steps.quantityYNDX);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -611,10 +629,10 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
-        BigDecimal pricePos2 = new BigDecimal(steps.getPriceFromMarketDataWithDate(steps.instrumet8, "last", dateTs));
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        BigDecimal pricePos2 = new BigDecimal(steps.getPriceFromMarketDataWithDate(instrument.instrumentYNDX, "last", dateTs));
         //выполняем расчеты
-        BigDecimal valuePos2 = new BigDecimal(steps.quantity8).multiply(pricePos2);
+        BigDecimal valuePos2 = new BigDecimal(steps.quantityYNDX).multiply(pricePos2);
         BigDecimal valuePortfolio = valuePos2.add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -651,7 +669,7 @@ public class CalculateMasterPortfolioValueTest {
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, steps.ticker8, steps.tradingClearingAccount8, steps.quantity8);
+        createMasterPortfolio(ticker1, tradingClearingAccount1, quantity1, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, steps.quantityYNDX);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -667,10 +685,10 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
-        BigDecimal pricePos2 = new BigDecimal(steps.getPriceFromMarketDataWithDate(steps.instrumet8, "last", dateTs));
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        BigDecimal pricePos2 = new BigDecimal(steps.getPriceFromMarketDataWithDate(instrument.instrumentYNDX, "last", dateTs));
         //выполняем расчеты
-        BigDecimal valuePos2 = new BigDecimal(steps.quantity8).multiply(pricePos2);
+        BigDecimal valuePos2 = new BigDecimal(steps.quantityYNDX).multiply(pricePos2);
         BigDecimal valuePortfolio = valuePos2.add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         await().atMost(FIVE_SECONDS).until(() ->

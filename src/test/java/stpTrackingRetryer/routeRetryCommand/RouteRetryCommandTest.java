@@ -452,7 +452,7 @@ public class RouteRetryCommandTest {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -477,27 +477,10 @@ public class RouteRetryCommandTest {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
-    }
-
-
-    //вызываем метод CreateSubscription для slave
-    void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
-        subscriptionApi.createSubscription()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebleIdSlave)
-            .contractIdQuery(contractIdSlave)
-            .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        contractSlave = contractService.getContract(contractIdSlave);
     }
 
 
@@ -539,7 +522,7 @@ public class RouteRetryCommandTest {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);

@@ -271,7 +271,7 @@ public class UpdateStrategySuccessTest {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -295,8 +295,9 @@ public class UpdateStrategySuccessTest {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 }

@@ -82,6 +82,8 @@ public class GetExchangePositionsTest {
     }
 
     String xApiKey = "x-api-key";
+    String key = "tracking";
+    String keyRead = "tcrm";
 
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersGetExchangePosition")
@@ -91,7 +93,7 @@ public class GetExchangePositionsTest {
     @Description("Метод необходим для получения списка всех позиций, участвующих в автоследовании.")
     void C1041093(String name, String login) {
         ExchangePositionApi.GetExchangePositionsOper getExchangePositions = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
             getExchangePositions = getExchangePositions.xAppNameHeader(name);
@@ -133,6 +135,21 @@ public class GetExchangePositionsTest {
     }
 
 
+    @Test
+    @AllureId("1705727")
+    @DisplayName("C1705727.GetExchangePositions.Авторизация: Неверное значение X-API-KEY")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
+    void C1705727() {
+        exchangePositionApi.getExchangePositions()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response.asString());
+    }
+
+
     private static Stream<Arguments> provideLimit() {
         return Stream.of(
             Arguments.of(1),
@@ -152,7 +169,7 @@ public class GetExchangePositionsTest {
     void C1045326(Integer limit) {
         //вызываем метод getExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(limit)
             .xTcsLoginHeader("tracking_admin")
@@ -178,7 +195,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePosition = exchangePositionService.getExchangePositionByPositionAndLimitmit(position, 1);
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(position)
             .limitQuery(1)
@@ -213,7 +230,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 3).getPosition())
             .limitQuery(1)
@@ -248,7 +265,7 @@ public class GetExchangePositionsTest {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
         GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 1).getPosition())
             .limitQuery(1)

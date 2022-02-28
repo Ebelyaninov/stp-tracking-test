@@ -1,0 +1,65 @@
+{
+    "httpRequest": {
+        "method": "GET",
+        "path": "{{path}}",
+        "queryStringParameters": {
+            "brokerType": [
+                "broker"
+            ],
+            "brokerStatus": [
+                "opened"
+            ]
+        }
+    },
+    "httpResponse": {
+        "body": {
+            "investId": "{{investId}}",
+            "brokerAccounts": [
+                {
+                    "id": "{{contractId}}",
+                    "type": "broker",
+                    "status": "opened",
+                    "name": "Брокерский счёт",
+                    "openedDate": "2018-05-22",
+                    "blocked": false,
+                    "hidden": false,
+                    "customTags": [
+                        "main-broker"
+                    ],
+                    "position": 1,
+                    "autoOpen": false,
+                    "integrationId": "20180522235959437TRD833103",
+                    "clientCodes": [
+                        {
+                            "id": "DDO250635210",
+                            "exchangeCode": "moex",
+                            "exchangeSection": "moex_foex"
+                        },
+                        {
+                            "id": "DDO250635210",
+                            "exchangeCode": "moex",
+                            "exchangeSection": "moex_stcks"
+                        },
+                        {
+                            "id": "DDO250635210",
+                            "exchangeCode": "spb",
+                            "exchangeSection": "spbex_fostck"
+                        },
+                        {
+                            "id": "U801081",
+                            "exchangeCode": "moex",
+                            "exchangeSection": "moex_ftrs"
+                        }
+                    ],
+                    "operations": [
+                        "not-trading",
+                        "securities"
+                    ],
+                    "blocking": [],
+                    "closedDate": null,
+                    "strategyId": null
+                }
+            ]
+        }
+    }
+}

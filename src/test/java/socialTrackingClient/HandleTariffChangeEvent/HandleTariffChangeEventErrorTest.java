@@ -240,6 +240,59 @@ public class HandleTariffChangeEventErrorTest {
         assertThat("Отправили событие в топик", messages.size(), equalTo(0));
     }
 
+    @SneakyThrows
+    @Test
+    @AllureId("1692017")
+    @DisplayName("C1692017. Не удалось обновить контракт на этапе активации подписки (контракт уже подписан на стратегию)")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Обработка событий об изменении тарифа")
+    void C1692017() {
+        //Добавляем стратегию мастеру
+        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+        //Добавляем подписку slave
+        clientSlave = clientService.createClient(investIdSlave, ClientStatusType.none, null, ClientRiskProfile.conservative);
+        UUID strategyIdBeforeUpdate = UUID.randomUUID();
+        contractSlave = new Contract()
+            .setId(contractIdSlave)
+            .setClientId(clientSlave.getId())
+            .setState(ContractState.tracked)
+            .setBlocked(false)
+            .setStrategyId(strategyIdBeforeUpdate);
+        contractSlave = contractService.saveContract(contractSlave);
+
+        subscription = new Subscription()
+            .setSlaveContractId(contractIdSlave)
+            .setStrategyId(strategyId)
+            .setStartTime(startTime)
+            .setStatus(SubscriptionStatus.draft)
+            .setEndTime(null)
+            .setBlocked(false);
+        subscription = subscriptionService.saveSubscription(subscription);
+
+        ChangeTariff.Event buildMessage = createMessageForChangeTariff(contractIdSlave, "TRD10.0", ChangeTariff.TariffType.TRACKING);
+        //вычитываем все события из топика tracking.contract.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //Отправляем событие в топик tariff.change.raw
+        byte[] eventBytes = buildMessage.toByteArray();
+        oldKafkaService.send(TARIFF_CHANGE_RAW, eventBytes, eventBytes);
+        //Проверяем, что не обновили подписку
+        await().atMost(Duration.ofSeconds(5))
+            .until(() -> subscriptionService.findSubcription(contractIdSlave).get().getStatus(), equalTo(SubscriptionStatus.draft));
+        //Ищем и проверяем событие в топике tracking.contract.event
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        //Проверяем, что обновили подписку
+        Optional<Subscription> getDataFromSubscription = subscriptionService.findSubcription(contractIdSlave);
+        assertThat("Не активировали подписку", getDataFromSubscription.get().getStatus(), is(SubscriptionStatus.draft));
+        //Проверить, что не обновили контракт
+        Optional<Contract> getDataFromContract = contractService.findContract(contractIdSlave);
+        assertThat("state != " + ContractState.tracked, getDataFromContract.get().getState(), is(ContractState.tracked));
+        assertThat("strategyId != " + strategyIdBeforeUpdate, getDataFromContract.get().getStrategyId(), is(strategyIdBeforeUpdate));
+        //проверяем событие
+        assertThat("Отправили событие в топик", messages.size(), equalTo(0));
+    }
+
 
     public void createSubcription(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus, Boolean blocked,java.sql.Timestamp dateStart,
@@ -248,7 +301,7 @@ public class HandleTariffChangeEventErrorTest {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);

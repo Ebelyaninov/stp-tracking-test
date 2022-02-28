@@ -6,9 +6,10 @@ import ru.qa.tinkoff.tariff.entities.ContractTariff;
 
 import java.math.BigInteger;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Repository
 public interface ContractTariffRepository extends JpaRepository<ContractTariff, BigInteger> {
 
-    ContractTariff findContractTariffByContractIdAndEndDateGreaterThan (String contractId, OffsetDateTime endDate);
+    List<ContractTariff> findContractTariffByContractIdOrderByEndDateDesc (String contractId);
 }

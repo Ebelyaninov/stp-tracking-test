@@ -225,7 +225,7 @@ public class CreateStrategyErrorValidDataTest {
         //Находим в БД автоследования созданный контракт и Проверяем его поля
         contract = сontractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));
-        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
+//        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));
         assertThat("стратегия не равно null", (contract.getStrategyId()), is(nullValue()));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);

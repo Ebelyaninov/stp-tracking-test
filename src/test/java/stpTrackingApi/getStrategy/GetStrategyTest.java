@@ -29,7 +29,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponse;
@@ -74,8 +76,9 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class
-//    TrackingApiClientConfiguration.class
-    , StrategyApiCreator.class
+    , StrategyApiCreator.class,
+    StpTrackingInstrumentConfiguration.class
+
 })
 public class GetStrategyTest {
     @Autowired
@@ -116,9 +119,10 @@ public class GetStrategyTest {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
     SubscriptionBlockService subscriptionBlockService;
-
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
+    @Autowired
+    StpInstrument instrument;
 
 //    @Autowired
 //    RestClientApiConfigurationProperties trackingApiProperties;
@@ -150,42 +154,24 @@ public class GetStrategyTest {
     MasterPortfolioValue masterPortfolioValue;
 
 
-    String tickerShare = "SBER";
-    String tradingClearingAccountShare = "L01+00002F00";
-    String quantityShare = "30";
-    String briefNameShare ="Сбер Банк";
-    String imageShare ="RU0009029540.png";
-    String typeShare ="share";
-
-    String tickerEtf = "FXDE";
-    String tradingClearingAccountEtf = "L01+00002F00";
-    String quantityEtf = "5";
-
-    String tickerBond = "SU29009RMFS6";
-    String tradingClearingAccountBond = "L01+00002F00";
-    String quantityBond = "7";
-    String briefNameBond ="ОФЗ 29009";
-    String imageBond ="minfin.png";
-    String typeBond ="bond";
-
-    String tickerMoney = "USD000UTSTOM";
-    String tradingClearingAccountMoney = "MB9885503216";
-    String quantityMoney = "2000";
+    String quantitySBER = "30";
+    String quantityFXDE = "5";
+    String quantitySU29009RMFS6 = "7";
+    String quantityUSD = "2000";
     String expectedRelativeYieldName = "expected-relative-yield";
+    String description = "стратегия autotest GetStrategyTest";
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
                 subscriptionBlockService.deleteSubscription(subscriptionBlock);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
             }
 
             try {
                 subscriptionService.deleteSubscription(steps.subscription);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
             }
             try {
                 contractService.deleteContract(steps.contractSlave);
@@ -261,9 +247,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1583843() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -271,8 +254,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //создаем запись в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -296,11 +279,9 @@ public class GetStrategyTest {
         Boolean checkStrategyCharacteristicsExpectedRelativeYield =
             getStrategy.getCharacteristics().get(0).getItems().stream()
                 .anyMatch(strategyCharacteristic -> strategyCharacteristic.getId().equals("expected-relative-yield"));
-
         BigDecimal managementFee = new BigDecimal("0.05")
             .multiply(BigDecimal.valueOf(100))
             .divide(new BigDecimal("12"), 3, BigDecimal.ROUND_HALF_UP);
-
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
         assertThat("Тип характеристики не равно", strategyCharacteristics.get(0).getType(), is(GetStrategyResponseCharacteristics.TypeEnum.CONDITION));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
@@ -317,9 +298,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C945710() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -329,8 +307,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", true, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", true, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -347,7 +325,7 @@ public class GetStrategyTest {
         createDateMasterPortfolioMaxDrawdown(strategyId, 1, 2, "12");
         createDateMasterPortfolioPositionRetention(strategyId, 1, 2, "weeks");
         createDateMasterPortfolioRate(strategyId, 1, 2);
-        createDateMasterPortfolioTopPositions(strategyId,1,2);
+        createDateMasterPortfolioTopPositions(strategyId, 1, 2);
         createTestDateToMasterSignal(strategyId);
         createDateSignalFrequency(strategyId, 1, 2, 6);
         createDateSignalsCount(strategyId, 1, 2, 6);
@@ -371,17 +349,12 @@ public class GetStrategyTest {
     }
 
 
-
-
     @Test
     @AllureId("1271501")
     @DisplayName("C1271501.GetStrategy.Получение данных торговой стратегии draft")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1271501() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -390,8 +363,8 @@ public class GetStrategyTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createContractAndStrategyDraft(siebelIdMaster, investIdMaster, contractIdMaster,ClientRiskProfile.aggressive, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+        steps.createContractAndStrategyDraft(siebelIdMaster, investIdMaster, contractIdMaster, ClientRiskProfile.aggressive, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, false);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
@@ -406,15 +379,15 @@ public class GetStrategyTest {
             .execute(response -> response.as(GetStrategyResponse.class));
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategyMaster = strategyService.getStrategy(strategyId);
-        List<StrategyCharacteristic> recommendedBaseMoney = getStrategyCharacteristic (getStrategy, "main", "recommended-base-money-position-quantity");
-        List<StrategyCharacteristic> baseCurrency = getStrategyCharacteristic (getStrategy, "main", "base-currency");
-        List<StrategyCharacteristic> tailValue = getStrategyCharacteristic (getStrategy, "main", "tail-value");
-        List<StrategyCharacteristic> slavesCount = getStrategyCharacteristic (getStrategy, "main", "slaves-count");
-        List<StrategyCharacteristic> activationInterval = getStrategyCharacteristic (getStrategy, "main", "activation-interval");
-        List<StrategyCharacteristic> signalsCount = getStrategyCharacteristic (getStrategy, "main", "signals-count");
-        List<StrategyCharacteristic> maxDrawdown = getStrategyCharacteristic (getStrategy, "main", "master-portfolio-max-drawdown");
-        List<StrategyCharacteristic> signalFrequency = getStrategyCharacteristic (getStrategy, "main", "signal-frequency");
-        List<StrategyCharacteristic> positionRetention = getStrategyCharacteristic (getStrategy, "main", "master-portfolio-position-retention");
+        List<StrategyCharacteristic> recommendedBaseMoney = getStrategyCharacteristic(getStrategy, "main", "recommended-base-money-position-quantity");
+        List<StrategyCharacteristic> baseCurrency = getStrategyCharacteristic(getStrategy, "main", "base-currency");
+        List<StrategyCharacteristic> tailValue = getStrategyCharacteristic(getStrategy, "main", "tail-value");
+        List<StrategyCharacteristic> slavesCount = getStrategyCharacteristic(getStrategy, "main", "slaves-count");
+        List<StrategyCharacteristic> activationInterval = getStrategyCharacteristic(getStrategy, "main", "activation-interval");
+        List<StrategyCharacteristic> signalsCount = getStrategyCharacteristic(getStrategy, "main", "signals-count");
+        List<StrategyCharacteristic> maxDrawdown = getStrategyCharacteristic(getStrategy, "main", "master-portfolio-max-drawdown");
+        List<StrategyCharacteristic> signalFrequency = getStrategyCharacteristic(getStrategy, "main", "signal-frequency");
+        List<StrategyCharacteristic> positionRetention = getStrategyCharacteristic(getStrategy, "main", "master-portfolio-position-retention");
         List<PortfolioRateSection> portfolioRateTypes = getStrategy.getPortfolioRate().getTypes();
         List<PortfolioRateSection> portfolioRateTSectors = getStrategy.getPortfolioRate().getSectors();
         List<PortfolioRateSection> portfolioRateTCompanies = getStrategy.getPortfolioRate().getCompanies();
@@ -425,9 +398,9 @@ public class GetStrategyTest {
         assertThat("description не равно", getStrategy.getDescription(), is(strategyMaster.getDescription()));
         assertThat("riskProfile не равно", getStrategy.getRiskProfile().toString(), is(strategyMaster.getRiskProfile().toString()));
         assertThat("recommended-base-money-position-quantity не равно", recommendedBaseMoney.size(), is(0));
-        checkCharacteristics (baseCurrency, "base-currency", "Валюта", "Рубли");
+        checkCharacteristics(baseCurrency, "base-currency", "Валюта", "Рубли");
         assertThat("tail-value не равно", tailValue.size(), is(0));
-        checkCharacteristics (slavesCount, "slaves-count", "Количество подписчиков", "0");
+        checkCharacteristics(slavesCount, "slaves-count", "Количество подписчиков", "0");
         assertThat("activation-interval не равно", activationInterval.size(), is(0));
         assertThat("signalsCount не равно", signalsCount.size(), is(0));
         assertThat("master-portfolio-max-drawdown не равно", maxDrawdown.size(), is(0));
@@ -449,7 +422,6 @@ public class GetStrategyTest {
     }
 
 
-
     private static Stream<Arguments> provideSubscriptionStatusAndStrategyStatus() {
         return Stream.of(
             Arguments.of(SubscriptionStatus.draft, StrategyStatus.active),
@@ -466,9 +438,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C946707(SubscriptionStatus subscriptionStatus, StrategyStatus strategyStatus) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -482,8 +451,8 @@ public class GetStrategyTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            strategyStatus, 1, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 1, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -508,7 +477,6 @@ public class GetStrategyTest {
         assertThat("Номер договора, с которого подписан ведомый", getStrategy.getSubscription().getContractId(), is(contractIdSlave));
         assertThat("Признак наличия подписки авторизованного пользователя на стратегию не равно", getStrategy.getSubscription().getIsLead(), is(true));
     }
-
 
 
 //    @Test
@@ -601,9 +569,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1250904(SubscriptionStatus subscriptionStatus) throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -617,8 +582,8 @@ public class GetStrategyTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 1, LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null, "TEST", "TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -626,7 +591,7 @@ public class GetStrategyTest {
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, subscriptionStatus, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true, false);
-        subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String periodDefault = "[" + fmt.format(startSubTime) + ",)";
@@ -648,16 +613,12 @@ public class GetStrategyTest {
     }
 
 
-
     @Test
     @AllureId("1250915")
     @DisplayName("C1250915.GetStrategy.Проверка blocked и blocked reason для подписок, status = 'active', blocked = true, period = past")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1250915() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -671,8 +632,8 @@ public class GetStrategyTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 1, LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", false, null, "TEST", "TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -681,10 +642,10 @@ public class GetStrategyTest {
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true, false);
-        subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String periodDefault = "[" + fmt.format(startSubTime) + "," +fmt.format(endTime)+ "]";
+        String periodDefault = "[" + fmt.format(startSubTime) + "," + fmt.format(endTime) + "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
             SubscriptionBlockReason.RISK_PROFILE, periodDefault);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
@@ -709,9 +670,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1250886() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -725,8 +683,8 @@ public class GetStrategyTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1,LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", true, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 1, LocalDateTime.now().minusDays(5).minusHours(2), "0.3", "0.05", true, null, "TEST", "TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -735,10 +693,10 @@ public class GetStrategyTest {
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
-        subscription =subscriptionService.getSubscriptionByContract(contractIdSlave);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         long subscriptionId = subscription.getId();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String periodDefault = "[" + fmt.format(startSubTime) + "," +fmt.format(endTime)+ "]";
+        String periodDefault = "[" + fmt.format(startSubTime) + "," + fmt.format(endTime) + "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
             SubscriptionBlockReason.RISK_PROFILE, periodDefault);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
@@ -757,12 +715,6 @@ public class GetStrategyTest {
     }
 
 
-
-
-
-
-
-
     private static Stream<Arguments> provideScore() {
         return Stream.of(
             Arguments.of((Object) null),
@@ -777,10 +729,7 @@ public class GetStrategyTest {
     @DisplayName("C1223538.GetStrategy.Получение данных торговой стратегии,  необязательный параметр score")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
-    void C1223538(Integer score)  {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
+    void C1223538(Integer score) {
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -790,7 +739,7 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWintContractAndStrategyWithProfile(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, true);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -806,17 +755,12 @@ public class GetStrategyTest {
     }
 
 
-
-
     @Test
     @AllureId("1217969")
     @DisplayName("C1217969.GetStrategy.Получение данных торговой стратегии.Нет подписки")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1217969() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -826,8 +770,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -849,7 +793,6 @@ public class GetStrategyTest {
     }
 
 
-
     @Test
     @AllureId("1115576")
     @DisplayName("C1115576.GetStrategy.Не найдена стратегия в strategy")
@@ -857,8 +800,6 @@ public class GetStrategyTest {
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1115576() throws JSONException {
         strategyId = UUID.randomUUID();
-//        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
-
         String rawResponse = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -867,7 +808,6 @@ public class GetStrategyTest {
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(ResponseBodyData::asString);
-
         JSONObject jsonObject = new JSONObject(rawResponse);
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
@@ -892,9 +832,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C946709(StrategyCurrency strategyCurrency, String symbol, int multiplicity) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -904,8 +841,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -929,7 +866,7 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //выбираем проверяемую характеристику
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "main", "recommended-base-money-position-quantity");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "main", "recommended-base-money-position-quantity");
         //расчитываем значение recommendedBaseMoney
         BigDecimal recommendedBaseMoneyPositionQuantity = new BigDecimal("982684.75")
             .add(new BigDecimal("982684.75").multiply(new BigDecimal("0.05")));
@@ -938,7 +875,7 @@ public class GetStrategyTest {
         String rubbleSymbol = symbol;
         String recommendedBaseMoney = str.replace(",", " ") + " " + rubbleSymbol;
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "recommended-base-money-position-quantity", "Рекомендуемая сумма", recommendedBaseMoney);
+        checkCharacteristics(characteristic, "recommended-base-money-position-quantity", "Рекомендуемая сумма", recommendedBaseMoney);
         assertThat("Подсказка не равно", characteristic.get(0).getHint(), is(""));
     }
 
@@ -949,9 +886,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C946710() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -961,15 +895,15 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
         strategy.setActivationTime(updateTime);
         strategyService.saveStrategy(strategy);
         //создаем запись  протфеле в кассандре
-        List<MasterPortfolio.Position> positionList =new ArrayList<>();
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
@@ -981,23 +915,21 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них base-currency
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "main", "base-currency");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "main", "base-currency");
         //проверяем полученные данные
-        checkCharacteristics (characteristic, "base-currency", "Валюта", "Рубли");
+        checkCharacteristics(characteristic, "base-currency", "Валюта", "Рубли");
     }
-
-
 
 
     private static Stream<Arguments> provideTailValue() {
         return Stream.of(
-            Arguments.of(StrategyCurrency.usd, "523.12", "до 1 тыс. $" ),
-            Arguments.of(StrategyCurrency.usd, "1223", "до 10 тыс. $" ),
-            Arguments.of(StrategyCurrency.usd, "1000000", "до 5 млн. $" ),
-            Arguments.of(StrategyCurrency.rub, "523.12", "до 100 тыс. ₽" ),
-            Arguments.of(StrategyCurrency.rub, "10000000", "до 100 млн. ₽" ),
-            Arguments.of(StrategyCurrency.rub, "130101040", "до 500 млн. ₽" ),
-            Arguments.of(StrategyCurrency.rub, "1000000011", "более 1 млрд. ₽" )
+            Arguments.of(StrategyCurrency.usd, "523.12", "до 1 тыс. $"),
+            Arguments.of(StrategyCurrency.usd, "1223", "до 10 тыс. $"),
+            Arguments.of(StrategyCurrency.usd, "1000000", "до 5 млн. $"),
+            Arguments.of(StrategyCurrency.rub, "523.12", "до 100 тыс. ₽"),
+            Arguments.of(StrategyCurrency.rub, "10000000", "до 100 млн. ₽"),
+            Arguments.of(StrategyCurrency.rub, "130101040", "до 500 млн. ₽"),
+            Arguments.of(StrategyCurrency.rub, "1000000011", "более 1 млрд. ₽")
         );
     }
 
@@ -1010,9 +942,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C946711(StrategyCurrency strategyCurrency, String tailValue, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1022,8 +951,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1045,16 +974,16 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них tail-value
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "main", "tail-value");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "main", "tail-value");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "tail-value", "Денег в управлении", result);
+        checkCharacteristics(characteristic, "tail-value", "Денег в управлении", result);
     }
 
 
     private static Stream<Arguments> provideSlavesCount() {
         return Stream.of(
             Arguments.of(15, "15"),
-            Arguments.of(1223, "1" + "\u00A0" + "223" ),
+            Arguments.of(1223, "1" + "\u00A0" + "223"),
             Arguments.of(2345555, "2" + "\u00A0" + "345" + "\u00A0" + "555")
         );
     }
@@ -1068,9 +997,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1260965(int countSlaves, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1080,8 +1006,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, countSlaves, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, countSlaves, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1101,13 +1027,10 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них slaves-count
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "main", "slaves-count");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "main", "slaves-count");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "slaves-count", "Количество подписчиков", result);
+        checkCharacteristics(characteristic, "slaves-count", "Количество подписчиков", result);
     }
-
-
-
 
 
     private static Stream<Arguments> provideActivationInterval() {
@@ -1129,9 +1052,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1261187(int days, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1141,8 +1061,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(days).minusHours(2);
@@ -1162,17 +1082,16 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них "activation-interval"
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "main", "activation-interval");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "main", "activation-interval");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "activation-interval", "Сколько существует", result);
+        checkCharacteristics(characteristic, "activation-interval", "Сколько существует", result);
     }
-
 
 
     private static Stream<Arguments> provideSignalsСount() {
         return Stream.of(
             Arguments.of(15, "15"),
-            Arguments.of(1223, "1" + "\u00A0" + "223" ),
+            Arguments.of(1223, "1" + "\u00A0" + "223"),
             Arguments.of(2345555, "2" + "\u00A0" + "345" + "\u00A0" + "555")
         );
     }
@@ -1186,9 +1105,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1265507(int signalsСount, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1198,8 +1114,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1220,12 +1136,10 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них "signals-count"
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "trade", "signals-count");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "trade", "signals-count");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "signals-count", "Общее количество сделок", result);
+        checkCharacteristics(characteristic, "signals-count", "Общее количество сделок", result);
     }
-
-
 
 
     private static Stream<Arguments> provideMaxDrawdown() {
@@ -1245,9 +1159,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1266065(String value) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1257,8 +1168,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1269,8 +1180,8 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateMasterPortfolioMaxDrawdown(strategyId, 1, 2, value);
-       BigDecimal maxDrawdownValue = new BigDecimal(value).multiply(new BigDecimal("-1"));
-       String result = maxDrawdownValue.toString() + " %";
+        BigDecimal maxDrawdownValue = new BigDecimal(value).multiply(new BigDecimal("-1"));
+        String result = maxDrawdownValue.toString() + " %";
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -1281,23 +1192,21 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них "master-portfolio-max-drawdown"
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "trade", "master-portfolio-max-drawdown");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "trade", "master-portfolio-max-drawdown");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "master-portfolio-max-drawdown", "Максимальная просадка", result);
+        checkCharacteristics(characteristic, "master-portfolio-max-drawdown", "Максимальная просадка", result);
     }
-
-
 
 
     private static Stream<Arguments> provideSignalFrequency() {
         return Stream.of(
-            Arguments.of(0,"ежемесячно"),
+            Arguments.of(0, "ежемесячно"),
             Arguments.of(2, "ежемесячно"),
             Arguments.of(7, "еженедельно"),
             Arguments.of(10, "еженедельно"),
-            Arguments.of(11,"ежедневно"),
-            Arguments.of(12,"ежедневно")
-            );
+            Arguments.of(11, "ежедневно"),
+            Arguments.of(12, "ежедневно")
+        );
     }
 
 
@@ -1309,9 +1218,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1266087(int value, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1321,8 +1227,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1343,16 +1249,15 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них "signal-frequency"
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "trade", "signal-frequency");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "trade", "signal-frequency");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "signal-frequency", "Частота сделок", result);
+        checkCharacteristics(characteristic, "signal-frequency", "Частота сделок", result);
     }
-
 
 
     private static Stream<Arguments> provideMasterPortfolioPositionRetention() {
         return Stream.of(
-            Arguments.of("days","до дня"),
+            Arguments.of("days", "до дня"),
             Arguments.of("weeks", "до недели"),
             Arguments.of("months", "до месяца"),
             Arguments.of("forever", "больше месяца")
@@ -1367,9 +1272,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1266934(String value, String result) throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1379,8 +1281,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1401,11 +1303,10 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         //смотрим характеристики и находим среди них "master-portfolio-position-retention"
-        List<StrategyCharacteristic> characteristic= getStrategyCharacteristic(getStrategy, "trade", "master-portfolio-position-retention");
+        List<StrategyCharacteristic> characteristic = getStrategyCharacteristic(getStrategy, "trade", "master-portfolio-position-retention");
         //проверяем полученные данные с расчетами
-        checkCharacteristics (characteristic, "master-portfolio-position-retention", "Ср. время удержания позиции", result);
+        checkCharacteristics(characteristic, "master-portfolio-position-retention", "Ср. время удержания позиции", result);
     }
-
 
 
     @SneakyThrows
@@ -1415,9 +1316,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1267043() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1427,8 +1325,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1470,7 +1368,6 @@ public class GetStrategyTest {
     }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("1267127")
@@ -1478,9 +1375,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1267127() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1490,8 +1384,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1501,7 +1395,7 @@ public class GetStrategyTest {
         List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
-        createDateMasterPortfolioTopPositions(strategyId,1,2);
+        createDateMasterPortfolioTopPositions(strategyId, 1, 2);
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -1512,17 +1406,17 @@ public class GetStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategyResponse.class));
         List<ru.qa.tinkoff.swagger.tracking.model.TopPosition> topPositions = getStrategy.getTopPositions();
-       for (int i = 0; i < topPositions.size(); i++) {
-            if(topPositions.get(i).getExchangePosition().getTicker().equals(tickerShare)){
-                assertThat("briefName не равно", topPositions.get(i).getExchangePosition().getBriefName(), is(briefNameShare));
-                assertThat("image не равно", topPositions.get(i).getExchangePosition().getImage(), is(imageShare));
-                assertThat("type не равно", topPositions.get(i).getExchangePosition().getType().getValue(), is(typeShare));
+        for (int i = 0; i < topPositions.size(); i++) {
+            if (topPositions.get(i).getExchangePosition().getTicker().equals(instrument.tickerSBER)) {
+                assertThat("briefName не равно", topPositions.get(i).getExchangePosition().getBriefName(), is(instrument.briefNameSBER));
+                assertThat("image не равно", topPositions.get(i).getExchangePosition().getImage(), is(instrument.imageSBER));
+                assertThat("type не равно", topPositions.get(i).getExchangePosition().getType().getValue(), is(instrument.typeSBER));
             }
-           if(topPositions.get(i).getExchangePosition().getTicker().equals(tickerBond)){
-               assertThat("briefName не равно", topPositions.get(i).getExchangePosition().getBriefName(), is(briefNameBond));
-               assertThat("image не равно", topPositions.get(i).getExchangePosition().getImage(), is(imageBond));
-               assertThat("type не равно", topPositions.get(i).getExchangePosition().getType().getValue(), is(typeBond));
-           }
+            if (topPositions.get(i).getExchangePosition().getTicker().equals(instrument.tickerSU29009RMFS6)) {
+                assertThat("briefName не равно", topPositions.get(i).getExchangePosition().getBriefName(), is(instrument.briefNameSU29009RMFS6));
+                assertThat("image не равно", topPositions.get(i).getExchangePosition().getImage(), is(instrument.imageSU29009RMFS6));
+                assertThat("type не равно", topPositions.get(i).getExchangePosition().getType().getValue(), is(instrument.typeSU29009RMFS6));
+            }
         }
     }
 
@@ -1534,9 +1428,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1267723() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1546,8 +1437,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -1570,23 +1461,6 @@ public class GetStrategyTest {
         assertThat("profileId не равно", getStrategy.getOwner().getSocialProfile().getId().toString(), is(clientMaster.getSocialProfile().getId().toString()));
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @SneakyThrows
     @Test
     @AllureId("1261187")
@@ -1594,9 +1468,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1261187_1() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1606,18 +1477,12 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0,null, "0.3", "0.05", false, null);
-//        //изменяем время активации стратегии
-//        strategy = strategyService.getStrategy(strategyId);
-//        LocalDateTime updateTime = LocalDateTime.now().minusDays(days).minusHours(2);
-//        strategy.setActivationTime(updateTime);
-//        strategyService.saveStrategy(strategy);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, "0.3", "0.05", false, null, "TEST", "TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
-
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -1634,7 +1499,7 @@ public class GetStrategyTest {
                 .collect(Collectors.toList());
         List<StrategyCharacteristic> tailCharacteristics = new ArrayList<>();
         for (int i = 0; i < strategyCharacteristics.get(0).getItems().size(); i++) {
-            if(strategyCharacteristics.get(0).getItems().get(i).getId().equals("activation-interval")) {
+            if (strategyCharacteristics.get(0).getItems().get(i).getId().equals("activation-interval")) {
                 tailCharacteristics.add(strategyCharacteristics.get(0).getItems().get(i));
             }
         }
@@ -1662,9 +1527,6 @@ public class GetStrategyTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
     void C1583315(BigDecimal expectedRelativeYield) {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest" +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -1672,8 +1534,8 @@ public class GetStrategyTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, expectedRelativeYield);
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, expectedRelativeYield, "TEST", "TEST11");
         //создаем запись в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -1695,13 +1557,9 @@ public class GetStrategyTest {
         //Проверяем, что нашли expected-relative-yield
         assertThat("id не равно", strategyCharacteristics.get(0).getItems().get(0).getId(), is(expectedRelativeYieldName));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Прогноз автора"));
-        assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("+"  + expectedRelativeYield.toString() + "% годовых"));
+        assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is( expectedRelativeYield.toString() + "% в год"));
 
     }
-
-
-
-
 
 
     BigDecimal roundDecimal(BigDecimal recommendedBaseMoneyPositionQuantity, int multiplicity) {
@@ -1713,12 +1571,6 @@ public class GetStrategyTest {
         return new BigDecimal(
             integer.add(BigInteger.valueOf(multiplicity)).subtract(mod));
     }
-
-
-
-
-
-
 
 
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,
@@ -1739,33 +1591,33 @@ public class GetStrategyTest {
     public List<MasterPortfolio.Position> createListMasterPosition(Date date, int lastChangeDetectedVersion, Tracking.Portfolio.Position position) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerShare)
-            .tradingClearingAccount(tradingClearingAccountShare)
-            .quantity(new BigDecimal(quantityShare))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerEtf)
-            .tradingClearingAccount(tradingClearingAccountEtf)
-            .quantity(new BigDecimal(quantityEtf))
+            .ticker(instrument.tickerFXDE)
+            .tradingClearingAccount(instrument.tradingClearingAccountFXDE)
+            .quantity(new BigDecimal(quantityFXDE))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerBond)
-            .tradingClearingAccount(tradingClearingAccountBond)
-            .quantity(new BigDecimal(quantityBond))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerMoney)
-            .tradingClearingAccount(tradingClearingAccountMoney)
-            .quantity(new BigDecimal(quantityMoney))
+            .ticker(instrument.tickerUSD)
+            .tradingClearingAccount(instrument.tradingClearingAccountUSD)
+            .quantity(new BigDecimal(quantityUSD))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
@@ -1870,13 +1722,13 @@ public class GetStrategyTest {
     void createDateMasterPortfolioTopPositions(UUID strategyId, int days, int hours) {
         List<MasterPortfolioTopPositions.TopPositions> topPositions = new ArrayList<>();
         topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
-            .ticker(tickerShare)
-            .tradingClearingAccount(tradingClearingAccountShare)
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .signalsCount(3)
             .build());
         topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
-            .ticker(tickerBond)
-            .tradingClearingAccount(tradingClearingAccountBond)
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
             .signalsCount(7)
             .build());
         masterPortfolioTopPositions = MasterPortfolioTopPositions.builder()
@@ -1907,30 +1759,29 @@ public class GetStrategyTest {
     }
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(4, 3, 2, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 3, 2, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(4, 2, 3, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 2, 3, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(4, 1, 4, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 1, 4, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(3, 7, 5, strategyId, tickerEtf, tradingClearingAccountEtf,
+        createMasterSignal(3, 7, 5, strategyId, instrument.tickerFXDE, instrument.tradingClearingAccountFXDE,
             "3310", "5", 12);
-        createMasterSignal(3, 1, 6, strategyId, tickerBond, tradingClearingAccountBond,
+        createMasterSignal(3, 1, 6, strategyId, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             "106.663", "7", 12);
-        createMasterSignal(2, 2, 7, strategyId, tickerMoney, tradingClearingAccountMoney,
+        createMasterSignal(2, 2, 7, strategyId, instrument.tickerUSD, instrument.tradingClearingAccountUSD,
             "70.8425", "2000", 12);
     }
 
 
-
-    List<StrategyCharacteristic> getStrategyCharacteristic (GetStrategyResponse getStrategy, String typeChar, String itemChar) {
+    List<StrategyCharacteristic> getStrategyCharacteristic(GetStrategyResponse getStrategy, String typeChar, String itemChar) {
         List<GetStrategyResponseCharacteristics> strategyCharacteristics =
             getStrategy.getCharacteristics().stream()
                 .filter(strategyCharacteristic -> strategyCharacteristic.getType().getValue().equals(typeChar))
                 .collect(Collectors.toList());
         List<StrategyCharacteristic> characteristics = new ArrayList<>();
         for (int i = 0; i < strategyCharacteristics.get(0).getItems().size(); i++) {
-            if(strategyCharacteristics.get(0).getItems().get(i).getId().equals(itemChar)) {
+            if (strategyCharacteristics.get(0).getItems().get(i).getId().equals(itemChar)) {
                 characteristics.add(strategyCharacteristics.get(0).getItems().get(i));
             }
         }
@@ -1938,11 +1789,11 @@ public class GetStrategyTest {
 
     }
 
-   void checkCharacteristics (List<StrategyCharacteristic> characteristics, String id, String title, String value) {
-       //проверяем полученные данные
-       assertThat("id характеристики не равно", characteristics.get(0).getId(), is(id));
-       assertThat("title не равно", characteristics.get(0).getTitle(), is(title));
-       assertThat("value не равно", characteristics.get(0).getValue(), is(value));
-   }
+    void checkCharacteristics(List<StrategyCharacteristic> characteristics, String id, String title, String value) {
+        //проверяем полученные данные
+        assertThat("id характеристики не равно", characteristics.get(0).getId(), is(id));
+        assertThat("title не равно", characteristics.get(0).getTitle(), is(title));
+        assertThat("value не равно", characteristics.get(0).getValue(), is(value));
+    }
 
 }

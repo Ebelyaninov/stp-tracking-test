@@ -88,7 +88,7 @@ public class UnblockContractErrorTest {
 
     String xApiKey = "x-api-key";
     String key= "tracking";
-
+    String keyRead = "tcrm";
     SlavePortfolio slavePortfolio;
 
     ru.qa.tinkoff.tracking.entities.Client clientSlave;
@@ -191,7 +191,7 @@ public class UnblockContractErrorTest {
             contract = new Contract()
                 .setId(contractIdSlave)
                 .setClientId(clientSlave.getId())
-                .setRole(null)
+//                .setRole(null)
                 .setState(contractState)
                 .setBlocked(blocked);
 
@@ -213,11 +213,24 @@ public class UnblockContractErrorTest {
     }
 
     @Test
+    @AllureId("1705765")
+    @DisplayName("C1705765.unblockContract - Заголовок X-API-KEY с доступом read")
+    @Description(" Разблокировка договора")
+    void C1705765() {
+         contractApi.unblockContract()
+            .contractIdPath(contractIdSlave)
+            .xAppNameHeader("tracking")
+            .xTcsLoginHeader("login")
+             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .respSpec(spec -> spec.expectStatusCode(401));
+    }
+
+    @Test
     @AllureId("1491051")
     @DisplayName("C1491051.unblockContract - Заголовок X-API-KEY не передан")
     @Description(" Разблокировка договора")
     void C1491051() {
-         contractApi.unblockContract()
+        contractApi.unblockContract()
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")

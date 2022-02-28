@@ -23,6 +23,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.*;
@@ -32,7 +33,9 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategyResponse;
@@ -71,7 +74,8 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 
 public class GetLiteStrategyTest {
@@ -112,36 +116,27 @@ public class GetLiteStrategyTest {
     SignalsCountDao signalsCountDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
+    @Autowired
+    StpInstrument instrument;
 
     Strategy strategy;
     Profile profile;
     String contractIdMaster;
+    MasterPortfolioTopPositions masterPortfolioTopPositions;
     UUID strategyId;
     MasterPortfolioValue masterPortfolioValue;
     StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker
             .ApiClient.Config.apiConfig()).strategy();
 
-
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String siebelIdMaster = "1-7XOAYPX";
     String xApiKey = "x-api-key";
     String key = "stp-tracking";
-
-    String tickerShare = "SBER";
-    String tradingClearingAccountShare = "L01+00002F00";
-    String quantityShare = "30";
-
-    String tickerEtf = "FXDE";
-    String tradingClearingAccountEtf = "L01+00002F00";
-    String quantityEtf = "5";
-
-    String tickerBond = "SU29009RMFS6";
-    String tradingClearingAccountBond = "L01+00002F00";
-    String quantityBond = "7";
-
-    String tickerMoney = "USD000UTSTOM";
-    String tradingClearingAccountMoney = "MB9885503216";
-    String quantityMoney = "2000";
+    String quantitySBER = "30";
+    String quantityFXDE = "5";
+    String quantitySU29009RMFS6 = "7";
+    String quantityUSD = "2000";
 
     Boolean overloadedFalse = false;
     Boolean overloadedTrue = true;
@@ -193,7 +188,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", overloadedFalse, null);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", overloadedFalse, null,"TEST","TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -241,7 +236,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", overloadedTrue, null);
+            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", overloadedTrue, expectedRelativeYield,"TEST","TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -274,6 +269,9 @@ public class GetLiteStrategyTest {
             is("0"));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
             is("подписаны"));
+        assertThat("expected-relative-yield не равен", getLiteStrategy.getCharacteristics().get(1).getValue(), is("10% в год"));
+        assertThat("short-description не равно", getLiteStrategy.getCharacteristics().get(3).getValue(), is("TEST"));
+        assertThat("owner-description не равно", getLiteStrategy.getCharacteristics().get(4).getValue(), is("TEST11"));
     }
 
 
@@ -296,7 +294,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null);
+            StrategyStatus.active, 2, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -305,6 +303,8 @@ public class GetLiteStrategyTest {
         strategyService.saveStrategy(strategy);
         //добавляем записи о стоимости портфеля за разные периода
         createPortfolioValuesDate(from, date);
+        //создаем запись о стоимости портфеля
+        createDateMasterPortfolioTopPositions(strategyId,0,1);
         //считаем точку
         BigDecimal normalizedMinMaxDif = new BigDecimal("99").subtract(new BigDecimal("0"));
         BigDecimal minMaxDif = new BigDecimal("109268.75").subtract(new BigDecimal("68349.11"));
@@ -326,6 +326,8 @@ public class GetLiteStrategyTest {
             .execute(response -> response.as(GetLiteStrategyResponse.class));
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
         assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues(), is(portfolioValuesPoints));
+        assertThat("master-portfolio-top-positions.value не равно", getLiteStrategy.getCharacteristics().get(5).getValue(),is("RU0009029540.png,minfin.png"));
+        assertThat("master-portfolio-top-positions.subtitle не равно", getLiteStrategy.getCharacteristics().get(5).getSubtitle(),is("Топ торгуемых бумаг"));
 
     }
 
@@ -359,7 +361,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -424,7 +426,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -525,7 +527,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
 //            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
@@ -559,7 +561,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null);
+            StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
 //            .xAppNameHeader("stp-tracking-api")
@@ -592,33 +594,33 @@ public class GetLiteStrategyTest {
     public List<MasterPortfolio.Position> createListMasterPosition(Date date, int lastChangeDetectedVersion, Tracking.Portfolio.Position position) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerShare)
-            .tradingClearingAccount(tradingClearingAccountShare)
-            .quantity(new BigDecimal(quantityShare))
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBER))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerEtf)
-            .tradingClearingAccount(tradingClearingAccountEtf)
-            .quantity(new BigDecimal(quantityEtf))
+            .ticker(instrument.tickerFXDE)
+            .tradingClearingAccount(instrument.tradingClearingAccountFXDE)
+            .quantity(new BigDecimal(quantityFXDE))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerBond)
-            .tradingClearingAccount(tradingClearingAccountBond)
-            .quantity(new BigDecimal(quantityBond))
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         positionList.add(MasterPortfolio.Position.builder()
-            .ticker(tickerMoney)
-            .tradingClearingAccount(tradingClearingAccountMoney)
-            .quantity(new BigDecimal(quantityMoney))
+            .ticker(instrument.tickerUSD)
+            .tradingClearingAccount(instrument.tradingClearingAccountUSD)
+            .quantity(new BigDecimal(quantityUSD))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
             .lastChangeAction((byte) position.getAction().getActionValue())
@@ -655,17 +657,17 @@ public class GetLiteStrategyTest {
     }
 
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(4, 3, 2, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 3, 2, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(4, 2, 3, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 2, 3, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(4, 1, 4, strategyId, tickerShare, tradingClearingAccountShare,
+        createMasterSignal(4, 1, 4, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             "289.37", "10", 12);
-        createMasterSignal(3, 7, 5, strategyId, tickerEtf, tradingClearingAccountEtf,
+        createMasterSignal(3, 7, 5, strategyId, instrument.tickerFXDE, instrument.tradingClearingAccountFXDE,
             "3310", "5", 12);
-        createMasterSignal(3, 1, 6, strategyId, tickerBond, tradingClearingAccountBond,
+        createMasterSignal(3, 1, 6, strategyId, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             "106.663", "7", 12);
-        createMasterSignal(2, 2, 7, strategyId, tickerMoney, tradingClearingAccountMoney,
+        createMasterSignal(2, 2, 7, strategyId, instrument.tickerUSD, instrument.tradingClearingAccountUSD,
             "70.8425", "2000", 12);
     }
 
@@ -696,6 +698,25 @@ public class GetLiteStrategyTest {
         createDateMasterPortfolioValue(strategyId, 1, 4, "109268.75");
 
     }
+    void createDateMasterPortfolioTopPositions(UUID strategyId, int days, int hours) {
+        List<MasterPortfolioTopPositions.TopPositions> topPositions = new ArrayList<>();
+        topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .signalsCount(3)
+            .build());
+        topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .signalsCount(7)
+            .build());
+        masterPortfolioTopPositions = MasterPortfolioTopPositions.builder()
+            .strategyId(strategyId)
+            .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
+            .positions(topPositions)
+            .build();
+        masterPortfolioTopPositionsDao.insertIntoMasterPortfolioTopPositions(masterPortfolioTopPositions);
 
+    }
 
 }

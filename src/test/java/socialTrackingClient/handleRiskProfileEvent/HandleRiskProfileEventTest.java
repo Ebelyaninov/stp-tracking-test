@@ -678,7 +678,7 @@ public class HandleRiskProfileEventTest {
         contractSlave = new Contract()
             .setId(contractIdConservative)
             .setClientId(clientSlave.getId())
-            .setRole(null)
+//            .setRole(null)
             .setState(ContractState.tracked)
             .setStrategyId(strategyId)
             .setBlocked(false);

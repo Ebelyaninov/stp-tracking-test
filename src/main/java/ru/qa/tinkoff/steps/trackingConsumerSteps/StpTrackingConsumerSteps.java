@@ -199,7 +199,7 @@ public class StpTrackingConsumerSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -223,8 +223,9 @@ public class StpTrackingConsumerSteps {
             .setScore(1)
             .setFeeRate(feeRate)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -240,7 +241,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -271,7 +272,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -302,28 +303,11 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
         contractSlave = contractService.saveContract(contractSlave);
-    }
-
-    //вызываем метод CreateSubscription для slave
-    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
-        subscriptionApi.createSubscription()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebleIdSlave)
-            .contractIdQuery(contractIdSlave)
-            .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        contractSlave = contractService.getContract(contractIdSlave);
     }
 
 
@@ -339,7 +323,7 @@ public class StpTrackingConsumerSteps {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
         contractSlave = contractService.getContract(contractIdSlave);
-        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
+//        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
         assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("untracked"));
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(IsNull.nullValue()));
     }
@@ -396,7 +380,7 @@ public class StpTrackingConsumerSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);

@@ -33,7 +33,10 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static io.qameta.allure.Allure.step;
@@ -97,6 +100,7 @@ public class BlockContractErrorTest {
     String key = "tracking";
 
     String notKey = "summer";
+    String keyRead = "tcrm";
     String notContractIdSlave = "1234567890";
 
     @BeforeAll
@@ -162,7 +166,8 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -191,10 +196,34 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         contractApi.blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
+            .xAppNameHeader("tracking")
+            .contractIdPath(contractIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response);
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1705429")
+    @DisplayName("Блокировка контракта ведомого. Авторизация.Передан x-api-key с доступом read")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для наложения технической блокировки на договор ведомого.")
+    void C1705429(){
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку клиента slave на strategy клиента master
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
+        //Вызываем метод blockContract
+        contractApi.blockContract()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("tracking")
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(401))

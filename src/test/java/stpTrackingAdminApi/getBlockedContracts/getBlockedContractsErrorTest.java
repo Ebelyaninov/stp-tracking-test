@@ -90,6 +90,8 @@ public class getBlockedContractsErrorTest {
 
     String xApiKey = "x-api-key";
     String key= "tracking";
+    String notKey = "counter";
+    String keyRead = "tcrm";
 
     @BeforeAll
     void getDataClients() {
@@ -194,5 +196,36 @@ public class getBlockedContractsErrorTest {
         //Проверяем тело ответа
         assertThat("код ошибки не равно", errorCode, is("0344-00-Z99"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1705706")
+    @DisplayName("getBlockedContracts. Передан X-API-KEY некорректный")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
+    void C1705706() {
+        //вызываем метод getBlockedContracts
+        contractApi.getBlockedContracts()
+            .reqSpec(r -> r.addHeader(xApiKey, notKey))
+            .xAppNameHeader("invest")
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response);
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1705705")
+    @DisplayName("getBlockedContracts.Передан X-API-KEYс доступом read")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
+    void C1705705() {
+        //вызываем метод getBlockedContracts
+        contractApi.getBlockedContracts()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .xAppNameHeader("invest")
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(response -> response);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
+import ru.qa.tinkoff.investTracking.rowmapper.ChangedAtSlavePortfolioRowMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.SlavePortfolioRowMapper;
 
 import java.util.Date;
@@ -23,6 +24,7 @@ public class SlavePortfolioDao {
 
     private final CqlTemplate cqlTemplate;
     private final SlavePortfolioRowMapper slavePortfolioRowMapper;
+    private final ChangedAtSlavePortfolioRowMapper changedAtSlavePortfolioRowMapper;
 
     public SlavePortfolio getLatestSlavePortfolio(String contractId, UUID strategyId) {
         String query = "select * " +
@@ -55,7 +57,16 @@ public class SlavePortfolioDao {
             " and changed_at < ? " +
             "order by changed_at desc, version desc," +
             " compared_to_master_version desc limit 1";;
-        return cqlTemplate.queryForObject(query, slavePortfolioRowMapper, contractId, strategyId, cutDate);
+        return cqlTemplate.queryForObject(query, changedAtSlavePortfolioRowMapper, contractId, strategyId, cutDate);
+    }
+    public SlavePortfolio getLatestSlavePortfolioAfter(String contractId, UUID strategyId, Date cutDate) {
+        String query = "select * from invest_tracking.changed_at_slave_portfolio" +
+            " where contract_id = ? " +
+            " and strategy_id = ? " +
+            " and changed_at >= ? " +
+            "order by changed_at ASC, version ASC," +
+            " compared_to_master_version ASC limit 1";;
+        return cqlTemplate.queryForObject(query, changedAtSlavePortfolioRowMapper, contractId, strategyId, cutDate);
     }
 
 
@@ -66,7 +77,7 @@ public class SlavePortfolioDao {
             "  and changed_at >= ? " +
             "  and changed_at < ? " +
             "order by changed_at desc, version desc, compared_to_master_version desc";
-        return cqlTemplate.queryForObject(query, slavePortfolioRowMapper, contractId, strategyId, start, end);
+        return cqlTemplate.queryForObject(query, changedAtSlavePortfolioRowMapper, contractId, strategyId, start, end);
     }
 
 
@@ -124,6 +135,19 @@ public class SlavePortfolioDao {
             .value("compared_to_master_version", comparedToMasterVersion)
             .value("base_money_position", baseMoneyPosition)
             .value("positions",positionList);
+        cqlTemplate.execute(insertQueryBuilder);
+    }
+
+    public void insertIntoSlavePortfolioWithoutPosition(String contractId, UUID strategyId, int version,
+                                         int comparedToMasterVersion,
+                                         SlavePortfolio.BaseMoneyPosition baseMoneyPosition,Date time) {
+        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
+            .value("contract_id", contractId)
+            .value("strategy_id", strategyId)
+            .value("version", version)
+            .value("compared_to_master_version", comparedToMasterVersion)
+            .value("changed_at", time)
+            .value("base_money_position", baseMoneyPosition);
         cqlTemplate.execute(insertQueryBuilder);
     }
 

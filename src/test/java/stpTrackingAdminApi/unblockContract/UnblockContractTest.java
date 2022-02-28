@@ -21,7 +21,9 @@ import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -40,7 +42,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -63,8 +68,8 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    GrpcServicesAutoConfiguration.class
-    //ClientApiAdminCreator.class
+    GrpcServicesAutoConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class UnblockContractTest {
     @Autowired
@@ -89,15 +94,14 @@ public class UnblockContractTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
-//    @Autowired
-//    ApiAdminCreator<ContractApi> apiApiAdminCreator;
+    @Autowired
+    StpInstrument instrument;
+
 
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     String xApiKey = "x-api-key";
-    String key= "tracking";
-
-    SlavePortfolio slavePortfolio;
+    String key = "tracking";
 
     Client clientSlave;
     String contractIdMaster;
@@ -109,12 +113,9 @@ public class UnblockContractTest {
     UUID investIdMaster;
     UUID investIdSlave;
 
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
-
 
     @BeforeAll
-    void getDataFromAccount(){
+    void getDataFromAccount() {
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
@@ -197,7 +198,7 @@ public class UnblockContractTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
@@ -223,7 +224,7 @@ public class UnblockContractTest {
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")
-            .reqSpec(r->r.addHeader(xApiKey, key))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(response -> response);
         //получаем портфель slave

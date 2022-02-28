@@ -173,10 +173,8 @@ public class CheckStrategyTitleErrorTest {
     void C1184389(String name, String platform, String version, String title) {
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
-
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
-
         StrategyApi.CheckStrategyTitleOper checkStrategyTitle = strategyApi.checkStrategyTitle()
             .body(request)
             .xB3ParentspanidHeader("a2fb4a1d1a96d312")

@@ -21,6 +21,7 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -29,7 +30,9 @@ import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -72,7 +75,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 
 public class AnalyzePortfolioErrorTest {
@@ -94,7 +98,7 @@ public class AnalyzePortfolioErrorTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
+    SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -105,6 +109,10 @@ public class AnalyzePortfolioErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
+    @Autowired
+    StpInstrument instrument;
+
+
     SlavePortfolio slavePortfolio;
     Subscription subscription;
     Client clientSlave;
@@ -117,23 +125,23 @@ public class AnalyzePortfolioErrorTest {
 
 
 
-    final String tickerMinfin = "XS0088543190";
-    final String tradingClearingAccountMinfin = "L01+00002F00";
-
-    final String tickerMinfinRU = "NMR";
-    final String tradingClearingAccountMinfinRU = "NDS000000001";
-
-    final String tickerINFN = "BCR";
-    final String tradingClearingAccountINFN = "TKCBM_TCAB";
-
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
-
-    final String tickerYandex = "YNDX";
-    final String tradingClearingAccountYandex = "Y02+00001F00";
-
-    final String tickerBRJ1 = "BRJ1";
-    final String tradingClearingAccountBRJ1 = "U800";
+//    final String tickerMinfin = "XS0088543190";
+//    final String tradingClearingAccountMinfin = "L01+00002F00";
+//
+//    final String tickerMinfinRU = "NMR";
+//    final String tradingClearingAccountMinfinRU = "NDS000000001";
+//
+//    final String tickerINFN = "BCR";
+//    final String tradingClearingAccountINFN = "TKCBM_TCAB";
+//
+//    final String tickerApple = "AAPL";
+//    final String tradingClearingAccountApple = "TKCBM_TCAB";
+//
+//    final String tickerYandex = "YNDX";
+//    final String tradingClearingAccountYandex = "Y02+00001F00";
+//
+//    final String tickerBRJ1 = "BRJ1";
+//    final String tradingClearingAccountBRJ1 = "U800";
 
 
     String description = "description test стратегия autotest update adjust base currency";
@@ -178,7 +186,7 @@ public class AnalyzePortfolioErrorTest {
             } catch (Exception e) {
             }
             try {
-                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
             try {
@@ -216,8 +224,8 @@ public class AnalyzePortfolioErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", "FIFA", "TKCBM_TCAB", "2.0", date, 3,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", "FIFA", "TKCBM_TCAB", "2.0", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -295,8 +303,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -367,9 +376,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", tickerYandex, tradingClearingAccountYandex, "2.0", date, 3,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
+            "2.0", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
 
@@ -418,8 +427,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -430,9 +440,9 @@ public class AnalyzePortfolioErrorTest {
         subscriptionId = subscription.getId();
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerYandex, tradingClearingAccountYandex,
-            "2.0", date, 1, new BigDecimal("4626.6"), new BigDecimal("0"),
-            new BigDecimal("0.0487"), new BigDecimal("2"));
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerYNDX,
+            instrument.tradingClearingAccountYNDX,"2.0", date, 1, new BigDecimal("4626.6"),
+            new BigDecimal("0"), new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
@@ -469,8 +479,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", tickerMinfin, tradingClearingAccountMinfin, "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", instrument.tickerXS0088543190, instrument.tradingClearingAccountXS0088543190, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -520,8 +530,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2.0", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -532,7 +543,8 @@ public class AnalyzePortfolioErrorTest {
         subscriptionId = subscription.getId();
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfin, tradingClearingAccountMinfin,
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerXS0088543190,
+            instrument.tradingClearingAccountXS0088543190,
             "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
             new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
@@ -570,9 +582,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", tickerBRJ1, tradingClearingAccountBRJ1, "2.0", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", instrument.tickerBRJ1, instrument.tradingClearingAccountBRJ1,
+            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -621,8 +633,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -633,9 +646,9 @@ public class AnalyzePortfolioErrorTest {
         subscriptionId = subscription.getId();
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerBRJ1, tradingClearingAccountBRJ1,
-            "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
-            new BigDecimal("0.0487"), new BigDecimal("2"));
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerBRJ1,
+            instrument.tradingClearingAccountBRJ1,"2.0", date, 1, new BigDecimal("626.6"),
+            new BigDecimal("0"),new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
@@ -672,9 +685,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", tickerMinfinRU, tradingClearingAccountMinfinRU, "2.0", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2.0", instrument.tickerNMR, instrument.tradingClearingAccountNMR,
+            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -723,8 +736,9 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "2.0", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -735,9 +749,9 @@ public class AnalyzePortfolioErrorTest {
         subscriptionId = subscription.getId();
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(tickerMinfinRU, tradingClearingAccountMinfinRU,
-            "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
-            new BigDecimal("0.0487"), new BigDecimal("2"));
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerNMR,
+            instrument.tradingClearingAccountNMR,"2.0", date, 1, new BigDecimal("626.6"),
+            new BigDecimal("0"), new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
@@ -773,8 +787,8 @@ public class AnalyzePortfolioErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "2.0", tickerINFN, tradingClearingAccountINFN, "2.0", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2.0", instrument.tickerBCR, instrument.tradingClearingAccountBCR, "2.0", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         OffsetDateTime startSubTime = OffsetDateTime.now();

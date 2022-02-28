@@ -27,11 +27,14 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -65,7 +68,8 @@ import static org.hamcrest.Matchers.notNullValue;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 
 })
 public class CalculateMasterPortfolioRateTest {
@@ -95,6 +99,8 @@ public class CalculateMasterPortfolioRateTest {
     StpTrackingAnalyticsSteps steps;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
+    @Autowired
+    StpInstrument instrument;
 
     UUID strategyId;
     MasterPortfolioRate masterPortfolioRate;
@@ -163,6 +169,7 @@ public class CalculateMasterPortfolioRateTest {
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
+        OffsetDateTime cutTimeForMd = cutTime.minusHours(3);
         //создаем команду
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_RATE, strategyIdByte);
@@ -175,13 +182,23 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTimeForMd);
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4 + "," +
-            steps.instrumet5 + "," + steps.instrumet6 + "," + steps.instrumet7;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 7);
+
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        instrumentList.add(instrument.instrumentTRNFP);
+        instrumentList.add(instrument.instrumentESGR);
+        instrumentList.add(instrument.instrumentUSD);
+
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 7);
         //получаем параметры для расчета стоимости портфеля bonds
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //группируем данные по показателям
@@ -232,7 +249,7 @@ public class CalculateMasterPortfolioRateTest {
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
@@ -251,12 +268,15 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 3);
         //получаем параметры для расчета стоимости портфеля bonds
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
@@ -265,15 +285,15 @@ public class CalculateMasterPortfolioRateTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1
@@ -282,9 +302,9 @@ public class CalculateMasterPortfolioRateTest {
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePos2);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker3, steps.tradingClearingAccount3, steps.type3, steps.sector3, steps.company3), valuePos3);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerLKOH, instrument.tradingClearingAccountLKOH, instrument.typeLKOH, instrument.sectorLKOH, instrument.companyLKOH), valuePos3);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
@@ -351,12 +371,14 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         //получаем параметры для расчета стоимости портфеля bonds
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
@@ -364,10 +386,10 @@ public class CalculateMasterPortfolioRateTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -377,8 +399,8 @@ public class CalculateMasterPortfolioRateTest {
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePos2);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
@@ -452,12 +474,14 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         //получаем параметры для расчета стоимости портфеля bonds
-        List<String> getBondDate = steps.getDateBondFromInstrument(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
@@ -465,10 +489,10 @@ public class CalculateMasterPortfolioRateTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -478,8 +502,8 @@ public class CalculateMasterPortfolioRateTest {
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePos2);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
@@ -510,8 +534,10 @@ public class CalculateMasterPortfolioRateTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //расчитываем новые доли
         String baseMoneyNew = "73445.55";
-        String ListInstNew = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3 + "," + steps.instrumet4;
-        Map<String, BigDecimal> pricesPosNew = steps.getPriceFromMarketAllDataWithDate(ListInstNew, "last", dateTs, 4);
+        String ListInstNew = instrument.instrumentSBER + "," + instrument.instrumentSU29009RMFS6 + "," + instrument.instrumentLKOH + "," + instrument.instrumentSNGSP;
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        Map<String, BigDecimal> pricesPosNew = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 4);
         BigDecimal valuePosNew1 = BigDecimal.ZERO;
         BigDecimal valuePosNew2 = BigDecimal.ZERO;
         BigDecimal valuePosNew3 = BigDecimal.ZERO;
@@ -519,18 +545,18 @@ public class CalculateMasterPortfolioRateTest {
         Iterator itNew = pricesPosNew.entrySet().iterator();
         while (itNew.hasNext()) {
             Map.Entry pair = (Map.Entry) itNew.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePosNew1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePosNew1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePosNew2 = valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePosNew3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePosNew3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet4)) {
-                valuePosNew4 = new BigDecimal(steps.quantity4).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePosNew4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolioNew = valuePosNew1
@@ -540,10 +566,10 @@ public class CalculateMasterPortfolioRateTest {
             .add(new BigDecimal(baseMoneyNew));
         log.info("valuePortfolioNew:  {}", valuePortfolioNew);
         Map<PositionDateFromFireg, BigDecimal> positionIdMapNew = new HashMap<>();
-        positionIdMapNew.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePosNew1);
-        positionIdMapNew.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePosNew2);
-        positionIdMapNew.put(new PositionDateFromFireg(steps.ticker3, steps.tradingClearingAccount3, steps.type3, steps.sector3, steps.company3), valuePosNew3);
-        positionIdMapNew.put(new PositionDateFromFireg(steps.ticker4, steps.tradingClearingAccount4, steps.type4, steps.sector4, steps.company4), valuePosNew4);
+        positionIdMapNew.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePosNew1);
+        positionIdMapNew.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePosNew2);
+        positionIdMapNew.put(new PositionDateFromFireg(instrument.tickerLKOH, instrument.tradingClearingAccountLKOH, instrument.typeLKOH, instrument.sectorLKOH, instrument.companyLKOH), valuePosNew3);
+        positionIdMapNew.put(new PositionDateFromFireg(instrument.tickerSNGSP, instrument.tradingClearingAccountSNGSP, instrument.typeSNGSP, instrument.sectorSNGSP, instrument.companySNGSP), valuePosNew4);
         Map<String, BigDecimal> sectorsNew = getSectors(positionIdMapNew, baseMoneyNew);
         Map<String, BigDecimal> typesNew = getTypes(positionIdMapNew, baseMoneyNew);
         Map<String, BigDecimal> companysNew = getCompanys(positionIdMapNew, baseMoneyNew);
@@ -648,7 +674,7 @@ public class CalculateMasterPortfolioRateTest {
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
+        createMasterPortfolio(instrument.tickerSBER, instrument.tradingClearingAccountSBER, steps.quantitySBER, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -665,23 +691,23 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
-        String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
@@ -728,7 +754,7 @@ public class CalculateMasterPortfolioRateTest {
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-        createMasterPortfolio(steps.ticker1, steps.tradingClearingAccount1, steps.quantity1, ticker8, tradingClearingAccount8, quantity8);
+        createMasterPortfolio(instrument.tickerSBER, instrument.tradingClearingAccountSBER, steps.quantitySBER, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -745,23 +771,23 @@ public class CalculateMasterPortfolioRateTest {
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String dateTs = fmt.format(cutTime);
-        String dateFireg = fmtFireg.format(cutTime);
-        String ListInst = steps.instrumet1;
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 1);
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 1);
         BigDecimal valuePos1 = BigDecimal.ZERO;
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
         Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
         Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
         Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
@@ -909,10 +935,10 @@ public class CalculateMasterPortfolioRateTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
                     .scaleByPowerOfTen(-2);
@@ -923,22 +949,22 @@ public class CalculateMasterPortfolioRateTest {
                     .multiply(minPriceIncrementNew);
                 BigDecimal price = roundPrice
                     .add(new BigDecimal(aciValue));
-                valuePos2 = new BigDecimal(steps.quantity2).multiply(price);
+                valuePos2 = new BigDecimal(steps.quantitySU29009RMFS6).multiply(price);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet4)) {
-                valuePos4 = new BigDecimal(steps.quantity4).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet5)) {
-                valuePos5 = new BigDecimal(steps.quantity5).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentTRNFP)) {
+                valuePos5 = new BigDecimal(steps.quantityTRNFP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet6)) {
-                valuePos6 = new BigDecimal(steps.quantity6).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentESGR)) {
+                valuePos6 = new BigDecimal(steps.quantityESGR).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet7)) {
-                valuePos7 = new BigDecimal(steps.quantity7).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentUSD)) {
+                valuePos7 = new BigDecimal(steps.quantityUSD).multiply((BigDecimal) pair.getValue());
             }
         }
 
@@ -952,13 +978,13 @@ public class CalculateMasterPortfolioRateTest {
 //            .add(new BigDecimal(baseMoney));
 //        log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker1, steps.tradingClearingAccount1, steps.type1, steps.sector1, steps.company1), valuePos1);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker2, steps.tradingClearingAccount2, steps.type2, steps.sector2, steps.company2), valuePos2);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker3, steps.tradingClearingAccount3, steps.type3, steps.sector3, steps.company3), valuePos3);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker4, steps.tradingClearingAccount4, steps.type4, steps.sector4, steps.company4), valuePos4);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker5, steps.tradingClearingAccount5, steps.type5, steps.sector5, steps.company5), valuePos5);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker6, steps.tradingClearingAccount6, steps.type6, steps.sector6, steps.company6), valuePos6);
-        positionIdMap.put(new PositionDateFromFireg(steps.ticker7, steps.tradingClearingAccount7, steps.type7, steps.sector7, steps.company7), valuePos7);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerLKOH, instrument.tradingClearingAccountLKOH, instrument.typeLKOH, instrument.sectorLKOH, instrument.companyLKOH), valuePos3);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSNGSP, instrument.tradingClearingAccountSNGSP, instrument.typeSNGSP, instrument.sectorSNGSP, instrument.companySNGSP), valuePos4);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerTRNFP, instrument.tradingClearingAccountTRNFP, instrument.typeTRNFP, instrument.sectorTRNFP, instrument.companyTRNFP), valuePos5);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerESGR, instrument.tradingClearingAccountESGR, instrument.typeESGR, instrument.sectorESGR, instrument.companyESGR), valuePos6);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerUSD, instrument.tradingClearingAccountUSD, instrument.typeUSD, instrument.sectorUSD, instrument.companyUSD), valuePos7);
         return positionIdMap;
     }
 
@@ -974,10 +1000,10 @@ public class CalculateMasterPortfolioRateTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
                     .scaleByPowerOfTen(-2);
@@ -988,22 +1014,22 @@ public class CalculateMasterPortfolioRateTest {
                     .multiply(minPriceIncrementNew);
                 BigDecimal price = roundPrice
                     .add(new BigDecimal(aciValue));
-                valuePos2 = new BigDecimal(steps.quantity2).multiply(price);
+                valuePos2 = new BigDecimal(steps.quantitySU29009RMFS6).multiply(price);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet4)) {
-                valuePos4 = new BigDecimal(steps.quantity4).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet5)) {
-                valuePos5 = new BigDecimal(steps.quantity5).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentTRNFP)) {
+                valuePos5 = new BigDecimal(steps.quantityTRNFP).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet6)) {
-                valuePos6 = new BigDecimal(steps.quantity6).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentESGR)) {
+                valuePos6 = new BigDecimal(steps.quantityESGR).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet7)) {
-                valuePos7 = new BigDecimal(steps.quantity7).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentUSD)) {
+                valuePos7 = new BigDecimal(steps.quantityUSD).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1
@@ -1063,7 +1089,7 @@ public class CalculateMasterPortfolioRateTest {
             .multiply(minPriceIncrementNew);
         BigDecimal price = roundPrice
             .add(new BigDecimal(aciValue));
-        valuePos = new BigDecimal(steps.quantity2).multiply(price);
+        valuePos = new BigDecimal(steps.quantitySU29009RMFS6).multiply(price);
         return valuePos;
     }
 

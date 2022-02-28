@@ -142,7 +142,7 @@ public class StpTrackingSlaveSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -168,7 +168,9 @@ public class StpTrackingSlaveSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategy = trackingService.saveStrategy(strategy);
     }
 
@@ -180,29 +182,11 @@ public class StpTrackingSlaveSteps {
         contract = new Contract()
             .setId(contractId)
             .setClientId(client.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
         contract = contractService.saveContract(contract);
-    }
-
-
-    //вызываем метод CreateSubscription для slave
-    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
-        subscriptionApi.createSubscription()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebleIdSlave)
-            .contractIdQuery(contractIdSlave)
-            .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        contractSlave = contractService.getContract(contractIdSlave);
     }
 
 
@@ -322,7 +306,7 @@ public class StpTrackingSlaveSteps {
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
         Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
-            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            //.reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -433,6 +417,19 @@ public class StpTrackingSlaveSteps {
                 .build())
             .build();
         return event;
+    }
+
+    //отправляем команду на включение синхронизации
+    public Tracking.PortfolioCommand createCommandEnableSynchronize(String contractIdSlave, OffsetDateTime time) {
+        Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractIdSlave)
+            .setOperation(Tracking.PortfolioCommand.Operation.ENABLE_SYNCHRONIZATION)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .build();
+        return command;
     }
 
     public List<MasterPortfolio.Position> createListMasterPositionWithOnePos(String ticker, String tradingClearingAccount,
@@ -686,6 +683,19 @@ public class StpTrackingSlaveSteps {
             baseMoneyPosition, positionList, date);
     }
 
+    public void createSlavePortfolioWithoutPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
+                                                 String money,Date date) {
+        //с базовой валютой
+        SlavePortfolio.BaseMoneyPosition baseMoneyPosition = SlavePortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(money))
+            .changedAt(date)
+            .lastChangeAction(null)
+            .build();
+        //insert запись в cassandra
+        slavePortfolioDao.insertIntoSlavePortfolioWithoutPosition(contractIdSlave, strategyId, version, comparedToMasterVersion,
+            baseMoneyPosition, date);
+    }
+
 
     @Step("Переместить offset до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
@@ -694,6 +704,8 @@ public class StpTrackingSlaveSteps {
             .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
+
+
 
 
     public Tracking.PortfolioCommand createRetrySynchronizationCommand(String contractIdSlave) {
@@ -842,6 +854,18 @@ public class StpTrackingSlaveSteps {
         kafkaSender.send(TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
+    //  метод отправляет команду с operation = 'ENABLE_SYNCHRONIZATION'.
+    public void createCommandEnableSynchronization(String contractIdSlave)  {
+        //создаем команду
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandEnableSynchronize(contractIdSlave, time);
+        log.info("Команда в tracking.slave.command:  {}", command);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
+    }
+
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
@@ -883,7 +907,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -920,7 +944,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -952,7 +976,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -981,7 +1005,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(true);
@@ -1013,7 +1037,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(true);
@@ -1034,7 +1058,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(true);
@@ -1176,7 +1200,7 @@ public class StpTrackingSlaveSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);

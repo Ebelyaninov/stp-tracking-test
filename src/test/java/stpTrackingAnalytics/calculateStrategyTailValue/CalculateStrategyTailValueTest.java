@@ -26,7 +26,9 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -45,7 +47,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -68,7 +69,8 @@ import static org.junit.Assert.assertEquals;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CalculateStrategyTailValueTest {
     @Autowired
@@ -99,6 +101,8 @@ public class CalculateStrategyTailValueTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
+    @Autowired
+    StpInstrument instrument;
 
     StrategyTailValue strategyTailValue;
     String contractIdMaster;
@@ -217,17 +221,21 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2 + "," + steps.instrumet3;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
+
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 3);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 3);
         // получаем данные для расчета по облигациям
-        List<String> getDateFromFireg = getIntrumentdate(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
         String nominal = getDateFromFireg.get(1);
         //выполняем расчеты стоимости портфеля
@@ -237,15 +245,15 @@ public class CalculateStrategyTailValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
-            if (pair.getKey().equals(steps.instrumet3)) {
-                valuePos3 = new BigDecimal(steps.quantity3).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
             }
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3)
@@ -298,17 +306,19 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        List<String> getDateFromFireg = getIntrumentdate(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
         String nominal = getDateFromFireg.get(1);
         //выполняем расчеты стоимости портфеля
@@ -317,10 +327,10 @@ public class CalculateStrategyTailValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -375,17 +385,19 @@ public class CalculateStrategyTailValueTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         // формируем список позиций для запроса prices MD
-        String ListInst = steps.instrumet1 + "," + steps.instrumet2;
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        String dateTs = fmt.format(cutTime);
+        String dateTs = fmt.format(cutTime.minusHours(3));
         //получаем цены по позициям от маркет даты
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateFireg = fmtFireg.format(cutTime);
         //вызываем метод MD и сохраняем prices в Map
-        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
         // получаем данные для расчета по облигациям
-        List<String> getDateFromFireg = getIntrumentdate(steps.ticker2, steps.classCode2, dateFireg);
+        List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
         String aciValue = getDateFromFireg.get(0);
         String nominal = getDateFromFireg.get(1);
         //выполняем расчеты стоимости портфеля
@@ -394,10 +406,10 @@ public class CalculateStrategyTailValueTest {
         Iterator it = pricesPos.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
-            if (pair.getKey().equals(steps.instrumet1)) {
-                valuePos1 = new BigDecimal(steps.quantity1).multiply((BigDecimal) pair.getValue());
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
             }
-            if (pair.getKey().equals(steps.instrumet2)) {
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
                 valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
             }
@@ -688,21 +700,21 @@ public class CalculateStrategyTailValueTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
             baseMoneySlave, date, positionList);
         String baseMoneySlaveOne = "28126.23";
-        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePosLight(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()));
+        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySlaveOne, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), positionListOnePos);
         String baseMoneySlaveTwo = "27806.13";
-        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPosLight(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()));
+        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "4193.13";
-        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePosLight(steps.ticker1, steps.tradingClearingAccount1,
-            steps.quantity1, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), steps.ticker2, steps.tradingClearingAccount2,
-            steps.quantity2, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), steps.ticker3, steps.tradingClearingAccount3,
-            steps.quantity3, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
+        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 4, 4,
             baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
     }

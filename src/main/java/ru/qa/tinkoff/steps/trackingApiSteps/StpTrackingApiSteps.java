@@ -235,7 +235,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -259,7 +259,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -293,7 +295,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -317,7 +319,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -328,7 +332,7 @@ public class StpTrackingApiSteps {
     public void createClientWintContractAndStrategyFee(String SIEBLE_ID, UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                                        UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                                        ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield) {
+                                                       StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield, String shortDescription, String ownerDescription) {
 
         //находим данные по клиенту в БД social
         String image = "";
@@ -346,7 +350,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -371,7 +375,11 @@ public class StpTrackingApiSteps {
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
             .setExpectedRelativeYield(expectedRelativeYield)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setShortDescription(shortDescription)
+            .setOwnerDescription(ownerDescription)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -401,7 +409,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -425,7 +433,9 @@ public class StpTrackingApiSteps {
             .setScore(score)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overload)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -445,7 +455,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -469,7 +479,9 @@ public class StpTrackingApiSteps {
             .setScore(1)
             .setFeeRate(feeRateProperties)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -508,7 +520,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -532,7 +544,9 @@ public class StpTrackingApiSteps {
             .setScore(score)
             .setFeeRate(feeRateProperties)
             .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList);
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -562,7 +576,7 @@ public class StpTrackingApiSteps {
         contractMaster = new Contract()
             .setId(contractId)
             .setClientId(clientMaster.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -581,8 +595,9 @@ public class StpTrackingApiSteps {
             .setSlavesCount(slaveCount)
             .setActivationTime(date)
             .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList);
-
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -620,7 +635,7 @@ public class StpTrackingApiSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -636,6 +651,9 @@ public class StpTrackingApiSteps {
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
 
     }
+
+
+
 
 
     //создаем портфель master в cassandra с позицией
@@ -931,7 +949,7 @@ public class StpTrackingApiSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(contractBlocked);
@@ -961,7 +979,7 @@ public class StpTrackingApiSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);
@@ -992,7 +1010,7 @@ public class StpTrackingApiSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(investId)
-            .setRole(contractRole)
+//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
@@ -1011,25 +1029,6 @@ public class StpTrackingApiSteps {
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
-
-    //вызываем метод CreateSubscription для slave
-    public void createSubscriptionSlave(String siebleIdSlave, String contractIdSlave, UUID strategyId) {
-        subscriptionApi.createSubscription()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebleIdSlave)
-            .contractIdQuery(contractIdSlave)
-            .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(ResponseBodyData::asString);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        assertThat("ID стратегию не равно", subscription.getStrategyId(), is(strategyId));
-        assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
-        contractSlave = contractService.getContract(contractIdSlave);
-    }
-
-
 
 
 //    //метод отправляет событие с Action = Update, чтобы очистить кеш contractCache

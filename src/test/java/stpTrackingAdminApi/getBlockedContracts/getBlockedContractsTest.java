@@ -31,6 +31,7 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -149,7 +150,8 @@ public class getBlockedContractsTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master
-        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,ContractState.tracked, strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
         //блокируем контракт Slave
         steps.BlockContract(contractIdSlave);
         //получаем список заблокированных контрактов из БД, которые подписаны на стратегию

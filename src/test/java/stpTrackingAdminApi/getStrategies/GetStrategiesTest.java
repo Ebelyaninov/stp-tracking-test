@@ -91,6 +91,8 @@ public class GetStrategiesTest {
     Strategy strategy;
     String SIEBEL_ID = "5-JDFC5N71";
     String xApiKey = "x-api-key";
+    String keyRead = "tcrm";
+    String key = "tracking";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
 
     @AfterEach
@@ -129,7 +131,7 @@ public class GetStrategiesTest {
     void C1041091(Integer limit) {
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(limit)
             .xTcsLoginHeader("tracking_admin")
@@ -159,7 +161,7 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -169,7 +171,7 @@ public class GetStrategiesTest {
         String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(1)
             .cursorQuery(position)
@@ -185,7 +187,54 @@ public class GetStrategiesTest {
         assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
         assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
         assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
+    }
 
+
+    @Test
+    @AllureId("1705738")
+    @DisplayName("C1705738.getStrategies.Получение списка стратегий, успешный ответ с api-key доступом read")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
+    void C1705738() {
+        String title = "Стратегия Autotest - Заголовок";
+        String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        Integer score = 2;
+        String percent = "0";
+        UUID strategyId = UUID.randomUUID();
+        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        //Получаем данные по клиенту в API-Сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //Создаем клиента в tracking: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        strategy = strategyService.getStrategy(strategyId);
+        Integer position = strategy.getPosition();
+        List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
+        String contractIdNew = strategys.get(0).getContract().getId();
+        contract = contractService.getContract(contractIdNew);
+        client = clientService.getClient(contract.getClientId());
+        String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
+        //вызываем метод getStrategys
+        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .limitQuery(1)
+            .cursorQuery(position)
+            .xTcsLoginHeader("tracking_admin")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesResponse.class));
+        String nickNameOwner = responseExep.getItems().get(0).getOwner().getSocialProfile() == null ?
+            "" : responseExep.getItems().get(0).getOwner().getSocialProfile().getNickname();
+        //проверяем, данные в сообщении
+        assertThat("номера стратегии не равно", strategys.get(0).getId(), is(responseExep.getItems().get(0).getId()));
+        assertThat("статус стратегии не равно", strategys.get(0).getStatus().toString(), is(responseExep.getItems().get(0).getStatus().toString()));
+        assertThat("название стратегии не равно", (strategys.get(0).getTitle()), is(responseExep.getItems().get(0).getTitle()));
+        assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
+        assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
+        assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
     }
 
 
@@ -207,13 +256,13 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         Integer position = strategys.get(size - 1).getPosition();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(position)
             .xTcsLoginHeader("tracking_admin")
@@ -242,12 +291,12 @@ public class GetStrategiesTest {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST");
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys
         GetStrategiesResponse responseExep = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(strategys.get(size - 2).getPosition())
             .limitQuery(1)
@@ -334,7 +383,7 @@ public class GetStrategiesTest {
     void C1041093(String name, String login) {
         //вызываем метод confirmMasterClient
         StrategyApi.GetStrategiesOper getStrategies = strategyApi.getStrategies()
-            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
             getStrategies = getStrategies.xAppNameHeader(name);

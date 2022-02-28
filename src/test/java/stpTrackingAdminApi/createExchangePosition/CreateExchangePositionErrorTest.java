@@ -15,12 +15,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
@@ -49,13 +49,16 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingInstrumentConfiguration.class
 })
 public class CreateExchangePositionErrorTest {
     ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
 
     @Autowired
     ExchangePositionService exchangePositionService;
+    @Autowired
+    StpInstrument instrument;
 
     private static Stream<Arguments> provideStringsForHeadersCreateExchangePosition() {
         return Stream.of(
@@ -63,11 +66,9 @@ public class CreateExchangePositionErrorTest {
             Arguments.of("trading-invest", null)
         );
     }
+
     String xApiKey = "x-api-key";
-    String ticker = "FXGD";
-    String tradingClearingAccount = "L01+00000F00";
-
-
+    String keyRead = "tcrm";
 
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateExchangePosition")
@@ -75,27 +76,27 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520697.CreateExchangePosition.Валидация запроса: обязательные параметры в headers :x-app-name, x-tcs-login")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520697(String name, String login)  {
+    void C520697(String name, String login) {
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
-            //вызываем метод createExchangePosition
-            ExchangePositionApi.CreateExchangePositionOper createExchangePosition = exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
-                .body(сreateExchangePositionRequest)
-                .respSpec(spec -> spec.expectStatusCode(400));
-            if (name != null) {
-                createExchangePosition = createExchangePosition.xAppNameHeader(name);
-            }
-            if (login != null) {
-                createExchangePosition = createExchangePosition.xTcsLoginHeader(login);
-            }
-            createExchangePosition.execute(ResponseBodyData::asString);
+        //вызываем метод createExchangePosition
+        ExchangePositionApi.CreateExchangePositionOper createExchangePosition = exchangePositionApi.createExchangePosition()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .body(сreateExchangePositionRequest)
+            .respSpec(spec -> spec.expectStatusCode(400));
+        if (name != null) {
+            createExchangePosition = createExchangePosition.xAppNameHeader(name);
+        }
+        if (login != null) {
+            createExchangePosition = createExchangePosition.xTcsLoginHeader(login);
+        }
+        createExchangePosition.execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     private static Stream<Arguments> provideStringsForBodyCreateExchangePosition() {
@@ -115,8 +116,8 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520826.CreateExchangePosition.Валидация запроса: обязательные параметры в body: ticker, tradingClearingAccount, exchange, trackingAllowed, orderQuantityLimits, periodId, limit")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520826(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchangeTest, Boolean trackingAllowed, Integer limit, String period)  {
-                //формируем тело запроса
+    void C520826(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchangeTest, Boolean trackingAllowed, Integer limit, String period) {
+        //формируем тело запроса
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
             limit, period, exchangeTest, trackingAllowed);
         //вызываем метод createExchangePosition
@@ -132,7 +133,7 @@ public class CreateExchangePositionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker("FXGD", "L01+00002F00");
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -140,27 +141,27 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520851.CreateExchangePosition.Валидация запроса: ticker < 1 символа")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520851()  {
+    void C520851() {
         String ticker = "";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
-            //вызываем метод createExchangePosition
-            exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("android")
-                .xDeviceIdHeader("test")
-                .xTcsLoginHeader("tracking_admin")
-                .body(сreateExchangePositionRequest)
-                .respSpec(spec -> spec.expectStatusCode(400))
-                .execute(ResponseBodyData::asString);
+        //вызываем метод createExchangePosition
+        exchangePositionApi.createExchangePosition()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(сreateExchangePositionRequest)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -168,14 +169,14 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520861.CreateExchangePosition.Валидация запроса: ticker > 12 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520861()  {
+    void C520861() {
         String ticker = "FXGDFXGDFXGDF";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
-       //вызываем метод createExchangePosition
+        //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
@@ -187,8 +188,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -196,12 +197,12 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520878.CreateExchangePosition.Валидация запроса: tradingClearingAccount < 1 символа")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520878()  {
+    void C520878() {
         String tradingClearingAccount = "";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -215,8 +216,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, tradingClearingAccount);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -224,12 +225,12 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C520885.CreateExchangePosition.Валидация запроса: tradingClearingAccount > 12 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C520885()  {
+    void C520885() {
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -243,8 +244,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, tradingClearingAccount);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -252,12 +253,12 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C521188.CreateExchangePosition.Валидация запроса: dailyQuantityLimit < 1 значения")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C521188()  {
+    void C521188() {
         String tradingClearingAccount = "L01+00002F001";
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 0);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -271,8 +272,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, tradingClearingAccount);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -285,7 +286,7 @@ public class CreateExchangePositionErrorTest {
         Integer limit = 100;
         String period = "";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -299,8 +300,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, tradingClearingAccount);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -331,7 +332,7 @@ public class CreateExchangePositionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -362,7 +363,7 @@ public class CreateExchangePositionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -393,7 +394,7 @@ public class CreateExchangePositionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -424,7 +425,7 @@ public class CreateExchangePositionErrorTest {
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -432,11 +433,11 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C521257.CreateExchangePosition.Авторизация: не передаем параметр apiKey")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C521257()  {
+    void C521257() {
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -449,8 +450,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -458,11 +459,11 @@ public class CreateExchangePositionErrorTest {
     @DisplayName("C521266.CreateExchangePosition.Авторизация: передаем неверный параметр apiKey")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
-    void C521266()  {
+    void C521266() {
         Integer limit = 100;
         String period = "additional_liquidity";
         //формируем тело запроса
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(ticker, tradingClearingAccount,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -476,8 +477,36 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
+    }
+
+
+    @Test
+    @AllureId("1705481")
+    @DisplayName("C1705481.CreateExchangePosition.Авторизация: передаем параметр apiKeyс доступом read")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
+    void C1705481() {
+        Integer limit = 100;
+        String period = "additional_liquidity";
+        //формируем тело запроса
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
+            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
+        //вызываем метод createExchangePosition
+        exchangePositionApi.createExchangePosition()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(сreateExchangePositionRequest)
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(ResponseBodyData::asString);
+        //проверяем запись в tracking.exchange_position
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     @Test
@@ -500,9 +529,9 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest createExPosition = new CreateExchangePositionRequest();
         createExPosition.exchange(ExchangePosition.ExchangeEnum.MOEX);
         createExPosition.setOrderQuantityLimits(orderQuantityLimitList);
-        createExPosition.setTicker(ticker);
+        createExPosition.setTicker(instrument.tickerFXGD);
         createExPosition.setTrackingAllowed(true);
-        createExPosition.setTradingClearingAccount(tradingClearingAccount);
+        createExPosition.setTradingClearingAccount(instrument.tradingClearingAccountFXGD);
         createExPosition.setDailyQuantityLimit(1000);
         //вызываем метод createExchangePosition
         exchangePositionApi.createExchangePosition()
@@ -516,8 +545,8 @@ public class CreateExchangePositionErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(ResponseBodyData::asString);
         //проверяем запись в tracking.exchange_position
-        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);
-        assertThat("запись по инструменту не равно",  exchangePositionOpt.isPresent(), is(false));
+        Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD);
+        assertThat("запись по инструменту не равно", exchangePositionOpt.isPresent(), is(false));
     }
 
     //методы для работы тестов:********************************************************************
@@ -541,8 +570,8 @@ public class CreateExchangePositionErrorTest {
 
     //body запроса метода updateExchangePosition парамерт DailyQuantityLimit
     public CreateExchangePositionRequest createBodyRequestParamDailyQuantityLimit(String ticker, String tradingClearingAccount, Integer limit, String period,
-                                                                        ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed,
-                                                                        Integer DailyQuantityLimit ) {
+                                                                                  ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed,
+                                                                                  Integer DailyQuantityLimit) {
         ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit orderQuantityLimit
             = new ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit();
         orderQuantityLimit.setLimit(limit);
@@ -559,8 +588,8 @@ public class CreateExchangePositionErrorTest {
 
     //body запроса метода updateExchangePosition парамерты для  внебиржевого инструмента
     public CreateExchangePositionRequest createBodyRequestParamOct(String ticker, String tradingClearingAccount, Integer limit, String period,
-                                                                                  ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed,
-                                                                                  Integer DailyQuantityLimit, String otcTicker, String otcClassCode) {
+                                                                   ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed,
+                                                                   Integer DailyQuantityLimit, String otcTicker, String otcClassCode) {
         ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit orderQuantityLimit
             = new ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit();
         orderQuantityLimit.setLimit(limit);
@@ -576,12 +605,6 @@ public class CreateExchangePositionErrorTest {
         createExPosition.setOtcClassCode(otcClassCode);
         return createExPosition;
     }
-
-
-
-
-
-
 
 
 }

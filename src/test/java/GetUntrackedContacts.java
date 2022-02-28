@@ -72,7 +72,7 @@ public class GetUntrackedContacts {
         createdClient.getContracts().add(new Contract()
             .setId(validBrokerAccount.getId())
             .setClientId(createdClient.getId())
-            .setRole(ContractRole.master)
+//            .setRole(ContractRole.master)
             .setStrategyId(UUID.fromString("f525f07f-b203-45ba-b86d-55d31e1780a5"))
             .setState(ContractState.tracked));
         trackingService.saveClient(createdClient);

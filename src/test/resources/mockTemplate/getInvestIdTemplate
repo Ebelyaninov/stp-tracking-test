@@ -1,0 +1,11 @@
+{
+    "httpRequest": {
+        "method": "GET",
+        "path": "{{path}}"
+    },
+    "httpResponse": {
+        "body": {
+            "investId": "{{investId}}"
+        }
+    }
+}

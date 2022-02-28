@@ -88,6 +88,8 @@ public class CreateStrategyErrorTest {
     String SIEBEL_ID = "1-5RLRHAS";
     String siebelIdNotOpen = "1-1PFLDYR";
     String siebelIdNotBroker = "5-M5JWUQE8";
+    String contractId;
+    String title;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -96,7 +98,18 @@ public class CreateStrategyErrorTest {
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
-            clientService.deleteClient(client);
+            try {
+                strategyService.deleteStrategy(strategyService.getStrategyByLowerTitle(title));
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(contractService.getContract(contractId));
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(client);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -115,7 +128,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C442935(String name, String version, String platform) {
-        String title = "Тест стратегия CreateStrategy Autotest 001";
+        title = "Тест стратегия CreateStrategy Autotest 001";
         String description = "New test стратегия Autotest 001";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -123,7 +136,7 @@ public class CreateStrategyErrorTest {
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
         //Находим подходящего клиента в сервисе счетов и БД social, Создаем по нему запись в tracking.client
-        String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
+        contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
         CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
@@ -163,7 +176,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266603()  {
-        String title = "Тест стратегия CreateStrategy Autotest 002";
+        title = "Тест стратегия CreateStrategy Autotest 002";
         String description = "New test стратегия Autotest 002";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -203,7 +216,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C438058() {
-        String title = "Тест стратегия CreateStrategy Autotest 003";
+        title = "Тест стратегия CreateStrategy Autotest 003";
         String description = "New test стратегия Autotest 003";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -295,7 +308,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C499682() {
-        String title = "Тест стратегия CreateStrategy Autotest 005";
+        title = "Тест стратегия CreateStrategy Autotest 005";
         String description = "New test стратегия Autotest 005";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -345,7 +358,7 @@ public class CreateStrategyErrorTest {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = (fmt.format(now));
-        String title = "";
+        title = "";
         String description = "New test стратегия Autotest 006";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -387,7 +400,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441407() {
-        String title = "Тест стратегия CreateStrategy Autotest 007";
+        title = "Тест стратегия CreateStrategy Autotest 007";
         String description = "";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -425,7 +438,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C455499() {
-        String title = "Тест стратегия CreateStrategy Autotest 008";
+        title = "Тест стратегия CreateStrategy Autotest 008";
         String description = "New test стратегия Autotest 008";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -463,7 +476,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C271533() throws JSONException {
-        String title = "CreateStrategy Autotest 009";
+        title = "CreateStrategy Autotest 009";
         String description = "New test стратегия Autotest 009";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -505,7 +518,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C266604(ClientStatusType clientStatusType) throws JSONException {
-        String title = "CreateStrategy Autotest 010";
+        title = "CreateStrategy Autotest 010";
         String description = "New test стратегия Autotest 010";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -557,7 +570,7 @@ public class CreateStrategyErrorTest {
 //        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
 //        String contractId = findValidAccountWithSiebelId.get(0).getId();
 
-        String title = "CreateStrategy Autotest 011";
+        title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -602,7 +615,7 @@ public class CreateStrategyErrorTest {
         String contractId ="2000030052";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdNotOpen = resAccountMaster.getInvestId();
-        String title = "CreateStrategy Autotest 012";
+        title = "CreateStrategy Autotest 012";
         String description = "New test стратегия Autotest 012";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -645,7 +658,7 @@ public class CreateStrategyErrorTest {
     void C266607() {
         String SIEBEL_ID1 = "5-20IBIUPTE";
         String SIEBEL_ID2 = "1-1P424JS";
-        String title = "CreateStrategy Autotest 013";
+        title = "CreateStrategy Autotest 013";
         String description = "New test стратегия Autotest 013";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -698,7 +711,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C441659() {
-        String title = "Тест стратегия CreateStrategy Autotest 014";
+        title = "Тест стратегия CreateStrategy Autotest 014";
         String description = "New test стратегия Autotest 014";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -744,7 +757,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C638559() {
-        String title = "Тест стратегия CreateStrategy Autotest 015";
+        title = "Тест стратегия CreateStrategy Autotest 015";
         String description = "New test стратегия Autotest 015";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -792,7 +805,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C931443() {
-        String title = "CreateStrategy Autotest 016";
+        title = "CreateStrategy Autotest 016";
         String description = "New test стратегия Autotest 016";
         String positionRetentionId = "years";
         //ToDo feeRate was disabled
@@ -836,7 +849,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C931444() {
-        String title = "Тест стратегия CreateStrategy Autotest 016";
+        title = "Тест стратегия CreateStrategy Autotest 016";
         String description = "New test стратегия Autotest 016";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
@@ -942,7 +955,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C1051229(double management, double result, String errorMessage) {
-        String title = "Тест стратегия CreateStrategy Autotest 018";
+        title = "Autotest018332212";
         String description = "New test стратегия Autotest 018";
         String positionRetentionId = "days";
         //ToDo feeRate was disabled
@@ -994,7 +1007,7 @@ public class CreateStrategyErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C1051233(Double management, Double result) {
-        String title = "Тест стратегия CreateStrategy Autotest 018";
+        title = "Тест CreateStrategy 018";
         String description = "New test стратегия Autotest 018";
         String positionRetentionId = "days";
         //ToDo feeRate was disabled
