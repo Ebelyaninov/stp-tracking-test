@@ -5,9 +5,7 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.val;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.*;
 import ru.qa.tinkoff.PostgreSQLEnumType;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
@@ -15,6 +13,9 @@ import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +56,10 @@ public class Client {
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_profile")
     ClientRiskProfile riskProfile;
+
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "position", insertable = false, updatable = false)
+    Integer position;
 
 
     public Client addContract(Contract contract) {
