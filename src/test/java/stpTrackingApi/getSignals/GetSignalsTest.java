@@ -29,8 +29,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -71,7 +73,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetSignalsTest {
 
@@ -99,6 +102,8 @@ public class GetSignalsTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     Client clientSlave;
 
@@ -112,8 +117,8 @@ public class GetSignalsTest {
             .api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
-    String siebelIdMaster = "1-7XOAYPX";
-    String siebelIdSlave = "5-42ASJ9C7";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     MasterSignal masterSignal;
 
@@ -126,6 +131,11 @@ public class GetSignalsTest {
     String quantitySU29009RMFS6 = "7";
     String quantityMoney = "2000";
 
+    @BeforeAll
+    void conf() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+    }
 
     @BeforeEach
     void createClient() {

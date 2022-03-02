@@ -18,7 +18,9 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetLiteStrategyResponse;
@@ -48,7 +50,8 @@ import static org.hamcrest.Matchers.*;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StrategyApiCreator.class
+    StrategyApiCreator.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetLiteStrategyTest {
     @Autowired
@@ -61,24 +64,28 @@ public class GetLiteStrategyTest {
     StpTrackingApiSteps steps;
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
+    @Autowired
+    StpSiebel stpSiebel;
 
     Strategy strategyMaster;
     String contractIdMaster;
     UUID strategyId;
 
-    String siebelIdMaster = "5-YEYXMQZR";
+    String siebelIdMaster;
     String title;
     String description;
     UUID investIdMaster;
 
 
     @BeforeAll void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
         title = steps.getTitleStrategy();
         description = "new test стратегия autotest";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractIdMaster);
     }
 
     @AfterEach

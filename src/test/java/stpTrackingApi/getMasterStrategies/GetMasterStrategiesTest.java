@@ -24,7 +24,9 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterStrategiesResponse;
@@ -65,8 +67,8 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetMasterStrategiesTest {
     @Autowired
@@ -81,8 +83,8 @@ public class GetMasterStrategiesTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingApiSteps steps;
-
-
+    @Autowired
+    StpSiebel stpSiebel;
 
     StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
@@ -90,7 +92,7 @@ public class GetMasterStrategiesTest {
 
     String contractIdMaster1;
     String contractIdMaster2;
-    String SIEBEL_ID_MASTER = "1-BABKO0G";
+    String SIEBEL_ID_MASTER;
     UUID strategyId1;
     UUID strategyId2;
     Strategy strategy1;
@@ -98,6 +100,11 @@ public class GetMasterStrategiesTest {
     Contract contract1;
     Contract contract2;
     Client clientMaster;
+
+    @BeforeAll
+    void getDataFromAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdApiMaster;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -132,7 +139,7 @@ public class GetMasterStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1184813() {
-        String SIEBEL_ID_MASTER = "5-JSZXGLRT";
+        String SIEBEL_ID_MASTER = "5-KZQQI0K8";
         Random ran = new Random();
         int x = ran.nextInt(6) + 5;
         String title1 = "autotest1 " + String.valueOf(x);

@@ -17,7 +17,9 @@ import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.ClientApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetAuthorizedClientResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -48,8 +50,8 @@ import static org.hamcrest.Matchers.*;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class GetAuthorizedClientErrorTest {
@@ -61,8 +63,10 @@ public class GetAuthorizedClientErrorTest {
     ClientService clientService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String SIEBEL_ID = "5-192WBUXCI";
+    String SIEBEL_ID;
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     String contractId;
     Client client;
@@ -71,10 +75,12 @@ public class GetAuthorizedClientErrorTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractId);
     }
 
     @AfterEach

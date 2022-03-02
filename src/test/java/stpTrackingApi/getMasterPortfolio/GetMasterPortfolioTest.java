@@ -29,8 +29,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterPortfolioResponse;
@@ -71,8 +73,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
-
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetMasterPortfolioTest {
     @Autowired
@@ -105,13 +107,15 @@ public class GetMasterPortfolioTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
     String contractIdMaster;
-    String SIEBEL_ID_MASTER = "5-192WBUXCI";
+    String SIEBEL_ID_MASTER;
     UUID strategyId;
     public String aciValue;
     public String nominal;
@@ -121,6 +125,10 @@ public class GetMasterPortfolioTest {
     public String quantityFB = "3";
     public String quantityUSD = "3000";
 
+    @BeforeAll
+    void getDataFromAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdApiMaster;
+    }
 
     @AfterEach
     void deleteClient() {

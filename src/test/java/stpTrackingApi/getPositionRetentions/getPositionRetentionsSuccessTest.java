@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -18,6 +19,8 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetPositionRetentionsResponse;
@@ -43,18 +46,23 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 
 public class getPositionRetentionsSuccessTest {
+    @Autowired
+    StpSiebel stpSiebel;
+
     AnalyticsApi analyticsApi;
 
-    String SIEBEL_ID = "4-20JTDILL";
+    String SIEBEL_ID;
 
     @BeforeAll
     void conf() {
         analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
     }
 
     @SneakyThrows

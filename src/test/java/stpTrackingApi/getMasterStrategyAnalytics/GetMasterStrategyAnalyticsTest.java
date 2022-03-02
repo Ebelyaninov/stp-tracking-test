@@ -31,8 +31,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterStrategyAnalyticsResponse;
@@ -68,9 +70,10 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-    , AnalyticsApiCreator.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    AnalyticsApiCreator.class,
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetMasterStrategyAnalyticsTest {
     @Autowired
@@ -107,10 +110,12 @@ public class GetMasterStrategyAnalyticsTest {
     ApiCreator<AnalyticsApi> analyticsApiCreator;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
 
     String contractIdMaster;
-    String SIEBEL_ID_MASTER = "5-192WBUXCI";
+    String SIEBEL_ID_MASTER;
     UUID strategyId;
     MasterPortfolioValue masterPortfolioValue;
     StrategyTailValue strategyTailValue;
@@ -129,6 +134,11 @@ public class GetMasterStrategyAnalyticsTest {
     public String nominal;
 
     private List<String> list;
+
+    @BeforeAll
+    void getDataFromAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdApiMaster;
+    }
 
     @BeforeEach
     public void getDateBond() {
@@ -168,6 +178,10 @@ public class GetMasterStrategyAnalyticsTest {
             }
             try {
                 strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMaster);
             } catch (Exception e) {
             }
         });

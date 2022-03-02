@@ -22,7 +22,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -59,7 +61,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class DeleteSubscriptionTest {
     @Autowired
@@ -78,6 +81,8 @@ public class DeleteSubscriptionTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
 
@@ -87,8 +92,8 @@ public class DeleteSubscriptionTest {
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-    String siebelIdMaster = "5-2G2O9XVOR";
-    String siebelIdSlave = "4-167TES05";
+    String siebelIdMaster;
+    String siebelIdSlave;
     String description = "new test стратегия autotest";
     String contractIdMaster;
     UUID investIdMaster;
@@ -98,6 +103,8 @@ public class DeleteSubscriptionTest {
 
     @BeforeEach
     void getDataForTests() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -108,6 +115,8 @@ public class DeleteSubscriptionTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractIdMaster);
+        steps.createEventInTrackingContractEvent(contractIdSlave);
     }
 
     @AfterEach

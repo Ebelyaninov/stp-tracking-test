@@ -30,8 +30,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponse;
@@ -75,10 +77,10 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-    , StrategyApiCreator.class,
-    StpTrackingInstrumentConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StrategyApiCreator.class,
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetStrategyTest {
     @Autowired
@@ -123,6 +125,8 @@ public class GetStrategyTest {
     ApiCreator<StrategyApi> strategyApiCreator;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
 //    @Autowired
 //    RestClientApiConfigurationProperties trackingApiProperties;
@@ -148,8 +152,8 @@ public class GetStrategyTest {
     String contractIdSlave;
     UUID strategyId;
 
-    String siebelIdMaster = "1-7XOAYPX";
-    String siebelIdSlave = "5-1P87U0B13";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     MasterPortfolioValue masterPortfolioValue;
 
@@ -160,6 +164,12 @@ public class GetStrategyTest {
     String quantityUSD = "2000";
     String expectedRelativeYieldName = "expected-relative-yield";
     String description = "стратегия autotest GetStrategyTest";
+
+    @BeforeAll
+    void conf() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -237,7 +247,14 @@ public class GetStrategyTest {
                 strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
             } catch (Exception e) {
             }
-
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMaster);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
         });
     }
 

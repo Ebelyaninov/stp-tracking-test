@@ -20,6 +20,8 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
@@ -60,7 +62,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class CreateStrategyErrorValidDataTest {
     @Autowired
@@ -73,13 +76,20 @@ public class CreateStrategyErrorValidDataTest {
     ContractService сontractService;
     @Autowired
     StrategyService strategyService;
+    @Autowired
+    StpSiebel stpSiebel;
 
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
     Client client;
     Contract contract;
     Profile profile;
-    String SIEBEL_ID = "1-5RLRHAS";
+    String SIEBEL_ID;
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+    }
 
     @AfterEach
     void deleteClient() {
