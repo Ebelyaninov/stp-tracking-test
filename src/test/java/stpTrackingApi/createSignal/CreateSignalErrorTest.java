@@ -7,6 +7,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
+import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,14 +38,17 @@ import ru.qa.tinkoff.kafka.model.KafkaModelFiregInstrumentWayfairWithRiskEvent;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
@@ -87,6 +91,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class
 })
 public class CreateSignalErrorTest {
@@ -112,6 +117,8 @@ public class CreateSignalErrorTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpTrackingAdminSteps adminSteps;
 
 
     ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
@@ -121,7 +128,7 @@ public class CreateSignalErrorTest {
 
     String contractId;
     UUID strategyId;
-    String SIEBEL_ID = "1-3L0X4M1";
+    String SIEBEL_ID = "1-9X6NHTJ";
     String contractIdMaster = "2000001772";
 
 
@@ -1432,6 +1439,159 @@ public class CreateSignalErrorTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1456532")
+    @DisplayName("1456532.Объем заявки. Покупка. additional_liquidity = 0. default = 5.")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1456532() {
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 3;
+        int version = 4;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "0");*/
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "10000", date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "15000");
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB,
+            true, 1000, orderQuantityListAll(5, "default", 0, "main_trading",
+                0, "additional_liquidity", 160, "primary"));
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        // проверяем тело ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Превышен объем заявки");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1440667")
+    @DisplayName("1440667 Объем заявки. Покупка. period = additional_liquidity. limit не найден")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1440667() {
+        BigDecimal price = new BigDecimal("3300.0");
+        int quantityRequest = 3;
+        int version = 4;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "0");*/
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "1000000", date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "3510000");
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.MOEX,
+            true, 22845, orderQuantityList(100, "additional_liquidity"));
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(500))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        // проверяем тело ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Сервис временно недоступен");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1439792")
+    @DisplayName("1439792 Объем заявки. Покупка. period = default. tailOrderQuantity > limit")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1439792() {
+        BigDecimal price = new BigDecimal("5341.8");
+        int quantityRequest = 8;
+        int version = 4;
+        String tailValue = "150000";
+        double money = 100000.0;
+        double quantityPosMasterPortfolio = 0.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
+            "0");*/
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.MOEX,
+            true, 22845, orderQuantityList(10, "default"));
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApi.createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем тело ошибки
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        adminSteps.checkErrors(errorResponse, "Error", "Превышен объем заявки");
+
+    }
 
 
     //*** Методы для работы тестов ***
@@ -1503,5 +1663,40 @@ public class CreateSignalErrorTest {
             .build();
         masterSignalDao.insertIntoMasterSignal(masterSignal);
     }
+
+
+    List<OrderQuantityLimit> orderQuantityList(int limit, String period) {
+        List<OrderQuantityLimit> orderQuantityLimitList
+            = new ArrayList<>();
+        OrderQuantityLimit orderQuantityLimit = new OrderQuantityLimit();
+        orderQuantityLimit.setLimit(limit);
+        orderQuantityLimit.setPeriodId(period);
+        orderQuantityLimitList.add(orderQuantityLimit);
+        return orderQuantityLimitList;
+    }
+
+    List<OrderQuantityLimit> orderQuantityListAll(int limit, String period, int limit1, String period1,
+                                                  int limit2, String period2, int limit3, String period3){
+        List<OrderQuantityLimit> orderQuantityLimitList
+            = new ArrayList<>();
+        OrderQuantityLimit orderQuantityLimit = new OrderQuantityLimit();
+        orderQuantityLimit.setLimit(limit);
+        orderQuantityLimit.setPeriodId(period);
+        orderQuantityLimitList.add(orderQuantityLimit);
+        OrderQuantityLimit orderQuantityLimit1 = new OrderQuantityLimit();
+        orderQuantityLimit1.setLimit(limit1);
+        orderQuantityLimit1.setPeriodId(period1);
+        orderQuantityLimitList.add(orderQuantityLimit1);
+        OrderQuantityLimit orderQuantityLimit2 = new OrderQuantityLimit();
+        orderQuantityLimit2.setLimit(limit2);
+        orderQuantityLimit2.setPeriodId(period2);
+        orderQuantityLimitList.add(orderQuantityLimit2);
+        OrderQuantityLimit orderQuantityLimit3 = new OrderQuantityLimit();
+        orderQuantityLimit3.setLimit(limit3);
+        orderQuantityLimit3.setPeriodId(period3);
+        orderQuantityLimitList.add(orderQuantityLimit3);
+        return orderQuantityLimitList;
+    }
+
 
 }

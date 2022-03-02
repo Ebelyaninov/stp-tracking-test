@@ -29,14 +29,13 @@ import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.math.BigDecimal;
@@ -274,6 +273,30 @@ public class StpTrackingAdminSteps {
             .setOtcClassCode(otcClassCode);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
     }
+
+    //создаем запись в tracking.update_position по инструменту
+    public void updateExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+                                       Boolean trackingAllowed, Integer dailyQuantityLimit, List<OrderQuantityLimit> orderQuantityLimitList ) {
+        //формируем тело запроса
+        UpdateExchangePositionRequest updateExPosition = new UpdateExchangePositionRequest();
+        updateExPosition.exchange(exchange);
+        updateExPosition.dailyQuantityLimit(dailyQuantityLimit);
+        updateExPosition.setOrderQuantityLimits(orderQuantityLimitList);
+        updateExPosition.setTicker(ticker);
+        updateExPosition.setTrackingAllowed(trackingAllowed);
+        updateExPosition.setTradingClearingAccount(tradingClearingAccount);
+        exchangePositionApi.updateExchangePosition()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExPosition)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
+    }
+
 
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,
                                       String money, List<MasterPortfolio.Position> positionList) {
