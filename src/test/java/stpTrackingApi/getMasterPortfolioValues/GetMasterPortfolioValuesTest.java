@@ -30,7 +30,9 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
@@ -80,7 +82,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetMasterPortfolioValuesTest {
     @Autowired
@@ -101,15 +104,23 @@ public class GetMasterPortfolioValuesTest {
     StpTrackingApiSteps steps;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
+    @Autowired
+    StpSiebel stpSiebel;
 
     AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
 
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
     Strategy strategy;
-    String siebelIdMaster = "1-BABKO0G";
-    String siebelIdSlave = "5-42ASJ9C7";
+    String siebelIdMaster;
+    String siebelIdSlave;
     UUID strategyId;
+
+    @BeforeAll
+    void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -128,6 +139,10 @@ public class GetMasterPortfolioValuesTest {
             }
             try {
                 masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMaster);
             } catch (Exception e) {
             }
         });

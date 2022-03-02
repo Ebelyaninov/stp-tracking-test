@@ -29,7 +29,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -74,7 +76,8 @@ import static org.hamcrest.Matchers.nullValue;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class getStrategiesCatalogTabsTest {
@@ -89,10 +92,17 @@ public class getStrategiesCatalogTabsTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String siebelId = "4-LQB8FKN";
+    String siebelId;
 
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+
+    @BeforeAll
+    void conf() {
+        siebelId = stpSiebel.siebelIdApiMaster;
+    }
 
     private static Stream<Arguments> provideRequiredParam() {
         return Stream.of(

@@ -22,7 +22,9 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -57,6 +59,7 @@ import static org.hamcrest.Matchers.is;
     TrackingDatabaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 
@@ -73,6 +76,8 @@ public class DeleteSubscriptionErrorTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
@@ -82,8 +87,8 @@ public class DeleteSubscriptionErrorTest {
     Contract contractSlave;
 
     Subscription subscription;
-    String siebelIdMaster = "5-8H3I46J1";
-    String siebelIdSlave = "5-7ECGV169";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     UUID strategyId;
     UUID investIdMaster;
@@ -95,6 +100,8 @@ public class DeleteSubscriptionErrorTest {
 
     @BeforeEach
     void getDataForTests() {
+        String siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        String siebelIdSlave = stpSiebel.siebelIdApiSlave;
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -105,6 +112,8 @@ public class DeleteSubscriptionErrorTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractIdMaster);
+        steps.createEventInTrackingContractEvent(contractIdSlave);
     }
 
     @AfterEach
@@ -145,9 +154,9 @@ public class DeleteSubscriptionErrorTest {
 
     private static Stream<Arguments> provideRequiredParamDeleteSubscription() {
         return Stream.of(
-            Arguments.of(null, "4.5.6", "android", "2010103725"),
-            Arguments.of("trading-invest", null, "android", "2010103725"),
-            Arguments.of("trading-invest", "4.5.6", null, "2010103725")
+            Arguments.of(null, "4.5.6", "android", "2000012761"),
+            Arguments.of("trading-invest", null, "android", "2000012761"),
+            Arguments.of("trading-invest", "4.5.6", null, "2000012761")
         );
     }
 

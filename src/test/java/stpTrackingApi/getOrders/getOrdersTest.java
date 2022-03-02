@@ -22,9 +22,11 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
@@ -61,7 +63,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class getOrdersTest {
@@ -84,9 +87,11 @@ public class getOrdersTest {
     SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String siebelIdMaster = "5-F6VT91I0";
-    String siebelIdSlave = "4-M3KKMT7";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     String contractIdSlave;
     String contractIdMaster;
@@ -99,6 +104,12 @@ public class getOrdersTest {
     Integer maxLimit = 100;
     Integer defaultLimit = 30;
     ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
+
+    @BeforeAll
+    void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -129,6 +140,14 @@ public class getOrdersTest {
             }
             try {
                 slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMaster);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdSlave);
             } catch (Exception e) {
             }
         });

@@ -28,7 +28,9 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
@@ -68,7 +70,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    KafkaAutoConfiguration.class
+    KafkaAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class CreateStrategyErrorTest {
@@ -82,18 +85,26 @@ public class CreateStrategyErrorTest {
     ProfileService profileService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
     Client client;
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    String SIEBEL_ID = "1-5RLRHAS";
-    String siebelIdNotOpen = "1-1PFLDYR";
-    String siebelIdNotBroker = "5-M5JWUQE8";
+    String SIEBEL_ID;
+    String siebelIdNotOpen;
+    String siebelIdNotBroker;
     String contractId;
     String title;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+        siebelIdNotOpen = stpSiebel.siebelIdApiNotOpen;
+        siebelIdNotBroker = stpSiebel.siebelIdApiNotBroker;
+    }
 
     @AfterEach
     void deleteClient() {

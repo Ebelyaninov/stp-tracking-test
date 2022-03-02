@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -23,6 +24,8 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -46,18 +49,23 @@ import static org.junit.jupiter.api.Assertions.assertAll;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class getPositionRetentionsErrorTest {
+    @Autowired
+    StpSiebel stpSiebel;
+
     AnalyticsApi analyticsApi;
 
-    String SIEBEL_ID = "4-20JTDILL";
+    String SIEBEL_ID;
     String FAKE_SIEBEL_ID = "5-AABBCCDD";
 
     @BeforeAll
     void conf() {
         analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
     }
 
     @SneakyThrows

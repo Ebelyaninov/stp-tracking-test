@@ -17,7 +17,9 @@ import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.CheckStrategyTitleRequest;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -50,8 +52,8 @@ import static org.hamcrest.Matchers.*;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class CheckStrategyTitleErrorTest {
@@ -60,10 +62,12 @@ public class CheckStrategyTitleErrorTest {
     ClientService clientService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
     StrategyApi strategyApi;
 
-    String SIEBEL_ID = "5-LFCI8UPV";
+    String SIEBEL_ID;
     String title = "Самый уникаЛьный и неповторим!";
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     LocalDateTime currentDate = (LocalDateTime.now());
@@ -79,6 +83,7 @@ public class CheckStrategyTitleErrorTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();

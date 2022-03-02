@@ -13,6 +13,8 @@ public class StpSiebel {
 
     public String siebelIdMasterAdmin = "5-CQNPKPNH";
     public String siebelIdSlaveAdmin = "5-22NDYVFEE";
-
-
+    public String siebelIdApiMaster = "4-10YQRW0N";
+    public String siebelIdApiSlave = "4-23D6LZT9";
+    public String siebelIdApiNotOpen = "5-3MYZ425J";
+    public String siebelIdApiNotBroker = "5-DGXUTIXL";
 }

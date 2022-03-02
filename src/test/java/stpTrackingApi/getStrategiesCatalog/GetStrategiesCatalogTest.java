@@ -29,7 +29,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
@@ -76,7 +78,8 @@ import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.v
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetStrategiesCatalogTest {
     @Autowired
@@ -99,6 +102,8 @@ public class GetStrategiesCatalogTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
+    @Autowired
+    StpSiebel stpSiebel;
 
     private Random random = new Random();
 
@@ -110,13 +115,19 @@ public class GetStrategiesCatalogTest {
             .api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
-    String siebelIdMaster1 = "1-7XOAYPX";
-    String siebelIdMaster2 = "5-42ASJ9C7";
-    String siebelIdMaster3 = "4-1OQ8F0QG";
+    String siebelIdMaster1;
+    String siebelIdMaster2;
+    String siebelIdMaster3;
     String xApiKey = "x-api-key";
     String key = "stp-tracking";
     MasterPortfolioValue masterPortfolioValue;
 
+    @BeforeAll
+    void conf() {
+        siebelIdMaster1 = stpSiebel.siebelIdApiMaster;
+        siebelIdMaster2 = stpSiebel.siebelIdApiSlave;
+        siebelIdMaster3 = stpSiebel.siebelIdMasterAdmin;
+    }
 
     @AfterEach
     void deleteClient() {
