@@ -32,8 +32,10 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -76,8 +78,8 @@ import static org.junit.Assert.assertEquals;
     GrpcServicesAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    MocksBasicStepsConfiguration.class
-
+    MocksBasicStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleActualizeCommandTest {
     @Autowired
@@ -110,6 +112,8 @@ public class HandleActualizeCommandTest {
     MocksBasicSteps mocksBasicSteps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
@@ -122,14 +126,16 @@ public class HandleActualizeCommandTest {
     String contractIdSlave;
     UUID strategyId;
     UUID strategyIdNew;
-    String SIEBEL_ID_MASTER = "1-F7HJ10R";
-    String SIEBEL_ID_SLAVE = "5-JEF71TBN";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
 
     public String value;
 
     String description = "description test стратегия autotest update adjust base currency";
 
     @BeforeAll void createDataForTests() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
         mocksBasicSteps.createDataForMasterMock(SIEBEL_ID_MASTER);
     }
 
@@ -182,6 +188,10 @@ public class HandleActualizeCommandTest {
             }
             try {
                 steps.createEventInTrackingEvent(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingEvent(contractIdMaster);
             } catch (Exception e) {
             }
             try {
@@ -347,7 +357,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C741543() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "5-HWHTMYS3";
         mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "7000", "2");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
@@ -429,7 +439,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1416943() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "1-38B7AFZ";
         mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "7000", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -539,7 +549,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C748732() {
-        String SIEBEL_ID_SLAVE = "1-4ILVF6E";
+        String SIEBEL_ID_SLAVE = "5-7OOOE6B1";
         mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -615,7 +625,7 @@ public class HandleActualizeCommandTest {
         "Version из команды - slave_portfolio.version текущего портфеля= 1," +
         " Action = 'MORNING_UPDATE',version из команды < version из ответа ")
     void C1053004() {
-        String SIEBEL_ID_SLAVE = "1-1IE1IUG";
+        String SIEBEL_ID_SLAVE = "5-22NVD3I1";
         mocksBasicSteps.createDataForMocksTestC741543(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -1821,7 +1831,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1481900() {
         //String SIEBEL_ID_SLAVE = "5-CKWQPRIV";
-        String SIEBEL_ID_SLAVE = "5-EJVMT8JB";
+        String SIEBEL_ID_SLAVE = "5-1B1MZMBXO";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1888,7 +1898,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1481454() {
-        String SIEBEL_ID_SLAVE = "5-340W7W4R";
+        String SIEBEL_ID_SLAVE = "1-27UK0AY";
         // String SIEBEL_ID_SLAVE = "5-DXA6EWR9";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3520,7 +3530,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1578407() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "1-1U3NR90";
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3617,7 +3627,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1578254() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "5-9R5I76TF";
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);

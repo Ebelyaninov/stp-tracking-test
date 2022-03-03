@@ -27,8 +27,10 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -78,6 +80,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     GrpcServicesAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleActualizeCommandErrorTest {
     @Autowired
@@ -110,6 +113,8 @@ public class HandleActualizeCommandErrorTest {
     SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
@@ -127,10 +132,15 @@ public class HandleActualizeCommandErrorTest {
     String contractIdSlave;
     UUID strategyId;
     UUID strategyIdNew;
-    String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
-    String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
 
     String description = "description test стратегия autotest update adjust base currency";
+
+    @BeforeAll void createDataForTests() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -827,7 +837,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C857703() {
-        String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
+        //String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -935,7 +945,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C857730() {
-        String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
+        //String SIEBEL_ID_SLAVE = "5-1HE55RPOV";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1105,7 +1115,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1598880() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "5-6JZZQETH";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1154,7 +1164,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1701547() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "5-6JZZQETH";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1233,7 +1243,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1701486() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = "5-6JZZQETH";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
