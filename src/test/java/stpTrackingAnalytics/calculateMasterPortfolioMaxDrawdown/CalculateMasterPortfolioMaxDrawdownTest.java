@@ -26,7 +26,9 @@ import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
@@ -67,9 +69,12 @@ import static org.hamcrest.Matchers.notNullValue;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class
 })
+
 public class CalculateMasterPortfolioMaxDrawdownTest {
+
     @Autowired
     ByteToByteSenderService byteToByteSenderService;
     @Autowired
@@ -98,12 +103,13 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     MasterPortfolioMaxDrawdownDao masterPortfolioMaxDrawdownDao;
+    @Autowired
+    StpSiebel siebel;
 
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
     MasterPortfolioMaxDrawdown masterPortfolioMaxDrawdown;
 
-    String SIEBEL_ID_MASTER = "5-192WBUXCI";
     UUID strategyId;
     String description = "new test стратегия autotest";
 
@@ -151,7 +157,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     void C983303(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -219,7 +225,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     void C983084(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -289,7 +295,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     void C983216(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -340,7 +346,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     void C980851(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active

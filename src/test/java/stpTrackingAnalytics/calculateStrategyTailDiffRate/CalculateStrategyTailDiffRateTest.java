@@ -25,8 +25,10 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -63,6 +65,7 @@ import static org.hamcrest.Matchers.notNullValue;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     StpTrackingInstrumentConfiguration.class
 })
 public class CalculateStrategyTailDiffRateTest {
@@ -96,16 +99,13 @@ public class CalculateStrategyTailDiffRateTest {
     StrategyTailDiffRateDao strategyTailDiffRateDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel siebel;
 
     StrategyTailDiffRate strategyTailDiffRate;
     String contractIdMaster;
     SlavePortfolio slavePortfolio;
     Client clientSlave;
-    String SIEBEL_ID_MASTER = "5-192WBUXCI";
-
-    String siebelIdSlaveOne = "5-1P87U0B13";
-    String siebelIdSlaveTwo = "5-7ECGV169";
-    String siebelIdSlaveThree = "5-3CGSIDQR";
 
     String contractIdSlaveOne;
     String contractIdSlaveTwo;
@@ -116,6 +116,7 @@ public class CalculateStrategyTailDiffRateTest {
     UUID investIdSlaveThree;
 
     UUID strategyId;
+    UUID investIdMaster;
 
     String description = "new test стратегия autotest";
 
@@ -199,6 +200,26 @@ public class CalculateStrategyTailDiffRateTest {
         });
     }
 
+    @BeforeAll
+    void getDataClients() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveOne);
+        investIdSlaveOne = resAccountSlaveOne.getInvestId();
+        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveTwo);
+        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
+        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveThree);
+        investIdSlaveThree = resAccountSlaveThree.getInvestId();
+        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
+
+    }
+
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
             Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
@@ -216,19 +237,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1530868(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -292,19 +300,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1532791(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -365,19 +360,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1530698(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -416,19 +398,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1531377(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -486,19 +455,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1531774(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -557,19 +513,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1534083(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -630,19 +573,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1533651() {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -697,19 +627,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1533734() {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
