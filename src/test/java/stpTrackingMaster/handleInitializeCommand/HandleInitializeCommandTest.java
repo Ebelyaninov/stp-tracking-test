@@ -26,6 +26,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -71,7 +73,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingMasterStepsConfiguration.class
+    StpTrackingMasterStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleInitializeCommandTest {
     @Autowired
@@ -92,6 +95,8 @@ public class HandleInitializeCommandTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingMasterSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -100,8 +105,12 @@ public class HandleInitializeCommandTest {
     MasterPortfolio masterPortfolio;
     String contractId;
     UUID strategyId;
-    String SIEBEL_ID = "5-2G2O9XVOR";
+    String siebelIdMaster;
 
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -139,7 +148,7 @@ public class HandleInitializeCommandTest {
         String description = "new test стратегия autotest";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebelIdMaster)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -188,7 +197,7 @@ public class HandleInitializeCommandTest {
         String description = "new test стратегия autotest";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebelIdMaster)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))

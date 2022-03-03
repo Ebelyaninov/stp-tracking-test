@@ -31,6 +31,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
@@ -73,7 +75,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingMasterStepsConfiguration.class
+    StpTrackingMasterStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 
@@ -102,9 +105,14 @@ public class HandleActualizeCommandErrorTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpTrackingMasterSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
      BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     MasterPortfolio masterPortfolio;
     Client clientSlave;
@@ -115,6 +123,13 @@ public class HandleActualizeCommandErrorTest {
 
     UUID strategyId;
     String contractIdSlave;
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+
+    }
 
     @AfterEach
     void deleteClient() {
@@ -166,7 +181,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662316() {
-        String siebelIdMaster = "1-DPVDVIC";
+
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
@@ -199,7 +214,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662385() {
-        String siebelIdMaster = "1-DPVDVIC";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -250,7 +265,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1614492(int versionPortfolio, int versionCommand ) {
-        String siebelIdMaster = "1-DPVDVIC";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -303,7 +318,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662387() {
-        String siebelIdMaster = "1-DPVDVIC";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -357,8 +372,8 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719222() {
-        String siebelIdMaster = "1-51Q76AT";
-        String siebelIdSlave = "1-BU57GIO";
+
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -426,8 +441,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C720454() {
-        String siebelIdMaster = "1-51Q76AT";
-        String siebelIdSlave = "5-13U2T8ND8";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -515,8 +529,7 @@ public class HandleActualizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C721195() {
-        String siebelIdMaster = "1-51Q76AT";
-        String siebelIdSlave = "5-13U2T8ND8";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";

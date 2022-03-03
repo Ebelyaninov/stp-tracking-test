@@ -129,5 +129,33 @@ public class MocksBasicSteps {
         mockMiddleSteps.createRestOrder(mockMiddleSteps.createBodyForRestOrder(ticker, "Buy", "2000115978", classCode, "FillAndKill", "Fill", "1", "1", "KNM219525193"));
     }
 
+    public void createDataForMocksTestC695957 (String siebelIdSlave, String ticker, String classCode, String usdQuantity, String quantityAAPL) {
+        String tickerAndClassCode = ticker + "_" + classCode;
+        //Создание моков
+        String investIdSlave = "c76ab3d2-de36-4546-a0f2-0a2f8613a34e";
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING_WEEKEND"));
+        //getInvestID
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+        //GetBrockerAccountBySiebelId
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdSlave, siebelIdSlave, "2000115978"));
+        //Очистить мок grpc
+        mockMiddleSteps.clearMocksForGrpc();
+        //Добавляем данный grpc
+        mockMiddleSteps.createGrpcMock(mockMiddleSteps.createBodyForGrpc("2000115978", usdQuantity, "0", "0", quantityAAPL));
+        //Создаем цены в MD
+        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+        ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));
+        //Очищаем мок rest мок MD
+        mockMiddleSteps.clearMocksForRestOrder();
+        //Создать ответ от MD на order
+        mockMiddleSteps.createRestOrder(mockMiddleSteps.createBodyForRestOrder(ticker, "Buy", "2000115978", classCode, "FillAndKill", "Fill", "1", "1", "KNM219525193"));
+    }
+
 
 }

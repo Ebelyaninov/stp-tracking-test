@@ -29,6 +29,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
@@ -63,7 +65,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingMasterStepsConfiguration.class
+    StpTrackingMasterStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleActualizeCommandTest {
     @Autowired
@@ -90,6 +93,8 @@ public class HandleActualizeCommandTest {
     StringToByteSenderService kafkaSender;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
+    @Autowired
+    StpSiebel stpSiebel;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -100,6 +105,10 @@ public class HandleActualizeCommandTest {
     String contractIdMaster;
     String contractIdSlave;
     int version;
+    String siebelIdMaster;
+    String siebelIdSlave;
+    String siebelIdSlaveActive;
+    String siebelIdSlaveBlocked;
 
     String ticker = "XS0587031096";
     String tradingClearingAccount = "TKCBM_TCAB";
@@ -108,6 +117,16 @@ public class HandleActualizeCommandTest {
     String tradingClearingAccountPos = "TKCBM_TCAB";
 
     UUID strategyId;
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+        siebelIdSlaveActive = stpSiebel.siebelIdSlaveActiveStpTrackingMaster;
+        siebelIdSlaveBlocked = stpSiebel.siebelIdSlaveBlockedStpTrackingMaster;
+
+    }
+
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -161,8 +180,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662388() {
-        String siebelIdMaster = "1-DC5C5KJ";
-        String siebelIdSlave = "5-7T71HO5B";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -254,8 +272,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719882() {
-        String siebelIdMaster = "1-DC5C5KJ";
-        String siebelIdSlave = "5-37UW09LR";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -350,8 +367,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C720132() {
-        String siebelIdMaster = "1-DC5C5KJ";
-        String siebelIdSlave = "5-14DCU08B1";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -450,8 +466,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663357() {
-        String siebelIdMaster = "1-F6L0ULT";
-        String siebelIdSlave = "5-14DCU08B1";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -555,7 +570,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663495() {
-        String siebelIdMaster = "1-BABKO0G";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -644,8 +659,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C666901() {
-        String siebelIdMaster = "1-1VAEYWG";
-        String siebelIdSlave = "5-14DCU08B1";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -746,9 +760,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1244154() {
-        String siebelIdMaster = "1-BABKO0G";
-        String siebelIdSlaveActive = "1-BU57GIO";
-        String siebelIdSlaveBlocked = "1-5PQK50Q";
+
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -868,7 +881,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324954() {
-        String siebelIdMaster = "1-51Q76AT";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
@@ -925,7 +938,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324919() {
-        String siebelIdMaster = "1-51Q76AT";
+
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest " +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
