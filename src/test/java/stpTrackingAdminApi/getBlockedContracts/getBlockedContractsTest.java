@@ -19,8 +19,10 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -55,6 +57,7 @@ import static org.hamcrest.Matchers.is;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
 
@@ -76,10 +79,9 @@ public class getBlockedContractsTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
 
-
-    String siebelIdMaster = "5-23AZ65JU2";
-    String siebelIdSlave = "4-LQB8FKN";
 
     String contractIdSlave;
     String contractIdMaster;
@@ -96,11 +98,11 @@ public class getBlockedContractsTest {
     @BeforeAll
     void getDataClients() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -146,7 +148,7 @@ public class getBlockedContractsTest {
         String description = "Autotest get block contract";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategyNew(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         //создаем подписку клиента slave на strategy клиента master

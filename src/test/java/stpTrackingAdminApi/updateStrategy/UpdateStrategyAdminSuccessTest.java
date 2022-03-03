@@ -25,6 +25,8 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
@@ -72,7 +74,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 
 })
 
@@ -82,7 +85,6 @@ public class UpdateStrategyAdminSuccessTest {
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     Strategy strategy;
-    String SIEBEL_ID = "4-1UBHYQ63";
     String xApiKey = "x-api-key";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String title;
@@ -106,17 +108,19 @@ public class UpdateStrategyAdminSuccessTest {
     ClientService clientService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
 
     @BeforeAll
     void createTestData() {
         title = steps.getTitleStrategy();
         description = "Стратегия Autotest 001 - Описание";
         //Находим клиента в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        socialProfile = steps.getProfile(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -216,8 +220,8 @@ public class UpdateStrategyAdminSuccessTest {
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Получаем данные по клиенту в API-Сервиса счетов
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -263,8 +267,8 @@ public class UpdateStrategyAdminSuccessTest {
         Integer score = null;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Создаем клиента в tracking: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,

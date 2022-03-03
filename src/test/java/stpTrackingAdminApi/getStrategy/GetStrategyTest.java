@@ -18,6 +18,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
@@ -54,9 +56,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
+
 public class GetStrategyTest {
+
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -74,8 +79,10 @@ public class GetStrategyTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StrategyService strategyService;
+    @Autowired
+    StpSiebel siebel;
 
-    String SIEBEL_ID = "1-1XHHA7S";
+
     String xApiKey = "x-api-key";
     String key = "tracking";
     String keyRead = "tcrm";
@@ -86,15 +93,16 @@ public class GetStrategyTest {
     UUID investId;
     String contractId;
 
+
     @BeforeAll
     void createTestData() {
         title = steps.getTitleStrategy();
         description = "new test стратегия autotest";
         //находим клиента в БД social
-        socialProfile = steps.getProfile(SIEBEL_ID);
+        socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))

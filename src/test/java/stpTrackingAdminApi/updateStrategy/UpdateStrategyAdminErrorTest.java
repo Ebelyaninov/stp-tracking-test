@@ -28,6 +28,8 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
@@ -75,16 +77,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
+
 public class UpdateStrategyAdminErrorTest {
+
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
-    Client client;
-    Contract contract;
-    Strategy strategy;
 
 
     @Autowired
@@ -101,12 +102,13 @@ public class UpdateStrategyAdminErrorTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
 
-
-    String SIEBEL_ID = "4-1UBHYQ63";
     String xApiKey = "x-api-key";
     String key = "tracking";
     String keyRead = "tcrm";
+    Strategy strategy;
 
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
 
@@ -151,7 +153,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -159,7 +161,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -200,7 +202,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -208,7 +210,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -251,7 +253,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -259,7 +261,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -302,7 +304,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -310,7 +312,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -353,7 +355,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -361,7 +363,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.moderate,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -403,7 +405,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -411,7 +413,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -459,7 +461,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -467,7 +469,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -510,7 +512,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -518,7 +520,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -557,7 +559,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -565,7 +567,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -605,7 +607,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -613,7 +615,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -652,7 +654,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -660,7 +662,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -701,7 +703,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -709,7 +711,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -751,7 +753,7 @@ public class UpdateStrategyAdminErrorTest {
         //Создаем клиента в БД tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -759,7 +761,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -808,7 +810,7 @@ public class UpdateStrategyAdminErrorTest {
         //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -816,7 +818,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -861,7 +863,7 @@ public class UpdateStrategyAdminErrorTest {
         //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -869,7 +871,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -913,7 +915,7 @@ public class UpdateStrategyAdminErrorTest {
         UUID strategyId = UUID.randomUUID();
         //Получаем данные по клиенту в API-Сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -921,7 +923,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
@@ -962,7 +964,7 @@ public class UpdateStrategyAdminErrorTest {
         //Создаем клиента в tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -970,7 +972,7 @@ public class UpdateStrategyAdminErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);

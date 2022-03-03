@@ -22,8 +22,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetMasterClientsResponse;
@@ -57,6 +59,7 @@ import static org.hamcrest.Matchers.is;
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     ClientApiAdminCreator.class
 })
 public class GetMasterClientsTest {
@@ -80,13 +83,14 @@ public class GetMasterClientsTest {
     ApiAdminCreator<ClientApi> clientApiAdminCreator;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
+
     String xApiKey = "x-api-key";
     String key = "tracking";
     String keyRead = "tcrm";
     Client client;
 
-
-    String siebelIdMaster = "5-DYNN1E3S";
     String contractIdMaster;
     UUID strategyId;
     LocalDateTime localDateTime;
@@ -95,7 +99,7 @@ public class GetMasterClientsTest {
     @BeforeAll
     void getDataFromAccount() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
@@ -109,7 +113,8 @@ public class GetMasterClientsTest {
         String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        stpTrackingAdminSteps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+        stpTrackingAdminSteps.createClientWithContractAndStrategyNew(siebel.siebelIdMasterAdmin, investIdMaster,
+            ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(1));
     }

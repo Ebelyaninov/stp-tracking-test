@@ -35,9 +35,11 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
@@ -79,10 +81,13 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
     StpTrackingSlaveStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     KafkaOldConfiguration.class
 })
 public class GetTimelineTest {
+
     TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
+
     @Autowired
     ClientService clientService;
     @Autowired
@@ -119,14 +124,10 @@ public class GetTimelineTest {
     StpTrackingSlaveSteps stpTrackingSlaveSteps;
     @Autowired
     MasterSignalDao masterSignalDao;
+    @Autowired
+    StpSiebel siebel;
 
     String xApiKey = "x-api-key";
-
-    //String siebelIdMaster = "1-51Q76AT";
-    //String siebelIdSlave = "5-1P87U0B13";
-
-    String siebelIdMaster = "5-F6VT91I0";
-    String siebelIdSlave = "4-M3KKMT7";
 
     String contractIdMaster;
     String contractIdSlave;
@@ -139,6 +140,7 @@ public class GetTimelineTest {
     SlavePortfolio slavePortfolio;
     MasterPortfolio masterPortfolio;
     SlaveOrder2 slaveOrder2;
+    SocialProfile socialProfile;
 
     SlaveAdjust slaveAdjust;
     List<SlaveAdjust> slaveAdjustList;
@@ -153,12 +155,15 @@ public class GetTimelineTest {
 
     @BeforeAll
     void getDataClients() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по профилю из пульса
+        socialProfile = steps.getProfile(siebel.siebelIdMasterAdmin);
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -217,9 +222,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1672898() throws JsonProcessingException {
-        strategyId = UUID.randomUUID();
-        //получаем данные по ведущему из пульса
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -255,8 +257,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674082() throws JsonProcessingException {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -297,8 +297,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674102() throws JsonProcessingException {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -333,8 +331,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674164() throws JsonProcessingException {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -375,8 +371,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584715() throws JsonProcessingException {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -450,8 +444,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584771() {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -568,8 +560,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584886() {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -630,8 +620,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584889(Integer limit, Integer expectedLimit) {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -689,8 +677,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1586906() {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -757,8 +743,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1586965() {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -818,8 +802,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1664155(String action) {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -862,8 +844,6 @@ public class GetTimelineTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1586884() {
-        strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(siebelIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,

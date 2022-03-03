@@ -17,7 +17,9 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -48,15 +50,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
 })
 public class ActivateStrategyErrorTest {
+
     StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    static final String SIEBEL_ID = "5-55RUONV5";
-    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
-    String xApiKey = "x-api-key";
-    String key = "tracking";
-    String keyRead = "tcrm";
+
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -69,8 +69,23 @@ public class ActivateStrategyErrorTest {
     ProfileService profileService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
+
     String description = "Autotest  - ActivateStrategy";
     Integer score = 1;
+
+    //static final String SIEBEL_ID = "5-55RUONV5";
+
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
+    String xApiKey = "x-api-key";
+    String key = "tracking";
+    String keyRead = "tcrm";
+
+    String contractId;
+
+    UUID investId;
+
 
     @AfterEach
     void deleteClient() {
@@ -91,16 +106,22 @@ public class ActivateStrategyErrorTest {
     }
 
 
+    @BeforeAll
+    void getDataClients() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
+    }
+
+
     @Test
     @AllureId("C457266")
     @DisplayName("C457266.ActivateStrategy. Не переданы обязательные параметры")
     @Description("Метод возвращает список доступных договоров для подключения стратегии")
     void C457266() {
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -143,10 +164,6 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457270() {
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -168,10 +185,6 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C1705386() {
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -193,10 +206,6 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457271() {
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -237,10 +246,6 @@ public class ActivateStrategyErrorTest {
     void C840992() {
         Integer score = null;
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft, при этом score передаем как null
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -261,10 +266,6 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C1253905() {
         UUID strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,

@@ -23,7 +23,9 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
@@ -65,6 +67,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
 public class ActivateStrategySuccessTest {
@@ -87,16 +90,14 @@ public class ActivateStrategySuccessTest {
     StpTrackingAdminSteps steps;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
+    @Autowired
+    StpSiebel siebel;
 
-
-
-    Client client;
     Strategy strategy;
-    String SIEBEL_ID = "5-55RUONV5";
     String xApiKey = "x-api-key";
     String key= "tracking";
-    MasterPortfolio masterPortfolio;
     String contractId;
+    UUID investId;
     UUID strategyId;
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String description = "Autotest  - ActivateStrategy";
@@ -125,6 +126,15 @@ public class ActivateStrategySuccessTest {
         });
     }
 
+    @BeforeAll
+    void getDataClients() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
+    }
+
 
     @Test
     @AllureId("457274")
@@ -133,10 +143,6 @@ public class ActivateStrategySuccessTest {
     void C457274() throws Exception {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -182,10 +188,6 @@ public class ActivateStrategySuccessTest {
     void C457351() throws Exception {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,

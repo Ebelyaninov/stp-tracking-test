@@ -24,6 +24,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
@@ -51,14 +53,16 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class
 })
+
 
 public class ConfirmMasterClientErrorTest {
     ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    String SIEBEL_ID = "5-GA3OLBWB";
+
     String xApiKey = "x-api-key";
     String keyRead = "tcrm";
 
@@ -66,6 +70,8 @@ public class ConfirmMasterClientErrorTest {
     ProfileService profileService;
     @Autowired
     ClientService clientService;
+    @Autowired
+    StpSiebel siebel;
 
     private static Stream<Arguments> provideStringsForHeadersConfirmMasterClient() {
         return Stream.of(
@@ -83,7 +89,7 @@ public class ConfirmMasterClientErrorTest {
     void C455794(String name,  String login) {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -131,7 +137,7 @@ public class ConfirmMasterClientErrorTest {
     void C455854() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -158,7 +164,7 @@ public class ConfirmMasterClientErrorTest {
     void C467544() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -184,7 +190,7 @@ public class ConfirmMasterClientErrorTest {
     void C455861() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -212,7 +218,7 @@ public class ConfirmMasterClientErrorTest {
     void C1705432() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
