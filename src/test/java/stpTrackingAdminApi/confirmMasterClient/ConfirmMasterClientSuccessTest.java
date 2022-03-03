@@ -28,6 +28,8 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
@@ -57,22 +59,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
-    , ClientApiAdminCreator.class
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ClientApiAdminCreator.class
 })
 
 public class ConfirmMasterClientSuccessTest {
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
     Client client;
-    String SIEBEL_ID = "1-7XOAYPX";
-    String siebelIdEmptyNick = "1-9X6NHTJ";
-    String siebelIdNullImage = "5-421S5P27";
-    String siebelIdNotBroker = "5-11FZVG5DZ";
-
-    String siebelIdNotOpen = "1-BQCZQC7";
-
     String xApiKey = "x-api-key";
 
 
@@ -82,6 +79,8 @@ public class ConfirmMasterClientSuccessTest {
     ClientService clientService;
     @Autowired
     ApiAdminCreator<ClientApi> clientApiAdminCreator;
+    @Autowired
+    StpSiebel siebel;
 
     @AfterEach
     void deleteClient() {
@@ -99,10 +98,10 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C259274() {
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -133,7 +132,7 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C261414() {
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -141,7 +140,7 @@ public class ConfirmMasterClientSuccessTest {
             ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -175,7 +174,7 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C261568() {
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -183,7 +182,7 @@ public class ConfirmMasterClientSuccessTest {
             ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -216,7 +215,7 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C261734() {
         //находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
             .setNickname(profile.getNickname())
@@ -224,7 +223,7 @@ public class ConfirmMasterClientSuccessTest {
             ;
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -261,7 +260,7 @@ public class ConfirmMasterClientSuccessTest {
     void C455943() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdEmptyNick)
+            .siebelIdPath(siebel.siebelIdEmptyNick)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -269,7 +268,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdEmptyNick = resAccountMaster.getInvestId();
         //находим запись в БД social с пустым значением в поле nickname
         //достаем из БД сервиса счетов sieble_id, у которого несколько инвест счетов
-        Profile profile = profileService.getProfileBySiebelId(siebelIdEmptyNick);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdEmptyNick);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
@@ -301,10 +300,10 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455952() {
         //находим запись в БД social c с пустым значением в поле nickname
-        Profile profile = profileService.getProfileBySiebelId(siebelIdNullImage);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdNullImage);
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdNullImage)
+            .siebelIdPath(siebel.siebelIdNullImage)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -341,11 +340,11 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455965() {
         //находим запись в БД social c с пустым значением в поле nickname
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //находим данные клиента в сервисе счетов: договор БС, investId
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -381,13 +380,13 @@ public class ConfirmMasterClientSuccessTest {
         //находим данные клиента в сервисе счетов: договор БС, investId
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdNotBroker)
+            .siebelIdPath(siebel.siebelIdNotBroker)
             .brokerTypeQuery("invest-box")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investIdNotBroker = resAccountMaster.getInvestId();
-        Profile profile = profileService.getProfileBySiebelId(siebelIdNotBroker);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdNotBroker);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
@@ -418,7 +417,7 @@ public class ConfirmMasterClientSuccessTest {
     void C455990() {
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdNotOpen)
+            .siebelIdPath(siebel.siebelIdNotOpen)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("closed")
             .respSpec(spec -> spec.expectStatusCode(200))
