@@ -38,6 +38,15 @@ public class StpSiebel {
     public String siebelIdSlaveActiveStpTrackingMaster = "4-175NOS0W";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";
 
+    // Analytics //
+
+    public String siebelIdMasterAnalytics = "5-192WBUXCI";
+    public String siebelIdMasterAnalytics1 = "5-AJ7L9FNI";
+
+    public String siebelIdAnalyticsSlaveOne = "5-1P87U0B13";
+    public String siebelIdAnalyticsSlaveTwo = "5-7ECGV169";
+    public String siebelIdAnalyticsSlaveThree = "5-3CGSIDQR";
+
     //StpTrackingSlave//
     public String siebelIdSlaveMaster = "5-GEKUR6VD";
     public String siebelIdSlaveSlave = "5-JEF71TBN";
@@ -49,4 +58,5 @@ public class StpSiebel {
     public String siebelIdAgressiveForClient = "5-775DOBIB";
     public String siebelIdMediumForClient = "5-4HSBIRY7";
     public String siebelIdConservativeForClient = "5-LGGA88YZ";
+
 }
