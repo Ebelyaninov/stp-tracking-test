@@ -22,4 +22,6 @@ public class StpSiebel {
 
     public String siebelIdSlaveActiveStpTrackingMaster = "4-175NOS0W";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";
+    public String siebelIdSlaveMaster = "5-GEKUR6VD";
+    public String siebelIdSlaveSlave = "5-JEF71TBN";
 }

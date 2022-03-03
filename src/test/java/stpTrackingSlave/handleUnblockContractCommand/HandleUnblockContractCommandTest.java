@@ -25,7 +25,9 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -67,6 +69,7 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     GrpcServicesAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleUnblockContractCommandTest {
     @Autowired
@@ -97,6 +100,8 @@ public class HandleUnblockContractCommandTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
 
     SlavePortfolio slavePortfolio;
 
@@ -105,8 +110,8 @@ public class HandleUnblockContractCommandTest {
     String contractIdSlave;
     Contract contract;
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "5-JEF71TBN";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
@@ -119,6 +124,10 @@ public class HandleUnblockContractCommandTest {
 
     String description = "description test стратегия autotest update adjust base currency";
 
+    @BeforeAll void createDataForTests() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
+    }
 
     @AfterEach
     void deleteClient() {
