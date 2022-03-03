@@ -38,6 +38,15 @@ public class StpSiebel {
     public String siebelIdSlaveActiveStpTrackingMaster = "4-175NOS0W";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";
 
+    //StpTrackingSlave//
     public String siebelIdSlaveMaster = "5-GEKUR6VD";
     public String siebelIdSlaveSlave = "5-JEF71TBN";
+
+    //socialTrackingClient//
+    public String siebelIdMasterForClient = "4-1P767GFO";
+    public String siebelIdSlaveForClient = "5-8NL1RLT1";
+    //Для тестов важен ответ от метода getInvestProfile с нужным риск профилем
+    public String siebelIdAgressiveForClient = "5-775DOBIB";
+    public String siebelIdMediumForClient = "5-4HSBIRY7";
+    public String siebelIdConservativeForClient = "5-LGGA88YZ";
 }

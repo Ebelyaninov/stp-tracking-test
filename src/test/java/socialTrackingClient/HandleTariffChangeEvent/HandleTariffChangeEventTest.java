@@ -19,7 +19,9 @@ import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -59,7 +61,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     KafkaOldConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleTariffChangeEventTest {
 
@@ -79,9 +82,11 @@ public class HandleTariffChangeEventTest {
     StrategyService strategyService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String SIEBEL_ID_MASTER = "4-1NLJQ9HH";
-    String SIEBEL_ID_SLAVE = "5-8NL1RLT1";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
     String contractIdMaster;
     String contractIdSlave;
     UUID investIdMaster;
@@ -98,6 +103,8 @@ public class HandleTariffChangeEventTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterForClient;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveForClient;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();

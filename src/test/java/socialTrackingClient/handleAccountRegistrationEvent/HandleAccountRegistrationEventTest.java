@@ -25,9 +25,11 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.Tariff.api.TariffApi;
 import ru.qa.tinkoff.swagger.Tariff.invoker.ApiClient;
@@ -81,7 +83,7 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-
+    StpTrackingSiebelConfiguration.class,
     TariffDataBaseAutoConfiguration.class
 })
 public class HandleAccountRegistrationEventTest {
@@ -116,13 +118,15 @@ public class HandleAccountRegistrationEventTest {
     TariffService tariffService;
     @Autowired
     ContractTariffService contractTariffService;
+    @Autowired
+    StpSiebel stpSiebel;
 
     TariffApi tariffApi = ApiClient.api(ApiClient.Config.apiConfig()).tariff();
 
-    String SIEBEL_ID_MASTER = "4-1P767GFO";
-    String SIEBEL_ID_AGRESSIVE = "5-775DOBIB";
-    String SIEBEL_ID_MEDIUM = "5-4HSBIRY7";
-    String SIBEL_ID_CONSERVATIVE = "5-LGGA88YZ";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_AGRESSIVE;
+    String SIEBEL_ID_MEDIUM;
+    String SIBEL_ID_CONSERVATIVE ;
     String contractIdMaster;
     String contractIdAgressive;
     String contractIdMedium;
@@ -143,6 +147,10 @@ public class HandleAccountRegistrationEventTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterForClient;
+        SIEBEL_ID_AGRESSIVE = stpSiebel.siebelIdAgressiveForClient;
+        SIEBEL_ID_MEDIUM = stpSiebel.siebelIdMediumForClient;
+        SIBEL_ID_CONSERVATIVE = stpSiebel.siebelIdConservativeForClient;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();

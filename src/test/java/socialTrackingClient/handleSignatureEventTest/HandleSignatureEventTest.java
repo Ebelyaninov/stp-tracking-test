@@ -17,7 +17,9 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -55,8 +57,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    KafkaOldConfiguration.class
-
+    KafkaOldConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class HandleSignatureEventTest {
@@ -75,8 +77,10 @@ public class HandleSignatureEventTest {
     ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String SIEBEL_ID = "1-1LGJ72C";
+    String SIEBEL_ID;
     String contractId;
     Client client;
     UUID investId;
@@ -85,6 +89,7 @@ public class HandleSignatureEventTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdMasterForClient;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();
