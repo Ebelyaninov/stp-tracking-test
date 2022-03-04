@@ -3723,6 +3723,9 @@ public class HandleActualizeCommandTest {
 
     // методы для работы тестов*************************************************************************
 
+
+
+
     Tracking.PortfolioCommand createCommandActualizeOnlyBaseMoney(int scale, int unscaled, String contractIdSlave,
                                                                   int version, OffsetDateTime time,
                                                                   Tracking.Portfolio.Action action, boolean delayedCorrection) {

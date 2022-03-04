@@ -205,7 +205,7 @@ public class StpTrackingSlaveSteps {
 //    }
 
 
-  public   String getPriceFromMarketData(String instrumentId, String type, String priceForTest) {
+  public String getPriceFromMarketData(String instrumentId, String type) {
         Response res = pricesMDApiCreator.get().mdInstrumentPrices()
             .instrumentIdPath(instrumentId)
             .requestIdQuery("111")
@@ -215,9 +215,9 @@ public class StpTrackingSlaveSteps {
             .execute(response -> response);
         String price = res.getBody().jsonPath().getString("prices.price_value[0]");
 
-        if (price == null) {
-            price = priceForTest;
-        }
+//        if (price == null) {
+//            price = priceForTest;
+//        }
         return price;
     }
 
@@ -251,6 +251,45 @@ public class StpTrackingSlaveSteps {
         price = values.get("price").toString();
         return price;
     }
+
+
+    public String getPriceFromPriceCacheOrMD(String ticker, String tradingClearingAccount, String instrumentId, String type) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> prices = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount)
+                        && keys.get("priceType").equals(type);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+//        @SuppressWarnings("unchecked")
+            if (prices.size() > 0){
+            var values = (Map<Double, Object>) prices.get(0).getValue();
+            price = values.get("price").toString();
+        }
+        else {
+                price = getPriceFromMarketData(instrumentId, type);
+            }
+        return price;
+    }
+
+
+
 
     public String getPriceFromExchangePositionPriceCache(String ticker, String type) {
         String price = "";

@@ -28,12 +28,17 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -87,6 +92,10 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     StpTrackingSlaveStepsConfiguration.class,
     MocksBasicStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class
+
 })
 public class AnalyzePortfolioTest {
 
@@ -104,7 +113,6 @@ public class AnalyzePortfolioTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
-
     @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
@@ -121,6 +129,12 @@ public class AnalyzePortfolioTest {
     MiddleGrpcService middleGrpcService;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    StpMockSlaveDate stpMockSlaveDate;
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
@@ -131,8 +145,18 @@ public class AnalyzePortfolioTest {
     SlaveOrder2 slaveOrder2;
     UUID strategyId;
     UUID id;
-    String SIEBEL_ID_MASTER = "1-3Z0IR7O";
-    String SIEBEL_ID_SLAVE = "1-BXDUEON";
+
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
+
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdAnalyzeMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdAnalyzeSlave;
+    }
+
+
     long subscriptionId;
 
     BigDecimal targetFeeReserveRate = new BigDecimal("0.03");
@@ -201,6 +225,15 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C681845() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Buy", "1", "1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -291,6 +324,15 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C683302() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Buy", "1", "1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -371,7 +413,6 @@ public class AnalyzePortfolioTest {
         assertThat("ChangedAt позиции в портфеле slave не равен", position.get(0).getChangedAt().toInstant(), is(date.toInstant()));
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-
     }
 
 
@@ -383,6 +424,17 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C684579() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
+            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Buy", "1", "1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -422,10 +474,10 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now().minusDays(1);
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -562,6 +614,15 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C688348() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerALFAperp, instrument.classCodeALFAperp,
+            "105", "100", "105");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Buy", "1", "1");
         //получаем данные для перерасчета бумаги типа облигация
         List<String> list = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp,
             instrument.tradingClearingAccountALFAperp, SIEBEL_ID_MASTER);
@@ -598,7 +659,7 @@ public class AnalyzePortfolioTest {
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         //создаем портфель для slave
-        String baseMoneySlave = "3657.23";
+        String baseMoneySlave = "6657.23";
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, positionList);
@@ -609,8 +670,8 @@ public class AnalyzePortfolioTest {
         BigDecimal minPriceIncrement = new BigDecimal(minPrIncrement);
         BigDecimal aciValue = new BigDecimal(aci);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal getprice = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerALFAperp,
-            instrument.tradingClearingAccountALFAperp, "last", SIEBEL_ID_SLAVE));
+        BigDecimal getprice = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, instrument.instrumentALFAperp, "last"));
         //расчитываетм price
         BigDecimal priceBefore = getprice.multiply(currentNominal)
             .scaleByPowerOfTen(-2);
@@ -673,6 +734,17 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1323457() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
+            "105.4975", "104.51", "106.475");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
+            "2668.25", "2460.67", "2445.48");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
+            "Sell", "39", "39");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -714,14 +786,14 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal priceUSD = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerUSDRUB,
-            instrument.tradingClearingAccountUSDRUB, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceUSD = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerUSDRUB,
+            instrument.tradingClearingAccountUSDRUB, instrument.instrumentUSDRUB,"last" ));
         BigDecimal priceNewUSD = priceUSD.divide(new BigDecimal(currentNominal), 10, BigDecimal.ROUND_HALF_UP);
         BigDecimal newMinPriceIncrement = new BigDecimal(minPriceIncrement).divide(new BigDecimal(currentNominal), 10, BigDecimal.ROUND_HALF_UP);
         BigDecimal roundPriceNew = priceNewUSD.divide(newMinPriceIncrement, 0, RoundingMode.HALF_UP)
             .multiply(newMinPriceIncrement).stripTrailingZeros();
-        BigDecimal priceSBER = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceSBER = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, instrument.instrumentSBER, "last"));
         //получаем портфель slave
         checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -780,6 +852,17 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1346546() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
+            "140.9075", "138.195", "140.9075");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
+            "2668.25", "2460.67", "2445.48");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
+            "Sell", "39", "39");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -821,14 +904,14 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal priceGBP = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerGBP,
-            instrument.tradingClearingAccountGBP, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceGBP = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerGBP,
+            instrument.tradingClearingAccountGBP, instrument.instrumentGBP, "last"));
         BigDecimal priceNewGBP = priceGBP.divide(new BigDecimal(currentNominal), 10, BigDecimal.ROUND_HALF_UP);
         BigDecimal newMinPriceIncrement = new BigDecimal(minPriceIncrement).divide(new BigDecimal(currentNominal), 10, BigDecimal.ROUND_HALF_UP);
         BigDecimal roundPriceNew = priceNewGBP.divide(newMinPriceIncrement, 0, RoundingMode.HALF_UP)
             .multiply(newMinPriceIncrement).stripTrailingZeros();
-        BigDecimal priceSBER = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceSBER = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, instrument.instrumentSBER, "last"));
         //получаем портфель slave
         checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -887,7 +970,7 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1382257() {
-        String SIEBEL_ID_SLAVE = "1-FRT3HXX";
+        String SIEBEL_ID_SLAVE = stpSiebel.siebelIdAnalyzeSlaveOnlyBaseMoney;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -936,7 +1019,7 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1439616() {
-        String SIEBEL_ID_SLAVE = "1-1Q5Z83F";
+        String SIEBEL_ID_SLAVE = stpSiebel.siebelIdAnalyzeSlaveMoneyAndAAPL;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1130,7 +1213,7 @@ public class AnalyzePortfolioTest {
     @Test
     @AllureId("1387789")
     @Tags({@Tag("qa")})
-    @DisplayName("C1387789. Определяем buy_enabled = false с action = MONEY_SELL_TRADE и оба флага у позиции включены ")
+    @DisplayName("C1387789. Определяем buy_enabled = false с action = MONEY_SELL_TRADE и оба флага у позиции включены")
     @Subfeature("Успешные сценарии")
     @Description("Operation = 'ACTUALIZE'. ACTION = 'MONEY_SELL_TRADE'. " +
         "Master_portfolio.version = slave_portfolio.compared_to_master_version. lots после округления < 0 " +
@@ -1269,6 +1352,14 @@ public class AnalyzePortfolioTest {
         "Master_portfolio.version = slave_portfolio.compared_to_master_version.  lots после округления = 0 " +
         "И buy_enabled = true")
     void C1385945() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
+            "140.9075", "138.195", "140.9075");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
+            "2668.25", "2460.67", "2445.48");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2554,10 +2645,22 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1479051")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1479051.AnalyzePortfolio.Набор позиций slave-портфеля, позиции нет в slave_portfolio.SlavePortfolioValue <= 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1479051() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
+            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Sell", "6", "6");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2598,10 +2701,10 @@ public class AnalyzePortfolioTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         Thread.sleep(5000);
@@ -2674,10 +2777,22 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1481329")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1481329.AnalyzePortfolio.Набор позиций slave-портфеля, позиции в slave_portfolio и в master_portfolio.Стоимость портфеля <= 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1481329() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
+            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Sell", "4", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2718,10 +2833,10 @@ public class AnalyzePortfolioTest {
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
-        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -2782,10 +2897,22 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1481368")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1481368.AnalyzePortfolio.Набор позиций slave-портфеля, позиции есть в slave_portfolio, но нет в master_portfolio.Стоимость портфеля <= 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1481368() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
+            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerABBV, instrument.classCodeABBV,
+            "Sell", "2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2824,10 +2951,10 @@ public class AnalyzePortfolioTest {
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
-        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -2847,7 +2974,8 @@ public class AnalyzePortfolioTest {
         List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
+        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV))
+            .add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -2888,10 +3016,17 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1481411")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1481411.AnalyzePortfolio.Пустой портфель slave.Стоимость портфеля <= 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1481411() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2985,10 +3120,20 @@ public class AnalyzePortfolioTest {
     @SneakyThrows
     @Test
     @AllureId("1481628")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1481628.AnalyzePortfolio.Пустой портфель slave.Стоимость портфеля = 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1481628() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Sell", "1", "1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3088,6 +3233,15 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1698354() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
+            "108.22", "109.22", "107.22");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Sell", "1", "1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3158,7 +3312,6 @@ public class AnalyzePortfolioTest {
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
         assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
@@ -3169,8 +3322,9 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountAAPL, "50", notNullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-
     }
+
+
 
 
     // методы для работы тестов*************************************************************************
@@ -3214,6 +3368,7 @@ public class AnalyzePortfolioTest {
 
         if (slavePortfolioValue.compareTo(BigDecimal.ZERO) <= 0) {
             slavePositionRate = (position.get(0).getQuantity().multiply(price)).divide(slavePositionsValue, 4, RoundingMode.HALF_UP);
+
             slavePositionRateDiff = slavePositionRate.negate();
             slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
                 .divide(price, 4, BigDecimal.ROUND_HALF_UP);

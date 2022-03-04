@@ -50,6 +50,13 @@ public class StpSiebel {
     public String siebelIdSlaveMaster = "5-GEKUR6VD";
     public String siebelIdSlaveSlave = "5-JEF71TBN";
 
+    public String siebelIdAnalyzeMaster ="1-3Z0IR7O";
+    public String siebelIdAnalyzeSlave = "1-BXDUEON";
+    public String siebelIdAnalyzeSlaveOnlyBaseMoney = "1-FRT3HXX";
+    public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-HWHTMYS3";
+    public String siebelIdAnalyzeMasterError = "5-2383868GN";
+    public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";
+
     //socialTrackingClient//
     public String siebelIdMasterForClient = "4-1P767GFO";
     public String siebelIdSlaveForClient = "5-8NL1RLT1";
