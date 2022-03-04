@@ -37,6 +37,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -80,6 +82,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     KafkaAutoConfiguration.class
 })
 
@@ -109,6 +112,8 @@ public class HandleExchangeRetryCommandTest {
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
+    @Autowired
+    StpSiebel siebel;
 
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
@@ -122,8 +127,6 @@ public class HandleExchangeRetryCommandTest {
     String contractIdMaster;
     String contractIdSlave = "2013919085";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-5CNFBO6Z";
-    String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
@@ -210,7 +213,7 @@ public class HandleExchangeRetryCommandTest {
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
+            .siebelIdPath(siebel.siebelMasterRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -218,7 +221,7 @@ public class HandleExchangeRetryCommandTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .siebelIdPath(siebel.siebelSlaveRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))

@@ -65,4 +65,12 @@ public class StpSiebel {
     public String siebelIdMediumForClient = "5-4HSBIRY7";
     public String siebelIdConservativeForClient = "5-LGGA88YZ";
 
+    // stpTrackingRetryer //
+
+    public String siebelMasterRetryer = "5-5CNFBO6Z";
+    public String siebelSlaveRetryer = "5-LZ9SSTLK";
+
+    public String siebelMasterRetryer1 = "4-1V1UVPX8";
+
+
 }
