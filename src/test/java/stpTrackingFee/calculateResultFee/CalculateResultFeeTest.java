@@ -25,8 +25,10 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -70,7 +72,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class CalculateResultFeeTest {
     @Autowired
@@ -103,6 +106,8 @@ public class CalculateResultFeeTest {
     SlaveAdjustDao slaveAdjustDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
@@ -118,8 +123,8 @@ public class CalculateResultFeeTest {
     UUID investIdSlave;
     SlaveAdjust slaveAdjust;
     String operId = "2321010121";
-    String siebelIdMaster = "1-51Q76AT";
-    String siebelIdSlave = "5-1P87U0B13";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
@@ -132,6 +137,8 @@ public class CalculateResultFeeTest {
 
     @BeforeAll
     void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();

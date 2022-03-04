@@ -34,7 +34,6 @@ public class StpSiebel {
     public String siebelIdApiNotBroker = "5-DGXUTIXL";
     public String siebelIdMasterStpTrackingMaster = "1-DPVDVIC";
     public String siebelIdSlaveStpTrackingMaster = "1-424AQYT";
-
     public String siebelIdSlaveActiveStpTrackingMaster = "4-175NOS0W";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";
 

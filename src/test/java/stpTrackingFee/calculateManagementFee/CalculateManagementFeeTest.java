@@ -28,8 +28,10 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
@@ -73,7 +75,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class CalculateManagementFeeTest {
     @Autowired
@@ -102,6 +105,8 @@ public class CalculateManagementFeeTest {
     ManagementFeeDao managementFeeDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -117,8 +122,8 @@ public class CalculateManagementFeeTest {
     SlavePortfolio slavePortfolio;
 
     UUID strategyId;
-    String siebelIdMaster = "1-51Q76AT";
-    String siebelIdSlave = "5-1P87U0B13";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
@@ -129,6 +134,13 @@ public class CalculateManagementFeeTest {
 
 
     String description = "new test стратегия autotest";
+
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+    }
 
     @AfterEach
     void deleteClient() {
