@@ -100,8 +100,8 @@ public class DeleteSubscriptionErrorTest {
 
     @BeforeEach
     void getDataForTests() {
-        String siebelIdMaster = stpSiebel.siebelIdApiMaster;
-        String siebelIdSlave = stpSiebel.siebelIdApiSlave;
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
