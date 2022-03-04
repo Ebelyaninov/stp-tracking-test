@@ -31,8 +31,10 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -76,7 +78,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class AnalyzePortfolioErrorTest {
@@ -111,6 +114,8 @@ public class AnalyzePortfolioErrorTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
 
     SlavePortfolio slavePortfolio;
@@ -119,30 +124,18 @@ public class AnalyzePortfolioErrorTest {
     String contractIdMaster;
     String contractIdSlave;
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-2383868GN";
-    String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+
     long subscriptionId;
 
 
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
 
-//    final String tickerMinfin = "XS0088543190";
-//    final String tradingClearingAccountMinfin = "L01+00002F00";
-//
-//    final String tickerMinfinRU = "NMR";
-//    final String tradingClearingAccountMinfinRU = "NDS000000001";
-//
-//    final String tickerINFN = "BCR";
-//    final String tradingClearingAccountINFN = "TKCBM_TCAB";
-//
-//    final String tickerApple = "AAPL";
-//    final String tradingClearingAccountApple = "TKCBM_TCAB";
-//
-//    final String tickerYandex = "YNDX";
-//    final String tradingClearingAccountYandex = "Y02+00001F00";
-//
-//    final String tickerBRJ1 = "BRJ1";
-//    final String tradingClearingAccountBRJ1 = "U800";
-
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdAnalyzeMasterError;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdAnalyzeSlaveError;
+    }
 
     String description = "description test стратегия autotest update adjust base currency";
 

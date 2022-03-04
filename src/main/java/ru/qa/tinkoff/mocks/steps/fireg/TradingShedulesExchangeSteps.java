@@ -7,6 +7,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateEnhancer;
+import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateFX;
 import ru.qa.tinkoff.swagger.fireg.model.TradingScheduleExchange;
 
 import java.text.SimpleDateFormat;
@@ -66,6 +67,17 @@ public class TradingShedulesExchangeSteps {
         String currentDatePlusTwo = date.plusDays(2).format(formatter);
         String body = TextResourceEnhancer.enhance(
             new TradingShedulesExchangeTemplateEnhancer (exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
+        return  body;
+    }
+
+    public String createBodyForTradingShedulesExchangeFX (String exchange){
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String currentDate = date.format(formatter);
+        String currentDatePlusOne = date.plusDays(1).format(formatter);
+        String currentDatePlusTwo = date.plusDays(2).format(formatter);
+        String body = TextResourceEnhancer.enhance(
+            new TradingShedulesExchangeTemplateFX(exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
         return  body;
     }
 
