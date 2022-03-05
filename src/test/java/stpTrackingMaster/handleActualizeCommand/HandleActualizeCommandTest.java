@@ -48,6 +48,7 @@ import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -926,6 +927,8 @@ public class HandleActualizeCommandTest {
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
         // проверяем, что обновился state = 1
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
+            masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version+1);
         assertThat("Состояние сигнала  не равно", masterSignal.getTailOrderQuantity().toString(), is("0"));
     }
@@ -985,6 +988,8 @@ public class HandleActualizeCommandTest {
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
         // проверяем, поле tail_order_quantity
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
+            masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version+1);
         assertThat("Состояние сигнала  не равно", masterSignal.getTailOrderQuantity().toString(), is("10"));
     }
