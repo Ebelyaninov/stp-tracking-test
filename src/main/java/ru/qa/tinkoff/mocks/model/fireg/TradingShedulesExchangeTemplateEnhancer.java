@@ -22,7 +22,7 @@ public class TradingShedulesExchangeTemplateEnhancer implements TextResourceInfo
 
     @Override
     public String path() {
-        return "mockTemplate/TradingShedulesExchangeTemplate";
+        return "mockTemplate/tradingShedulesExchangeTemplate";
     }
 
     @Override
