@@ -52,9 +52,9 @@ public class MockMiddleSteps {
         return createBodyJSON.toString();
     }
 
-    public String createBodyForGrpc (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String quantityAAPL){
+    public String createBodyForGrpc (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String usdScaledQty, String quantityAAPL, String ticker, String tradingAccont){
         String body = TextResourceEnhancer.enhance(
-            new MiddleGRPCMethodEnhancer(agreementId, eurUnscaledPrice, rubUnscaledPrice, usdUnscaledPrice, quantityAAPL));
+            new MiddleGRPCMethodEnhancer(agreementId, eurUnscaledPrice, rubUnscaledPrice, usdUnscaledPrice, usdScaledQty, quantityAAPL, ticker, tradingAccont));
         return body;
     }
 
