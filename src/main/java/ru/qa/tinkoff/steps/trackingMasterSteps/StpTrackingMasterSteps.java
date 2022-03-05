@@ -137,7 +137,7 @@ public class StpTrackingMasterSteps {
             createExPosition.setTradingClearingAccount(tradingClearingAccount);
             //вызываем метод createExchangePosition
             exchangePositionApi.createExchangePosition()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("android")
