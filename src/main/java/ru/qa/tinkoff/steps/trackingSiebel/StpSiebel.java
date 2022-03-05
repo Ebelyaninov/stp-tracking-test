@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class StpSiebel {
 
     // "5-GA3OLBWB" "1-7XOAYPX" "4-LQB8FKN" "5-23AZ65JU2" "5-DYNN1E3S"
-    // "5-4LCY1YEB" "5-JEF71TBN" "4-1UBHYQ63" "1-1XHHA7S" "5-JDFC5N71"
+    // "5-4LCY1YEB" "5-JEF71TBN" "4-1UBHYQ63" "1-1XHHA7S"
 
     // Admin //
 
@@ -71,6 +71,10 @@ public class StpSiebel {
     public String siebelSlaveRetryer = "5-LZ9SSTLK";
 
     public String siebelMasterRetryer1 = "4-1V1UVPX8";
+
+    // handleSocialEvent //
+
+    public String siebelSocial = "1-9JNCS7D"; // необходим не пустой socialProfile
 
 
 }
