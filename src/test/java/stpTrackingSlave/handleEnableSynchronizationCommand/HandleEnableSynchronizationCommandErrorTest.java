@@ -686,8 +686,11 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем данные портфеля
-        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(nullValue()));
-        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(nullValue()));
+        assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
+        assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
+        //Проверяем выставлялась ли заявка
+        List<SlaveOrder2> slaveOrder2List = slaveOrderDao.getSlaveOrders2WithStrategy(contractIdSlave, strategyId);
+        assertThat("найдена заявка", slaveOrder2List.size(), is(0));
 
     }
 
