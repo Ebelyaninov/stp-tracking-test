@@ -1,11 +1,9 @@
 package ru.qa.tinkoff.mocks.model;
 
 import lombok.SneakyThrows;
-import org.springframework.util.ResourceUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class TextResourceEnhancer {
@@ -20,8 +18,12 @@ public class TextResourceEnhancer {
     }
 
     private static String getResourceAsText(String path) throws IOException {
-        File file = ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + path);
-        try (FileInputStream inputStream = new FileInputStream(file)) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        //File file = ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + path);
+        try (InputStream inputStream = classLoader.getResourceAsStream(path)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Resource not found: " + path);
+            }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
