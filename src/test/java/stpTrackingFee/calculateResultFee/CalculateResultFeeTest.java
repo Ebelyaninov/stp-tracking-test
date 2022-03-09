@@ -137,8 +137,8 @@ public class CalculateResultFeeTest {
 
     @BeforeAll
     void getDataFromAccount() {
-        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
-        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
