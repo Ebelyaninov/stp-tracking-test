@@ -1,5 +1,6 @@
 package stpTrackingSlave.handleActualizeCommand;
 
+import com.google.protobuf.Enum;
 import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import extenstions.RestAssuredExtension;
@@ -131,10 +132,13 @@ public class HandleActualizeCommandTest {
     String contractIdSlave;
     UUID strategyId;
     UUID strategyIdNew;
+    UUID idempotencyKey;
+    UUID id;
     String SIEBEL_ID_MASTER;
     String SIEBEL_ID_SLAVE;
 
     public String value;
+    long subscriptionId;
 
     String description = "description test стратегия autotest update adjust base currency";
 
@@ -201,6 +205,10 @@ public class HandleActualizeCommandTest {
             }
             try {
                 slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
             } catch (Exception e) {
             }
         });
@@ -3849,12 +3857,155 @@ public class HandleActualizeCommandTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @AllureId("1565814")
+    @DisplayName("1565814 HandleActualizeCommand. slave_portfolio = null. action = TRACKING_STATE_UPDATE")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C1565814() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //добавить запись в slaveOrder
+        createTestDataSlaveOrder2(1, 2,0,1, instrument.classCodeFB, instrument.tickerFB, instrument.tradingClearingAccountFB);
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        ru.tinkoff.invest.miof.Client.GetClientPositionsReq clientPositionsReq = ru.tinkoff.invest.miof.Client.GetClientPositionsReq.newBuilder()
+            .setAgreementId(contractIdSlave)
+            .build();
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions =
+            middleGrpcService.getClientPositions(clientPositionsReq);
+        int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
+        //формируем команду на актуализацию для slave
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 7000, contractIdSlave,
+            versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE),
+            time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
+        //Проверяем contractSlave
+        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(false));
+
+    }
+
+    private static Stream<Arguments> actionParam() {
+        return Stream.of(
+            Arguments.of(Tracking.Portfolio.Action.MONEY_BUY_TRADE),
+            Arguments.of(Tracking.Portfolio.Action.MONEY_SELL_TRADE),
+            Arguments.of(Tracking.Portfolio.Action.SECURITY_BUY_TRADE),
+            Arguments.of(Tracking.Portfolio.Action.SECURITY_SELL_TRADE)
+        );
+    }
+
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("actionParam")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @AllureId("1565830")
+    @DisplayName("1565830 HandleActualizeCommand. slave_portfolio = null. action <> TRACKING_STATE_UPDATE")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C1565830(Tracking.Portfolio.Action action) {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //добавить запись в slaveOrder
+        createTestDataSlaveOrder2(1, 2,0,1, instrument.classCodeFB, instrument.tickerFB, instrument.tradingClearingAccountFB);
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        ru.tinkoff.invest.miof.Client.GetClientPositionsReq clientPositionsReq = ru.tinkoff.invest.miof.Client.GetClientPositionsReq.newBuilder()
+            .setAgreementId(contractIdSlave)
+            .build();
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions =
+            middleGrpcService.getClientPositions(clientPositionsReq);
+        int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
+        //формируем команду на актуализацию для slave
+        OffsetDateTime time = OffsetDateTime.now();
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 7000, contractIdSlave,
+            versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4, action),
+            time, action, false);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
+        //Проверяем contractSlave
+        await().atMost(FIVE_SECONDS).until(() ->
+            contractService.getContract(contractIdSlave).getBlocked(), is(true));
+        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+
+    }
 
 
 
     // методы для работы тестов*************************************************************************
 
 
+
+    //метод создает записи по заявкам в рамках одной стратегии
+    @SneakyThrows
+    void createTestDataSlaveOrder2 (int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount) {
+        idempotencyKey = UUID.randomUUID();
+        for (int i = 0; i < count; i++) {
+            attemptsCounts = attemptsCounts + 1;
+            createSlaveOrder2(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode,
+                new BigDecimal("0"), idempotencyKey, id, new BigDecimal("173"), new BigDecimal("1"), null, ticker, tradingClearingAccount);
+            Thread.sleep(500);
+        }
+    }
+
+    //метод для создания вставки заявки
+    void createSlaveOrder2(int minusDays, int minusHours, String contractId, UUID strategyId, int version, Integer attemptsCount,
+                           int action, String classCode, BigDecimal filledQuantity,
+                           UUID idempotencyKey, UUID id, BigDecimal price, BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+
+        OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
+        slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
+            action, classCode, 3, filledQuantity, idempotencyKey,
+            id, price, quantity, state,
+            ticker, tradingClearingAccount);
+    }
 
 
     Tracking.PortfolioCommand createCommandActualizeOnlyBaseMoney(int scale, int unscaled, String contractIdSlave,
