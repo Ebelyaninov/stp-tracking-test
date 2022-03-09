@@ -37,6 +37,10 @@ public class StpSiebel {
     public String siebelIdSlaveActiveStpTrackingMaster = "4-175NOS0W";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";
 
+    // Fee //
+    public String siebelIdMasterStpTrackingFee = "5-F0XGQDPV";
+    public String siebelIdSlaveStpTrackingFee = "4-IJ8NBW3";
+
     // Analytics //
 
     public String siebelIdMasterAnalytics = "5-192WBUXCI";

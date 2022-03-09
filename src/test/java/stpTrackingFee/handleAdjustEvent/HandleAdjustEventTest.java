@@ -127,8 +127,8 @@ public class HandleAdjustEventTest {
 
     @BeforeAll
     void getDataFromAccount() {
-        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
-        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
     }
 
     @AfterEach

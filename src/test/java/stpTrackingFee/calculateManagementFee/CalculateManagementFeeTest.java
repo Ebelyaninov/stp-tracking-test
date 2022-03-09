@@ -138,8 +138,8 @@ public class CalculateManagementFeeTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
-        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
-        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
     }
 
     @AfterEach
