@@ -49,10 +49,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
@@ -1068,7 +1065,96 @@ public class HandleLimitEventTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1481444")
+    @DisplayName("1481444 HandleLimitEvent. base_currency = USD. money_limit.currency = CHF. adjust_currency < 0.")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
+    void C1481444() {
+        String SIEBEL_ID_SLAVE = "1-1XHHA7S";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
+        contractIdSlaves.add(contractIdSlave);
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //вычитываем топик tracking.contract.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //создаем событие с отрицательным лимитом по не базовой валюте
+        OffsetDateTime now = OffsetDateTime.now();
+        List<Limit.MoneyLimit> moneyLimits = new ArrayList<>();
+        moneyLimits.add(Limit.MoneyLimit.newBuilder()
+            .setLoadDate(19055)
+            .setClientCode(clientCodeSlave)
+            .setCurrency("CHF")
+            .setFirmId("MC0253200000")
+            .setOpenBalance(-100)
+            .setOpenLimit(-100)
+            .setOpenBalanceValue(Limit.Decimal.newBuilder()
+                .setUnscaled(-100)
+                .setScale(0))
+            .setOpenLimitValue(Limit.Decimal.newBuilder()
+                .setUnscaled(-100)
+                .setScale(0))
+            .setAccountId("MB9885503216").build());
+        Limit.Event eventLimit = Limit.Event.newBuilder()
+            .addAllMoneyLimit(moneyLimits)
+            .setAction(Limit.Event.Action.ADJUST_CURRENCY)
+            .setVersion(Int32Value.newBuilder().setValue(1).build())
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setCreatedAt(com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .build();
+        log.info("Команда в tracking.slave.command:  {}", eventLimit);
+        byte[] eventBytes = eventLimit.toByteArray();
+        oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        Pair<String, byte[]> messageEvent = messages.stream()
+            .sorted(Collections.reverseOrder())
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(messageEvent.getValue());
+        //Проверяем, данные в сообщении из tracking.contract.event
+        checkEvent(event, contractIdSlave, "UPDATED", "TRACKED", true);
+        //Проверяем contractSlave
+        assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+
+    }
+
     //общие методы для тестов
+
+    void checkEvent(Tracking.Event event, String contractId, String action, String state, boolean blocked) {
+        assertThat("ID contract не равен", event.getContract().getId(), is(contractId));
+        assertThat("Action не равен", event.getAction().toString(), is(action));
+        assertThat("State не равен", event.getContract().getState().toString(), is(state));
+        assertThat("Blocked не равен", (event.getContract().getBlocked()), is(blocked));
+
+    }
+
+
     List<MasterPortfolio.Position> masterPositions(Date date, String tickerOne, String tradingClearingAccountOne,
                                                    String quantityOne, String tickerTwo, String tradingClearingAccountTwo,
                                                    String quantityTwo) {
