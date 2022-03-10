@@ -4,6 +4,7 @@ package ru.qa.tinkoff.investTracking.services;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
@@ -26,6 +27,7 @@ public class SlavePortfolioDao {
     private final SlavePortfolioRowMapper slavePortfolioRowMapper;
     private final ChangedAtSlavePortfolioRowMapper changedAtSlavePortfolioRowMapper;
 
+    @Step("Находим запись в slave_portfolio: ")
     public SlavePortfolio getLatestSlavePortfolio(String contractId, UUID strategyId) {
         String query = "select * " +
             "from invest_tracking.slave_portfolio " +

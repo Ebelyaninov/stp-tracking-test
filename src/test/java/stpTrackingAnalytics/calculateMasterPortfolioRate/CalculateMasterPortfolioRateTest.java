@@ -2,10 +2,7 @@ package stpTrackingAnalytics.calculateMasterPortfolioRate;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -897,10 +894,11 @@ public class CalculateMasterPortfolioRateTest {
 
 //методы для работы тестов*******************************************************************************
 
-
+    //группируем данные по показателям
+    @Step("Считаем стоимость позиции в портфеле и добавляем данные в Map: ")
     Map<PositionDateFromFireg, BigDecimal> getPositionsMap(Map<String, BigDecimal> pricesPos, String nominal,
                                                            BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
-
+        log.info("Считаем стоимость позиции в портфеле");
         BigDecimal valuePos1 = BigDecimal.ZERO;
         BigDecimal valuePos2 = BigDecimal.ZERO;
         BigDecimal valuePos3 = BigDecimal.ZERO;
@@ -914,6 +912,7 @@ public class CalculateMasterPortfolioRateTest {
             Map.Entry pair = (Map.Entry) it.next();
             if (pair.getKey().equals(instrument.instrumentSBER)) {
                 valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentSBER + "в портфеле: " + valuePos1);
             }
             if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
                 String priceTs = pair.getValue().toString();
@@ -927,33 +926,29 @@ public class CalculateMasterPortfolioRateTest {
                 BigDecimal price = roundPrice
                     .add(new BigDecimal(aciValue));
                 valuePos2 = new BigDecimal(steps.quantitySU29009RMFS6).multiply(price);
+                log.info("Считаем стоимость позиции " + instrument.instrumentSU29009RMFS6 + "в портфеле: " + valuePos2);
             }
             if (pair.getKey().equals(instrument.instrumentLKOH)) {
                 valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentLKOH + "в портфеле: " + valuePos3);
             }
             if (pair.getKey().equals(instrument.instrumentSNGSP)) {
                 valuePos4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentSNGSP + "в портфеле: " + valuePos4);
             }
             if (pair.getKey().equals(instrument.instrumentTRNFP)) {
                 valuePos5 = new BigDecimal(steps.quantityTRNFP).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentTRNFP + "в портфеле: " + valuePos5);
             }
             if (pair.getKey().equals(instrument.instrumentESGR)) {
                 valuePos6 = new BigDecimal(steps.quantityESGR).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentESGR + "в портфеле: " + valuePos6);
             }
             if (pair.getKey().equals(instrument.instrumentUSD)) {
                 valuePos7 = new BigDecimal(steps.quantityUSD).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentUSD + "в портфеле: " + valuePos7);
             }
         }
-
-//        BigDecimal valuePortfolio = valuePos1
-//            .add(valuePos2)
-//            .add(valuePos3)
-//            .add(valuePos4)
-//            .add(valuePos5)
-//            .add(valuePos6)
-//            .add(valuePos7)
-//            .add(new BigDecimal(baseMoney));
-//        log.info("valuePortfolio:  {}", valuePortfolio);
         Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
         positionIdMap.put(new PositionDateFromFireg(instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.typeSBER, instrument.sectorSBER, instrument.companySBER), valuePos1);
         positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
@@ -965,6 +960,7 @@ public class CalculateMasterPortfolioRateTest {
         return positionIdMap;
     }
 
+    @Step("Считаем стоимость портфеля: ")
     BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,
                                  BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
         BigDecimal valuePos1 = BigDecimal.ZERO;
@@ -1018,36 +1014,34 @@ public class CalculateMasterPortfolioRateTest {
             .add(valuePos7)
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-
         return valuePortfolio;
     }
 
+    //группируем данные по показателям
+    @Step("Группируем данные по показателям Sectors: ")
     Map<String, BigDecimal> getSectors(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> sectors = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getSector(),
                 Map.Entry::getValue, BigDecimal::add));
-
-//        sectors.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
         return sectors;
     }
-
+    @Step("Группируем данные по показателям Types: ")
     Map<String, BigDecimal> getTypes(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> types = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getType(),
                 Map.Entry::getValue, BigDecimal::add));
-//        types.merge("money", new BigDecimal(baseMoney), BigDecimal::add);
         return types;
     }
 
+    @Step("Группируем данные по показателям Companys: ")
     Map<String, BigDecimal> getCompanys(Map<PositionDateFromFireg, BigDecimal> positionIdMap, String baseMoney) {
         Map<String, BigDecimal> companys = positionIdMap.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().getCompany(),
                 Map.Entry::getValue, BigDecimal::add));
-//        companys.merge("Денежные средства", new BigDecimal(baseMoney), BigDecimal::add);
         return companys;
     }
 
-
+    @Step("Проверяем расчитанные и олученные данные по долям sectors, types, companys: ")
     void checkParam(Map<String, BigDecimal> sectors, Map<String, BigDecimal> types, Map<String,
         BigDecimal> companys, LocalDateTime cut, LocalDateTime cutInCommand) {
         assertThat("доли по секторам не равны", true, is(sectors.equals(masterPortfolioRate.getSectorToRateMap())));
@@ -1056,6 +1050,7 @@ public class CalculateMasterPortfolioRateTest {
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
     }
 
+    @Step("Рассчитываем стоимость позиции bond: ")
     BigDecimal valuePosBonds(String priceTs, String nominal, BigDecimal minPriceIncrement, String aciValue, BigDecimal valuePos) {
         BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
             .scaleByPowerOfTen(-2);
@@ -1082,6 +1077,8 @@ public class CalculateMasterPortfolioRateTest {
         steps.createMasterPortfolioSevenPosition(3, 8, "16551.10", contractIdMaster, strategyId);
     }
 
+
+    @Step("Создаем одну позицию для мастера в master_portfolio: ")
     List getPosListOne(String ticker, String tradingClearingAccount, String quantity,
                        Tracking.Portfolio.Position positionAction, Date date) {
         List<MasterPortfolio.Position> positionListMasterOne = new ArrayList<>();
@@ -1095,7 +1092,7 @@ public class CalculateMasterPortfolioRateTest {
             .build());
         return positionListMasterOne;
     }
-
+    @Step("Создаем две позиции для мастера в master_portfolio: ")
     List getPosListTwo(String ticker1, String tradingClearingAccount1, String quantity1,
                        String ticker2, String tradingClearingAccount2, String quantity2,
                        Tracking.Portfolio.Position positionAction, Date date) {
@@ -1119,7 +1116,7 @@ public class CalculateMasterPortfolioRateTest {
         return positionListMasterOne;
     }
 
-
+    @Step("Создаем портфель мастера в master_portfolio: ")
     void createMasterPortfolio(String ticker1, String tradingClearingAccount1, String quantity1,
                                String ticker2, String tradingClearingAccount2, String quantity2) {
         steps.createMasterPortfolioWithOutPosition(15, 1, "47390.90", contractIdMaster, strategyId);
@@ -1149,8 +1146,8 @@ public class CalculateMasterPortfolioRateTest {
             }
         }
     }
-
-
+    //исключаем группу позиций с деньгами
+    @Step("Исключаем группу позиций с деньгами: ")
     private BigDecimal calculateSumWithoutMoneyGroup(Map<String, BigDecimal> map, String moneyGroupKey) {
         return map.entrySet()
             .stream()

@@ -1,6 +1,5 @@
 package stpTrackingSlave.handleSynchronizeCommand.CreateSlaveOrder;
 
-import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -12,51 +11,50 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
-import ru.qa.tinkoff.investTracking.services.*;
-import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
+import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
+import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
-import ru.qa.tinkoff.swagger.MD.api.OrdersApi;
-import ru.qa.tinkoff.swagger.MD.api.PricesApi;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
-import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("CreateSlaveOrder - Выставление заявки")
@@ -69,7 +67,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class CreateSlaveOrderErrorTest {
 
@@ -103,16 +103,26 @@ public class CreateSlaveOrderErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
+    @Autowired
+    StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
     Subscription subscription;
     SlaveOrder2 slaveOrder2;
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
     Contract contract;
-    String SIEBEL_ID_MASTER = "5-AJ7L9FNI";
+    String SIEBEL_ID_MASTER;
     UUID strategyId;
     long subscriptionId;
-    String description = "description test стратегия autotest update adjust base currency";
+    String description = "description autotest CreateSlaveOrderError";
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterAnalytics1;
+    }
+
 
     @AfterEach
     void deleteClient() {
@@ -178,8 +188,6 @@ public class CreateSlaveOrderErrorTest {
     void C701280() {
         String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
         contractIdSlave = "2047111824";
-        String ticker = "BANEP";
-        String tradingClearingAccount = "L01+00000F00";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -196,19 +204,19 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerBANEP, instrument.tradingClearingAccountBANEP,
             "2", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "26551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "27000.0";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerBANEP, instrument.tradingClearingAccountBANEP,
             "7", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
@@ -238,8 +246,6 @@ public class CreateSlaveOrderErrorTest {
     void C712128() {
         String SIEBEL_ID_SLAVE = "4-LQB8FKN";
         contractIdSlave = "2054235441";
-        String ticker = "ABBV";
-        String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -255,23 +261,25 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
-            "5", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
-            "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
-       //вычитываем из топика кафка tracking.delay.command все offset
+        //вычитываем из топика кафка tracking.delay.command все offset
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
@@ -287,8 +295,6 @@ public class CreateSlaveOrderErrorTest {
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-
-
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
         //проверяем параметры команды по синхронизации
@@ -296,9 +302,6 @@ public class CreateSlaveOrderErrorTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
             is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
-
-
-
     }
 
 
@@ -311,8 +314,6 @@ public class CreateSlaveOrderErrorTest {
     void C849688() {
         contractIdSlave = "2092721501";
         String SIEBEL_ID_SLAVE = "5-2IMV74EF5";
-        String ticker = "AAPL";
-        String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -327,19 +328,21 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,
             "5", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
-            "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -362,7 +365,6 @@ public class CreateSlaveOrderErrorTest {
     }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("730132")
@@ -372,8 +374,6 @@ public class CreateSlaveOrderErrorTest {
     void C730132() {
         String SIEBEL_ID_SLAVE = "1-3L0X4M1";
         contractIdSlave = "2065560563";
-        String ticker = "ABBV";
-        String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -387,19 +387,21 @@ public class CreateSlaveOrderErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
-            "5", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
-            "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -417,10 +419,9 @@ public class CreateSlaveOrderErrorTest {
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         log.info("Событие  в tracking.event:  {}", event);
         //проверяем, данные в сообщении и таб. contract
-        checkEventParam (event);
-        checkContractParam (contractIdSlave);
+        checkEventParam(event);
+        checkContractParam(contractIdSlave);
     }
-
 
 
     @SneakyThrows
@@ -432,8 +433,6 @@ public class CreateSlaveOrderErrorTest {
     void C851304() {
         String SIEBEL_ID_SLAVE = "4-LQB8FKN";
         contractIdSlave = "2054235441";
-        String ticker = "ABBV";
-        String tradingClearingAccount = "TKCBM_TCAB";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -449,18 +448,19 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(ticker, tradingClearingAccount,
-            "5", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
 
 //        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(ticker, tradingClearingAccount,
-            "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
@@ -480,24 +480,22 @@ public class CreateSlaveOrderErrorTest {
     }
 
 
-
-
-
-/////////***методы для работы тестов**************************************************************************
+    /////////***методы для работы тестов**************************************************************************
     //проверяем, парамерты message события в топике tracking.event
-    void checkEventParam (Tracking.Event event) {
+    @Step("Проверяем параметры message события в топике tracking.event")
+    void checkEventParam(Tracking.Event event) {
         assertThat("ID события не равен", event.getAction().toString(), is("UPDATED"));
         assertThat("ID договора не равен", event.getContract().getState().toString(), is("TRACKED"));
         assertThat("ID стратегии не равен", (event.getContract().getBlocked()), is(true));
     }
+
     //проверяем запись по контракту в табл. contract
-    void checkContractParam (String contractIdSlave)  {
+    @Step("Проверяем параметры по контракту в табл. contract")
+    void checkContractParam(String contractIdSlave) {
         contract = contractService.getContract(contractIdSlave);
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("tracked"));
         assertThat("статус клиента не равно", (contract.getBlocked()), is(true));
     }
-
-
 
 
 }

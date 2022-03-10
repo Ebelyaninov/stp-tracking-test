@@ -290,7 +290,7 @@ public class StpTrackingSlaveSteps {
 
 
 
-
+    @Step("Получаем значение price для позиции из exchangePositionPriceCache или запрос в MD: ")
     public String getPriceFromExchangePositionPriceCache(String ticker, String type) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
@@ -393,6 +393,7 @@ public class StpTrackingSlaveSteps {
 
 
     //отправляем команду на синхронизацию
+    @Step("Формируем команду на синхронизацию портфелей SYNCHRONIZE: ")
     public Tracking.PortfolioCommand createCommandSynchronize(String contractIdSlave, OffsetDateTime time) {
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
@@ -470,7 +471,7 @@ public class StpTrackingSlaveSteps {
             .build();
         return command;
     }
-
+    @Step("Добавляем позицию в портфель мастера: ")
     public List<MasterPortfolio.Position> createListMasterPositionWithOnePos(String ticker, String tradingClearingAccount,
                                                                              String quantityPos, Date date,
                                                                              int lastChangeDetectedVersion,
@@ -550,7 +551,7 @@ public class StpTrackingSlaveSteps {
     }
 
 
-
+    @Step("Создаем запись по портфелю мастера в таб. master_portfolio: ")
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,
                                       String money, List<MasterPortfolio.Position> positionList) {
         //создаем портфель master в cassandra
@@ -649,7 +650,7 @@ public class StpTrackingSlaveSteps {
             .build());
         return positionList;
     }
-
+    @Step("Добавляем позицию в портфель slave: ")
     public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLight(String ticker, String tradingClearingAccount,
                                                                                 String quantityPos, Date date)    {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -708,7 +709,7 @@ public class StpTrackingSlaveSteps {
             .build());
         return positionList;
     }
-
+    @Step("Создаем портфель для slave в табл. slave_portfolio: ")
     public void createSlavePortfolioWithPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
                                                  String money,Date date, List<SlavePortfolio.Position> positionList) {
         //с базовой валютой
@@ -846,6 +847,7 @@ public class StpTrackingSlaveSteps {
 
 
     //метод отправляет команду с operation = 'SYNCHRONIZE'.
+    @Step("Отправляем команду по синхронизации в топик TRACKING_SLAVE_COMMAND: ")
     public  void createCommandSynTrackingSlaveCommand(String contractIdSlave) {
         //создаем команду
         OffsetDateTime time = OffsetDateTime.now();
@@ -905,7 +907,7 @@ public class StpTrackingSlaveSteps {
         kafkaSender.send(Topics.TRACKING_SLAVE_COMMAND, contractIdSlave, eventBytes);
     }
 
-
+    @Step("Получаем данные клиента из сервиса счетов: ")
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -937,6 +939,7 @@ public class StpTrackingSlaveSteps {
         return position;
     }
     //метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создаем подписку для slave: ")
     public void createSubcription(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
                                   ClientRiskProfile riskProfile, UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd,Boolean blocked ) throws JsonProcessingException {

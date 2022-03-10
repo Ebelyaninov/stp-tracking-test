@@ -2,10 +2,7 @@ package stpTrackingAnalytics.calculateMasterPortfolioMaxDrawdown;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -425,7 +422,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     }
 
 //методы для работы тестов****************************************************************************
-
+   @Step("Создаем запись по стоимости портфеля мастера в табл. master_portfolio_value: ")
     void createDateMasterPortfolioValue(UUID strategyId, int days, int hours, String value) {
         masterPortfolioValue = MasterPortfolioValue.builder()
             .strategyId(strategyId)
@@ -434,7 +431,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             .build();
         masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
     }
-
+    @Step("Проверка полученных значений в табл. master_portfolio_max_drawdown: ")
     void checkParam(BigDecimal maxDrawdown, OffsetDateTime cutTime) {
         assertThat("value просадки портфеля не равно", masterPortfolioMaxDrawdown.getValue(), is(maxDrawdown));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioMaxDrawdown.getCut().toInstant(),

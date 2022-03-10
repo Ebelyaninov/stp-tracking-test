@@ -245,4 +245,20 @@ public class StpInstrument {
     public String tradingClearingAccountQCOM = "L01+00000SPB";
     public String classCodeQCOM = "SPBXM";
 
+
+    public String tickerTUSD = "TUSD";
+    public String tradingClearingAccountTUSD = "L01+00000F00";
+    public String classCodeTUSD = "TQTD";
+    public String instrumentTUSD = tickerTUSD + "_" + classCodeTUSD;
+
+    public String tickerTECH = "TECH";
+    public String tradingClearingAccountTECH = "L01+00000SPB";
+    public String classCodeTECH = "SPBXM";
+    public String instrumentTECH = tickerTECH + "_" + classCodeTECH;
+
+    public String tickerBANEP = "BANEP";
+    public String tradingClearingAccountBANEP = "L01+00000F00";
+
+
+
 }
