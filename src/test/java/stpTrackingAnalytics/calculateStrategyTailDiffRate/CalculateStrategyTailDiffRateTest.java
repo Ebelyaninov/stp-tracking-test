@@ -5,6 +5,7 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -105,7 +107,6 @@ public class CalculateStrategyTailDiffRateTest {
     StrategyTailDiffRate strategyTailDiffRate;
     String contractIdMaster;
     SlavePortfolio slavePortfolio;
-    Client clientSlave;
 
     String contractIdSlaveOne;
     String contractIdSlaveTwo;
@@ -118,10 +119,10 @@ public class CalculateStrategyTailDiffRateTest {
     UUID strategyId;
     UUID investIdMaster;
 
-    String description = "new test стратегия autotest";
+    String description = "autotest CalculateStrategyTailDiffRateTest";
 
 
-    List<Float> strategyTailDiffRateQuantiles = List.of((float) 0.0, (float)0.5, (float)0.9, (float)0.99, (float)1.0);
+    List<Float> strategyTailDiffRateQuantiles = List.of((float) 0.0, (float) 0.5, (float) 0.9, (float) 0.99, (float) 1.0);
 
 
     @AfterEach
@@ -228,7 +229,6 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
-
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideAnalyticsCommand")
@@ -279,16 +279,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
-
-
 
 
     @SneakyThrows
@@ -342,14 +338,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
 
 
     @SneakyThrows
@@ -378,13 +372,13 @@ public class CalculateStrategyTailDiffRateTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Map<Float, Float> result = new LinkedHashMap<>();
-        result.put((float)0.0, (float)0.0);
-        result.put((float)0.5, (float)0.0);
-        result.put((float)0.9, (float)0.0);
-        result.put((float)0.99, (float)0.0);
-        result.put((float)1.0, (float)0.0);
+        result.put((float) 0.0, (float) 0.0);
+        result.put((float) 0.5, (float) 0.0);
+        result.put((float) 0.9, (float) 0.0);
+        result.put((float) 0.99, (float) 0.0);
+        result.put((float) 1.0, (float) 0.0);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -439,9 +433,9 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
 //        diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -497,9 +491,9 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -555,14 +549,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
 
 
     @SneakyThrows
@@ -607,13 +599,13 @@ public class CalculateStrategyTailDiffRateTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Map<Float, Float> result = new LinkedHashMap<>();
-        result.put((float)0.0, (float)0.01);
-        result.put((float)0.5, (float)0.1);
-        result.put((float)0.9, (float)0.55);
-        result.put((float)0.99, (float)0.55);
-        result.put((float)1.0, (float)0.55);
+        result.put((float) 0.0, (float) 0.01);
+        result.put((float) 0.5, (float) 0.1);
+        result.put((float) 0.9, (float) 0.55);
+        result.put((float) 0.99, (float) 0.55);
+        result.put((float) 1.0, (float) 0.55);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -670,19 +662,15 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
 
 
-
-
-
-
-
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioOne() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -704,9 +692,9 @@ public class CalculateStrategyTailDiffRateTest {
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "871.169";
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
-            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()),instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             "3", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            "2", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            "2", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-9.2838"), new BigDecimal("-3.0003"),
             new BigDecimal("-1.9935"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveOne, strategyId, 4, 4,
@@ -714,8 +702,7 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
-
-
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioTwo() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -739,13 +726,14 @@ public class CalculateStrategyTailDiffRateTest {
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.99"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 4, 4,
             baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
     }
 
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioThree() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -769,7 +757,7 @@ public class CalculateStrategyTailDiffRateTest {
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.33"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 4, 4,
@@ -796,9 +784,8 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
-
-
-    BigDecimal getPortfolioDiffRate (String contractIdSlave, UUID strategyId, int version ) {
+    @Step("Рассчитываем portfolioDiffRate для каждого подписчика: ")
+    BigDecimal getPortfolioDiffRate(String contractIdSlave, UUID strategyId, int version) {
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, version);
         BigDecimal portfolioValue = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal portfolioDiffRate = BigDecimal.ZERO;
@@ -819,6 +806,7 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
+    @Step("Рассчитываем кривизну портфеля и записываем результат: ")
     public Map<Float, Float> calculateQuantiles(List<Float> probabilities, List<Float> data) {
         if (data == null || data.isEmpty()) {
             throw new IllegalArgumentException("Data cannot be null or empty");
@@ -864,11 +852,11 @@ public class CalculateStrategyTailDiffRateTest {
 
     void createDateStrategyTailDiffRate(UUID strategyId, Date date) {
         Map<Float, Float> values = new LinkedHashMap<>();
-        values.put((float)0.0, (float)0.01);
-        values.put((float)0.5, (float)0.1);
-        values.put((float)0.9, (float)0.55);
-        values.put((float)0.99, (float)0.55);
-        values.put((float)1.0, (float)0.55);
+        values.put((float) 0.0, (float) 0.01);
+        values.put((float) 0.5, (float) 0.1);
+        values.put((float) 0.9, (float) 0.55);
+        values.put((float) 0.99, (float) 0.55);
+        values.put((float) 1.0, (float) 0.55);
         strategyTailDiffRate = StrategyTailDiffRate.builder()
             .strategyId(strategyId)
             .cut(date)
@@ -876,10 +864,6 @@ public class CalculateStrategyTailDiffRateTest {
             .build();
         strategyTailDiffRateDao.insertIntoStrategyTailDiffRate(strategyTailDiffRate);
     }
-
-
-
-
 
 
 }

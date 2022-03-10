@@ -2,10 +2,7 @@ package stpTrackingAnalytics.calculateSignalFrequency;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -81,18 +78,6 @@ public class СalculateSignalFrequencyTest {
     UUID strategyId;
     SignalFrequency signalFrequency;
 
-
-//    final String tickerNok = "NOK";
-//    final String tradingClearingAccountNok = "L01+00000SPB";
-//
-//    final String tickerGazprom = "XS0191754729";
-//    final String tradingClearingAccountGazprom = "L01+00000F00";
-//
-//    final String tickerAbbV = "ABBV";
-//    final String tradingClearingAccountAbbV = "TKCBM_TCAB";
-//
-//    final String tickerApple = "AAPL";
-//    final String tradingClearingAccountApple = "TKCBM_TCAB";
 
 
     @AfterEach
@@ -323,7 +308,7 @@ public class СalculateSignalFrequencyTest {
 
 
     // методы для работы тестов*************************************************************************
-
+    @Step("Переводим значение stratedyId в byte: ")
     public byte[] bytes(UUID uuid) {
         return ByteBuffer.allocate(16)
             .putLong(uuid.getMostSignificantBits())
@@ -335,7 +320,7 @@ public class СalculateSignalFrequencyTest {
         return ByteString.copyFrom(bytes(uuid));
     }
 
-
+    @Step("Создаем запись по сигналам мастера в табл. master_signal: ")
     void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
                             String price, String quantity, int action) {
         LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
@@ -397,6 +382,7 @@ public class СalculateSignalFrequencyTest {
     }
 
     //считаем количество уникальных дней
+    @Step("Считаем количество уникальных дней: ")
     public Integer countUniqueMasterSignalDays(UUID strategyId, Date start, Date end) {
         return new HashSet<>(masterSignalDao.getUniqMasterSignalDaysByPeriod(strategyId, start, end)).size();
     }

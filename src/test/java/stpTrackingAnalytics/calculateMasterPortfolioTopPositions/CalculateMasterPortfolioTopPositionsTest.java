@@ -3,10 +3,7 @@ package stpTrackingAnalytics.calculateMasterPortfolioTopPositions;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +33,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -137,7 +135,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -197,7 +195,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -253,7 +251,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -402,6 +400,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
     // методы для работы тестов*************************************************************************
 
+    @Step("Переводим значение stratedyId в byte: ")
     public byte[] bytes(UUID uuid) {
         return ByteBuffer.allocate(16)
             .putLong(uuid.getMostSignificantBits())
@@ -413,7 +412,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         return ByteString.copyFrom(bytes(uuid));
     }
 
-
+    @Step("Создаем записи по сигналам мастера в табл. master_signal: ")
     void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
                             String price, String quantity, int action) {
         LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
@@ -503,6 +502,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
     }
 
 
+    @Step("Сортируем полученные позиции и выбираем первые 3 из них")
     List<TopPosition> getExpectedListPosition(Map<PositionId, Long> positionIdLongMap) {
         List<TopPosition> expectedList = positionIdLongMap.entrySet().stream()
             .sorted((o1, o2) -> {

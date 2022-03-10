@@ -61,6 +61,8 @@ public class StpSiebel {
     public String siebelIdAnalyzeMasterError = "5-2383868GN";
     public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";
 
+    public String siebelIdSlaveOrderSlave = "5-23LMDXSIW";
+
     //socialTrackingClient//
     public String siebelIdMasterForClient = "4-1P767GFO";
     public String siebelIdSlaveForClient = "5-8NL1RLT1";
@@ -80,5 +82,9 @@ public class StpSiebel {
 
     public String siebelSocial = "1-9JNCS7D"; // необходим не пустой socialProfile
 
+
+    // Fee
+    public String siebelMasterFee = "1-51Q76AT";
+    public String siebelMasterSlave = "5-1P87U0B13";
 
 }

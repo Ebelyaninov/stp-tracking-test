@@ -135,14 +135,14 @@ public class MocksBasicSteps {
         throws InterruptedException {
         //getInvestID
         mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
-        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
         mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
         mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
         Thread.sleep(1000);
         mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
             .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
         mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
-            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdMaster));
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdMaster, investIdMaster));
         Thread.sleep(1000);
         mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
             (investIdMaster, siebelIdMaster, contractIdMaster));
