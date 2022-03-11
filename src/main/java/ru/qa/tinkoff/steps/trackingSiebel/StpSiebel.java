@@ -60,8 +60,9 @@ public class StpSiebel {
     public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-HWHTMYS3";
     public String siebelIdAnalyzeMasterError = "5-2383868GN";
     public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";
-
     public String siebelIdSlaveOrderSlave = "5-23LMDXSIW";
+
+
 
     //socialTrackingClient//
     public String siebelIdMasterForClient = "4-1P767GFO";

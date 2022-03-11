@@ -22,9 +22,13 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -64,6 +68,7 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class SynchronizePositionResolverTest {
@@ -94,7 +99,8 @@ public class SynchronizePositionResolverTest {
     @Autowired
     StpInstrument instrument;
     @Autowired
-    MocksBasicSteps mocksBasicSteps;
+    StpSiebel stpSiebel;
+
 
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder2;
@@ -104,13 +110,18 @@ public class SynchronizePositionResolverTest {
     String contractIdSlave;
     UUID strategyId;
     long subscriptionId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "5-CQNPKPNH";
+    String SIEBEL_ID_MASTER ;
+    String SIEBEL_ID_SLAVE;
     BigDecimal askPriceAdditionalRate = new BigDecimal("0.002");
 
     String description = "description: autotest by SynchronizePositionResolverTest";
 
     public String value;
+
+    @BeforeAll void createDataForTests() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -603,12 +614,11 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695957")
-    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("695957.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций, у которых slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache != 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695957() {
-        mocksBasicSteps.createDataForMocksTestC695957(SIEBEL_ID_SLAVE, instrument.tickerAAPL, instrument.classCodeAAPL, "0", "2");
+
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
