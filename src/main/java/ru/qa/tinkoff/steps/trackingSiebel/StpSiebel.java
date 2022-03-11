@@ -87,4 +87,6 @@ public class StpSiebel {
     public String siebelMasterFee = "1-51Q76AT";
     public String siebelMasterSlave = "5-1P87U0B13";
 
+    // socialTrackingNotification //
+    public String siebelIdSocialTrackingNotification = "5-4H607YXZ";
 }
