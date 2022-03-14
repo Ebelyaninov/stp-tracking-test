@@ -61,8 +61,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
 
 
 

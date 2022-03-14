@@ -29,8 +29,8 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 
-import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi;
+import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -50,8 +50,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Service
@@ -73,7 +73,7 @@ public class StpTrackingFeeSteps {
         .ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.Config.apiConfig()).cache();
+    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.fireg.invoker.ApiClient.Config.apiConfig()).instruments();
 

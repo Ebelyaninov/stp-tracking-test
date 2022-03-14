@@ -36,7 +36,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategiesCatalogResponse;
-import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.*;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.Currency;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -64,8 +64,8 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Epic("getStrategiesCatalog - Получение каталога стратегий")
