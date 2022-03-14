@@ -22,5 +22,7 @@ public class RestClientApiConfigurationProperties {
 
     private String trackingCacheSlaveBaseUrl;
 
+    private String trackingCacheApiBaseUrl;
+
 
 }

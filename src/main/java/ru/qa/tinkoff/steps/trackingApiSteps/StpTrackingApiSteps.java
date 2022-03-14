@@ -31,9 +31,10 @@ import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetInvestIdResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi;
+import ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient;
+
+import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -59,8 +60,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Service
@@ -79,7 +80,7 @@ public class StpTrackingApiSteps {
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).contract();
 
-    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ApiClient.Config.apiConfig()).cache();
+    CacheApi cacheApi = ApiClient.api(ApiClient.Config.apiConfig()).cache();
 
 
 
@@ -680,7 +681,7 @@ public class StpTrackingApiSteps {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
         List<Entity> resCachePrice = cacheApi.getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
@@ -712,7 +713,7 @@ public class StpTrackingApiSteps {
         List<String> dateBond = new ArrayList<>();
         //получаем содержимое кеша exchangePositionCache
         List<Entity> resCacheExchangePosition = cacheApi.getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .cacheNamePath("exchangePositionCache")
             .xAppNameHeader("tracking")
