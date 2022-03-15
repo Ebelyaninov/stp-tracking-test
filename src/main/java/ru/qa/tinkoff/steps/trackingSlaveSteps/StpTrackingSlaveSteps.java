@@ -6,7 +6,6 @@ import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheSlaveCreator;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.MarketDataCreator;
-import ru.qa.tinkoff.creator.PricesMDApiCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -30,8 +28,6 @@ import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.miof.api.ClientApi;
-import ru.qa.tinkoff.swagger.miof.model.RuTinkoffTradingMiddlePositionsPositionsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.trackingSlaveCache.api.CacheApi;
@@ -58,20 +54,15 @@ import java.util.stream.Collectors;
 
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
 import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
-
-
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StpTrackingSlaveSteps {
-
 
     private final ContractService contractService;
     private final TrackingService trackingService;
@@ -98,7 +89,7 @@ public class StpTrackingSlaveSteps {
 //        .trackingSlaveCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger
 //            .trackingSlaveCache.invoker.ApiClient.Config.apiConfig()).cache();
 
-    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+//    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
 
 //    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
 //        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -188,22 +179,6 @@ public class StpTrackingSlaveSteps {
             .setBlocked(false);
         contract = contractService.saveContract(contract);
     }
-
-
-//    public void createDataToMarketData(String ticker, String classCode, String lastPrice, String askPrice, String bidPrice) {
-//        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
-//        String last = getPriceFromMarketData(ticker + "_" + classCode, "last", lastPrice);
-//        String ask = getPriceFromMarketData(ticker + "_" + classCode, "ask", askPrice);
-//        String bid = getPriceFromMarketData(ticker + "_" + classCode, "bid", bidPrice);
-//    }
-
-
-//    public void getPriceFromMarketDataSave(String ticker, String classCode, String typePrice, String lastPrice) {
-//        //получаем данные от маркет даты по ценам: last, ask, bid  и кидаем их в тестовый топик
-//        String priceNew = getPriceFromMarketData(ticker + "_" + classCode, typePrice, lastPrice);
-//        createEventTrackingTestMdPricesInStream(ticker + "_" + classCode, typePrice, lastPrice, priceNew);
-//    }
-
 
   public String getPriceFromMarketData(String instrumentId, String type) {
         Response res = pricesMDApiCreator.get().mdInstrumentPrices()

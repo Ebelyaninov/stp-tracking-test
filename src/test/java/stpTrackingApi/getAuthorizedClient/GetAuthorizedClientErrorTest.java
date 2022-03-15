@@ -1,7 +1,10 @@
 package stpTrackingApi.getAuthorizedClient;
 
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.*;
+import io.qameta.allure.AllureId;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -13,30 +16,29 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ClientApi;
-import ru.qa.tinkoff.swagger.tracking.model.GetAuthorizedClientResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -51,27 +53,24 @@ import static org.hamcrest.Matchers.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class GetAuthorizedClientErrorTest {
-
-    ClientApi clientApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-        .api((ApiClient.Config.apiConfig())).client();
-
     @Autowired
     ClientService clientService;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
-
     String SIEBEL_ID;
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     String contractId;
     Client client;
-
     UUID investId;
+    @Autowired
+    ApiCreator<ClientApi> clientApiCreator;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -107,10 +106,10 @@ public class GetAuthorizedClientErrorTest {
     @DisplayName("С1131948.getAuthorizedClient. Ошибка валидации запроса")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения базовых данных авторизованного клиента в разрезе статуса его участия в автоследовании.")
-    void С1131948(String name, String platform, String version) {
+    void C1131948(String name, String platform, String version) {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        ClientApi.GetAuthorizedClientOper getAuthorizedClient =  clientApi.getAuthorizedClient()
+        ClientApi.GetAuthorizedClientOper getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xB3ParentspanidHeader("a2fb4a1d1a96d312")
             .xB3SpanidHeader("a2fb4a1d1a96d312")
@@ -139,7 +138,7 @@ public class GetAuthorizedClientErrorTest {
     void C1131990() {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        Response getAuthorizedClient = clientApi.getAuthorizedClient()
+        Response getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -162,7 +161,7 @@ public class GetAuthorizedClientErrorTest {
     void C1189654() {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        Response getAuthorizedClient = clientApi.getAuthorizedClient()
+        Response getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

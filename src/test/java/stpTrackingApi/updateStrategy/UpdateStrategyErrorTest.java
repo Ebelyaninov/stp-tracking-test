@@ -20,6 +20,7 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
@@ -67,7 +68,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class UpdateStrategyErrorTest {
     @Autowired
@@ -82,10 +84,15 @@ public class UpdateStrategyErrorTest {
     StrategyService strategyService;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+//    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
     Client client;
     Contract contract;
     Strategy strategy;
@@ -132,7 +139,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -148,7 +155,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         //вызываем метод updateStrategy
-        StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
+        StrategyApi.UpdateStrategyOper updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .body(request)
@@ -185,7 +192,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -201,7 +208,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -233,7 +240,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -249,7 +256,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -281,7 +288,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -297,7 +304,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -329,7 +336,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -345,7 +352,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath("6087b7df-0b05-4afa-a55b-8a2eeb457833")
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -376,7 +383,7 @@ public class UpdateStrategyErrorTest {
     void C542533() {
         UUID strategyId = UUID.randomUUID();
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -392,7 +399,7 @@ public class UpdateStrategyErrorTest {
 //        request.setTitle(null);
 //        request.setDescription(null);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -424,7 +431,7 @@ public class UpdateStrategyErrorTest {
         String title = "общий, недетализированный план.";
         String description = "Тестовая стратегия для автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -440,7 +447,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -472,7 +479,7 @@ public class UpdateStrategyErrorTest {
         String title = "";
         String description = "Тестовая стратегия для автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -488,7 +495,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -527,7 +534,7 @@ public class UpdateStrategyErrorTest {
             " проявление, которое охватывает вопросы теории и практики подготовки к войне, её планирование и ведение," +
             " исследует закономерности войны.";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -545,7 +552,7 @@ public class UpdateStrategyErrorTest {
 //        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -577,7 +584,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -595,7 +602,7 @@ public class UpdateStrategyErrorTest {
 //        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -627,7 +634,7 @@ public class UpdateStrategyErrorTest {
         String description = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -643,7 +650,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -674,7 +681,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -691,7 +698,7 @@ public class UpdateStrategyErrorTest {
         request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -724,7 +731,7 @@ public class UpdateStrategyErrorTest {
         String title = "Тест стратегия автотестов 01";
         String description = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -741,7 +748,7 @@ public class UpdateStrategyErrorTest {
         request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableCurrency.USD);
         request.setDescription(description);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -772,7 +779,7 @@ public class UpdateStrategyErrorTest {
         UUID strategyId = UUID.randomUUID();
         String title = "Тест стратегия автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -788,7 +795,7 @@ public class UpdateStrategyErrorTest {
         request.setTitle(title);
         request.setDescription(null);
         // вызываем метод updateStrategy()
-        Response updateStrategy = strategyApi.updateStrategy()
+        Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

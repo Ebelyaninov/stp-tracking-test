@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
@@ -60,11 +63,10 @@ import static org.hamcrest.Matchers.*;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-
+    ApiCreatorConfiguration.class
 })
 
-public class СheckStrategyTitleTest {
-
+public class CheckStrategyTitleTest {
     @Autowired
     ClientService clientService;
     @Autowired
@@ -77,9 +79,9 @@ public class СheckStrategyTitleTest {
     TrackingService trackingService;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-
-    StrategyApi strategyApi;
     Contract contract;
     Strategy strategy;
     String SIEBEL_ID;
@@ -88,13 +90,7 @@ public class СheckStrategyTitleTest {
     LocalDateTime currentDate = (LocalDateTime.now());
     String contractId;
     Client client;
-
     UUID investId;
-
-    @BeforeAll
-    void conf() {
-        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    }
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -205,7 +201,7 @@ public class СheckStrategyTitleTest {
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -238,7 +234,7 @@ public class СheckStrategyTitleTest {
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

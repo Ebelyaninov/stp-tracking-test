@@ -13,26 +13,22 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreator;
-import ru.qa.tinkoff.creator.ClientApiCreator;
-import ru.qa.tinkoff.creator.StrategyApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ClientApi;
-import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +37,8 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -56,14 +53,12 @@ import static org.hamcrest.Matchers.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    ClientApiCreator.class,
+    ApiCreatorConfiguration.class,
     StpTrackingSiebelConfiguration.class
 })
 
 public class GetAuthorizedClientTest {
 
-//    ClientApi clientApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-//        .api((ApiClient.Config.apiConfig())).client();
 
     @Autowired
     ClientService clientService;
@@ -101,7 +96,7 @@ public class GetAuthorizedClientTest {
         });
     }
 
-    private static Stream<Arguments> provideMasterStatusForCLient () {
+    private static Stream<Arguments> provideMasterStatusForCLient() {
         return Stream.of(
             Arguments.of(ClientStatusType.none),
             Arguments.of(ClientStatusType.registered),
@@ -159,7 +154,6 @@ public class GetAuthorizedClientTest {
     }
 
 
-
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
     void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile) {
@@ -167,7 +161,7 @@ public class GetAuthorizedClientTest {
     }
 
     @Step("Вызов метода getAuthorizedClient")
-    Response getAuthorizedClient (String siebelId, String traceId) {
+    Response getAuthorizedClient(String siebelId, String traceId) {
         Response getAuthorizedClientResponse = clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

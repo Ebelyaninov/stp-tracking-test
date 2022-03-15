@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.AnalyticsApiCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -22,6 +25,7 @@ import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
+import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetPositionRetentionsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.PositionRetention;
@@ -47,21 +51,23 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 
 public class getPositionRetentionsSuccessTest {
     @Autowired
     StpSiebel stpSiebel;
-
-    AnalyticsApi analyticsApi;
+    @Autowired
+    ApiCreator<AnalyticsApi> analyticsApiCreator;
+//    AnalyticsApi analyticsApi;
 
     String SIEBEL_ID;
 
     @BeforeAll
     void conf() {
-        analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+//        analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
     }
 
@@ -71,7 +77,7 @@ public class getPositionRetentionsSuccessTest {
     @DisplayName("C891716.GetPositionRetentions. Получение списка возможного времени удержания позиции")
     @Description("Метод возвращает возможные значения показателя времени удержания позиции на торговой стратегии")
     void C891716() {
-        GetPositionRetentionsResponse actualResponse = analyticsApi.getPositionRetentions()
+        GetPositionRetentionsResponse actualResponse = analyticsApiCreator.get().getPositionRetentions()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("0.0.1")

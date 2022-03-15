@@ -17,6 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.BrokerAccountApiCreator;
+import ru.qa.tinkoff.creator.SubscriptionApiCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -62,7 +66,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class DeleteSubscriptionTest {
     @Autowired
@@ -83,8 +88,10 @@ public class DeleteSubscriptionTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<SubscriptionApi> subscriptionApiCreator;
 
-    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+//    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
 
     Strategy strategyMaster;
     Contract contractMaster;
@@ -182,7 +189,7 @@ public class DeleteSubscriptionTest {
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафкаtracking.subscription.event все offset
         steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -262,7 +269,7 @@ public class DeleteSubscriptionTest {
         //вычитываем из топика кафка tracking.fee.calculate.command все offset
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_COMMAND);
         LocalDateTime time = LocalDateTime.now().withNano(0);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -336,7 +343,7 @@ public class DeleteSubscriptionTest {
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -379,7 +386,7 @@ public class DeleteSubscriptionTest {
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, true);
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

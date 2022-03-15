@@ -17,6 +17,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -74,7 +77,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetSignalsTest {
 
@@ -104,17 +108,18 @@ public class GetSignalsTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
     Client clientSlave;
 
     String contractIdMaster;
     String contractIdSlave;
     UUID strategyId;
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
-    ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi socialStrategyApi =
-        ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient
-            .api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient.Config.apiConfig()).strategy();
+//    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+
+
 
 
     String siebelIdMaster;
@@ -214,7 +219,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309488(String name, String version, String platform) {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .xTcsSiebelIdHeader(siebelIdMaster)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -245,7 +250,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309491() {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -269,7 +274,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309550() {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -293,7 +298,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309580() {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(UUID.randomUUID())
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -317,7 +322,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309585() {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -352,7 +357,7 @@ public class GetSignalsTest {
             strategyId, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        StrategyApi.GetSignalsOper getSignals = strategyApi.getSignals()
+        StrategyApi.GetSignalsOper getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -377,7 +382,7 @@ public class GetSignalsTest {
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1309614() {
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -405,7 +410,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalNotFoundExPosCac(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -448,7 +453,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -487,7 +492,7 @@ public class GetSignalsTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -527,7 +532,7 @@ public class GetSignalsTest {
             strategyId, SubscriptionStatus.draft, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -567,7 +572,7 @@ public class GetSignalsTest {
             strategyId, SubscriptionStatus.draft, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -614,7 +619,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -678,7 +683,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -718,7 +723,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -761,7 +766,7 @@ public class GetSignalsTest {
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -814,7 +819,7 @@ public class GetSignalsTest {
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вызываем метод для получения списка сделок (сигналов) стратегии
-        GetSignalsResponse getSignals = strategyApi.getSignals()
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

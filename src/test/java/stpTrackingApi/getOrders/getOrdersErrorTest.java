@@ -17,6 +17,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.ContractApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -30,7 +33,6 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -62,7 +64,8 @@ import static org.hamcrest.Matchers.is;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 public class getOrdersErrorTest {
@@ -85,6 +88,8 @@ public class getOrdersErrorTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<ContractApi> contractApiCreator;
 
     String siebelIdMaster;
     String siebelIdSlave;
@@ -102,7 +107,7 @@ public class getOrdersErrorTest {
     String description;
 
 
-    ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
+//    ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @BeforeAll
     void getDataFromAccount() {
@@ -189,7 +194,7 @@ public class getOrdersErrorTest {
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        ContractApi.GetOrdersOper getOrdersResponse = contractApi.getOrders()
+        ContractApi.GetOrdersOper getOrdersResponse = contractApiCreator.get().getOrders()
             .xTcsSiebelIdHeader(siebelIdSlave)
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -231,7 +236,7 @@ public class getOrdersErrorTest {
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        ErrorResponse getOrdersResponse = contractApi.getOrders()
+        ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")
@@ -266,7 +271,7 @@ public class getOrdersErrorTest {
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        ErrorResponse getOrdersResponse = contractApi.getOrders()
+        ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")
@@ -294,7 +299,7 @@ public class getOrdersErrorTest {
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        ErrorResponse getOrdersResponse = contractApi.getOrders()
+        ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")
@@ -328,7 +333,7 @@ public class getOrdersErrorTest {
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        ErrorResponse getOrdersResponse = contractApi.getOrders()
+        ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")

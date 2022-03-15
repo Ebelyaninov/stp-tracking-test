@@ -12,11 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -25,10 +23,8 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
-//import ru.qa.tinkoff.swagger.tracking.model.StrategyFeeRate;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -41,8 +37,6 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,7 +57,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     SocialDataBaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CreateStrategyErrorValidDataTest {
     @Autowired
@@ -78,12 +73,14 @@ public class CreateStrategyErrorValidDataTest {
     StrategyService strategyService;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+
     Client client;
     Contract contract;
-    Profile profile;
     String SIEBEL_ID;
 
     @BeforeAll
@@ -111,7 +108,7 @@ public class CreateStrategyErrorValidDataTest {
     @DisplayName("С1185005.CreateStrategy.Валидация запроса: title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
-    void С1185005() {
+    void C1185005() {
         String title = "общий, недетализированный план.";
         String description = "new test стратегия autotest CreateStrategy007";
         //ToDo нужно будет вернуть StrategyFeeRate feeRate
@@ -127,10 +124,10 @@ public class CreateStrategyErrorValidDataTest {
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("4000.0");
-        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, baseMoney, "days", feeRate);
         //Вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createStrategy = strategyApi.createStrategy()
+        StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -175,7 +172,7 @@ public class CreateStrategyErrorValidDataTest {
         request.setPositionRetentionId(positionRetentionId);
 //        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
-        Response expectedResponse = strategyApi.createStrategy()
+        Response expectedResponse = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -217,10 +214,10 @@ public class CreateStrategyErrorValidDataTest {
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("6000.0");
-        CreateStrategyRequest request = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, baseMoney, "days", feeRate);
         //Вызываем метод CreateStrategy
-        Response expectedResponse = strategyApi.createStrategy()
+        Response expectedResponse = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -252,7 +249,7 @@ public class CreateStrategyErrorValidDataTest {
     //Метод для получения инфо о клиенте через API - сервиса счетов
     @Step("Получение инфо об аккаунте клиента через API сервиса счетов")
     GetBrokerAccountsResponse getBrokerAccountByAccountPublicApi(String siebelId) {
-        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebelId)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -263,10 +260,10 @@ public class CreateStrategyErrorValidDataTest {
     }
 
     //ToDo Нужно будет вернуть feeRate как StrategyFeeRate
-    CreateStrategyRequest createStrategyRequest (Currency currency, String contractId, String description,
-                                                 StrategyRiskProfile strategyRiskProfile, String title,
-                                                 BigDecimal basemoney, String  positionRetentionId,
-                                                 String feeRate) {
+    CreateStrategyRequest createStrategyRequest(Currency currency, String contractId, String description,
+                                                StrategyRiskProfile strategyRiskProfile, String title,
+                                                BigDecimal basemoney, String positionRetentionId,
+                                                String feeRate) {
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setBaseCurrency(currency);
         createStrategyRequest.setContractId(contractId);
