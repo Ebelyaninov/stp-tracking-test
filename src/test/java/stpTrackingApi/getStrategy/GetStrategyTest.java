@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
@@ -78,7 +79,7 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StrategyApiCreator.class,
+    ApiCreatorConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class
 })
@@ -128,12 +129,6 @@ public class GetStrategyTest {
     @Autowired
     StpSiebel stpSiebel;
 
-//    @Autowired
-//    RestClientApiConfigurationProperties trackingApiProperties;
-//    @Autowired
-//    Supplier<StrategyApi> strategyApiSupplier;
-//    @Autowired
-//    ApiClient apiClient;
 
     Client clientMaster;
     Strategy strategyMaster;

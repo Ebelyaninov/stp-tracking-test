@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -53,7 +56,8 @@ import static org.hamcrest.Matchers.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class CheckStrategyTitleErrorTest {
@@ -64,8 +68,10 @@ public class CheckStrategyTitleErrorTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    StrategyApi strategyApi;
+//    StrategyApi strategyApi;
 
     String SIEBEL_ID;
     String title = "Самый уникаЛьный и неповторим!";
@@ -76,10 +82,10 @@ public class CheckStrategyTitleErrorTest {
 
     UUID investId;
 
-    @BeforeAll
-    void conf() {
-        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    }
+//    @BeforeAll
+////    void conf() {
+////        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+////    }
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -114,7 +120,7 @@ public class CheckStrategyTitleErrorTest {
     @DisplayName("С1184393.CheckStrategyTitle. Параметр title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод предназначен для проверки названия стратегии перед его фиксацией: валидно ли оно для использования и не занято ли")
-    void С1184393() {
+    void C1184393() {
         String title = "Самый уникаЛьный и неповторим!+";
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
@@ -122,7 +128,7 @@ public class CheckStrategyTitleErrorTest {
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -145,14 +151,14 @@ public class CheckStrategyTitleErrorTest {
     @DisplayName("С1184398.CheckStrategyTitle. Не передан заголовок x-tcs-siebel-id")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод предназначен для проверки названия стратегии перед его фиксацией: валидно ли оно для использования и не занято ли")
-    void С1184398() {
+    void C1184398() {
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
 
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -180,7 +186,7 @@ public class CheckStrategyTitleErrorTest {
         createClient(investId, ClientStatusType.registered, null);
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
-        StrategyApi.CheckStrategyTitleOper checkStrategyTitle = strategyApi.checkStrategyTitle()
+        StrategyApi.CheckStrategyTitleOper checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .body(request)
             .xB3ParentspanidHeader("a2fb4a1d1a96d312")
             .xB3SampledHeader("1")

@@ -20,6 +20,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -77,7 +80,8 @@ import static org.hamcrest.Matchers.nullValue;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 public class getStrategiesCatalogTabsTest {
@@ -94,10 +98,12 @@ public class getStrategiesCatalogTabsTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
     String siebelId;
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+//    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
     @BeforeAll
     void conf() {
@@ -121,7 +127,7 @@ public class getStrategiesCatalogTabsTest {
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500852(String name, String version, String platform) {
         //вызываем метод получения вкладок для фильтрации
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader(siebelId)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -150,7 +156,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500855() {
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
@@ -171,7 +177,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1501045() {
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader("1-LQB8FKN")
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")
@@ -193,7 +199,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500830() {
-        GetStrategiesCatalogTabsResponse getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        GetStrategiesCatalogTabsResponse getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader(siebelId)
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")

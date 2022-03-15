@@ -15,6 +15,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.ContractApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.services.*;
@@ -30,7 +33,6 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetOrdersResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -64,7 +66,8 @@ import static org.hamcrest.Matchers.is;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 public class getOrdersTest {
@@ -89,6 +92,8 @@ public class getOrdersTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<ContractApi> contractApiCreator;
 
     String siebelIdMaster;
     String siebelIdSlave;
@@ -103,7 +108,7 @@ public class getOrdersTest {
     String description;
     Integer maxLimit = 100;
     Integer defaultLimit = 30;
-    ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
+//    ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @BeforeAll
     void getDataFromAccount() {
@@ -257,7 +262,7 @@ public class getOrdersTest {
         //вставляем запись о заявке в таблицу slave_order
        createTestDataSlaveOrder2(1, 102, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
-        GetOrdersResponse getOrdersResponse = contractApi.getOrders()
+        GetOrdersResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")
@@ -375,7 +380,7 @@ public class getOrdersTest {
         Optional<SlaveOrder2> getFirstSlaveOrder = getOrderByAttemptsCount(contractIdSlave, 2);
         String cursoreForFirstOrder = String.valueOf(getNextCursore(getFirstSlaveOrder));
         //вызываем метод getOrders
-        GetOrdersResponse getOrdersResponse = contractApi.getOrders()
+        GetOrdersResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")
@@ -549,7 +554,7 @@ public class getOrdersTest {
 
     //метод получает список заявок slave
     public GetOrdersResponse getOrders() {
-        GetOrdersResponse getOrdersResponse = contractApi.getOrders()
+        GetOrdersResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
             .xPlatformHeader("ios")

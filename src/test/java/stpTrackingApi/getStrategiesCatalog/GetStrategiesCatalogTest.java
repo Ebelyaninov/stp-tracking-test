@@ -20,6 +20,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
+import ru.qa.tinkoff.creator.StrategySocialApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -79,7 +83,8 @@ import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilder
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetStrategiesCatalogTest {
     @Autowired
@@ -104,15 +109,21 @@ public class GetStrategiesCatalogTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
+
+    @Autowired
+    StrategySocialApiCreator strategySocialApiCreator;
+
 
     private Random random = new Random();
 
     String contractIdMaster;
     UUID strategyId;
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi socialStrategyApi =
-        ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient
-            .api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient.Config.apiConfig()).strategy();
+//    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+//    ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi socialStrategyApi =
+//        ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient
+//            .api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
     String siebelIdMaster1;
@@ -180,7 +191,7 @@ public class GetStrategiesCatalogTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xTcsSiebelIdHeader(siebelIdMaster2)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -221,7 +232,7 @@ public class GetStrategiesCatalogTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -256,7 +267,7 @@ public class GetStrategiesCatalogTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        StrategyApi.GetStrategiesCatalogOper getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -288,7 +299,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1098182(Integer limit) {
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -342,7 +353,7 @@ public class GetStrategiesCatalogTest {
                 clientIds.add(investId);
             }
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")
@@ -351,7 +362,7 @@ public class GetStrategiesCatalogTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetStrategiesCatalogResponse.class));
             //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
                 .reqSpec(r -> r.addHeader(xApiKey, key))
                 .xAppNameHeader("stp-tracking-api")
                 .respSpec(spec -> spec.expectStatusCode(200))
@@ -404,7 +415,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1105850() {
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -413,7 +424,7 @@ public class GetStrategiesCatalogTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -463,7 +474,7 @@ public class GetStrategiesCatalogTest {
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -472,7 +483,7 @@ public class GetStrategiesCatalogTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -546,7 +557,7 @@ public class GetStrategiesCatalogTest {
             }
 
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")
@@ -555,7 +566,7 @@ public class GetStrategiesCatalogTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetStrategiesCatalogResponse.class));
             //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+            GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
                 .reqSpec(r -> r.addHeader(xApiKey, key))
                 .xAppNameHeader("stp-tracking-api")
                 .respSpec(spec -> spec.expectStatusCode(200))
@@ -612,7 +623,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1110593() {
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -623,7 +634,7 @@ public class GetStrategiesCatalogTest {
         //определяем значение курсора
         UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -640,7 +651,7 @@ public class GetStrategiesCatalogTest {
             is(liteStrategies.get(liteStrategies.size() - 1).getId().toString()));
         //определяем значение курсора
         UUID cursorNew = liteStrategies.get(liteStrategies.size() - 3).getId();
-        GetStrategiesCatalogResponse getStrategiesCatalogNew = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalogNew = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -664,7 +675,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1110503() {
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -675,7 +686,7 @@ public class GetStrategiesCatalogTest {
         //определяем значение курсора
         UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -695,7 +706,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1110525() {
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -706,7 +717,7 @@ public class GetStrategiesCatalogTest {
         //определяем значение курсора
         UUID cursor = liteStrategies.get(liteStrategies.size() - 2).getId();
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -757,7 +768,7 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1111769() {
         //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-        GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -768,7 +779,7 @@ public class GetStrategiesCatalogTest {
         //определяем значение курсора
         UUID cursor = liteStrategies.get(liteStrategies.size() - 1).getId();
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -904,7 +915,7 @@ public class GetStrategiesCatalogTest {
 
             for (int i = 0; i < 10; i++) {
                 //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-                GetLiteStrategiesResponse getLiteStrategiesResponse = socialStrategyApi.getLiteStrategies()
+                GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
                     .reqSpec(r -> r.addHeader(xApiKey, key))
                     .xAppNameHeader("stp-tracking-api")
                     .respSpec(spec -> spec.expectStatusCode(200))
@@ -934,7 +945,7 @@ public class GetStrategiesCatalogTest {
             }
 
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
+            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")

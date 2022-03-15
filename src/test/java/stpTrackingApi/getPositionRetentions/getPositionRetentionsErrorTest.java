@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.AnalyticsApiCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -50,21 +53,24 @@ import static org.junit.jupiter.api.Assertions.assertAll;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 public class getPositionRetentionsErrorTest {
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<AnalyticsApi> analyticsApiCreator;
 
-    AnalyticsApi analyticsApi;
+//    AnalyticsApi analyticsApi;
 
     String SIEBEL_ID;
     String FAKE_SIEBEL_ID = "5-AABBCCDD";
 
     @BeforeAll
     void conf() {
-        analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+//        analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
     }
 
@@ -73,8 +79,8 @@ public class getPositionRetentionsErrorTest {
     @AllureId("С891771")
     @DisplayName("С891771.GetPositionRetentions. Недостаточно прав, не передан заголовок 'X-TCS-SIEBEL-ID'")
     @Description("Метод возвращает возможные значения показателя времени удержания позиции на торговой стратегии")
-    void С891771() {
-        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApi.getPositionRetentions()
+    void C891771() {
+        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApiCreator.get().getPositionRetentions()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xDeviceIdHeader("autotest")
             .xAppNameHeader("invest")
@@ -104,7 +110,7 @@ public class getPositionRetentionsErrorTest {
     @DisplayName("C937555.GetPositionRetentions. Валидация не пройдена, не передан любой из заголовков кроме 'X-DEVICE-ID' и 'X-TCS-SIEBEL-ID'")
     @Description("Метод возвращает возможные значения показателя времени удержания позиции на торговой стратегии")
     void C937555(String appName, String appPlatform, String appVersion) {
-        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApi.getPositionRetentions()
+        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApiCreator.get().getPositionRetentions()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xDeviceIdHeader("autotest")
@@ -132,7 +138,7 @@ public class getPositionRetentionsErrorTest {
     @DisplayName("C937560.GetPositionRetentions. В заголовке 'X-TCS-SIEBEL-ID' передан не существующий {SIEBEL_ID}")
     @Description("Метод возвращает возможные значения показателя времени удержания позиции на торговой стратегии")
     void C937560() {
-        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApi.getPositionRetentions()
+        AnalyticsApi.GetPositionRetentionsOper getPositionRetentions = analyticsApiCreator.get().getPositionRetentions()
             .reqSpec(r -> r.addHeader("api-key", "tracking"))
             .xTcsSiebelIdHeader(FAKE_SIEBEL_ID)
             .xDeviceIdHeader("autotest")

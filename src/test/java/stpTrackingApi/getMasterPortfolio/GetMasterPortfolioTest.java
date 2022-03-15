@@ -20,6 +20,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.ClientApiCreator;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.*;
@@ -74,7 +78,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetMasterPortfolioTest {
     @Autowired
@@ -109,9 +114,11 @@ public class GetMasterPortfolioTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
+//    StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
     String contractIdMaster;
@@ -191,7 +198,7 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -284,7 +291,7 @@ public class GetMasterPortfolioTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "80190.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -342,7 +349,7 @@ public class GetMasterPortfolioTest {
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
 //        createMasterPortfolios();
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -402,7 +409,7 @@ public class GetMasterPortfolioTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -481,7 +488,7 @@ public class GetMasterPortfolioTest {
     void C1176547(String appName, String appVersion, String appPlatform) {
         strategyId = UUID.randomUUID();
         // вызываем метод getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xTcsSiebelIdHeader(SIEBEL_ID_MASTER)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -512,7 +519,7 @@ public class GetMasterPortfolioTest {
     void C1184175() {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -536,7 +543,7 @@ public class GetMasterPortfolioTest {
     void C1184223() {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -560,7 +567,7 @@ public class GetMasterPortfolioTest {
     void C1184310() {
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -599,7 +606,7 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         // вызываем метод getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -637,7 +644,7 @@ public class GetMasterPortfolioTest {
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         //формируем тело запроса метода getMasterPortfolio
-        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        StrategyApi.GetMasterPortfolioOper getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -695,7 +702,7 @@ public class GetMasterPortfolioTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -789,7 +796,7 @@ public class GetMasterPortfolioTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
-        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApi.getMasterPortfolio()
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

@@ -19,6 +19,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Description;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
@@ -68,7 +71,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetMasterStrategiesTest {
     @Autowired
@@ -85,9 +89,11 @@ public class GetMasterStrategiesTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
+//    StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
+//        .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
 
 
     String contractIdMaster1;
@@ -167,7 +173,7 @@ public class GetMasterStrategiesTest {
         contract1 = contractService.getContract(contractIdMaster1);
         contract2 = contractService.getContract(contractIdMaster2);
         // вызываем метод getMasterStrategies
-        GetMasterStrategiesResponse getMasterStrategiesResponse = strategyApi.getMasterStrategies()
+        GetMasterStrategiesResponse getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -198,7 +204,7 @@ public class GetMasterStrategiesTest {
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1185892() {
         // вызываем метод getMasterStrategies
-        GetMasterStrategiesResponse getMasterStrategiesResponse = strategyApi.getMasterStrategies()
+        GetMasterStrategiesResponse getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -225,7 +231,7 @@ public class GetMasterStrategiesTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1184814(String name, String version, String platform) throws Exception {
-        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApi.getMasterStrategies()
+        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xTcsSiebelIdHeader(SIEBEL_ID_MASTER)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -253,7 +259,7 @@ public class GetMasterStrategiesTest {
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1185914() {
         // вызываем метод getMasterStrategies
-        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApi.getMasterStrategies()
+        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -274,7 +280,7 @@ public class GetMasterStrategiesTest {
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1185919() {
         // вызываем метод getMasterStrategies
-        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApi.getMasterStrategies()
+        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

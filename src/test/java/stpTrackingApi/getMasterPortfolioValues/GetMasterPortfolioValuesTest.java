@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.AnalyticsApiCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
@@ -83,7 +86,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetMasterPortfolioValuesTest {
     @Autowired
@@ -106,8 +110,10 @@ public class GetMasterPortfolioValuesTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<AnalyticsApi> analyticsApiCreator;
 
-    AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+//    AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
 
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
@@ -178,7 +184,7 @@ public class GetMasterPortfolioValuesTest {
         createDateMasterPortfolioValue();
        //вызываем метод GetMasterPortfolioValues
        GetMasterPortfolioValuesResponse expecResponse =
-        analyticsApi.getMasterPortfolioValues()
+           analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -342,7 +348,7 @@ public class GetMasterPortfolioValuesTest {
         createDateMasterPortfolioValue();
         //вызываем метод GetMasterPortfolioValues
         GetMasterPortfolioValuesResponse expecResponse =
-            analyticsApi.getMasterPortfolioValues()
+            analyticsApiCreator.get().getMasterPortfolioValues()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")
@@ -375,7 +381,7 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113987(String name, String version, String platform) {
         strategyId = UUID.randomUUID();
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -406,7 +412,7 @@ public class GetMasterPortfolioValuesTest {
     void C996561() {
         strategyId = UUID.randomUUID();
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -430,7 +436,7 @@ public class GetMasterPortfolioValuesTest {
     void C981551() {
         strategyId = UUID.randomUUID();
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -466,7 +472,7 @@ public class GetMasterPortfolioValuesTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, false);
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -495,7 +501,7 @@ public class GetMasterPortfolioValuesTest {
 
     GetMasterPortfolioValuesResponse getMasterPortfolioValuesLimitFrom (String dateTs, int limit) {
         GetMasterPortfolioValuesResponse expecResponse =
-            analyticsApi.getMasterPortfolioValues()
+            analyticsApiCreator.get().getMasterPortfolioValues()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")

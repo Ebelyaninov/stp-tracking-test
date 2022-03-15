@@ -19,13 +19,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -59,7 +62,8 @@ import static org.hamcrest.Matchers.is;
     TrackingDatabaseAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 
@@ -78,9 +82,11 @@ public class DeleteSubscriptionErrorTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<SubscriptionApi> subscriptionApiCreator;
 
 
-    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+//    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
 
     Strategy strategyMaster;
     Client clientSlave;
@@ -178,7 +184,7 @@ public class DeleteSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -226,7 +232,7 @@ public class DeleteSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -270,7 +276,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки без siebleId
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -316,7 +322,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -368,7 +374,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -411,7 +417,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -454,7 +460,7 @@ public class DeleteSubscriptionErrorTest {
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
         //вызываем метод удаления подписки
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription = subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -497,7 +503,7 @@ public class DeleteSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription =  subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription =  subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -542,7 +548,7 @@ public class DeleteSubscriptionErrorTest {
         strategyMaster = strategyService.getStrategy(strategyId);
         assertThat("Количество подписчиков на стратегию не равно", strategyMaster.getSlavesCount(), is(1));
         int count = strategyMaster.getSlavesCount();
-        SubscriptionApi.DeleteSubscriptionOper deleteSubscription =  subscriptionApi.deleteSubscription()
+        SubscriptionApi.DeleteSubscriptionOper deleteSubscription =  subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -74,7 +75,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     InvestTrackingAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CreateSignalSuccessTest {
 
@@ -104,11 +106,15 @@ public class CreateSignalSuccessTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<SignalApi> signalApiCreator;
+    @Autowired
+    ApiAdminCreator<ExchangePositionApi> exchangePositionApiAdminCreator;
 
-    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.
-        api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
-
-    SignalApi signalApi = ApiClient.api(ApiClient.Config.apiConfig()).signal();
+//    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.
+//        api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
+//
+//    SignalApi signalApi = ApiClient.api(ApiClient.Config.apiConfig()).signal();
     String contractId;
     UUID strategyId;
     String contractIdMaster;
@@ -192,7 +198,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -265,7 +271,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -333,7 +339,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyId,
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -399,7 +405,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
             instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -478,7 +484,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -556,7 +562,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyId,
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -629,7 +635,7 @@ public class CreateSignalSuccessTest {
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
             instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
         // вызываем метод CreateSignal
-        signalApi.createSignal()
+        signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -690,7 +696,7 @@ public class CreateSignalSuccessTest {
             createExPosition.setTrackingAllowed(trackingAllowed);
             createExPosition.setTradingClearingAccount(tradingClearingAccount);
             //вызываем метод createExchangePosition
-            exchangePositionApi.createExchangePosition()
+            exchangePositionApiAdminCreator.get().createExchangePosition()
                 .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
