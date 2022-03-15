@@ -289,7 +289,7 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ожидаем записи в result_fee
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(2), subscriptionId);
         //проверяем полученные данные
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
@@ -393,7 +393,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(2), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -631,7 +631,7 @@ public class CalculateResultFeeTest {
         //создаем портфели slave
         createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
         //перемещаем в топике tracking.fee.calculate.command Offset в конец очереди сообщений
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -787,7 +787,7 @@ public class CalculateResultFeeTest {
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 3,
             startFirst, endFirst, context, new BigDecimal("65162.5"), endFirst);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         createCommandResult(subscriptionId);
         // проверяем, что команда в tracking.fee.calculate.command не улетает
         await().atMost(Duration.ofSeconds(20))
@@ -1065,7 +1065,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -1120,8 +1120,9 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
             2, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).toInstant()));
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         createCommandResult(subscriptionId);
+        checkComparedToFeeVersion(1, subscriptionId);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -1286,10 +1287,10 @@ public class CalculateResultFeeTest {
             OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValueSecond.toString());
 
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
 
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -1414,6 +1415,7 @@ public class CalculateResultFeeTest {
         if (porfolioValue.compareTo(BigDecimal.ZERO) < 0) {
             porfolioValue = new BigDecimal("0");
         }
+        checkComparedToFeeVersion(5, subscriptionId);
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 5);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(porfolioValue));
         //Переопределяем HWM, сумма заводов + HWM
@@ -1624,7 +1626,7 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1))
             .until(
                 () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
                 notNullValue());
@@ -1713,7 +1715,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -1894,9 +1896,9 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500))
             .until(
-                () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4),
+                () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9),
                 notNullValue());
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioOnePeriod));
@@ -1998,7 +2000,7 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ждем появления записи в табл. result_fee
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -2043,11 +2045,11 @@ public class CalculateResultFeeTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ожидаем записи в result_fee
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(2)).until(() ->
             resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0), notNullValue());
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -2119,6 +2121,7 @@ public class CalculateResultFeeTest {
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
         //Смотрим, сообщение, которое поймали в топике kafka
+        checkComparedToFeeVersion(1, subscriptionId);
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
@@ -2190,6 +2193,7 @@ public class CalculateResultFeeTest {
             .execute(ResponseBodyData::asString);
         //получаем подписку
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        checkComparedToFeeVersion(1, subscriptionId);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -2201,6 +2205,7 @@ public class CalculateResultFeeTest {
         assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
         assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
         assertThat("portfolioValue не равен", feeCommand.getManagement().getPortfolioValue().getScale(), is(0));
+        checkComparedToFeeVersion(1, subscriptionId);
         //проверяем запись в таблице management_fee
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1);
         assertThat("contractID не равен", resultFee.getContractId(), is(contractIdSlave));
@@ -2709,13 +2714,15 @@ public class CalculateResultFeeTest {
 
     @Step("Ожидаем записи в табл.result_fee: ")
     void checkComparedToFeeVersion(int version, long subscriptionId) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
-            if (resultFee.getVersion() != version) {
-                Thread.sleep(5000);
-            }
-        }
+//        for (int i = 0; i < 5; i++) {
+//            Thread.sleep(3000);
+//            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
+//            if (resultFee.getVersion() != version) {
+//                Thread.sleep(5000);
+//            }
+//        }
+        await().atMost(Duration.ofSeconds(6)).pollDelay(Duration.ofSeconds(5)).until(() ->
+            resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version), notNullValue());
     }
 
     @Step("Отправляем команду в TRACKING_CONTRACT_EVENT: ")
