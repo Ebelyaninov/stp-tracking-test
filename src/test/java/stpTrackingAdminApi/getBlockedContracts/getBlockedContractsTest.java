@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -58,12 +59,13 @@ import static org.hamcrest.Matchers.is;
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    ContractApiAdminCreator.class
 })
 
 public class getBlockedContractsTest {
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -81,6 +83,8 @@ public class getBlockedContractsTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
 
     String contractIdSlave;
@@ -165,7 +169,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -201,7 +205,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -233,7 +237,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -264,7 +268,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")

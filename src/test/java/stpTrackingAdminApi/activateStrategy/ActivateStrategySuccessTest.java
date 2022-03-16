@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -68,11 +70,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class ActivateStrategySuccessTest {
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -92,6 +95,8 @@ public class ActivateStrategySuccessTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
 
     Strategy strategy;
     String xApiKey = "x-api-key";
@@ -153,7 +158,7 @@ public class ActivateStrategySuccessTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -198,7 +203,7 @@ public class ActivateStrategySuccessTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -222,7 +227,7 @@ public class ActivateStrategySuccessTest {
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

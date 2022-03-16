@@ -1,4 +1,4 @@
-package ru.qa.tinkoff.creator;
+package ru.qa.tinkoff.creator.adminCreator;
 
 import io.restassured.builder.RequestSpecBuilder;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;

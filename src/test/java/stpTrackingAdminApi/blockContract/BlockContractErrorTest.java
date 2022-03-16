@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -65,12 +66,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    ContractApiAdminCreator.class
 })
 
 public class BlockContractErrorTest {
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -88,6 +90,8 @@ public class BlockContractErrorTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
     String siebelIdMaster = "5-CQNPKPNH";
     String siebelIdSlave = "5-22NDYVFEE";
@@ -174,7 +178,7 @@ public class BlockContractErrorTest {
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
-        Response responseBlockContract = contractApi.blockContract()
+        Response responseBlockContract = contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -204,7 +208,7 @@ public class BlockContractErrorTest {
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
-        contractApi.blockContract()
+        contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("tracking")
             .contractIdPath(contractIdSlave)
@@ -230,7 +234,7 @@ public class BlockContractErrorTest {
             new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),
             null, false, false);
         //Вызываем метод blockContract
-        contractApi.blockContract()
+        contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("tracking")
             .contractIdPath(contractIdSlave)
@@ -247,7 +251,7 @@ public class BlockContractErrorTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288379(){
         //Вызываем метод blockContract
-        Response responseBlockContract = contractApi.blockContract()
+        Response responseBlockContract = contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("tracking")

@@ -391,6 +391,7 @@ public class СalculateSignalFrequencyTest {
     // ожидаем версию портфеля slave
     void checkMasterSignalFrequency(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId);
             if (signalFrequency.getStrategyId() == null) {
                 Thread.sleep(5000);

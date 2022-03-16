@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -59,11 +60,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    ContractApiAdminCreator.class
 })
 
 public class getBlockedContractsErrorTest {
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -81,6 +83,8 @@ public class getBlockedContractsErrorTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
 
     String contractIdSlave;
@@ -145,7 +149,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491578() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -160,7 +164,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491608() {
         //вызываем метод getBlockedContracts
-        Response getblockedContracts = contractApi.getBlockedContracts()
+        Response getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -184,7 +188,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491580() {
         //вызываем метод getBlockedContracts
-        Response getblockedContracts = contractApi.getBlockedContracts()
+        Response getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -209,7 +213,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1705706() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -224,7 +228,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1705705() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(401))

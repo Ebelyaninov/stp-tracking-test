@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.SignalApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -59,7 +61,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class GetSignalsErrorTest {
 
@@ -79,12 +82,14 @@ public class GetSignalsErrorTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    SignalApiAdminCreator signalApiAdminCreator;
 
     String xApiKey = "x-api-key";
     String key= "tracking";
 
 
-    SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
+    //SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
 
     String contractIdMaster;
     UUID strategyId;
@@ -157,7 +162,7 @@ public class GetSignalsErrorTest {
     @Description("Получение списка сигналов на стратегии")
     void C1458346() {
 
-        signalApi.getSignals()
+        signalApiAdminCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -184,7 +189,7 @@ public class GetSignalsErrorTest {
 
         strategyService.deleteStrategy(stpTrackingAdminSteps.strategy);
 
-        SignalApi.GetSignalsOper updateGetSignals = signalApi.getSignals()
+        SignalApi.GetSignalsOper updateGetSignals = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppVersionHeader("4.5.6")
@@ -212,7 +217,7 @@ public class GetSignalsErrorTest {
 
 
     ErrorResponse getSignalsResponse (UUID strategyId, int statusCode) {
-        ErrorResponse getSignalsResponse = signalApi.getSignals()
+        ErrorResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")

@@ -15,6 +15,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -50,15 +52,18 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class CreateExchangePositionErrorTest {
-    ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
+ //   ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
 
     @Autowired
     ExchangePositionService exchangePositionService;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
 
     private static Stream<Arguments> provideStringsForHeadersCreateExchangePosition() {
         return Stream.of(
@@ -83,7 +88,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
-        ExchangePositionApi.CreateExchangePositionOper createExchangePosition = exchangePositionApi.createExchangePosition()
+        ExchangePositionApi.CreateExchangePositionOper createExchangePosition = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .body(сreateExchangePositionRequest)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -121,7 +126,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, tradingClearingAccount,
             limit, period, exchangeTest, trackingAllowed);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -149,7 +154,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -177,7 +182,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(ticker, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -205,7 +210,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -233,7 +238,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -261,7 +266,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 0);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -289,7 +294,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -320,7 +325,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -351,7 +356,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -382,7 +387,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -413,7 +418,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(ticker, tradingClearingAccount,
             limit, period, ExchangePosition.ExchangeEnum.SPB, true, 100, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -440,7 +445,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -466,7 +471,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -494,7 +499,7 @@ public class CreateExchangePositionErrorTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamDailyQuantityLimit(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 100);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -534,7 +539,7 @@ public class CreateExchangePositionErrorTest {
         createExPosition.setTradingClearingAccount(instrument.tradingClearingAccountFXGD);
         createExPosition.setDailyQuantityLimit(1000);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

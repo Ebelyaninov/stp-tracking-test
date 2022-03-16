@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -78,12 +80,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class UpdateStrategyAdminErrorTest {
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
@@ -104,6 +107,8 @@ public class UpdateStrategyAdminErrorTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
 
     String xApiKey = "x-api-key";
     String key = "tracking";
@@ -170,7 +175,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
+        StrategyApi.UpdateStrategyOper updateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId.toString())
             .body(updateStrategyRequest)
@@ -219,7 +224,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -270,7 +275,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -321,7 +326,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -372,7 +377,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -422,7 +427,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -478,7 +483,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -529,7 +534,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
+        StrategyApi.UpdateStrategyOper updateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -576,7 +581,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        strategyApi.updateStrategy()
+        strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trackinaxcg"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -624,7 +629,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        strategyApi.updateStrategy()
+        strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -669,7 +674,7 @@ public class UpdateStrategyAdminErrorTest {
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -720,7 +725,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -774,7 +779,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -828,7 +833,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoresForUpdateStrategy);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -881,7 +886,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoreUpdate);
         //Вызываем метод updateStrategy
-        Response expectedResponse = strategyApi.updateStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -933,7 +938,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYieldUpdate);
         //Вызываем метод updateStrategy
-        StrategyApi.UpdateStrategyOper updateStrategy = strategyApi.updateStrategy()
+        StrategyApi.UpdateStrategyOper updateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -990,7 +995,7 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setScore(scoreUpdate);
         updateStrategyRequest.setTests(tests);
         //Вызываем метод updateStrategy
-        ErrorResponse expectedResponse = strategyApi.updateStrategy()
+        ErrorResponse expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

@@ -4,7 +4,6 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.extern.slf4j.Slf4j;
@@ -16,24 +15,24 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.ClientApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetExchangePositionsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.ExchangePosition;
 import ru.qa.tinkoff.tracking.entities.enums.ExchangePositionExchange;
 import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -53,14 +52,17 @@ import static org.hamcrest.Matchers.nullValue;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class GetExchangePositionsTest {
     @Autowired
     StpTrackingAdminSteps steps;
     @Autowired
     ExchangePositionService exchangePositionService;
-    ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
+    @Autowired
+    ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
+//    ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
 
     @AfterEach
@@ -92,7 +94,7 @@ public class GetExchangePositionsTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для получения списка всех позиций, участвующих в автоследовании.")
     void C1041093(String name, String login) {
-        ExchangePositionApi.GetExchangePositionsOper getExchangePositions = exchangePositionApi.getExchangePositions()
+        ExchangePositionApi.GetExchangePositionsOper getExchangePositions = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -112,7 +114,7 @@ public class GetExchangePositionsTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1045362() {
         //получаем данные по клиенту  в api сервиса счетов
-        exchangePositionApi.getExchangePositions()
+        exchangePositionApiAdminCreator.get().getExchangePositions()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -126,7 +128,7 @@ public class GetExchangePositionsTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1045395() {
-        exchangePositionApi.getExchangePositions()
+        exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -141,7 +143,7 @@ public class GetExchangePositionsTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1705727() {
-        exchangePositionApi.getExchangePositions()
+        exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -168,7 +170,7 @@ public class GetExchangePositionsTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1045326(Integer limit) {
         //вызываем метод getExchangePositions
-        GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
+        GetExchangePositionsResponse responseExep = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(limit)
@@ -194,7 +196,7 @@ public class GetExchangePositionsTest {
         // находим список биржевых позиций по условию если передан курсор
         List<ExchangePosition> exchangePosition = exchangePositionService.getExchangePositionByPositionAndLimitmit(position, 1);
         //вызываем метод GetExchangePositions
-        GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
+        GetExchangePositionsResponse responseExep = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(position)
@@ -229,7 +231,7 @@ public class GetExchangePositionsTest {
     void C1048275() {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
-        GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
+        GetExchangePositionsResponse responseExep = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 3).getPosition())
@@ -242,7 +244,7 @@ public class GetExchangePositionsTest {
             is(responseExep.getNextCursor().toString()));
         assertThat("hasNext не равно", true, is(responseExep.getHasNext()));
         //вызываем метод GetExchangePositions
-        GetExchangePositionsResponse responseEx = exchangePositionApi.getExchangePositions()
+        GetExchangePositionsResponse responseEx = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 2).getPosition())
@@ -264,7 +266,7 @@ public class GetExchangePositionsTest {
     void C1048468() {
         List<ExchangePosition> exchangePositions = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount();
         //вызываем метод GetExchangePositions
-        GetExchangePositionsResponse responseExep = exchangePositionApi.getExchangePositions()
+        GetExchangePositionsResponse responseExep = exchangePositionApiAdminCreator.get().getExchangePositions()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(exchangePositions.get(exchangePositions.size() - 1).getPosition())
