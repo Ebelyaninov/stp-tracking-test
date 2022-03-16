@@ -5,12 +5,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -23,13 +23,11 @@ import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -62,6 +60,7 @@ public class StpTrackingAdminSteps {
     private final ProfileService profileService;
     private final ExchangePositionService exchangePositionService;
     private final SubscriptionService subscriptionService;
+    private final ContractApiAdminCreator contractApiAdminCreator;
     @Autowired(required = false)
     private final MasterPortfolioDao masterPortfolioDao;
     public Client client;
@@ -82,8 +81,8 @@ public class StpTrackingAdminSteps {
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
-        .ApiClient.api(ApiClient.Config.apiConfig()).contract();
+//    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker
+//        .ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
      TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
 
@@ -291,7 +290,7 @@ public class StpTrackingAdminSteps {
 
     //вызываем метод blockContract для slave
     public void BlockContract(String contractIdSlave) {
-        contractApi.blockContract()
+        contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader(key)

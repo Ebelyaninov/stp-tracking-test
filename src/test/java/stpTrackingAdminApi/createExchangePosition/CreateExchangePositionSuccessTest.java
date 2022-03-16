@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -20,8 +22,6 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
@@ -53,11 +53,11 @@ import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
-
+    StpTrackingInstrumentConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class CreateExchangePositionSuccessTest {
-    ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
+    //ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
     @Autowired
     ByteToByteReceiverService kafkaReceiver;
@@ -65,6 +65,8 @@ public class CreateExchangePositionSuccessTest {
     ExchangePositionService exchangePositionService;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
 
     String xApiKey = "x-api-key";
 
@@ -91,7 +93,7 @@ public class CreateExchangePositionSuccessTest {
         var сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //вызываем метод createExchangePosition
-        var expecResponse = exchangePositionApi.createExchangePosition()
+        var expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -162,7 +164,7 @@ public class CreateExchangePositionSuccessTest {
         orderQuantityLimitList.add(new OrderQuantityLimit().limit(100).periodId("primary"));
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamQuantityLimitList(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD, orderQuantityLimitList, ExchangePosition.ExchangeEnum.MOEX, true, dailyQuantityLimit);
         //вызываем метод createExchangePosition
-        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.createExchangePosition()
+        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -246,7 +248,7 @@ public class CreateExchangePositionSuccessTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(instrument.tickerEURRUBTOM,
             tradingClearingAccount, orderQuantityLimitList, ExchangePosition.ExchangeEnum.MOEX, true, dailyQuantityLimit, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
-        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApi.createExchangePosition()
+        ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -318,7 +320,7 @@ public class CreateExchangePositionSuccessTest {
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
             limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //вызываем метод createExchangePosition
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -338,7 +340,7 @@ public class CreateExchangePositionSuccessTest {
         assertThat("Тикер внебиржевого инструмента не равен", exchangePosition.getOtcTicker(), is(IsNull.nullValue()));
         assertThat("Код класса внебиржевого инструмента не равен", exchangePosition.getOtcClassCode(), is(IsNull.nullValue()));
         //вызываем метод повторно
-        exchangePositionApi.createExchangePosition()
+        exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

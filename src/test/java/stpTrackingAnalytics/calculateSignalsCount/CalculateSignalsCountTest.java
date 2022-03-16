@@ -375,6 +375,7 @@ public class CalculateSignalsCountTest {
     // ожидаем версию портфеля slave
     void checkMasterSignalsCount(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId);
             if (signalsCount.getStrategyId() == null) {
                 Thread.sleep(5000);

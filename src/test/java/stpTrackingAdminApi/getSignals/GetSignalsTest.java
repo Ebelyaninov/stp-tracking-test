@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.SignalApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
@@ -56,7 +58,8 @@ import static org.hamcrest.Matchers.is;
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class GetSignalsTest {
 
@@ -78,12 +81,14 @@ public class GetSignalsTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    SignalApiAdminCreator signalApiAdminCreator;
 
     String xApiKey = "x-api-key";
     String key= "tracking";
     String keyRead = "tcrm";
 
-    SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
+    //SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
 
     String siebelIdMaster = "5-DYNN1E3S";
     String contractIdMaster;
@@ -200,7 +205,7 @@ public class GetSignalsTest {
         createMasterSignal(0, 1, 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "500.37", "10", 13);
         List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
-        GetSignalsResponse getdataFromResponce = signalApi.getSignals()
+        GetSignalsResponse getdataFromResponce = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -364,7 +369,7 @@ public class GetSignalsTest {
     }
 
     GetSignalsResponse getSignalsResponse (UUID strategyId) {
-         GetSignalsResponse getSignalsResponse = signalApi.getSignals()
+         GetSignalsResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -377,7 +382,7 @@ public class GetSignalsTest {
     }
 
     GetSignalsResponse getSignalsResponseWithLimitAndCursor (UUID strategyId, String cursor, int limit) {
-        GetSignalsResponse getSignalsResponse = signalApi.getSignals()
+        GetSignalsResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")

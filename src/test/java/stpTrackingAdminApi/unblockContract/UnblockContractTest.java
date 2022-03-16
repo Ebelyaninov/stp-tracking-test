@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -72,7 +74,8 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     StpTrackingSlaveStepsConfiguration.class,
     GrpcServicesAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class UnblockContractTest {
 
@@ -102,9 +105,11 @@ public class UnblockContractTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     String xApiKey = "x-api-key";
     String key = "tracking";
@@ -224,7 +229,7 @@ public class UnblockContractTest {
         //Вычитываем из топика kafka: tracking.master.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //Вызываем метод на разблокировку контракта
-        Response unblockContract = contractApi.unblockContract()
+        Response unblockContract = contractApiAdminCreator.get().unblockContract()
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -26,8 +28,6 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
@@ -69,12 +69,13 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class EnableContractSynchronizationTest {
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -98,6 +99,8 @@ public class EnableContractSynchronizationTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
     SlavePortfolio slavePortfolio;
 
@@ -194,7 +197,7 @@ public class EnableContractSynchronizationTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //вызываем метод enableContractSynchronization
-        contractApi.enableContractSynchronization()
+        contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")

@@ -13,18 +13,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.services.database.*;
 
@@ -42,14 +41,14 @@ import static io.qameta.allure.Allure.step;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingAdminStepsConfiguration.class
+    StpTrackingAdminStepsConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class EnableContractSynchronizationErrorTest {
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
+    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ClientService clientService;
@@ -61,6 +60,8 @@ public class EnableContractSynchronizationErrorTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
 
     String notContractIdSlave = "123456789";
@@ -102,7 +103,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398796() {
         //вызываем метод enableContractSynchronization
-        contractApi.enableContractSynchronization()
+        contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -120,7 +121,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1705484() {
         //вызываем метод enableContractSynchronization
-        contractApi.enableContractSynchronization()
+        contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -137,7 +138,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398790() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .contractIdPath(contractIdSlave)
@@ -159,7 +160,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1407957() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking")
             .contractIdPath(contractIdSlave)
@@ -181,7 +182,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398809() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -203,7 +204,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398806() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -225,7 +226,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398807() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")

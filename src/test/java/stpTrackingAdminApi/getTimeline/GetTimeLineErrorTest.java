@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.TimeLineApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
@@ -65,12 +67,13 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    KafkaOldConfiguration.class
+    KafkaOldConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class GetTimeLineErrorTest {
 
-    TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
+    //TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
 
     @Autowired
     ClientService clientService;
@@ -92,6 +95,8 @@ public class GetTimeLineErrorTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    TimeLineApiAdminCreator timeLineApiAdminCreator;
 
     String xApiKey = "x-api-key";
     String key = "tracking";
@@ -167,7 +172,7 @@ public class GetTimeLineErrorTest {
         strategyId = UUID.randomUUID();
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
-        ErrorResponse errorResponse = timelineApi.getTimeline()
+        ErrorResponse errorResponse = timeLineApiAdminCreator.get().getTimeline()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -186,7 +191,7 @@ public class GetTimeLineErrorTest {
         strategyId = UUID.randomUUID();
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
-        timelineApi.getTimeline()
+        timeLineApiAdminCreator.get().getTimeline()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .body(request)
@@ -201,7 +206,7 @@ public class GetTimeLineErrorTest {
         strategyId = UUID.randomUUID();
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
-        timelineApi.getTimeline()
+        timeLineApiAdminCreator.get().getTimeline()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")

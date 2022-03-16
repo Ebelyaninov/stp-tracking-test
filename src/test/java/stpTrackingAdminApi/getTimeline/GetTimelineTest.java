@@ -17,13 +17,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.TimeLineApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
 import ru.qa.tinkoff.investTracking.entities.ManagementFee;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.ResultFee;
 import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -42,8 +43,6 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Subscription;
@@ -82,11 +81,12 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
     InvestTrackingAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    KafkaOldConfiguration.class
+    KafkaOldConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class GetTimelineTest {
 
-    TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
+    //TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
 
     @Autowired
     ClientService clientService;
@@ -126,6 +126,8 @@ public class GetTimelineTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    TimeLineApiAdminCreator timeLineApiAdminCreator;
 
     String xApiKey = "x-api-key";
 
@@ -277,7 +279,7 @@ public class GetTimelineTest {
         request.setStrategyId(strategyId);
         request.setSlaveContractId(contractIdSlave);
         //вызываем метод getStrategy
-        GetTimelineResponse responseExep = timelineApi.getTimeline()
+        GetTimelineResponse responseExep = timeLineApiAdminCreator.get().getTimeline()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -352,7 +354,7 @@ public class GetTimelineTest {
         request.setStrategyId(strategyId);
         request.setSlaveContractId(contractIdSlave);
         //вызываем метод getTimeline
-        GetTimelineResponse responseExep = timelineApi.getTimeline()
+        GetTimelineResponse responseExep = timeLineApiAdminCreator.get().getTimeline()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -587,7 +589,7 @@ public class GetTimelineTest {
         request.setStrategyId(strategyId);
         request.setSlaveContractId(contractIdSlave);
         //вызываем метод getTimeline
-        GetTimelineResponse responseExep = timelineApi.getTimeline()
+        GetTimelineResponse responseExep = timeLineApiAdminCreator.get().getTimeline()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -656,7 +658,7 @@ public class GetTimelineTest {
             responseExep = steps.getimeline(request);
         }
         else {
-            responseExep = timelineApi.getTimeline()
+            responseExep = timeLineApiAdminCreator.get().getTimeline()
                 .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
                 .xAppNameHeader("invest")
                 .xTcsLoginHeader("tracking_admin")

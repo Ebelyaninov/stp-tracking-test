@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -58,8 +59,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     GrpcServicesAutoConfiguration.class,
-    StpTrackingSiebelConfiguration.class
-    //ClientApiAdminCreator.class
+    StpTrackingSiebelConfiguration.class,
+    ContractApiAdminCreator.class
 })
 public class UnblockContractErrorTest {
     @Autowired
@@ -86,8 +87,8 @@ public class UnblockContractErrorTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpSiebel siebel;
-//    @Autowired
-//    ApiAdminCreator<ContractApi> apiApiAdminCreator;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 

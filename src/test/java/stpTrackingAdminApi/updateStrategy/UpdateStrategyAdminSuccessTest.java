@@ -17,6 +17,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -75,12 +77,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingSiebelConfiguration.class
-
+    StpTrackingSiebelConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class UpdateStrategyAdminSuccessTest {
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
@@ -110,6 +112,8 @@ public class UpdateStrategyAdminSuccessTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
 
     @BeforeAll
     void createTestData() {
@@ -181,7 +185,7 @@ public class UpdateStrategyAdminSuccessTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
 //        //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -238,7 +242,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
 
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -283,7 +287,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
 
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -326,7 +330,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -368,7 +372,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
 
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -416,7 +420,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
 
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -462,7 +466,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -505,7 +509,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -558,7 +562,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         updateStrategyRequest.setTests(tests);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -595,7 +599,7 @@ public class UpdateStrategyAdminSuccessTest {
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTests(tests);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -652,7 +656,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setBuyEnabled(buyEnabled);
         updateStrategyRequest.setSellEnabled(sellEnabled);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")

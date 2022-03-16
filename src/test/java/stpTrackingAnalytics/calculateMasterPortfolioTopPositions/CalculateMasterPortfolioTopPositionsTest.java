@@ -533,6 +533,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
     // ожидаем версию портфеля slave
     void checkMasterPortfolioTopPositions(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositions(strategyId);
             if (masterPortfolioTopPositions.getStrategyId() == null) {
                 Thread.sleep(5000);

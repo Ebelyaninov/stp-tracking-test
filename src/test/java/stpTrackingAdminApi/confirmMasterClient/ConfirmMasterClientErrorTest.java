@@ -18,6 +18,9 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.entities.BrokerAccount;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.ClientApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -54,12 +57,13 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 
 public class ConfirmMasterClientErrorTest {
-    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
+//    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
@@ -72,6 +76,8 @@ public class ConfirmMasterClientErrorTest {
     ClientService clientService;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    ApiAdminCreator<ClientApi> clientApiAdminCreator;
 
     private static Stream<Arguments> provideStringsForHeadersConfirmMasterClient() {
         return Stream.of(
@@ -96,7 +102,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApi.confirmMasterClient()
+        ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .clientIdPath(investId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -119,7 +125,7 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C263126() {
         //вызываем метод confirmMasterClient с невалидным значением clientId (не UUID)
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -144,7 +150,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient со значением Login > 20 символов
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -171,7 +177,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient без параметра api-key
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -197,7 +203,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "trackidngc"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -225,7 +231,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -245,7 +251,7 @@ public class ConfirmMasterClientErrorTest {
     void C263127() {
         UUID invest_id = UUID.fromString("f45bfa77-3f63-4c1d-a7fb-8ee863333933");
         //вызываем метод confirmMasterClient с несуществующим значением clientId
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -265,7 +271,7 @@ public class ConfirmMasterClientErrorTest {
     void C455922() {
         UUID invest_id = UUID.fromString("f749bb39-df42-4469-94d3-5d503531d1b7");
         //вызываем метод confirmMasterClient
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r->r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")

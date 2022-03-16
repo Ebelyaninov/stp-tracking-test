@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -52,10 +54,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class ActivateStrategyErrorTest {
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
     @Autowired
     StrategyService strategyService;
@@ -71,6 +74,8 @@ public class ActivateStrategyErrorTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
 
     String description = "Autotest  - ActivateStrategy";
     Integer score = 1;
@@ -127,7 +132,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем ActiveStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId.toString())
@@ -145,7 +150,7 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457269() {
         //Вызываем метод activateStrategy с некоррентным значением strategyId (не формат UUID)
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -169,7 +174,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем метод activateStrategy с некоррентным значением api-key
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trackinnng"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -190,7 +195,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем метод activateStrategy с некоррентным значением api-key
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -211,7 +216,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем метод activateStrategy без api-key
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId)
@@ -226,7 +231,7 @@ public class ActivateStrategyErrorTest {
     @Description("Метод для администратора для перевода активации (публикации) стратегии.")
     void C457272() {
         //Вызываем метод activateStrategy с несуществующим значением strategyId
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -251,7 +256,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем метод activateStrategy без api-key
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .strategyIdPath(strategyId)
@@ -271,7 +276,7 @@ public class ActivateStrategyErrorTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //Вызываем метод activateStrategy без api-key
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

@@ -13,8 +13,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.ApiAdminCreator;
-import ru.qa.tinkoff.creator.ClientApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.ClientApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -60,7 +61,7 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    ClientApiAdminCreator.class
+    AdminApiCreatorConfiguration.class
 })
 public class GetMasterClientsTest {
     @Autowired

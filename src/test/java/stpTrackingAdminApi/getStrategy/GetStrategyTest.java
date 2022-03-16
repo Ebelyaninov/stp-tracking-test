@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -57,12 +59,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 
 public class GetStrategyTest {
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
@@ -81,6 +84,8 @@ public class GetStrategyTest {
     StrategyService strategyService;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
 
 
     String xApiKey = "x-api-key";
@@ -146,7 +151,7 @@ public class GetStrategyTest {
         BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
         Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
-        GetStrategyResponse responseExep = strategyApi.getStrategy()
+        GetStrategyResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
@@ -183,7 +188,7 @@ public class GetStrategyTest {
         BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
         Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
-        GetStrategyResponse responseExep = strategyApi.getStrategy()
+        GetStrategyResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
@@ -221,7 +226,7 @@ public class GetStrategyTest {
         BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
         Integer score = strategyService.getStrategy(strategyId).getScore();
         //вызываем метод getStrategy
-        GetStrategyResponse responseExep = strategyApi.getStrategy()
+        GetStrategyResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
@@ -255,7 +260,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
-        Response expectedResponse = strategyApi.getStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -275,7 +280,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
-        strategyApi.getStrategy()
+        strategyApiStrategyApiAdminCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -295,7 +300,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
-        strategyApi.getStrategy()
+        strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyId)
@@ -317,7 +322,7 @@ public class GetStrategyTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         //вызываем метод getStrategy
-        Response expectedResponse = strategyApi.getStrategy()
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .strategyIdPath(strategyIdTest)
