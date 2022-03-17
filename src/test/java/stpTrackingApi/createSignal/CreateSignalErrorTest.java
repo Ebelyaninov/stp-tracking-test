@@ -19,8 +19,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -45,7 +47,10 @@ import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
@@ -60,10 +65,9 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
 @Epic("createSignal - Создание торгового сигнала")
@@ -81,7 +85,8 @@ import static org.hamcrest.Matchers.notNullValue;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    AdminApiCreatorConfiguration.class
 })
 public class CreateSignalErrorTest {
     @Autowired
@@ -123,6 +128,7 @@ public class CreateSignalErrorTest {
     UUID strategyId;
     String SIEBEL_ID;
     String contractIdMaster;
+    UUID strategyIdMaxCount = UUID.fromString("982ec1ce-787e-43e2-89b9-5a7466cd581d");
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -148,15 +154,31 @@ public class CreateSignalErrorTest {
             } catch (Exception e) {
             }
             try {
-                masterPortfolioDao.deleteMasterPortfolio(contractId, strategyId);
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyId);
             } catch (Exception e) {
             }
             try {
-                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyIdMaxCount);
             } catch (Exception e) {
             }
             try {
                 masterSignalDao.deleteMasterSignalByStrategy(strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                masterSignalDao.deleteMasterSignalByStrategy(strategyIdMaxCount);
+            } catch (Exception e) {
+            }
+            try {
+                masterSignalDao.deleteMasterSignalByStrategy(strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyIdMaxCount);
+            } catch (Exception e) {
+            }
+            try {
+                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
             } catch (Exception e) {
             }
         });
@@ -245,10 +267,9 @@ public class CreateSignalErrorTest {
     }
 
 
-
     private static Stream<Arguments> provideStringsForBodyCreateSignal() {
         return Stream.of(
-            Arguments.of(null,  new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(null, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
 //            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", null, 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), null, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, null, "XS0587031096", "L01+00000SPB", 1),
@@ -417,8 +438,6 @@ public class CreateSignalErrorTest {
     }
 
 
-
-
     private static Stream<Arguments> provideStringsForPriceCreateSignal() {
         return Stream.of(
             Arguments.of(new BigDecimal("0.0")),
@@ -519,7 +538,6 @@ public class CreateSignalErrorTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
-
 
 
     @SneakyThrows
@@ -685,7 +703,6 @@ public class CreateSignalErrorTest {
     }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("657162")
@@ -806,7 +823,7 @@ public class CreateSignalErrorTest {
             "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+//        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
@@ -826,7 +843,6 @@ public class CreateSignalErrorTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Торговая площадка не работает"));
     }
-
 
 
     @SneakyThrows
@@ -905,7 +921,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+//        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
@@ -952,7 +968,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+//        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
@@ -999,7 +1015,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+//        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
@@ -1020,7 +1036,7 @@ public class CreateSignalErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно актива в портфеле для уменьшения позиции"));
     }
 
-   //TRUR L01+00002F00 должен стоять как недоступный для автоследования;
+    //TRUR L01+00002F00 должен стоять как недоступный для автоследования;
     @SneakyThrows
     @Test
     @AllureId("657577")
@@ -1050,7 +1066,7 @@ public class CreateSignalErrorTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, ExchangePosition.ExchangeEnum.SPB, false, 1000);
+        getExchangePosition(instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, ExchangePosition.ExchangeEnum.MOEX, false, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, version);
@@ -1237,7 +1253,6 @@ public class CreateSignalErrorTest {
 //    }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("658178")
@@ -1245,7 +1260,7 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658178() {
-        BigDecimal price = new BigDecimal("107.0");
+        BigDecimal price = new BigDecimal("500");
         int quantityRequest = 3;
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
@@ -1261,14 +1276,14 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+            price, quantityRequest, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB, version);
         // вызываем метод CreateSignal
         SignalApi.CreateSignalOper createSignal = signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
@@ -1412,11 +1427,11 @@ public class CreateSignalErrorTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6513");
         createMasterSignal(0, 0, 1, strategyId, ticker, tradingClearingAccount,
-            "292", "10", "5",  12);
+            "292", "10", "5", 12);
         createMasterSignal(0, 1, 2, strategyId, ticker, tradingClearingAccount,
-            "292", "10", "5",11);
-        createMasterSignal(0, 0, 3, strategyId,  ticker, tradingClearingAccount,
-            "292", "10", "5",12);
+            "292", "10", "5", 11);
+        createMasterSignal(0, 0, 3, strategyId, ticker, tradingClearingAccount,
+            "292", "10", "5", 12);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, ticker, tradingClearingAccount, version);
@@ -1437,11 +1452,57 @@ public class CreateSignalErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Превышен проторгованный объем за день"));
     }
 
-
+    @SneakyThrows
+    @Test
+    @AllureId("1742768")
+    @DisplayName("C1742768.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Sell.Cтратегия в списке тяжеловесных." +
+        "Количество сигналов > max-signals-count.Сreated_at > now() -max-signals-seconds-time-span")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1742768() {
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 1;
+        int version = 5;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioStrategyHeavyWeight();
+        //создаем записи по сигналам
+        createMasterSignalStrategyHeavyWeight();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyIdMaxCount, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyIdMaxCount,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        SignalApi.CreateSignalOper createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422));
+        createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Превышен объем сигналов за промежуток времени"));
+    }
 
 
     //*** Методы для работы тестов ***
-
     //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
                              Boolean trackingAllowed, Integer dailyQuantityLimit) {
@@ -1492,7 +1553,7 @@ public class CreateSignalErrorTest {
     }
 
     void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
-                            String price, String quantity, String tailOrderQuantity,int action) {
+                            String price, String quantity, String tailOrderQuantity, int action) {
         LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
         Date convertedDatetime = Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
         MasterSignal masterSignal = MasterSignal.builder()
@@ -1508,6 +1569,56 @@ public class CreateSignalErrorTest {
             .createdAt(convertedDatetime)
             .build();
         masterSignalDao.insertIntoMasterSignal(masterSignal);
+    }
+
+
+    void createMasterPortfolioStrategyHeavyWeight() {
+        // создаем портфель ведущего с позициями в кассандре
+        //первая версия без позиций
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionList, 1,
+            "1500", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(17).toInstant()));
+        //вторая версия без с одной позицией
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(16).toInstant()));
+        //третья версия
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositions, 3, "784.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5).toInstant()));
+        //четвертая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFour = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(4).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFour, 4, "891.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(4).toInstant()));
+        //пятая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFive = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(1).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFive, 5, "391.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1).toInstant()));
+    }
+
+
+    void createMasterSignalStrategyHeavyWeight() {
+        //создаем записи по сигналам
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), 2, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107.58", "2", "8", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(5).toInstant()), 3, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(4).toInstant()), 4, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107", "1", "4", 11);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(1).toInstant()), 5, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
     }
 
 }
