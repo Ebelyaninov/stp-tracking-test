@@ -989,6 +989,26 @@ public class StpTrackingApiSteps {
    }
 
 
+    //создание записи по сигналу в табл. master_signal
+    @Step("Создаем запись в master_signal по стратегии")
+    public void createMasterSignalWithDateCreate(Date createdAt, int version, UUID strategyId, String ticker, String tradingClearingAccount,
+                                   String price, String quantity, String tailOrderQuantity,int action) {
+        MasterSignal masterSignal = MasterSignal.builder()
+            .strategyId(strategyId)
+            .version(version)
+            .ticker(ticker)
+            .tradingClearingAccount(tradingClearingAccount)
+            .action((byte) action)
+            .state((byte) 1)
+            .price(new BigDecimal(price))
+            .quantity(new BigDecimal(quantity))
+            .tailOrderQuantity(new BigDecimal(tailOrderQuantity))
+            .createdAt(createdAt)
+            .build();
+        masterSignalDao.insertIntoMasterSignal(masterSignal);
+    }
+
+
 
 
 

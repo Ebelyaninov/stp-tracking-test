@@ -15,13 +15,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.*;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
+import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
@@ -68,7 +71,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @Tags({@Tag("stp-tracking-api"), @Tag("createSignal")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -76,10 +78,11 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    AdminApiCreatorConfiguration.class
+
 })
 public class CreateSignalSuccessTest {
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -101,6 +104,8 @@ public class CreateSignalSuccessTest {
     @Autowired
     MasterSignalDao masterSignalDao;
     @Autowired
+    StrategyTailValueDao strategyTailValueDao;
+    @Autowired
     StpTrackingApiSteps steps;
     @Autowired
     StpInstrument instrument;
@@ -111,25 +116,12 @@ public class CreateSignalSuccessTest {
     @Autowired
     ApiAdminCreator<ExchangePositionApi> exchangePositionApiAdminCreator;
 
-//    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.
-//        api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
-//
-//    SignalApi signalApi = ApiClient.api(ApiClient.Config.apiConfig()).signal();
-    String contractId;
     UUID strategyId;
     String contractIdMaster;
     int versionNew;
     MasterSignal masterSignal;
-
-//    String ticker = "AAPL";
-//    String tradingClearingAccount = "TKCBM_TCAB";
-//
-//    String tickerBond = "ALFAperp";
-//    String tradingClearingAccountBond = "TKCBM_TCAB";
-//    String instrumentBond = "ALFAperp_SPBBND";
-
-
     String SIEBEL_ID;
+    UUID strategyIdMaxCount = UUID.fromString("982ec1ce-787e-43e2-89b9-5a7466cd581d");
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -152,13 +144,38 @@ public class CreateSignalSuccessTest {
             } catch (Exception e) {
             }
             try {
-                masterPortfolioDao.deleteMasterPortfolio(contractId, strategyId);
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyIdMaxCount);
+            } catch (Exception e) {
+            }
+            try {
+                masterSignalDao.deleteMasterSignalByStrategy(strategyId);
             } catch (Exception e) {
             }
             try {
                 masterSignalDao.deleteMasterSignal(strategyId, versionNew);
             } catch (Exception e) {
             }
+            try {
+                masterSignalDao.deleteMasterSignalByStrategy(strategyIdMaxCount);
+            } catch (Exception e) {
+            }
+            try {
+                masterSignalDao.deleteMasterSignalByStrategy(strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyIdMaxCount);
+            } catch (Exception e) {
+            }
+            try {
+                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
+
         });
     }
 
@@ -190,8 +207,6 @@ public class CreateSignalSuccessTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        //getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -263,8 +278,6 @@ public class CreateSignalSuccessTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        //getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -331,8 +344,6 @@ public class CreateSignalSuccessTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        //getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -476,8 +487,6 @@ public class CreateSignalSuccessTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         //создаем запись в strategy_tail_value
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        //getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -585,7 +594,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции,  из  кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'sell' price_type = 'bid';
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,"bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceBid), 0, RoundingMode.HALF_UP);
         //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
@@ -671,6 +680,304 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         assertThat("количества единиц актива в заявках ведомых не равен", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1740596")
+    @DisplayName("C1740596.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Sell.Cтратегия в списке тяжеловесных. Количество сигналов < max-signals-count")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1740596() {
+        double money = 784.84;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 1;
+        int version = 3;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioThreeVersion();
+        //создаем записи по сигналам
+        createMasterTwoSignal();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyIdMaxCount, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyIdMaxCount,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMoney = money + (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1737220")
+    @DisplayName("C1737220.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Buy.Cтратегия в списке тяжеловесных. Количество сигналов < max-signals-count")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1737220() {
+        double money = 784.84;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 3;
+        int version = 3;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioThreeVersion();
+        //создаем записи по сигналам
+        createMasterTwoSignal();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyIdMaxCount, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyIdMaxCount,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition + 2, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1740662")
+    @DisplayName("C1740662.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Buy.Cтратегия в списке тяжеловесных. Количество сигналов = max-signals-count")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1740662() {
+        double money = 891.84;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 2;
+        int version = 4;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioForVersionBuy();
+        //создаем записи по сигналам
+        createMasterThreeSignalBuy();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyIdMaxCount, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyIdMaxCount,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition + 1, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1742644")
+    @DisplayName("C1742644.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Sell.Cтратегия в списке тяжеловесных. Количество сигналов > max-signals-count")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1742644() {
+        double money = 391.84;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 1;
+        int version = 5;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioFiveVersionSell();
+        //создаем записи по сигналам
+        createMasterForSignalSell();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyIdMaxCount, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL, price, quantityRequest, strategyIdMaxCount,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1744047")
+    @DisplayName("C1744047.CreateSignal.Лимит сигналов за промежуток времени. " +
+        "Создания торгового сигнала ведущим, action = Buy.Cтратегии нет в списке тяжеловесных." +
+        " Количество сигналов > max-signals-count.Сreated_at > now() - max-signals-seconds-time-span")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1744047() {
+        double money = 391.84;
+        BigDecimal price = new BigDecimal("107.0");
+        int quantityRequest = 1;
+        int version = 5;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем стратегию
+        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), false);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolioStrategyNotHeavyWeight();
+        //создаем записи по сигналам
+        createMasterSignalStrategyNotHeavyWeight();
+        //добавляем запись табл. strategy_tail_value
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+        // вызываем метод CreateSignal
+        signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(ResponseBodyData::asString);
     }
 
 
@@ -788,6 +1095,172 @@ public class CreateSignalSuccessTest {
                 Thread.sleep(3000);
             }
         }
+    }
+
+
+    void createMasterPortfolioThreeVersion() {
+        // создаем портфель ведущего с позициями в кассандре
+        //первая версия портфеля с пустыми позицими
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionList, 1,
+            "1500", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(7).toInstant()));
+        //вторая версия портфеля с 1-й позицией
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(7).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(5).toInstant()));
+        //третья версия портфеля
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositions, 3, "784.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5).toInstant()));
+    }
+
+    void createMasterTwoSignal() {
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(7).toInstant()), 2, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107.58", "2", "8", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(5).toInstant()), 3, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+    }
+
+
+    void createMasterPortfolioForVersionBuy() {
+        //первая версия без позиций
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionList, 1, "1500", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(17).toInstant()));
+        //вторая версия без с одной позицией
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(16).toInstant()));
+        //третья версия
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositions, 3, "784.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(15).toInstant()));
+        //четвертая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFour = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(13).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFour, 4, "891.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(13).toInstant()));
+    }
+
+
+    void createMasterThreeSignalBuy() {
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), 2, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107.58", "2", "8", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(15).toInstant()), 3, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(13).toInstant()), 4, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107", "1", "4", 11);
+    }
+
+
+    void createMasterPortfolioFiveVersionSell() {
+        //первая версия без позиций
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionList, 1,
+            "1500", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(17).toInstant()));
+        //вторая версия без с одной позицией
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(16).toInstant()));
+        //третья версия
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositions, 3, "784.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(15).toInstant()));
+        //четвертая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFour = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(14).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFour, 4, "891.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(14).toInstant()));
+        //пятая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFive = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(13).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFive, 5, "391.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(13).toInstant()));
+    }
+
+
+    void createMasterForSignalSell() {
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(17).toInstant()), 2, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107.58", "2", "8", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), 3, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(14).toInstant()), 4, strategyIdMaxCount, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107", "1", "4", 11);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(13).toInstant()), 5, strategyIdMaxCount, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+    }
+
+    void createMasterPortfolioStrategyNotHeavyWeight() {
+        // создаем портфель ведущего с позициями в кассандре
+        //первая версия без позиций
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, 1, "1500", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(17).toInstant()));
+        //вторая версия без с одной позицией
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusMinutes(16).toInstant()));
+        //третья версия
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "784.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5).toInstant()));
+        //четвертая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFour = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(4).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositionsVersionFour, 4, "891.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(4).toInstant()));
+        //пятая версия
+        List<MasterPortfolio.Position> masterTwoPositionsVersionFive = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(1).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "2");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositionsVersionFive, 5, "391.84",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1).toInstant()));
+    }
+
+
+    void createMasterSignalStrategyNotHeavyWeight() {
+        //создаем записи по сигналам
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), 2, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107.58", "2", "8", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(5).toInstant()), 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(4).toInstant()), 4, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "107", "1", "4", 11);
+        steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusMinutes(1).toInstant()), 5, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "500", "1", "4", 12);
     }
 
 }
