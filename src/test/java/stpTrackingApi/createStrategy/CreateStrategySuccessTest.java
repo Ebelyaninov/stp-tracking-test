@@ -550,7 +550,6 @@ public class CreateStrategySuccessTest {
     }
 
 
-
     private static Stream<Arguments> strategy() {
         return Stream.of(
             Arguments.of(ru.qa.tinkoff.tracking.entities.enums.StrategyStatus.draft, null),
@@ -574,13 +573,13 @@ public class CreateStrategySuccessTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            strategyStatus, 0, date, false);
+            strategyStatus, 0, date, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         strategy = strategyService.getStrategy(strategyId);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createSignal = strategyApiCreator.get().createStrategy()
@@ -597,7 +596,6 @@ public class CreateStrategySuccessTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("К договору уже привязана другая торговая стратегия"));
     }
-
 
 
     //*** Методы для работы тестов ***

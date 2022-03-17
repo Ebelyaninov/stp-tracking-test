@@ -31,10 +31,7 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
-import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -57,6 +54,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
+
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("activateStrategy - Активация стратегии")
@@ -74,9 +72,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     AdminApiCreatorConfiguration.class
 })
 public class ActivateStrategySuccessTest {
-
-    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -100,7 +95,7 @@ public class ActivateStrategySuccessTest {
 
     Strategy strategy;
     String xApiKey = "x-api-key";
-    String key= "tracking";
+    String key = "tracking";
     String contractId;
     UUID investId;
     UUID strategyId;
@@ -137,7 +132,6 @@ public class ActivateStrategySuccessTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
     }
 
 
@@ -149,9 +143,9 @@ public class ActivateStrategySuccessTest {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -185,7 +179,6 @@ public class ActivateStrategySuccessTest {
     }
 
 
-
     @Test
     @AllureId("457351")
     @DisplayName("C457351.ActivateStrategy. Успешный ответ при повторной активации")
@@ -194,9 +187,9 @@ public class ActivateStrategySuccessTest {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);

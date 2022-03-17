@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
@@ -52,6 +53,7 @@ import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.account.event.InvestAccountEvent;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -84,7 +86,8 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
     StpTrackingMasterStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    TariffDataBaseAutoConfiguration.class
+    TariffDataBaseAutoConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleAccountRegistrationEventTest {
 
@@ -274,11 +277,11 @@ public class HandleAccountRegistrationEventTest {
     @DisplayName("С1214114. Сохранение подписки для договора в статусе OPENED для события (UPDATED)(BROKER)(OPENED)(Conservative)")
     @Subfeature("Успешные сценарии")
     @Description("Обработка событий из сервиса счетов")
-    void С1214114() {
+    void C1214114() {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
 
         //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).toByteArray();
@@ -476,7 +479,7 @@ public class HandleAccountRegistrationEventTest {
     @DisplayName("С1214111. Нашли подписку в статусе draft и active и статус договора NEW (Нашли клиента в Client)")
     @Subfeature("Успешные сценарии")
     @Description("Обработка событий из сервиса счетов")
-    void С1214111(SubscriptionStatus subscriptionStatus) {
+    void C1214111(SubscriptionStatus subscriptionStatus) {
         //Добавляем стратегию мастеру
         stpTrackingMasterSteps.createClientWithContractAndStrategy(investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -542,7 +545,7 @@ public class HandleAccountRegistrationEventTest {
     @DisplayName("С1249816. Блокируем подписку, если risk_profile > strategy.risk_profile")
     @Subfeature("Успешные сценарии")
     @Description("Обработка событий из сервиса счетов")
-    void С1249816() {
+    void C1249816() {
         //Добавляем стратегию мастеру
         stpTrackingMasterSteps.createClientWithContractAndStrategy(investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -570,7 +573,7 @@ public class HandleAccountRegistrationEventTest {
     @DisplayName("С1249817. Блокируем подписку если client.risk_profile IS NULL")
     @Subfeature("Успешные сценарии")
     @Description("Обработка событий из сервиса счетов")
-    void С1249817() {
+    void C1249817() {
         //Добавляем стратегию мастеру
         stpTrackingMasterSteps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -601,11 +604,11 @@ public class HandleAccountRegistrationEventTest {
     @DisplayName("С1332315. Не активируем подписку с типом тарифа clientTariff.type != 'tracking' ")
     @Subfeature("Успешные сценарии")
     @Description("Обработка событий из сервиса счетов")
-    void С1332315() {
+    void C1332315() {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
 
         //Изменить тариф клиенту в БД тарифов
         contractTariffService.updateTariffIdByContract(getTariffIdByTariffType("WM"), contractIdConservative, time);

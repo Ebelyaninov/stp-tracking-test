@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.ContractApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -94,20 +93,15 @@ public class getOrdersErrorTest {
     String siebelIdMaster;
     String siebelIdSlave;
     String siebelIdNot = "1-2ML9VUT";
-
     String contractIdSlave;
     String contractIdMaster;
-
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
     UUID idempotencyKey;
-
     String title;
     String description;
 
-
-//    ContractApi contractApi = ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @BeforeAll
     void getDataFromAccount() {
@@ -182,13 +176,14 @@ public class getOrdersErrorTest {
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1408354(String name, String version, String platform) {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
+            false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
@@ -224,13 +219,14 @@ public class getOrdersErrorTest {
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1413892() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
+            false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
@@ -259,13 +255,14 @@ public class getOrdersErrorTest {
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1408312() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
+            false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
@@ -292,10 +289,11 @@ public class getOrdersErrorTest {
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1408717() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
+            false, new BigDecimal(58.00), "TEST", "TEST11");
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
@@ -321,13 +319,13 @@ public class getOrdersErrorTest {
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1408362() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order

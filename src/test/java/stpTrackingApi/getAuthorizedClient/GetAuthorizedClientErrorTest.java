@@ -92,7 +92,7 @@ public class GetAuthorizedClientErrorTest {
         });
     }
 
-    private static Stream<Arguments> provideStringsForHeadersGetAuthorizedClient () {
+    private static Stream<Arguments> provideStringsForHeadersGetAuthorizedClient() {
         return Stream.of(
             Arguments.of(null, "android", "5.0.1"),
             Arguments.of("trading-invest", null, "4.5.6"),
@@ -109,7 +109,7 @@ public class GetAuthorizedClientErrorTest {
     void C1131948(String name, String platform, String version) {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        ClientApi.GetAuthorizedClientOper getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
+        ClientApi.GetAuthorizedClientOper getAuthorizedClient = clientApiCreator.get().getAuthorizedClient()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xB3ParentspanidHeader("a2fb4a1d1a96d312")
             .xB3SpanidHeader("a2fb4a1d1a96d312")
@@ -138,7 +138,7 @@ public class GetAuthorizedClientErrorTest {
     void C1131990() {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        Response getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
+        Response getAuthorizedClient = clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -161,7 +161,7 @@ public class GetAuthorizedClientErrorTest {
     void C1189654() {
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
-        Response getAuthorizedClient =  clientApiCreator.get().getAuthorizedClient()
+        Response getAuthorizedClient = clientApiCreator.get().getAuthorizedClient()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -182,7 +182,7 @@ public class GetAuthorizedClientErrorTest {
         client = clientService.createClient(investId, clientStatusType, socialProfile, null);
     }
 
-    void checkServiceIsTemporarilyUnavailable (Response getAuthorizedClientResponse) {
+    void checkServiceIsTemporarilyUnavailable(Response getAuthorizedClientResponse) {
         assertThat("errorCode != Error", getAuthorizedClientResponse.getBody().jsonPath().get("errorCode").toString(), equalTo("Error"));
         assertThat("errorMessage != Сервис временно недоступен", getAuthorizedClientResponse.getBody().jsonPath().get("errorMessage").toString(), equalTo("Сервис временно недоступен"));
     }
