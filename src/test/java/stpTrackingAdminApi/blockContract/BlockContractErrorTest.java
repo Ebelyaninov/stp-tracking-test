@@ -36,6 +36,7 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -71,8 +72,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 
 public class BlockContractErrorTest {
-
-    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
@@ -171,12 +170,12 @@ public class BlockContractErrorTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288208(){
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -201,12 +200,12 @@ public class BlockContractErrorTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288159(){
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         contractApiAdminCreator.get().blockContract()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
@@ -224,13 +223,13 @@ public class BlockContractErrorTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1705429(){
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,
-            null, ContractState.tracked, strategyId, SubscriptionStatus.active,
+            ContractState.tracked, strategyId, SubscriptionStatus.active,
             new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),
             null, false, false);
         //Вызываем метод blockContract

@@ -72,12 +72,10 @@ public class GetLiteStrategyTest {
     Strategy strategyMaster;
     String contractIdMaster;
     UUID strategyId;
-
     String siebelIdMaster;
     String title;
     String description;
     UUID investIdMaster;
-
 
     @BeforeAll
     void getDataFromAccount() {
@@ -119,9 +117,9 @@ public class GetLiteStrategyTest {
         strategyId = UUID.randomUUID();
         GetLiteStrategyResponse getLiteStrategyResponse;
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, "0.3", "0.05", false, null, "TEST", "TEST11");
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null, "TEST", "TEST11");
 
         getLiteStrategyResponse = getSignalsResponse(strategyId);
         //Находим в БД автоследования стратегию и Проверяем ее поля

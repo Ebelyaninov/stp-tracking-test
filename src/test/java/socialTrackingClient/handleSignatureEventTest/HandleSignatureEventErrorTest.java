@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
@@ -64,7 +65,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     KafkaOldConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class HandleSignatureEventErrorTest {

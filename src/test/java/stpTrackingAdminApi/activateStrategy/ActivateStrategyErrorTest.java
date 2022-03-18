@@ -23,8 +23,6 @@ import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -58,7 +56,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 public class ActivateStrategyErrorTest {
 
-    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
 
     @Autowired
     StrategyService strategyService;
@@ -79,16 +76,11 @@ public class ActivateStrategyErrorTest {
 
     String description = "Autotest  - ActivateStrategy";
     Integer score = 1;
-
-    //static final String SIEBEL_ID = "5-55RUONV5";
-
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String xApiKey = "x-api-key";
     String key = "tracking";
     String keyRead = "tcrm";
-
     String contractId;
-
     UUID investId;
 
 

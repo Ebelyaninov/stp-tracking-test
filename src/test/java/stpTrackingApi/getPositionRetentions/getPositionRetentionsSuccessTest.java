@@ -8,14 +8,10 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.stereotype.Service;
-import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.AnalyticsApiCreator;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -25,8 +21,6 @@ import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
-import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetPositionRetentionsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.PositionRetention;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -61,13 +55,11 @@ public class getPositionRetentionsSuccessTest {
     StpSiebel stpSiebel;
     @Autowired
     ApiCreator<AnalyticsApi> analyticsApiCreator;
-//    AnalyticsApi analyticsApi;
 
     String SIEBEL_ID;
 
     @BeforeAll
     void conf() {
-//        analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
     }
 

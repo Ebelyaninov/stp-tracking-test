@@ -58,8 +58,6 @@ import static org.hamcrest.Matchers.notNullValue;
 })
 
 public class GetAuthorizedClientTest {
-
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -73,7 +71,6 @@ public class GetAuthorizedClientTest {
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     String contractId;
     Client client;
-
     UUID investId;
 
     @BeforeAll

@@ -60,7 +60,8 @@ import static org.hamcrest.Matchers.is;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    ContractApiAdminCreator.class
+    ContractApiAdminCreator.class,
+
 })
 
 public class getBlockedContractsTest {

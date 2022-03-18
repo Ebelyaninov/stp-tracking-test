@@ -12,7 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.*;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -68,7 +70,7 @@ public class CreateStrategyErrorValidDataTest {
     @Autowired
     ClientService clientService;
     @Autowired
-    ContractService сontractService;
+    ContractService contractService;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -92,7 +94,7 @@ public class CreateStrategyErrorValidDataTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                сontractService.deleteContract(contract);
+                contractService.deleteContract(contract);
             } catch (Exception e) {
             }
             try {
@@ -230,7 +232,7 @@ public class CreateStrategyErrorValidDataTest {
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
         //Находим в БД автоследования созданный контракт и Проверяем его поля
-        contract = сontractService.getContract(contractId);
+        contract = contractService.getContract(contractId);
         assertThat("номера договоров не равно", contract.getId(), is(contractId));
 //        assertThat("роль клиента не равно null", (contract.getRole()), is(nullValue()));
         assertThat("статус клиента не равно", (contract.getState()).toString(), is("untracked"));

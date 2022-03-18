@@ -75,7 +75,6 @@ public class GetLiteStrategyErrorTest {
 
     String contractIdMaster;
     UUID strategyId;
-
     String siebelIdMaster;
     String title;
     String description;
@@ -133,9 +132,9 @@ public class GetLiteStrategyErrorTest {
     void C1346580() {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
 
         ErrorResponse getLiteStrategyErrorResponse = strategyApiCreator.get().getLiteStrategy()
             .xAppNameHeader("invest")
@@ -166,9 +165,9 @@ public class GetLiteStrategyErrorTest {
     void C1346577(String xAppName, String xAppVersionHeader, String xPlatformHeader, Boolean stringStrategy) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null, "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
 
         StrategyApi.GetLiteStrategyOper getLiteStrategyError = strategyApiCreator.get().getLiteStrategy()
             .strategyIdPath(strategyId)

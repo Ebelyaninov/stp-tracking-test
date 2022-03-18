@@ -7,8 +7,6 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBodyData;
-import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,38 +15,34 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
-import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.creator.*;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
-import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
-import ru.qa.tinkoff.swagger.tracking.model.NullableCurrency;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -70,6 +64,7 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     ApiCreatorConfiguration.class,
+    StpTrackingApiStepsConfiguration.class,
 })
 public class UpdateStrategyErrorTest {
     @Autowired
@@ -79,7 +74,7 @@ public class UpdateStrategyErrorTest {
     @Autowired
     ClientService clientService;
     @Autowired
-    ContractService сontractService;
+    ContractService contractService;
     @Autowired
     StrategyService strategyService;
     @Autowired
@@ -88,16 +83,14 @@ public class UpdateStrategyErrorTest {
     ApiCreator<StrategyApi> strategyApiCreator;
     @Autowired
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    StpTrackingApiSteps steps;
 
-//    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-//    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
-    Client client;
-    Contract contract;
     Strategy strategy;
-    Profile profile;
     String SIEBEL_ID;
+    String title = "Тест стратегия автотестов";
+    String description = "Autotest  - UpdateStrategy";
 
     @BeforeAll
     void getData() {
@@ -108,14 +101,17 @@ public class UpdateStrategyErrorTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                trackingService.deleteStrategy(strategy);
-            } catch (Exception e) {}
+                trackingService.deleteStrategy(steps.strategyMaster);
+            } catch (Exception e) {
+            }
             try {
-                сontractService.deleteContract(contract);
-            } catch (Exception e) {}
+                contractService.deleteContract(steps.contractMaster);
+            } catch (Exception e) {
+            }
             try {
-                clientService.deleteClient(client);
-            } catch (Exception e) {}
+                clientService.deleteClient(steps.clientMaster);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -136,8 +132,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C542528(String name, String version, String platform) {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -148,12 +144,18 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+//        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
+//            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
+
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         //вызываем метод updateStrategy
         StrategyApi.UpdateStrategyOper updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -169,14 +171,14 @@ public class UpdateStrategyErrorTest {
         if (platform != null) {
             updateStrategy = updateStrategy.xPlatformHeader(platform);
         }
-        Response getResponseOfUpdateStrategy =  updateStrategy.execute(response -> response);
+        Response getResponseOfUpdateStrategy = updateStrategy.execute(response -> response);
         assertThat("номера стратегии не равно", getResponseOfUpdateStrategy.getBody().jsonPath().get("errorMessage"), is("Сервис временно недоступен"));
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -189,8 +191,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542529() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -201,12 +203,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -222,9 +226,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -237,8 +241,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542530() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -249,12 +253,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -270,9 +276,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -285,8 +291,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542531() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -297,12 +303,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе активная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.active, LocalDateTime.now());
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -318,9 +326,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("active"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -333,8 +341,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542532() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -345,12 +353,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath("6087b7df-0b05-4afa-a55b-8a2eeb457833")
@@ -366,13 +376,12 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
-
 
 
     @Test
@@ -392,12 +401,12 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-//        request.setTitle(null);
-//        request.setDescription(null);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -413,9 +422,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -428,8 +437,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C1187384() {
         UUID strategyId = UUID.randomUUID();
-        String title = "общий, недетализированный план.";
-        String description = "Тестовая стратегия для автотестов 01";
+        String titleNew = "общий, недетализированный план.";
+        String descriptionNew = "Тестовая стратегия для автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -440,12 +449,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -457,15 +468,17 @@ public class UpdateStrategyErrorTest {
             .body(request)
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response);
-        assertThat("номера стратегии не равно", updateStrategy.getBody().jsonPath().get("errorMessage"), is("Некорректное название для стратегии"));
+        assertThat("номера стратегии не равно", updateStrategy.getBody().jsonPath().get("errorMessage"),
+            is("Некорректное название для стратегии"));
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
-        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
+        assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(),
+            is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
 
 
@@ -476,8 +489,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C1187385() {
         UUID strategyId = UUID.randomUUID();
-        String title = "";
-        String description = "Тестовая стратегия для автотестов 01";
+        String titleNew = "";
+        String descriptionNew = "Тестовая стратегия для автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -488,12 +501,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -509,9 +524,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -524,8 +539,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542535() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 03";
-        String description = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план, " +
+        String titleNew = "Тест стратегия автотестов 03";
+        String descriptionNew = "Страте́гия (др.-греч. — искусство полководца) — общий, недетализированный план, " +
             "охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо" +
             " деятельности человека. Задачей стратегии является эффективное использование наличных ресурсов для " +
             "достижения основной цели (стратегия как способ действий становится особо необходимой в ситуации," +
@@ -543,14 +558,14 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
-//        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD);
-//        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
-        request.setDescription(description);
+        request.setTitle(titleNew);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -566,9 +581,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -581,8 +596,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542536() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -593,13 +608,13 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
-//        request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyBaseCurrency.USD);
-//        request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
         request.setDescription(description);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
@@ -616,9 +631,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -630,8 +645,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C542537() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //находим клиента в social и берем данные по профайлу
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
@@ -643,8 +658,10 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
@@ -664,9 +681,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -678,8 +695,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C560148() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -690,13 +707,15 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
+        request.setTitle(titleNew);
         request.setRiskProfile(ru.qa.tinkoff.swagger.tracking.model.NullableStrategyRiskProfile.MODERATE);
-        request.setDescription(description);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -712,13 +731,12 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
-
 
 
     @Test
@@ -728,8 +746,8 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C560149() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
-        String description = "Тестовая стратегия для работы автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
+        String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -740,13 +758,15 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
+        request.setTitle(titleNew);
         request.setBaseCurrency(ru.qa.tinkoff.swagger.tracking.model.NullableCurrency.USD);
-        request.setDescription(description);
+        request.setDescription(descriptionNew);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
             .strategyIdPath(strategyId)
@@ -762,9 +782,9 @@ public class UpdateStrategyErrorTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
-        assertThat("название стратегии не равно", (strategy.getTitle()), is("Тест стратегия автотестов"));
+        assertThat("название стратегии не равно", (strategy.getTitle()), is(title));
         assertThat("валюта стратегии не равно", (strategy.getBaseCurrency()).toString(), is(Currency.RUB.toString()));
-        assertThat("описание стратегии не равно", strategy.getDescription(), is("Тестовая стратегия для работы автотестов"));
+        assertThat("описание стратегии не равно", strategy.getDescription(), is(description));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("draft"));
         assertThat("риск-профиль стратегии не равно", (strategy.getRiskProfile()).toString(), is(ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile.CONSERVATIVE.toString()));
     }
@@ -777,7 +797,7 @@ public class UpdateStrategyErrorTest {
     @Description("Метод позволяет ведущему (автору стратегии) обновить параметры стратегии до ее публикации")
     void C1141663() {
         UUID strategyId = UUID.randomUUID();
-        String title = "Тест стратегия автотестов 01";
+        String titleNew = "Тест стратегия автотестов 01";
         //получаем данные по клиенту  в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -788,11 +808,13 @@ public class UpdateStrategyErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
-        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
-        request.setTitle(title);
+        request.setTitle(titleNew);
         request.setDescription(null);
         // вызываем метод updateStrategy()
         Response updateStrategy = strategyApiCreator.get().updateStrategy()
@@ -810,43 +832,4 @@ public class UpdateStrategyErrorTest {
     }
 
 
-    //***методы для работы тестов**************************************************************************
-
-    //метод создает клиента, договор и стратегию в БД автоследования
-    void createClientWintContractAndStrategyMulti(UUID investId, ClientStatusType сlientStatusType, SocialProfile socialProfile, String contractId, UUID strategyId, ContractRole contractRole,
-                                                  ContractState contractState, StrategyCurrency strategyCurrency,
-                                                  StrategyRiskProfile strategyRiskProfile, StrategyStatus strategyStatus, LocalDateTime date) {
-        client = clientService.createClient(investId, сlientStatusType, socialProfile, null);
-        contract = new Contract()
-            .setId(contractId)
-            .setClientId(client.getId())
-//            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-
-        contract = сontractService.saveContract(contract);
-        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
-        feeRateProperties.put("range", new BigDecimal("0.2"));
-        feeRateProperties.put("management", new BigDecimal("0.04"));
-        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
-        testsStrategiesList.add(new TestsStrategy());
-        strategy = new Strategy()
-            .setId(strategyId)
-            .setContract(contract)
-            .setTitle("Тест стратегия автотестов")
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription("Тестовая стратегия для работы автотестов")
-            .setStatus(strategyStatus)
-            .setSlavesCount(0)
-            .setActivationTime(date)
-            .setScore(1)
-            .setFeeRate(feeRateProperties)
-            .setOverloaded(false)
-            .setTestsStrategy(testsStrategiesList)
-            .setBuyEnabled(true)
-            .setSellEnabled(true);
-        strategy = trackingService.saveStrategy(strategy);
-    }
 }

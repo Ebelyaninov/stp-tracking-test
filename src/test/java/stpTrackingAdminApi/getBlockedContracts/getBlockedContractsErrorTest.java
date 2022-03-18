@@ -61,7 +61,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    ContractApiAdminCreator.class
+    ContractApiAdminCreator.class,
+
 })
 
 public class getBlockedContractsErrorTest {

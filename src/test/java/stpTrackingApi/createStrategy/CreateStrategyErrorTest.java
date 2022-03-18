@@ -20,13 +20,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
-import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.creator.*;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -34,10 +32,10 @@ import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.*;
+import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
+import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -50,7 +48,6 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -102,7 +99,6 @@ public class CreateStrategyErrorTest {
     String title;
 
 
-
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
@@ -135,6 +131,7 @@ public class CreateStrategyErrorTest {
             Arguments.of("trading", "ios 8.1", null)
         );
     }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateStrategy")
@@ -154,8 +151,8 @@ public class CreateStrategyErrorTest {
         contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
-            StrategyRiskProfile.CONSERVATIVE, title,basemoney, "days", feeRate);
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
@@ -190,7 +187,7 @@ public class CreateStrategyErrorTest {
     @DisplayName("C266603.CreateStrategy. Валидация запроса: siebelId не передан в заголовке с key = 'X-TCS-SIEBEL-ID'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
-    void C266603()  {
+    void C266603() {
         title = "Тест стратегия CreateStrategy Autotest 002";
         String description = "New test стратегия Autotest 002";
         //ToDo feeRate was disabled
@@ -202,8 +199,8 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
-            StrategyRiskProfile.CONSERVATIVE, title,basemoney, "days", feeRate);
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
@@ -242,8 +239,8 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
-            StrategyRiskProfile.CONSERVATIVE, title,basemoney, "days", feeRate);
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
+            StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
             .xTcsSiebelIdHeader("")
@@ -273,6 +270,7 @@ public class CreateStrategyErrorTest {
             Arguments.of(Currency.RUB, StrategyRiskProfile.CONSERVATIVE, "Autotest", null)
         );
     }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideStringsForBodyCreateStrategy")
@@ -292,8 +290,8 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal baseMoney = new BigDecimal("8000");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (baseCurrency, contractId, description,
-            strategyRiskProfile, title,baseMoney, positionRetentionId, feeRate);
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(baseCurrency, contractId, description,
+            strategyRiskProfile, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
@@ -384,7 +382,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApiCreator.get().createStrategy()
@@ -426,7 +424,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApiCreator.get().createStrategy()
@@ -464,7 +462,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         Response expectedResponse = strategyApiCreator.get().createStrategy()
@@ -502,7 +500,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -544,7 +542,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, clientStatusType);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -573,7 +571,7 @@ public class CreateStrategyErrorTest {
     @DisplayName("C266605.CreateStrategy. Тип договора клиента != 'broker'")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
-    void C266605()  {
+    void C266605() {
         //Находим investId клиента в БД сервиса счетов
         String SIEBEL_ID = "5-2T11RRL1";
         String contractId = "2002694087";
@@ -596,7 +594,7 @@ public class CreateStrategyErrorTest {
         createClientNotBrokerOrOpened(investIdNotBroker, siebelIdNotBroker, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -627,7 +625,7 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266606() throws JSONException {
         String SIEBEL_ID = "1-B33CKAM";
-        String contractId ="2000030052";
+        String contractId = "2000030052";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdNotOpen = resAccountMaster.getInvestId();
         title = "CreateStrategy Autotest 012";
@@ -641,7 +639,7 @@ public class CreateStrategyErrorTest {
         createClientNotBrokerOrOpened(investIdNotOpen, siebelIdNotOpen, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -692,7 +690,7 @@ public class CreateStrategyErrorTest {
         //Вызываем метод  GetUntrackedContracts с siebelId от первого клиента и номер договора от второго клиента
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractIdMaster2, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractIdMaster2, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -738,7 +736,7 @@ public class CreateStrategyErrorTest {
         String contractIdNew = contractId + "123";
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractIdNew, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractIdNew, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -762,7 +760,6 @@ public class CreateStrategyErrorTest {
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
         assertThat("запись по стратегии не равно", strategyOpt.isPresent(), is(false));
     }
-
 
 
     @SneakyThrows
@@ -832,7 +829,7 @@ public class CreateStrategyErrorTest {
         String contractId = createClient(SIEBEL_ID, ClientStatusType.registered);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -876,7 +873,7 @@ public class CreateStrategyErrorTest {
 
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("1000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, null, feeRate);
         //Вызываем метод CreateStrategy
         StrategyApi.CreateStrategyOper createStrategy = strategyApiCreator.get().createStrategy()
@@ -1060,16 +1057,10 @@ public class CreateStrategyErrorTest {
 //    }
 
 
-
-
-
-
-
-
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebelId в сервисе счетов и Создает запись по нему в таблице tracking.client
     public String createClient(String SIEBEL_ID, ClientStatusType clientIdStatusType) {
-        GetBrokerAccountsResponse resBrokerAccount =  brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resBrokerAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -1092,10 +1083,10 @@ public class CreateStrategyErrorTest {
     }
 
     //ToDo Пока отключили fee, нужно будет вернуть StrategyFeeRate   feeRate, а не string
-    CreateStrategyRequest createStrategyRequest (Currency currency, String contractId, String description,
-                                                 StrategyRiskProfile strategyRiskProfile, String title,
-                                                 BigDecimal basemoney, String  positionRetentionId,
-                                                 String   feeRate) {
+    CreateStrategyRequest createStrategyRequest(Currency currency, String contractId, String description,
+                                                StrategyRiskProfile strategyRiskProfile, String title,
+                                                BigDecimal basemoney, String positionRetentionId,
+                                                String feeRate) {
         CreateStrategyRequest createStrategyRequest = new CreateStrategyRequest();
         createStrategyRequest.setBaseCurrency(currency);
         createStrategyRequest.setContractId(contractId);
@@ -1107,13 +1098,6 @@ public class CreateStrategyErrorTest {
 //        createStrategyRequest.setFeeRate(feeRate);
         return createStrategyRequest;
     }
-
-
-
-
-
-
-
 
 
 }

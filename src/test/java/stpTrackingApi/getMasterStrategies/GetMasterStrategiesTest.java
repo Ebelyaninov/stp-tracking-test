@@ -18,10 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Description;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.StrategyApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
@@ -92,10 +90,6 @@ public class GetMasterStrategiesTest {
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
 
-//    StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking.invoker.ApiClient
-//        .api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).strategy();
-
-
     String contractIdMaster1;
     String contractIdMaster2;
     String SIEBEL_ID_MASTER;
@@ -106,6 +100,7 @@ public class GetMasterStrategiesTest {
     Contract contract1;
     Contract contract2;
     Client clientMaster;
+
 
     @BeforeAll
     void getDataFromAccount() {
