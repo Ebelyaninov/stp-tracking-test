@@ -9,6 +9,8 @@ import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheApiCreator;
@@ -37,6 +39,7 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -70,6 +73,7 @@ public class StpTrackingApiSteps {
     private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     private final ApiCacheApiCreator<ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi> cacheApiCacheApiCreator;
     private final MarketDataCreator<PricesApi> pricesMDApiCreator;
+    private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
 
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
@@ -371,6 +375,24 @@ public class StpTrackingApiSteps {
             .until(() -> kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(3)), List::isEmpty);
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
 
+    }
+
+    @Step("Переместить offset для всех партиций Kafka топика {topic.name} в конец очереди")
+    public void resetOffsetToEnd(Topics topic) {
+        log.info("Сброс offset для топика {}", topic.getName());
+
+        boostedReceiver.getKafkaConsumer().subscribe(Collections.singletonList(topic.getName()));
+        boostedReceiver.getKafkaConsumer().poll(Duration.ofSeconds(5));
+        Map<TopicPartition, Long> endOffsets = boostedReceiver.getKafkaConsumer()
+            .endOffsets(boostedReceiver.getKafkaConsumer().assignment());
+        HashMap<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+        endOffsets.forEach((p, o) -> {
+            log.info("Для partition: {} последний offset: {}", p.partition(), o);
+            offsets.put(p, new OffsetAndMetadata(o));
+        });
+        boostedReceiver.getKafkaConsumer().commitSync(offsets);
+        log.info("Offset для всех партиций Kafka топика {} перемещены в конец очереди", topic.getName());
+        boostedReceiver.getKafkaConsumer().unsubscribe();
     }
 
     //создаем портфель master в cassandra с позицией
