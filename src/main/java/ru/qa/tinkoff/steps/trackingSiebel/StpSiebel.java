@@ -65,7 +65,7 @@ public class StpSiebel {
 
 
     //socialTrackingClient//
-    public String siebelIdMasterForClient = "4-1P767GFO";
+    public String siebelIdMasterForClient = "5-8IZ6ZM9X";
     public String siebelIdSlaveForClient = "5-8NL1RLT1";
     //Для тестов важен ответ от метода getInvestProfile с нужным риск профилем
     public String siebelIdAgressiveForClient = "5-775DOBIB";
