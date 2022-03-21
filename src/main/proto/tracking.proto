@@ -42,6 +42,10 @@ message ExchangePosition {
   // Код класса инструмента вне биржи (например, сплитованные валюты)
   google.protobuf.StringValue otc_class_code = 8;
 
+   // Признак применения динамических лимитов для инструмента при выставлении сигнала
+  bool dynamic_limits = 9;
+
+
   message OrderQuantityLimit {
 
     // Идентификатор периода
@@ -347,7 +351,12 @@ message Signal {
 
     // Кол-во единиц актива в заявках хвоста, порожденных сигналом
     Decimal tail_order_quantity = 3;
+
+    // Значение лимита, которое было применено при проверке объема заявки
+    google.protobuf.DoubleValue dynamic_limit_quantity = 4;
 }
+
+
 
 // Команда для расчета аналитических показателей
 message AnalyticsCommand {
