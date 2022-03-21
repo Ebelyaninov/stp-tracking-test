@@ -183,7 +183,7 @@ public class HandleActualizeCommandTest {
     void C662388() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -229,7 +229,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -260,7 +260,7 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio (baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date,versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
             "12", "10");
     }
 
@@ -275,9 +275,10 @@ public class HandleActualizeCommandTest {
     void C719882() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
+        Double dynamicLimitQuantity = 100d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
@@ -322,7 +323,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -330,9 +331,9 @@ public class HandleActualizeCommandTest {
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithDynamicLimitQuantity(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, price,
-            quantityS, ticker, tradingClearingAccount);
+            quantityS, ticker, tradingClearingAccount, dynamicLimitQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -353,11 +354,10 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio (baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date,versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
             "12", "10");
-        checkParamMasterSignal(now,  price, quantityS);
+        checkParamMasterSignal(now, price, quantityS, dynamicLimitQuantity);
     }
-
 
 
     @SneakyThrows
@@ -370,9 +370,10 @@ public class HandleActualizeCommandTest {
     void C720132() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
+        Double dynamicLimitQuantity = 0d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
@@ -422,7 +423,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -453,10 +454,10 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio (baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
             "12", "10");
         OffsetDateTime offsetDateTime = date.toInstant().atOffset(ZoneOffset.UTC);
-        checkParamMasterSignal(offsetDateTime,  priceS, quantityS);
+        checkParamMasterSignal(offsetDateTime, priceS, quantityS, dynamicLimitQuantity);
     }
 
 
@@ -469,7 +470,7 @@ public class HandleActualizeCommandTest {
     void C663357() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -515,7 +516,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -573,7 +574,7 @@ public class HandleActualizeCommandTest {
     void C663495() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -642,7 +643,7 @@ public class HandleActualizeCommandTest {
         assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
         assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
 
-         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
+        masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
         assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("цена за бумагу в сигнале не равна", masterSignal.getPrice().longValue(), is(priceS.getUnscaled()));
@@ -662,7 +663,7 @@ public class HandleActualizeCommandTest {
     void C666901() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -704,7 +705,7 @@ public class HandleActualizeCommandTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -764,7 +765,7 @@ public class HandleActualizeCommandTest {
 
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -818,10 +819,10 @@ public class HandleActualizeCommandTest {
         //создаем  активную подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlaveActiveSubscription, null, contractIdSlaveActiveSubscription, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //Создаем заблокированную подписку
         steps.createSubcription(UUID.randomUUID(), null, contractIdSlaveBlockedSubscription, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, true, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
+            strategyId, SubscriptionStatus.active, true, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
@@ -854,7 +855,7 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlaveActiveSubscription, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio (baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date,versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
             "12", "10");
         //Удаляем данные
         try {
@@ -884,66 +885,7 @@ public class HandleActualizeCommandTest {
     void C1324954() {
 
         int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
-        strategyId = UUID.randomUUID();
-        //получаем текущую дату и время
-        OffsetDateTime now = OffsetDateTime.now();
-        version = 1;
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountSlave.getInvestId();
-        contractIdMaster = resAccountSlave.getBrokerAccounts().get(0).getId();
-        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster,null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
-            .build();
-        // создаем   портфель ведущего  в кассандре c позицией
-         String  baseMoney = "4990.0";
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        MasterPortfolio.BaseMoneyPosition baseMoneyPortfolio = MasterPortfolio.BaseMoneyPosition.builder()
-            .quantity(new BigDecimal(baseMoney))
-            .changedAt(date)
-            .build();
-        List<MasterPortfolio.Position> positionList = new ArrayList<>();
-        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPortfolio, positionList);
-        //формируем команду на актуализацию по ведущему
-        Tracking.Decimal priceSignal = Tracking.Decimal.newBuilder()
-            .setUnscaled(256).build();
-        Tracking.Decimal quantitySignal = Tracking.Decimal.newBuilder()
-            .setUnscaled(2).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version+1,
-            10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE,
-            priceSignal, quantitySignal, ticker, tradingClearingAccount);
-        log.info("Команда в tracking.master.command:  {}", command);
-        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
-        byte[] eventBytes = command.toByteArray();
-        String keyMaster = contractIdMaster;
-        //отправляем команду в топик kafka tracking.master.command
-        kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
-        // проверяем, что обновился state = 1
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
-            masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
-        masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version+1);
-        assertThat("Состояние сигнала  не равно", masterSignal.getTailOrderQuantity().toString(), is("0"));
-    }
-
-
-    @SneakyThrows
-    @Test
-    @AllureId("1324919")
-    @DisplayName("C1324919.HandleActualizeCommand.Поле tail_order_quantity. Передаём параметр в сообщении")
-    @Subfeature("Успешные сценарии")
-    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
-    void C1324919() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
+        String title = "Autotest " + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
@@ -962,7 +904,66 @@ public class HandleActualizeCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-        String  baseMoney = "4990.0";
+        String baseMoney = "4990.0";
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        MasterPortfolio.BaseMoneyPosition baseMoneyPortfolio = MasterPortfolio.BaseMoneyPosition.builder()
+            .quantity(new BigDecimal(baseMoney))
+            .changedAt(date)
+            .build();
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        masterPortfolioDao.insertIntoMasterPortfolio(contractIdMaster, strategyId, version, baseMoneyPortfolio, positionList);
+        //формируем команду на актуализацию по ведущему
+        Tracking.Decimal priceSignal = Tracking.Decimal.newBuilder()
+            .setUnscaled(256).build();
+        Tracking.Decimal quantitySignal = Tracking.Decimal.newBuilder()
+            .setUnscaled(2).build();
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version + 1,
+            10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE,
+            priceSignal, quantitySignal, ticker, tradingClearingAccount);
+        log.info("Команда в tracking.master.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        String keyMaster = contractIdMaster;
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
+        // проверяем, что обновился state = 1
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
+            masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
+        masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1);
+        assertThat("Состояние сигнала  не равно", masterSignal.getTailOrderQuantity().toString(), is("0"));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1324919")
+    @DisplayName("C1324919.HandleActualizeCommand.Поле tail_order_quantity. Передаём параметр в сообщении")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C1324919() {
+
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " + String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        version = 1;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountSlave.getInvestId();
+        contractIdMaster = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        // создаем   портфель ведущего  в кассандре c позицией
+        String baseMoney = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         MasterPortfolio.BaseMoneyPosition baseMoneyPortfolio = MasterPortfolio.BaseMoneyPosition.builder()
@@ -978,7 +979,7 @@ public class HandleActualizeCommandTest {
             .setUnscaled(2).build();
         Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
             .setUnscaled(10).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithTailOrderQuantity(contractIdMaster, now, version+1,
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithTailOrderQuantity(contractIdMaster, now, version + 1,
             10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE,
             priceSignal, quantitySignal, ticker, tradingClearingAccount, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
@@ -990,11 +991,9 @@ public class HandleActualizeCommandTest {
         // проверяем, поле tail_order_quantity
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
             masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
-        masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version+1);
+        masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1);
         assertThat("Состояние сигнала  не равно", masterSignal.getTailOrderQuantity().toString(), is("10"));
     }
-
-
 
 
     /////////***методы для работы тестов**************************************************************************
@@ -1005,8 +1004,8 @@ public class HandleActualizeCommandTest {
         assertThat("ключ команды по синхронизации ведомого  не равен", key, is(contractIdSlave));
     }
 
-    void checkParamMasterPortfolio (BigDecimal baseMoney,Instant createAt, String tickerPos, String tradingClearingAccountPos,
-                                    String quantityPos, Date date, int versionPos, String  lastChangeAction, String quantity) {
+    void checkParamMasterPortfolio(BigDecimal baseMoney, Instant createAt, String tickerPos, String tradingClearingAccountPos,
+                                   String quantityPos, Date date, int versionPos, String lastChangeAction, String quantity) {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
@@ -1026,7 +1025,7 @@ public class HandleActualizeCommandTest {
     }
 
 
-    void checkParamMasterSignal(OffsetDateTime now, Tracking.Decimal price, Tracking.Decimal quantityS) {
+    void checkParamMasterSignal(OffsetDateTime now, Tracking.Decimal price, Tracking.Decimal quantityS, Double dynamicLimitQuantity) {
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
         assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
@@ -1035,6 +1034,7 @@ public class HandleActualizeCommandTest {
         assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(ticker));
         assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("Состояние сигнала  не равно", masterSignal.getState().toString(), is("1"));
+        assertThat("dynamicLimitQuantity  не равно", masterSignal.getDynamicLimitQuantity(), is(dynamicLimitQuantity));
     }
 
 

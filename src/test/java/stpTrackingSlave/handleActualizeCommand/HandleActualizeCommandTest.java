@@ -227,7 +227,7 @@ public class HandleActualizeCommandTest {
         String SIEBEL_ID_SLAVE = "1-FRT3HXX";
         BigDecimal lot = new BigDecimal("1");
         mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-            "0", "7000", "0", "0");
+           "0", "7000", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
