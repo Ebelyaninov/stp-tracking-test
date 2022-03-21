@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -75,7 +76,8 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     GrpcServicesAutoConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class UnblockContractTest {
 
@@ -107,13 +109,8 @@ public class UnblockContractTest {
     StpSiebel siebel;
     @Autowired
     ContractApiAdminCreator contractApiAdminCreator;
-
-
-    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     String xApiKey = "x-api-key";
     String key = "tracking";
-
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
@@ -121,7 +118,6 @@ public class UnblockContractTest {
     UUID strategyId;
     UUID investIdMaster;
     UUID investIdSlave;
-
 
     @BeforeAll
     void getDataFromAccount() {

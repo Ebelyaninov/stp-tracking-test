@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -37,6 +38,7 @@ import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -70,7 +72,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class EnableContractSynchronizationTest {
@@ -103,15 +106,12 @@ public class EnableContractSynchronizationTest {
     ContractApiAdminCreator contractApiAdminCreator;
 
     SlavePortfolio slavePortfolio;
-
     String contractIdSlave;
     String contractIdMaster;
-
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
     Subscription subscription;
-
     String title;
     String description;
     String xApiKey = "x-api-key";
@@ -174,9 +174,10 @@ public class EnableContractSynchronizationTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398759() {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategyNew(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

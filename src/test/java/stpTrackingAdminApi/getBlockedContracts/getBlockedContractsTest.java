@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -33,6 +34,7 @@ import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -61,13 +63,11 @@ import static org.hamcrest.Matchers.is;
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     ContractApiAdminCreator.class,
+    ApiCreatorConfiguration.class
 
 })
 
 public class getBlockedContractsTest {
-
-    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -94,11 +94,10 @@ public class getBlockedContractsTest {
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
-
     Integer defaultLimit = 30;
-
     String xApiKey = "x-api-key";
     String key= "tracking";
+    String description = "Autotest get block contract";
 
     @BeforeAll
     void getDataClients() {
@@ -149,13 +148,12 @@ public class getBlockedContractsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491521() {
-        String title = "Autotest" + randomNumber(0,100);
-        String description = "Autotest get block contract";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategyNew(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,ContractState.tracked, strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);

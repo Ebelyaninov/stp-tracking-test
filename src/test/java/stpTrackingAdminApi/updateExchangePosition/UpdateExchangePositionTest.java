@@ -1,7 +1,10 @@
 package stpTrackingAdminApi.updateExchangePosition;
 
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.*;
+import io.qameta.allure.AllureId;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.extern.slf4j.Slf4j;
@@ -15,17 +18,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionRequest;
@@ -33,7 +35,6 @@ import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ExchangePositionExchange;
 import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.tinkoff.trading.tracking.Tracking;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 
 import java.time.Duration;
 import java.util.*;
@@ -44,6 +45,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
+
 @Slf4j
 @Epic("UpdateExchangePosition - Редактирования биржевой позиции")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -56,10 +58,10 @@ import static ru.qa.tinkoff.kafka.Topics.EXCHANGE_POSITION;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class UpdateExchangePositionTest {
-    //ExchangePositionApi exchangePositionApi = ApiClient.api(ApiClient.Config.apiConfig()).exchangePosition();
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
     String xApiKey = "x-api-key";
     String key = "tracking";
@@ -71,6 +73,7 @@ public class UpdateExchangePositionTest {
     ByteToByteReceiverService kafkaReceiver;
     @Autowired
     ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
+
     @AfterEach
     void deleteClient() {
         step("Удаляем инструмент автоследования", () -> {
@@ -82,7 +85,6 @@ public class UpdateExchangePositionTest {
         return Stream.of(
             Arguments.of(null, null),
             Arguments.of("EUR_RUB", "CETS")
-
         );
     }
 
@@ -208,7 +210,7 @@ public class UpdateExchangePositionTest {
         assertThat("Лимит количества единиц актива по заявке не равен", expecResponse.getOrderQuantityLimits().get(0).getLimit(), is(limit));
         assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(IsNull.nullValue()));
         assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(IsNull.nullValue()));
-       //проверяем ключ сообщения топика kafka
+        //проверяем ключ сообщения топика kafka
         assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
         assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
         //проверяем message топика kafka
@@ -734,7 +736,6 @@ public class UpdateExchangePositionTest {
         assertThat("Тикер внебиржевого инструмента не равен", exchangePosition.getOtcTicker(), is(IsNull.nullValue()));
         assertThat("Код класса внебиржевого инструмента не равен", exchangePosition.getOtcClassCode(), is(IsNull.nullValue()));
     }
-
 
 
     @Test

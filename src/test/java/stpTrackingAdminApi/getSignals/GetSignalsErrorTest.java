@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.SignalApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -40,6 +41,7 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -62,10 +64,10 @@ import static org.hamcrest.Matchers.is;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class GetSignalsErrorTest {
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -87,10 +89,6 @@ public class GetSignalsErrorTest {
 
     String xApiKey = "x-api-key";
     String key= "tracking";
-
-
-    //SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
-
     String contractIdMaster;
     UUID strategyId;
     LocalDateTime localDateTime;
@@ -112,9 +110,10 @@ public class GetSignalsErrorTest {
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        stpTrackingAdminSteps.createClientWithContractAndStrategyNew(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1));
+        stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
     }
 
     @AfterEach

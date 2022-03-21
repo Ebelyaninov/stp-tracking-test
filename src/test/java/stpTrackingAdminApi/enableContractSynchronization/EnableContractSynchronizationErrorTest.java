@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -25,9 +26,12 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.util.UUID;
+
 import static io.qameta.allure.Allure.step;
 
 @Slf4j
@@ -43,12 +47,12 @@ import static io.qameta.allure.Allure.step;
     KafkaAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class EnableContractSynchronizationErrorTest {
 
-    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ClientService clientService;
@@ -63,13 +67,10 @@ public class EnableContractSynchronizationErrorTest {
     @Autowired
     ContractApiAdminCreator contractApiAdminCreator;
 
-
     String notContractIdSlave = "123456789";
     String longContractIdSlave = "123456789000000000";
     String contractIdSlave;
-
     UUID investIdSlave;
-
     String xApiKey = "x-api-key";
     String key = "tracking";
     String notKey = "counter";
@@ -146,10 +147,9 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
-
     }
 
     @SneakyThrows
@@ -168,7 +168,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
     }
@@ -191,7 +191,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-14-B12", "Сервис временно недоступен");
     }
@@ -213,7 +213,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-14-B12", "Сервис временно недоступен");
     }
@@ -235,7 +235,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
     }

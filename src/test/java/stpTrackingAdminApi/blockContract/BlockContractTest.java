@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -61,7 +62,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    InvestTrackingAutoConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class BlockContractTest {
@@ -170,8 +172,8 @@ public class BlockContractTest {
         checkEventParams(event, "UPDATED", contractIdMaster, "UNTRACKED", true);
         //Находим в БД автоследования контракт и проверяем его поля
         checkContractParamDB(contractIdMaster, investIdMaster, null, "untracked", null, true);
-
     }
+
 
     @SneakyThrows
     @Test
@@ -185,7 +187,6 @@ public class BlockContractTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId)
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
@@ -238,32 +239,25 @@ public class BlockContractTest {
     }
 
 
-
-
-
     //Проверяем параметры события
     void checkEventParams(Tracking.Event event, String action, String ContractIdSlave, String state, boolean blocked) {
         assertThat("Action события не равен", event.getAction().toString(), is(action));
         assertThat("ID договора не равен", (event.getContract().getId()), is(ContractIdSlave));
         assertThat("State не равен Tracked", (event.getContract().getState().toString()), is(state));
         assertThat("Blocked не равен true", (event.getContract().getBlocked()), is(true));
-
     }
 
     void checkContractParamDB(String contractId, UUID clientId, String role, String state, UUID strategyId, boolean blocked ) {
         Contract getDataFromContract = contractService.getContract(contractId);
         assertThat("ContractId не равен", getDataFromContract.getId(), is(contractId));
         assertThat("номер клиента не равен", getDataFromContract.getClientId(), is(clientId));
-//        assertThat("роль в контракте не равна", getDataFromContract.getRole(), is(role));
         assertThat("state не равен", getDataFromContract.getState().toString(), is(state));
         assertThat("ID стратегии не равно", getDataFromContract.getStrategyId(), is(strategyId));
         assertThat("статус блокировки не равен", getDataFromContract.getBlocked(), is(true));
     }
 
     public static int randomNumber(int min, int max) {
-
         int number = min + (int) (Math.random() * max);
-
         return number;
     }
 }

@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -67,12 +68,10 @@ import static org.hamcrest.Matchers.nullValue;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class GetStrategiesTest {
-
-    //StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -95,9 +94,7 @@ public class GetStrategiesTest {
     Client client;
     Contract contract;
     Strategy strategy;
-    String SIEBEL_ID = "5-JDFC5N71";
     String xApiKey = "x-api-key";
-    String keyRead = "tcrm";
     String key = "tracking";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
 
@@ -177,9 +174,10 @@ public class GetStrategiesTest {
     void C1041616() {
         String percent = "0";
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -216,9 +214,11 @@ public class GetStrategiesTest {
     void C1705738() {
         String percent = "0";
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -254,9 +254,11 @@ public class GetStrategiesTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1041090() {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         Integer position = strategys.get(size - 1).getPosition();
@@ -280,9 +282,10 @@ public class GetStrategiesTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1043600() {
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys

@@ -370,10 +370,11 @@ public class GetStrategyTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createContractAndStrategyDraft(siebelIdMaster, investIdMaster, contractIdMaster, ClientRiskProfile.aggressive, null, ContractState.untracked,
+        //создаем в БД tracking данные: client, contract, strategy в статусе draft
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, false);
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
+            "TEST", "TEST11");
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
