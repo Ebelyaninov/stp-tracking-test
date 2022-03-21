@@ -13,9 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
-import ru.qa.tinkoff.creator.adminCreator.ClientApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -53,18 +54,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class ConfirmMasterClientSuccessTest {
-
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
     Client client;
     String xApiKey = "x-api-key";
-
-
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -73,6 +69,8 @@ public class ConfirmMasterClientSuccessTest {
     ApiAdminCreator<ClientApi> clientApiAdminCreator;
     @Autowired
     StpSiebel siebel;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
 
     @AfterEach
     void deleteClient() {
@@ -80,7 +78,6 @@ public class ConfirmMasterClientSuccessTest {
             clientService.deleteClient(client);
         });
     }
-
 
 
     @Test
@@ -92,7 +89,7 @@ public class ConfirmMasterClientSuccessTest {
         //находим клиента в БД social
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -100,8 +97,8 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -131,7 +128,7 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -140,8 +137,8 @@ public class ConfirmMasterClientSuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         createClient(investId, ClientStatusType.registered, socialProfile);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -173,7 +170,7 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -183,8 +180,8 @@ public class ConfirmMasterClientSuccessTest {
 //        //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
-        Response responseConfirmMaster =  clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -214,7 +211,7 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -222,10 +219,10 @@ public class ConfirmMasterClientSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //добавляем запись в tracking.client со статусом confirmed
-        createClient(investId, ClientStatusType.confirmed,socialProfile);
+        createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -251,7 +248,7 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455943() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdEmptyNick)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -263,7 +260,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdEmptyNick);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -280,7 +277,7 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера договоров не равно", client.getId(), is(investIdEmptyNick));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
-        assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
+        assertThat("Nickname клиента не равно", (client.getSocialProfile().getNickname()), is(profile.getNickname()));
 //        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage()), is(profile.getImage().toString()));
     }
 
@@ -294,7 +291,7 @@ public class ConfirmMasterClientSuccessTest {
         //находим запись в БД social c с пустым значением в поле nickname
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdNullImage);
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdNullImage)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -303,7 +300,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdNullImage = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -320,8 +317,8 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера договоров не равно", client.getId(), is(investIdNullImage));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
-        assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
-        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage().toString()), is(profile.getImage().toString()));
+        assertThat("Nickname клиента не равно", (client.getSocialProfile().getNickname()), is(profile.getNickname()));
+        assertThat("Image клиента не равно", (client.getSocialProfile().getImage().toString()), is(profile.getImage().toString()));
     }
 
 
@@ -335,7 +332,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //находим данные клиента в сервисе счетов: договор БС, investId
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -344,7 +341,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -359,7 +356,7 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера договоров не равно", client.getId(), is(investId));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
-        assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
+        assertThat("Nickname клиента не равно", (client.getSocialProfile().getNickname()), is(profile.getNickname()));
 //        assertThat("Image клиента не равно",  (client.getSocialProfile().getImage()), is(profile.getImage().toString()));
     }
 
@@ -371,7 +368,7 @@ public class ConfirmMasterClientSuccessTest {
     void C455898() {
         //находим данные клиента в сервисе счетов: договор БС, investId
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdNotBroker)
             .brokerTypeQuery("invest-box")
             .brokerStatusQuery("opened")
@@ -381,7 +378,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdNotBroker);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")
@@ -398,7 +395,7 @@ public class ConfirmMasterClientSuccessTest {
         assertThat("номера договоров не равно", client.getId(), is(investIdNotBroker));
         assertThat("номера клиента не равно", client.getMasterStatus().toString(), is("confirmed"));
         assertThat("идентификатор профайла не равно", (client.getSocialProfile().getId()), is(profile.getId().toString()));
-        assertThat("Nickname клиента не равно",  (client.getSocialProfile().getNickname()), is(profile.getNickname()));
+        assertThat("Nickname клиента не равно", (client.getSocialProfile().getNickname()), is(profile.getNickname()));
     }
 
     @Test
@@ -408,7 +405,7 @@ public class ConfirmMasterClientSuccessTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455990() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdNotOpen)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("closed")
@@ -417,7 +414,7 @@ public class ConfirmMasterClientSuccessTest {
         UUID investIdNotOpen = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("android")

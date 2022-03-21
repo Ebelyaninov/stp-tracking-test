@@ -69,7 +69,6 @@ public class StpTrackingApiSteps {
     private final ClientService clientService;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
-
     private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     private final ApiCacheApiCreator<ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi> cacheApiCacheApiCreator;
     private final MarketDataCreator<PricesApi> pricesMDApiCreator;
@@ -177,7 +176,6 @@ public class StpTrackingApiSteps {
                                                                   ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                                   StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, String result, String management, Boolean overloaded) {
 
-
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
         contractMaster = new Contract()
@@ -277,57 +275,6 @@ public class StpTrackingApiSteps {
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
-    //Метод создает клиента, договор и стратегию в БД автоследования
-    @Step("Создать договор и стратегию в бд автоследования для клиента {client}")
-    @SneakyThrows
-    //метод создает клиента, договор и стратегию в БД автоследования
-    public void createContractAndStrategyDraft(String SIEBLE_ID, UUID investId, String contractId, ClientRiskProfile riskProfile, ContractRole contractRole, ContractState contractState,
-                                               UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
-                                               ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                               StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, boolean overloaded) {
-
-        //находим данные по клиенту в БД social
-        String image = "";
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
-        if (profile.getImage() == null) {
-            image = "";
-        } else {
-            image = profile.getImage().toString();
-        }
-        //создаем запись о клиенте в tracking.client
-        clientMaster = clientService.createClient(investId, ClientStatusType.registered, new SocialProfile()
-            .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-            .setImage(image), riskProfile);
-        // создаем запись о договоре клиента в tracking.contract
-        contractMaster = new Contract()
-            .setId(contractId)
-            .setClientId(clientMaster.getId())
-//            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractMaster = contractService.saveContract(contractMaster);
-        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
-        testsStrategiesList.add(new TestsStrategy());
-        //создаем запись о стратегии клиента
-        strategyMaster = new Strategy()
-            .setId(strategyId)
-            .setContract(contractMaster)
-            .setTitle(title)
-            .setBaseCurrency(strategyCurrency)
-            .setRiskProfile(strategyRiskProfile)
-            .setDescription(description)
-            .setStatus(strategyStatus)
-            .setSlavesCount(slaveCount)
-            .setActivationTime(date)
-            .setOverloaded(overloaded)
-            .setTestsStrategy(testsStrategiesList)
-            .setBuyEnabled(true)
-            .setSellEnabled(true);
-        strategyMaster = trackingService.saveStrategy(strategyMaster);
-    }
-
 
     //Метод находит подходящий siebelId в сервисе счетов и Создаем запись по нему в табл. tracking.client
     public void createClient(UUID investId, ClientStatusType clientStatusType, SocialProfile socialProfile, ClientRiskProfile riskProfile) {
@@ -349,8 +296,6 @@ public class StpTrackingApiSteps {
     public void createClientWithContract(String SIEBLE_ID, UUID investId, ClientStatusType clientStatusType, ClientRiskProfile riskProfile,
                                          String contractId, ContractRole contractRole, ContractState contractState,
                                          UUID strategyId) {
-        //находим данные по клиенту в БД social
-//        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, clientStatusType, new SocialProfile()
             .setId(profile.getId().toString())

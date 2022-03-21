@@ -91,12 +91,9 @@ public class UnblockContractErrorTest {
     ContractApiAdminCreator contractApiAdminCreator;
 
     ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     String xApiKey = "x-api-key";
     String key= "tracking";
     String keyRead = "tcrm";
-    SlavePortfolio slavePortfolio;
-
     ru.qa.tinkoff.tracking.entities.Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;

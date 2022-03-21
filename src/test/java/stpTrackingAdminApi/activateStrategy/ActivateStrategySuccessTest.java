@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -69,7 +70,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class ActivateStrategySuccessTest {
     @Autowired
@@ -102,7 +104,7 @@ public class ActivateStrategySuccessTest {
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String description = "Autotest  - ActivateStrategy";
     Integer score = 5;
-
+    String siebelId;
 
     @AfterEach
     void deleteClient() {
@@ -128,6 +130,7 @@ public class ActivateStrategySuccessTest {
 
     @BeforeAll
     void getDataClients() {
+        siebelId = siebel.siebelIdAdmin;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
         investId = resAccountMaster.getInvestId();
@@ -143,9 +146,14 @@ public class ActivateStrategySuccessTest {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+//        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+//            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -187,9 +195,14 @@ public class ActivateStrategySuccessTest {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+//        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+//            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);

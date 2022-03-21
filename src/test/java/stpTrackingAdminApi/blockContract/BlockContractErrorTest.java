@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -68,11 +69,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    ContractApiAdminCreator.class
+    ContractApiAdminCreator.class,
+    ApiCreatorConfiguration.class
 })
 
 public class BlockContractErrorTest {
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -92,21 +93,17 @@ public class BlockContractErrorTest {
     @Autowired
     ContractApiAdminCreator contractApiAdminCreator;
 
-    String siebelIdMaster = "5-CQNPKPNH";
-    String siebelIdSlave = "5-22NDYVFEE";
+
 
     String contractIdSlave;
     String contractIdMaster;
-
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
-
     String title;
     String description;
     String xApiKey = "x-api-key";
     String key = "tracking";
-
     String notKey = "summer";
     String keyRead = "tcrm";
     String notContractIdSlave = "1234567890";
