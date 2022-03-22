@@ -6,14 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
+import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeSetTimeTemplate;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateEnhancer;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateFX;
 import ru.qa.tinkoff.swagger.fireg.model.TradingScheduleExchange;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 import static io.restassured.RestAssured.given;
 
@@ -78,6 +78,22 @@ public class TradingShedulesExchangeSteps {
         String currentDatePlusTwo = date.plusDays(2).format(formatter);
         String body = TextResourceEnhancer.enhance(
             new TradingShedulesExchangeTemplateFX(exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
+        return  body;
+    }
+
+    public String createBodyForTradingShedulesExchangeSetTime (String exchange){
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String currentDate = date.format(formatter);
+        String currentDatePlusOne = date.plusDays(1).format(formatter);
+        String currentDatePlusTwo = date.plusDays(2).format(formatter);
+
+        LocalDateTime start = LocalDateTime.now().plusSeconds(20);
+        DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String startTimeNow = start.format(formatterTime);
+
+        String body = TextResourceEnhancer.enhance(
+            new TradingShedulesExchangeSetTimeTemplate(startTimeNow, exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
         return  body;
     }
 

@@ -190,13 +190,143 @@ public class MocksBasicSteps {
         mockMiddleSteps.createRestOrder(
             mockMiddleSteps.createBodyForRestOrder(ticker, action, contractIdSlave, classCode,
                 "FillAndKill", "Fill", lotsRequested, lotsExecuted, clientCode));
-}
+    }
+
+
+    public void createDataForMockCreateSlaveOrders(String siebelIdMaster, String siebelIdSlave, String investIdMaster,
+                                                   String investIdSlave, String contractIdMaster, String contractIdSlave,
+                                                   String clientCode, String executionReportStatus, String ticker, String classCode,
+                                                   String action, String lotsRequested, String lotsExecuted)
+        throws InterruptedException {
+
+        //getInvestID
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdMaster, investIdMaster));
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdMaster, siebelIdMaster, contractIdMaster));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdSlave, siebelIdSlave, contractIdSlave));
+
+        String tickerAndClassCode = ticker + "_" + classCode;
+        //очищаем расписание
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        //создаём расписание
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING_WEEKEND"));
+
+        //Создаем цены в MD
+        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+        ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));;
+
+        //Очищаем мок rest мок middle
+        mockMiddleSteps.clearMocksForRestOrder();
+        //Создать ответ от middle
+        mockMiddleSteps.createRestOrder(
+            mockMiddleSteps.createBodyForRestOrder(ticker, action, contractIdSlave, classCode,
+                "FillAndKill", executionReportStatus, lotsRequested, lotsExecuted, clientCode));
+
+    }
+
+
+    public void createDataForMockCreateSlaveOrdersError(String siebelIdMaster, String siebelIdSlave, String investIdMaster,
+                                                   String investIdSlave, String contractIdMaster, String contractIdSlave,
+                                                   String clientCode, String ticker, String classCode,
+                                                   String action, String message, String code)
+        throws InterruptedException {
+
+        //getInvestID
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdMaster, investIdMaster));
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdMaster, siebelIdMaster, contractIdMaster));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdSlave, siebelIdSlave, contractIdSlave));
+
+        String tickerAndClassCode = ticker + "_" + classCode;
+        //очищаем расписание
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        //создаём расписание
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING_WEEKEND"));
+
+        //Создаем цены в MD
+        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+        ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));;
+
+        //Очищаем мок rest мок middle
+        mockMiddleSteps.clearMocksForRestOrder();
+        //Создать ответ от middle
+        mockMiddleSteps.createRestOrderError(
+            mockMiddleSteps.createBodyForRestOrderError(ticker, action, contractIdSlave, classCode,
+                "FillAndKill", message, code, clientCode));
+
+    }
 
 
 
+    public void TradingShedulesExchangeSetTime(String siebelIdMaster, String siebelIdSlave, String investIdMaster,
+                                               String investIdSlave, String contractIdMaster, String contractIdSlave, String clientCode, String ticker, String classCode,
+                                               String action, String lotsRequested, String lotsExecuted)
+        throws InterruptedException{
+
+        //getInvestID
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps
+            .createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdMaster, investIdMaster));
+
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdMaster, siebelIdMaster, contractIdMaster));
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel
+            (investIdSlave, siebelIdSlave, contractIdSlave));
+
+        //очищаем расписание
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        //создаём расписание
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeSetTime("SPB_MORNING_WEEKEND"));
+
+        //Создаем цены в MD
+        String tickerAndClassCode = ticker + "_" + classCode;
+        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+        ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));;
+
+        //Очищаем мок rest мок middle
+        mockMiddleSteps.clearMocksForRestOrder();
+        //Создать ответ от middle
+        mockMiddleSteps.createRestOrder(
+            mockMiddleSteps.createBodyForRestOrder(ticker, action, contractIdSlave, classCode,
+                "FillAndKill", "Fill", lotsRequested, lotsExecuted, clientCode));
 
 
-
+    }
 
 
 
