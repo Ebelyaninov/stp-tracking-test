@@ -92,7 +92,7 @@
                 "orderType": "Limit",
                 "orderDate": "2021-04-19T18:40:58.089228",
                 "expirationTime": "2021-04-20T02:00:00",
-                "timeInForceType": "FillOrKill"
+                "timeInForceType": "FillAndKill"
             },
             "trackingId": "HLuq3HJ3VI",
             "time": "2021-04-19T18:40:58.385725+03:00",

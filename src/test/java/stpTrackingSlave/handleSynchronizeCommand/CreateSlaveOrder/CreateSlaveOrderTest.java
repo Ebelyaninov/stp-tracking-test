@@ -21,10 +21,15 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
+import ru.qa.tinkoff.mocks.steps.middle.MockMiddleSteps;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -71,6 +76,8 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class,
+    MocksBasicStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class
 })
 public class CreateSlaveOrderTest {
@@ -105,6 +112,10 @@ public class CreateSlaveOrderTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
@@ -116,6 +127,8 @@ public class CreateSlaveOrderTest {
     BigDecimal lot = new BigDecimal("1");
     String SIEBEL_ID_MASTER;
     String SIEBEL_ID_SLAVE;
+    String slaveOrder;
+    String masterOrder;
     UUID strategyId;
     long subscriptionId;
     public String value;
@@ -127,6 +140,8 @@ public class CreateSlaveOrderTest {
     void getdataFromInvestmentAccount() {
         SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterAnalytics1;
         SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveOrderSlave;
+        slaveOrder = stpSiebel.siebelIdSlaveOrder;
+        masterOrder = stpSiebel.siebelIdMasterOrder;
     }
 
     @AfterEach
@@ -187,16 +202,21 @@ public class CreateSlaveOrderTest {
     @SneakyThrows
     @Test
     @AllureId("668233")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C668233.CreateSlaveOrder.Выставление заявки.Action = 'Buy'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C668233() {
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -260,16 +280,21 @@ public class CreateSlaveOrderTest {
     @SneakyThrows
     @Test
     @AllureId("705781")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C705781.CreateSlaveOrder.Выставление заявки.Action = 'Sell'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C705781() {
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "Fill", instrument.tickerAAPL, instrument.classCodeAAPL,  "Sell","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active

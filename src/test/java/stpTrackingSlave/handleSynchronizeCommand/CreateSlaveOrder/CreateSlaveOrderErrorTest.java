@@ -23,10 +23,14 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -51,8 +55,7 @@ import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
 
@@ -69,6 +72,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class,
+    MocksBasicStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class
 })
 public class CreateSlaveOrderErrorTest {
@@ -107,6 +112,12 @@ public class CreateSlaveOrderErrorTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
+
+
     Subscription subscription;
     SlaveOrder2 slaveOrder2;
     Client clientSlave;
@@ -114,13 +125,18 @@ public class CreateSlaveOrderErrorTest {
     String contractIdSlave;
     Contract contract;
     String SIEBEL_ID_MASTER;
+    String slaveOrder;
+    String masterOrder;
     UUID strategyId;
     long subscriptionId;
     String description = "description autotest CreateSlaveOrderError";
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+
         SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterAnalytics1;
+        slaveOrder = stpSiebel.siebelIdSlaveOrder;
+        masterOrder = stpSiebel.siebelIdMasterOrder;
     }
 
 
@@ -182,32 +198,42 @@ public class CreateSlaveOrderErrorTest {
     @SneakyThrows
     @Test
     @AllureId("701280")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C701280.CreateSlaveOrder.Выставление заявки.Биржа не работает")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C701280() {
-        String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
-        contractIdSlave = "2047111824";
+        //String SIEBEL_ID_SLAVE = "5-1YWVDYEZI";
+        //contractIdSlave = "2047111824";
+        //создаем мока для миддл
+        mocksBasicSteps.TradingShedulesExchangeSetTime(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder,instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerBANEP, instrument.tradingClearingAccountBANEP,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,  "5", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
+
+/*        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerBANEP, instrument.tradingClearingAccountBANEP,
             "2", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "26551.10", masterPos);
-        //создаем подписку на стратегию
+        *///создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
@@ -215,9 +241,14 @@ public class CreateSlaveOrderErrorTest {
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
-        String baseMoneySl = "27000.0";
+/*        String baseMoneySl = "27000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerBANEP, instrument.tradingClearingAccountBANEP,
             "7", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
+            baseMoneySl, date, createListSlaveOnePos);*/
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -240,18 +271,23 @@ public class CreateSlaveOrderErrorTest {
     @SneakyThrows
     @Test
     @AllureId("712128")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C712128.CreateSlaveOrder.Выставление заявки.ExecutionReportStatus ='Rejected'")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C712128() {
-        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
-        contractIdSlave = "2054235441";
+/*        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+        contractIdSlave = "2054235441";*/
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "Rejected", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -261,8 +297,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -275,8 +311,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -302,25 +338,31 @@ public class CreateSlaveOrderErrorTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
             is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
-    }
+}
 
 
     @SneakyThrows
     @Test
     @AllureId("849688")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C849688.CreateSlaveOrder.Выставление заявки.Отмена заявки и повторного выставления, executionReportStatus = 'Cancelled' И lotsExecuted = 0")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C849688() {
-        contractIdSlave = "2092721501";
-        String SIEBEL_ID_SLAVE = "5-2IMV74EF5";
+/*        contractIdSlave = "2092721501";
+        String SIEBEL_ID_SLAVE = "5-2IMV74EF5";*/
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "Cancelled", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "0");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -365,30 +407,37 @@ public class CreateSlaveOrderErrorTest {
     }
 
 
+
     @SneakyThrows
     @Test
     @AllureId("730132")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C730132.CreateSlaveOrder.Выставление заявки.Выставление заявки.Ошибка из списка настройки fatal-error-codes")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C730132() {
-        String SIEBEL_ID_SLAVE = "1-3L0X4M1";
-        contractIdSlave = "2065560563";
+/*        String SIEBEL_ID_SLAVE = "1-3L0X4M1";
+        contractIdSlave = "2065560563";*/
+        mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Symbol not found for SecurityId(SPBXM,AAPL)", "SymbolNotFound");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "5", date, 4,
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -399,9 +448,10 @@ public class CreateSlaveOrderErrorTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
+        // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -427,18 +477,22 @@ public class CreateSlaveOrderErrorTest {
     @SneakyThrows
     @Test
     @AllureId("851304")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C851304.CreateSlaveOrder.Выставление заявки.Ошибка из списка настройки reject-error-codes")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C851304() {
-        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
-        contractIdSlave = "2054235441";
+/*        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+        contractIdSlave = "2054235441";*/
+        mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Ошибка тарифного модуля", "TariffModuleError");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -448,8 +502,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -459,8 +513,8 @@ public class CreateSlaveOrderErrorTest {
 
 //        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
@@ -478,6 +532,226 @@ public class CreateSlaveOrderErrorTest {
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
     }
+
+
+    // тест выполняется только с моком
+    @SneakyThrows
+    @Test
+    @AllureId("1725860")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("1725860 Выставление заявки. Повторное выставление заявки, если в ответе New")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C1725860() {
+/*        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+        contractIdSlave = "2054235441";*/
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "New", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
+            baseMoneySl, date, createListSlaveOnePos);
+        //вычитываем из топика кафка tracking.delay.command все offset
+        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        //отправляем команду на синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
+        Instant createdAtSlaveOrder = createdAt.toInstant();
+        //проверяем параметры SlaveOrder
+        Integer state = null;
+        assertThat("State не равно", slaveOrder2.getState(), is(state));
+        //смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
+            is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("867332")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("867332 Выставление заявки. Вернулся успех, но executionReportStatus неизвестное значение")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C867332() {
+/*        String SIEBEL_ID_SLAVE = "4-LQB8FKN";
+        contractIdSlave = "2054235441";*/
+        //создаем мока для миддл
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, "Welcome", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
+            baseMoneySl, date, createListSlaveOnePos);
+        //вычитываем из топика кафка tracking.contract.event все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //отправляем команду на синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
+        Instant createdAtSlaveOrder = createdAt.toInstant();
+        //проверяем параметры SlaveOrder
+        Integer state = null;
+        assertThat("State не равно", slaveOrder2.getState(), is(state));
+        //смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event commandKafka = Tracking.Event.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Action команды не равен", commandKafka.getAction().toString(), is("UPDATED"));
+        assertThat("ContractId команды не равен", commandKafka.getContract().getId(), is(contractIdSlave));
+        assertThat("Blocked команды не равен", commandKafka.getContract().getBlocked(), is(true));
+        assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
+            is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
+        //проверяем, данные в сообщении и таб. contract
+        checkEventParam(commandKafka);
+        checkContractParam(contractIdSlave);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("867312")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("867312 Выставление заявки. Незнакомый payload.code")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
+    void C867312() {
+/*        String SIEBEL_ID_SLAVE = "1-3L0X4M1";
+        contractIdSlave = "2065560563";*/
+        mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
+            mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Trading don't work", "NotWorking");
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "5", date, 4,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        // создаем портфель slave с позицией в кассандре
+        String baseMoneySl = "7000";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "2", date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
+            baseMoneySl, date, createListSlaveOnePos);
+        //вычитываем из топика кафка tracking.delay.command все offset
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        //отправляем команду на синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        //смотрим, сообщение, которое поймали в топике kafka tracking.event
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.event:  {}", event);
+        //проверяем, данные в сообщении и таб. contract
+        checkEventParam(event);
+        checkContractParam(contractIdSlave);
+    }
+
 
 
     /////////***методы для работы тестов**************************************************************************
