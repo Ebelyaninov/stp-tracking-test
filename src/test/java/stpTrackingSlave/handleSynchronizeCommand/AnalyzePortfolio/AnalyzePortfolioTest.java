@@ -312,7 +312,7 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountAAPL, "0", nullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -527,7 +527,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -722,7 +722,7 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountALFAperp, "0", nullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -840,7 +840,7 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountUSDRUB, "39", notNullValue());
         assertThat("Проверяем флаг buy_enabled", positionUSD.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionUSD.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(5)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -958,7 +958,7 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountGBP, "39", notNullValue());
         assertThat("Проверяем флаг buy_enabled", positionGBP.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionGBP.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -2770,7 +2770,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -2890,7 +2890,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -3009,7 +3009,7 @@ public class AnalyzePortfolioTest {
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
