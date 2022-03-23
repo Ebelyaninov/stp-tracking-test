@@ -33,6 +33,7 @@ import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -231,7 +232,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -325,7 +326,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -425,7 +426,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -518,7 +519,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -608,7 +609,7 @@ public class HandleActualizeCommandTest {
         createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -707,7 +708,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -824,7 +825,7 @@ public class HandleActualizeCommandTest {
         steps.createSubcription(UUID.randomUUID(), null, contractIdSlaveBlockedSubscription, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, true, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();

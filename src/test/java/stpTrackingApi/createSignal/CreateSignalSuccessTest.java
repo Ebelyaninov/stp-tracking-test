@@ -41,6 +41,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -408,7 +409,7 @@ public class CreateSignalSuccessTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -638,7 +639,7 @@ public class CreateSignalSuccessTest {
             strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "103.05", "3", "1", 12);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.SPB, true, 1000);
         //вычитываем из топика кафка tracking.master.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
@@ -985,7 +986,7 @@ public class CreateSignalSuccessTest {
 
     //*** Методы для работы тестов ***
     //Метод находит подходящий siebleId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+    void getExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
                              Boolean trackingAllowed, Integer dailyQuantityLimit) {
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);

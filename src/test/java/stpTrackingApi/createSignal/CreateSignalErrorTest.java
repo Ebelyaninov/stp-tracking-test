@@ -44,6 +44,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -872,7 +873,7 @@ public class CreateSignalErrorTest {
             "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, ExchangePosition.ExchangeEnum.SPB, true, 1000);
+        getExchangePosition(instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, Exchange.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, version);
@@ -1063,7 +1064,7 @@ public class CreateSignalErrorTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        getExchangePosition(instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, ExchangePosition.ExchangeEnum.MOEX, false, 1000);
+        getExchangePosition(instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, Exchange.MOEX, false, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerTRUR, instrument.tradingClearingAccountTRUR, version);
@@ -1501,7 +1502,7 @@ public class CreateSignalErrorTest {
 
     //*** Методы для работы тестов ***
     //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
-    void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+    void getExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
                              Boolean trackingAllowed, Integer dailyQuantityLimit) {
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);

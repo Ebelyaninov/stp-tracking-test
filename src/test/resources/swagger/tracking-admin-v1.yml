@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.14.0
+  version: 1.15.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
@@ -189,6 +189,31 @@ paths:
           description: Unauthorized
         422:
           $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+    delete:
+      tags:
+        - strategy
+      summary: deleteDraftStrategy
+      description: Удаляет торговую стратегию {strategyId} в статусе draft
+      operationId: deleteDraftStrategy
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      responses:
+        200:
+          description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
         500:
           $ref: '#/components/responses/Error'
 
@@ -833,7 +858,36 @@ components:
 
     CreateExchangePositionRequest:
       allOf:
-        - $ref: '#/components/schemas/ExchangePosition'
+        - $ref: '#/components/schemas/ExchangePositionId'
+        - type: object
+          required:
+            - exchange
+            - trackingAllowed
+            - dailyQuantityLimit
+            - orderQuantityLimits
+          properties:
+            exchange:
+              $ref: '#/components/schemas/Exchange'
+            trackingAllowed:
+              $ref: '#/components/schemas/TrackingAllowed'
+            dailyQuantityLimit:
+              $ref: '#/components/schemas/DailyQuantityLimit'
+            orderQuantityLimits:
+              $ref: '#/components/schemas/OrderQuantityLimits'
+            otcTicker:
+              description: Тикер вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 12
+              example: USDRUB
+            otcClassCode:
+              description: Код класса инструмента вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 10
+              example: EES_CETS
+            dynamicLimits:
+              $ref: '#/components/schemas/DynamicLimits'
 
     CreateExchangePositionResponse:
       allOf:
@@ -841,7 +895,33 @@ components:
 
     UpdateExchangePositionRequest:
       allOf:
-        - $ref: '#/components/schemas/ExchangePosition'
+        - $ref: '#/components/schemas/ExchangePositionId'
+        - type: object
+          properties:
+            exchange:
+              $ref: '#/components/schemas/Exchange'
+            trackingAllowed:
+              $ref: '#/components/schemas/TrackingAllowed'
+            dailyQuantityLimit:
+              $ref: '#/components/schemas/DailyQuantityLimit'
+            orderQuantityLimits:
+              $ref: '#/components/schemas/OrderQuantityLimits'
+            otcTicker:
+              description: Тикер вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 12
+              nullable: true
+              example: USDRUB
+            otcClassCode:
+              description: Код класса инструмента вне биржи (например, сплитованные валюты)
+              type: string
+              minLength: 1
+              maxLength: 10
+              nullable: true
+              example: EES_CETS
+            dynamicLimits:
+              $ref: '#/components/schemas/DynamicLimits'
 
     UpdateExchangePositionResponse:
       allOf:
@@ -855,25 +935,18 @@ components:
           required:
             - exchange
             - trackingAllowed
+            - dailyQuantityLimit
             - orderQuantityLimits
+            - dynamicLimits
           properties:
             exchange:
-              description: Биржа (торговая площадка)
-              type: string
-              enum: [MOEX, MOEX_PLUS, FX, SPB]
+              $ref: '#/components/schemas/Exchange'
             trackingAllowed:
-              description: Признак разрешённой для торговли в автоследовании позиции
-              type: boolean
+              $ref: '#/components/schemas/TrackingAllowed'
             dailyQuantityLimit:
-              description: Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
-              type: integer
-              minimum: 1
+              $ref: '#/components/schemas/DailyQuantityLimit'
             orderQuantityLimits:
-              description: Лимиты кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
-              type: array
-              items:
-                $ref: '#/components/schemas/OrderQuantityLimit'
-              minItems: 1
+              $ref: '#/components/schemas/OrderQuantityLimits'
             otcTicker:
               description: Тикер вне биржи (например, сплитованные валюты)
               type: string
@@ -886,6 +959,34 @@ components:
               minLength: 1
               maxLength: 10
               example: EES_CETS
+            dynamicLimits:
+              $ref: '#/components/schemas/DynamicLimits'
+
+    DynamicLimits:
+      description: Флаг применения динамических лимитов для инструмента при выставлении сигнала
+      type: boolean
+
+    Exchange:
+      description: Биржа (торговая площадка)
+      type: string
+      enum: [ MOEX, MOEX_PLUS, FX, SPB ]
+      deprecated: true
+
+    TrackingAllowed:
+      description: Признак разрешённой для торговли в автоследовании позиции
+      type: boolean
+
+    DailyQuantityLimit:
+      description: Лимит кол-ва единиц актива в рамках одной торговой сессии (суммарно на master и его slave-портфели)
+      type: integer
+      minimum: 1
+
+    OrderQuantityLimits:
+      description: Лимиты кол-ва единиц актива в рамках одной заявки (суммарно на master и его slave-портфели)
+      type: array
+      items:
+        $ref: '#/components/schemas/OrderQuantityLimit'
+      minItems: 1
 
     ExchangePositionId:
       description: Идентификатор биржевой позиции
