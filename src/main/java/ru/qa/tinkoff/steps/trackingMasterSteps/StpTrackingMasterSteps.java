@@ -20,6 +20,7 @@ import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -117,7 +118,7 @@ public class StpTrackingMasterSteps {
 
 
     //метод проверяет инструмент в tracking.exchange_position и создает его при необоходимости
-    public void getExchangePosition(String ticker, String tradingClearingAccount, ExchangePosition.ExchangeEnum exchange,
+    public void getExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
                                     Boolean trackingAllowed, Integer dailyQuantityLimit) {
         //проверяем запись в tracking.exchange_position
         Optional<ru.qa.tinkoff.tracking.entities.ExchangePosition> exchangePositionOpt = exchangePositionService.findExchangePositionByTicker(ticker, tradingClearingAccount);

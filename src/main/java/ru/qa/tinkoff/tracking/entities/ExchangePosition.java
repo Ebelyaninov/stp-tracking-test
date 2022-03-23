@@ -63,4 +63,7 @@ public class ExchangePosition implements Serializable {
     @Generated(GenerationTime.INSERT)
     @Column(name = "position", insertable = false, updatable = false)
     Integer position;
+
+    @Column(name = "dynamic_limits")
+    Boolean dynamicLimits;
 }

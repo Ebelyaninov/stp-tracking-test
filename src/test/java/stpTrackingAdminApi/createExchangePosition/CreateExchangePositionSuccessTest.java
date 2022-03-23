@@ -24,6 +24,7 @@ import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -92,7 +93,7 @@ public class CreateExchangePositionSuccessTest {
         resetOffsetToLate(EXCHANGE_POSITION);
         //формируем тело запроса
         var сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
-            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+            limit, period, Exchange.MOEX, true, 1000);
         //вызываем метод createExchangePosition
         var expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -163,7 +164,7 @@ public class CreateExchangePositionSuccessTest {
         orderQuantityLimitList.add(new OrderQuantityLimit().limit(200).periodId("main_trading"));
         orderQuantityLimitList.add(new OrderQuantityLimit().limit(200).periodId("additional_liquidity"));
         orderQuantityLimitList.add(new OrderQuantityLimit().limit(100).periodId("primary"));
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamQuantityLimitList(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD, orderQuantityLimitList, ExchangePosition.ExchangeEnum.MOEX, true, dailyQuantityLimit);
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamQuantityLimitList(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD, orderQuantityLimitList, Exchange.MOEX, true, dailyQuantityLimit);
         //вызываем метод createExchangePosition
         ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -247,7 +248,7 @@ public class CreateExchangePositionSuccessTest {
         orderQuantityLimit.setPeriodId("main_trading");
         orderQuantityLimitList.add(orderQuantityLimit);
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(instrument.tickerEURRUBTOM,
-            tradingClearingAccount, orderQuantityLimitList, ExchangePosition.ExchangeEnum.MOEX, true, dailyQuantityLimit, otcTicker, otcClassCode);
+            tradingClearingAccount, orderQuantityLimitList, Exchange.MOEX, true, dailyQuantityLimit, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -319,7 +320,7 @@ public class CreateExchangePositionSuccessTest {
         String period = "additional_liquidity";
         //формируем тело запроса
         CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestRequiredParam(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD,
-            limit, period, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
+            limit, period, Exchange.MOEX, true, 1000);
         //вызываем метод createExchangePosition
         exchangePositionApiAdminCreator.get().createExchangePosition()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -359,7 +360,7 @@ public class CreateExchangePositionSuccessTest {
 
     //body запроса метода updateExchangePosition обязательные парамерты
     public CreateExchangePositionRequest createBodyRequestRequiredParam(String ticker, String tradingClearingAccount, Integer limit, String period,
-                                                                        ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed, int dailyQuantityLimit) {
+                                                                        Exchange exchange, Boolean trackingAllowed, int dailyQuantityLimit) {
         ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit orderQuantityLimit
             = new ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit();
         orderQuantityLimit.setLimit(limit);
@@ -376,7 +377,7 @@ public class CreateExchangePositionSuccessTest {
 
     //body запроса метода updateExchangePosition обязательные парамерты orderQuantityLimitList передаем отдельно списком
     public CreateExchangePositionRequest createBodyRequestParamQuantityLimitList(String ticker, String tradingClearingAccount, List<OrderQuantityLimit> orderQuantityLimitList,
-                                                                                 ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed, Integer dailyQuantityLimit) {
+                                                                                 Exchange exchange, Boolean trackingAllowed, Integer dailyQuantityLimit) {
         CreateExchangePositionRequest createExPosition = new CreateExchangePositionRequest();
         createExPosition.exchange(exchange);
         createExPosition.dailyQuantityLimit(dailyQuantityLimit);
@@ -390,7 +391,7 @@ public class CreateExchangePositionSuccessTest {
 
     //body запроса метода updateExchangePosition обязательные парамерты orderQuantityLimitList передаем отдельно списком
     public CreateExchangePositionRequest createBodyRequestParamOct(String ticker, String tradingClearingAccount, List<OrderQuantityLimit> orderQuantityLimitList,
-                                                                   ExchangePosition.ExchangeEnum exchange, Boolean trackingAllowed,
+                                                                   Exchange exchange, Boolean trackingAllowed,
                                                                    Integer dailyQuantityLimit, String otcTicker, String otcClassCode) {
         CreateExchangePositionRequest createExPosition = new CreateExchangePositionRequest();
         createExPosition.exchange(exchange);

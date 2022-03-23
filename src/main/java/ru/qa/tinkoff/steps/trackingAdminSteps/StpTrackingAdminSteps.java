@@ -184,7 +184,8 @@ public class StpTrackingAdminSteps {
             .setDailyQuantityLimit(200)
             .setOrderQuantityLimits(mapValue)
             .setOtcTicker(otcTicker)
-            .setOtcClassCode(otcClassCode);
+            .setOtcClassCode(otcClassCode)
+            .setDynamicLimits(false);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
     }
 
