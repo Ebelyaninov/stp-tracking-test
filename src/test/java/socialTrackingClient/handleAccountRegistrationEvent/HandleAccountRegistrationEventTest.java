@@ -416,7 +416,6 @@ public class HandleAccountRegistrationEventTest {
         contractSlave = new Contract()
             .setId(contractIdAgressive)
             .setClientId(clientSlave.getId())
-//            .setRole(null)
             .setState(ContractState.untracked)
             .setStrategyId(null)
             .setBlocked(false);
@@ -432,16 +431,17 @@ public class HandleAccountRegistrationEventTest {
             .setStatus(SubscriptionStatus.draft)
             .setEndTime(null)
             .setBlocked(false);
-            //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
-
+        //Изменить тариф клиенту в БД тарифов
+        contractTariffService.updateTariffIdByContract(getTariffIdByTariffType("tracking"), contractIdAgressive, time);
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        //Проверяем тариф клиента
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(200))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubscriptionByContractIdAndStatus(contractIdAgressive, SubscriptionStatus.active).getStatus().equals(SubscriptionStatus.active));
@@ -599,6 +599,7 @@ public class HandleAccountRegistrationEventTest {
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
     }
 
+    //ToDo успеваем обновить тариф и получаем в ответе метода тарифов tracking
     @Test
     @AllureId("1332315")
     @DisplayName("С1332315. Не активируем подписку с типом тарифа clientTariff.type != 'tracking' ")
@@ -633,12 +634,68 @@ public class HandleAccountRegistrationEventTest {
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
         //Проверяем, что не отправили событие в топик tracking.contract.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative)).collect(Collectors.toList());
         assertThat("Отправили событие в топик", messages.size(), equalTo(0));
 
         //Вернуть тариф tracking клиенту в БД тарифов
         contractTariffService.updateTariffIdByContract(getTariffIdByTariffType("tracking"), contractIdConservative, time);
     }
+
+    //ToDo получаем событие о смене тарифа changeTariff и активируем подписку (или уже тариф с типом tracking)
+//    @SneakyThrows
+//    @Test
+//    @AllureId("1761876")
+//    @DisplayName("C1761876. Не активируем подписку, если тариф != tracking и нашли подписку в статусе draft и событие == OPENED")
+//    @Subfeature("Успешные сценарии")
+//    @Description("Обработка событий из сервиса счетов")
+//    void C1761876() {
+//        //Добавляем стратегию мастеру
+//        stpTrackingMasterSteps.createClientWithContractAndStrategy(investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+//            StrategyStatus.active, 0, LocalDateTime.now());
+//        //Добавляем подписку slave
+//        clientSlave = clientService.createClient(investIdAgressive, ClientStatusType.none, null, ClientRiskProfile.aggressive);
+//        // создаем запись о договоре клиента в tracking.contract
+//        contractSlave = new Contract()
+//            .setId(contractIdAgressive)
+//            .setClientId(clientSlave.getId())
+//            .setState(ContractState.untracked)
+//            .setStrategyId(null)
+//            .setBlocked(false);
+//        contractSlave = contractService.saveContract(contractSlave);
+//        //создаем запись подписке клиента
+//        subscription = new Subscription()
+//            .setSlaveContractId(contractIdAgressive)
+//            .setStrategyId(strategyId)
+//            .setStartTime(startTime)
+//            .setStatus(SubscriptionStatus.draft)
+//            .setEndTime(null)
+//            .setBlocked(false);
+//        subscription = subscriptionService.saveSubscription(subscription);
+//        int actualTariffId = getTariffIdByTariffType("WM");
+//        contractTariffService.updateTariffIdByContract(actualTariffId, contractIdAgressive, time);
+//        //вычитываем все события из топика tracking.fee.calculate.command
+//        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+//        //Форимируем и отправляем событие в топик account.registration.event
+//        byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
+//        byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
+//        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+//        //Проверяем тариф клиента
+//        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(200))
+//            .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
+//        await().atMost(Duration.ofSeconds(5))
+//            .until(() -> subscriptionService.findSubscriptionByContractIdAndStatus(contractIdAgressive, SubscriptionStatus.draft).getStatus().equals(SubscriptionStatus.draft));
+//        //Для события в статусе open добавляем подписку в статусе draft и вызывали метод тарифов
+//        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.draft,  false);
+//        checkContract(contractIdAgressive, investIdAgressive, ContractState.untracked, null);
+//        //Проверяем, что не отправили событие в топик tracking.contract.event
+//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+//        assertThat("Отправили событие в топик", messages.size(), equalTo(0));
+//        //Получить id тарифа и обновить на тариф tracking
+//        Integer tariffID = getTariffIdByTariffType("tracking");
+//        contractTariffService.updateTariffIdByContract(tariffID, contractIdAgressive, time);
+//    }
 
     //Метод для создания события по схеме  invest-account-event.proto
     InvestAccountEvent.Event createMessageForHandleAccountRegistrationEventWithOutStrategy (int action, String brokerAccountId, int type, int status,
@@ -769,7 +826,7 @@ public class HandleAccountRegistrationEventTest {
             .contractIdPath(contractId)
             .execute(response -> response.as(TariffResponseType.class));
 
-        if (getTariff.getTariff().getSiebelId() !=  "RD11.0" & getTariff.getTariff().getName() != "Автоследование"){
+        if (getTariff.getTariff().getSiebelId() !=  "TRD11.0" & getTariff.getTariff().getName() != "Автоследование"){
             contractTariffService.updateTariffIdByContract(tariffID, contractId, time);
         }
     }
