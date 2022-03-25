@@ -327,9 +327,9 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         //создаем запись о стоимости портфеля
-        createDateMasterPortfolioValue(strategyId, 4, 2, "683491.11");
-        createDateMasterPortfolioValue(strategyId, 3, 5, "87269.99");
-        createDateMasterPortfolioValue(strategyId, 2, 4, "982684.75");
+        createDateMasterPortfolioValue(strategyId, 4, 2, "683491.11", "683491.11");
+        createDateMasterPortfolioValue(strategyId, 3, 5, "87269.99", "683491.11");
+        createDateMasterPortfolioValue(strategyId, 2, 4, "982684.75", "683491.11");
         createDateMasterPortfolioMaxDrawdown(strategyId, 1, 2, "12");
         createDateMasterPortfolioPositionRetention(strategyId, 1, 2, "weeks");
         createDateMasterPortfolioRate(strategyId, 1, 2);
@@ -862,9 +862,9 @@ public class GetStrategyTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         //создаем запись о стоимости портфеля
-        createDateMasterPortfolioValue(strategyId, 4, 2, "683491.11");
-        createDateMasterPortfolioValue(strategyId, 3, 5, "87269.99");
-        createDateMasterPortfolioValue(strategyId, 2, 4, "982684.75");
+        createDateMasterPortfolioValue(strategyId, 4, 2, "683491.11", "683491.11");
+        createDateMasterPortfolioValue(strategyId, 3, 5, "87269.99", "87269.99");
+        createDateMasterPortfolioValue(strategyId, 2, 4, "10023123122.75", "982684.75");
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -886,8 +886,104 @@ public class GetStrategyTest {
         //проверяем полученные данные с расчетами
         checkCharacteristics(characteristic, "recommended-base-money-position-quantity", "Рекомендуемая сумма", recommendedBaseMoney);
         assertThat("Подсказка не равно", characteristic.get(0).getHint(), is(""));
+        //Проверяем характеристику minimum-base-money-position-quantity
+        List<MasterPortfolioValue> masterPortfolioValue = masterPortfolioValueDao.getListMasterPortfolioValueByStrategyIdAndSortedByCut(strategyId);
+        String getMinimumValue = String.format("%,d", masterPortfolioValue.get(0).getMinimumValue().toBigInteger());
+        String minimumBaseMoneyValue = getMinimumValue.replace(",", " ") + " " + rubbleSymbol;
+        characteristic = getStrategyCharacteristic(getStrategy, "main", "minimum-base-money-position-quantity");
+        checkCharacteristics(characteristic, "minimum-base-money-position-quantity", "Минимальная сумма", minimumBaseMoneyValue);
     }
 
+
+    @Test
+    @SneakyThrows
+    @AllureId("1765264")
+    @DisplayName("C1765264.GetStrategy. Не нашли данные в таблице master_portfolio_value")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
+    void C1765264() throws JsonProcessingException, InterruptedException {
+        strategyId = UUID.randomUUID();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
+        //изменяем время активации стратегии
+        strategy = strategyService.getStrategy(strategyId);
+        LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
+        strategy.setActivationTime(updateTime);
+        strategyService.saveStrategy(strategy);
+        //создаем запись  протфеле в кассандре
+        List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
+        // вызываем метод getStrategy
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        //выбираем проверяемую характеристику
+        List<StrategyCharacteristic> recommendedBaseMoneyPositionQuantity = getStrategyCharacteristic(getStrategy, "main", "recommended-base-money-position-quantity");
+        List<StrategyCharacteristic> minimumBaseMoneyPositionQuantity = getStrategyCharacteristic(getStrategy, "main", "minimum-base-money-position-quantity");
+        //проверяем, что не передали характеристики recommended-base-money-position-quantity и minimum-base-money-position-quantity
+        assertThat("Передали характеристику recommendedBaseMoneyPositionQuantity", recommendedBaseMoneyPositionQuantity.size(), is(0));
+        assertThat("Передали характеристику minimumBaseMoneyPositionQuantity", minimumBaseMoneyPositionQuantity.size(), is(0));
+    }
+
+    @Test
+    @SneakyThrows
+    @AllureId("1765264")
+    @DisplayName("C1765265.GetStrategy. Поле master_portfolio_value.minimum_value IS NULL")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
+    void C1765265() throws JsonProcessingException, InterruptedException {
+        strategyId = UUID.randomUUID();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
+        //изменяем время активации стратегии
+        strategy = strategyService.getStrategy(strategyId);
+        LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
+        strategy.setActivationTime(updateTime);
+        strategyService.saveStrategy(strategy);
+        //создаем запись  протфеле в кассандре
+        List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
+        //Создаем запись с master_portfolio_value.minimum_value IS NULL
+        createDateMasterPortfolioValue(strategyId, 2, 4, null, "982684.75");
+        // вызываем метод getStrategy
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        //выбираем проверяемую характеристику
+        List<StrategyCharacteristic> recommendedBaseMoneyPositionQuantity = getStrategyCharacteristic(getStrategy, "main", "recommended-base-money-position-quantity");
+        List<StrategyCharacteristic> minimumBaseMoneyPositionQuantity = getStrategyCharacteristic(getStrategy, "main", "minimum-base-money-position-quantity");
+        //проверяем, что не передали характеристики minimum-base-money-position-quantity
+        assertThat("Не передали характеристику recommendedBaseMoneyPositionQuantity", recommendedBaseMoneyPositionQuantity.size(), is(1));
+        assertThat("Передали характеристику minimumBaseMoneyPositionQuantity", minimumBaseMoneyPositionQuantity.size(), is(0));
+    }
 
     @Test
     @AllureId("946710")
@@ -1635,13 +1731,24 @@ public class GetStrategyTest {
     }
 
 
-    void createDateMasterPortfolioValue(UUID strategyId, int days, int hours, String value) {
-        masterPortfolioValue = MasterPortfolioValue.builder()
-            .strategyId(strategyId)
-            .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
-            .value(new BigDecimal(value))
-            .build();
-        masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
+    void createDateMasterPortfolioValue(UUID strategyId, int days, int hours, String minimumValue, String value) {
+        if (minimumValue == null){
+            masterPortfolioValue = MasterPortfolioValue.builder()
+                .strategyId(strategyId)
+                .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
+                .value(new BigDecimal(value))
+                .build();
+            masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
+        }
+        else {
+            masterPortfolioValue = MasterPortfolioValue.builder()
+                .strategyId(strategyId)
+                .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
+                .minimumValue(new BigDecimal(minimumValue))
+                .value(new BigDecimal(value))
+                .build();
+            masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
+        }
     }
 
 
