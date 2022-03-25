@@ -36,6 +36,17 @@ public class MasterPortfolioValueDao {
         return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId);
     }
 
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public List<MasterPortfolioValue> getListMasterPortfolioValueByStrategyIdAndSortedByCut(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "ORDER BY cut DESC";
+        List<MasterPortfolioValue> result = cqlTemplate.query(query, masterPortfolioValueRowMapper, strategyId);
+        return result;
+    }
+
     public List<Pair<LocalDateTime, BigDecimal>> getMasterPortfolioValuesByStrategyId(UUID strategyId, Date start, Date end) {
         var query = "select cut, value " +
             "from invest_tracking.master_portfolio_value " +
@@ -109,13 +120,14 @@ public class MasterPortfolioValueDao {
     @Step("Добавляем запись в master_portfolio_value")
     @SneakyThrows
     public void insertIntoMasterPortfolioValue(MasterPortfolioValue masterPortfolioValue) {
-        String query = "insert into invest_tracking.master_portfolio_value (strategy_id, cut, value) " +
-            "values (?, ?, ?)";
+        String query = "insert into invest_tracking.master_portfolio_value (strategy_id, cut, minimum_value, value) " +
+            "values (?, ?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
         cqlTemplate.execute(query,
             masterPortfolioValue.getStrategyId(),
             timestamp,
+            masterPortfolioValue.getMinimumValue(),
             masterPortfolioValue.getValue());
     }
 }
