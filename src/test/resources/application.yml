@@ -88,7 +88,7 @@ app:
     invest-account-public-api-base-url: http://invest-qa.tinkoff.ru/account/public/v1/
     md-api-base-url: http://trading-test.tcsbank.ru/v1/md/
     miof-api-base-url: https://www-qa1.tcsbank.ru/api/miof
-    tracking-cache-slave-base-url: http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/cache/v1/
+    tracking-cache-slave-base-url: http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/v1
     tracking-cache-api-base-url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-social-strategy-base-url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
     tracking-admin-api-base-url: http://invest-qa.tinkoff.ru/tracking/admin/v1/

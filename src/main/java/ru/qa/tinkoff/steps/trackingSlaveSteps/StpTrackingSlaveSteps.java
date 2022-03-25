@@ -201,7 +201,7 @@ public class StpTrackingSlaveSteps {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
@@ -232,7 +232,7 @@ public class StpTrackingSlaveSteps {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice =cacheApiCacheSlaveCreator.get().getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
@@ -270,7 +270,7 @@ public class StpTrackingSlaveSteps {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
         Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
@@ -290,7 +290,7 @@ public class StpTrackingSlaveSteps {
         }
         if ("".equals(price)) {
             Response resCacheNodeOne = cacheApiCacheSlaveCreator.get().getAllEntities()
-                .reqSpec(r -> r.addHeader("api-key", "tracking"))
+                .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
                 .reqSpec(r -> r.addHeader("magic-number", "1"))
                 .cacheNamePath("exchangePositionPriceCache")
                 .xAppNameHeader("tracking")
@@ -319,7 +319,7 @@ public class StpTrackingSlaveSteps {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache по певой ноде
         Response resCacheNodeZero = cacheApiCacheSlaveCreator.get().getAllEntities()
-            .reqSpec(r -> r.addHeader("api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             //.reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")

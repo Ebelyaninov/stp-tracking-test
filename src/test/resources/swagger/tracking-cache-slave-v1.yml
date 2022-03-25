@@ -10,7 +10,7 @@ info:
 
 
 servers:
-  - url:  http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/cache/v1/
+  - url:  http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/v1
     description: тестовый стенд
   - url: http://trading.tinkoff.local
     description: боевой стенд
