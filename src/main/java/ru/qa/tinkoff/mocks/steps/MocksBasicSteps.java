@@ -284,9 +284,9 @@ public class MocksBasicSteps {
 
 
 
-    public void TradingShedulesExchangeSetTime(String siebelIdMaster, String siebelIdSlave, String investIdMaster,
+    public void TradingShedulesExchangeDefaultTime(String siebelIdMaster, String siebelIdSlave, String investIdMaster,
                                                String investIdSlave, String contractIdMaster, String contractIdSlave, String clientCode, String ticker, String classCode,
-                                               String action, String lotsRequested, String lotsExecuted)
+                                               String action, String lotsRequested, String lotsExecuted, String exchange)
         throws InterruptedException{
 
         //getInvestID
@@ -308,7 +308,7 @@ public class MocksBasicSteps {
         //очищаем расписание
         tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         //создаём расписание
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeSetTime("SPB_MORNING_WEEKEND"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeDefaultTime(exchange));
 
         //Создаем цены в MD
         String tickerAndClassCode = ticker + "_" + classCode;
