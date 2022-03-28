@@ -28,5 +28,9 @@ public class StpMockSlaveDate {
     public String contractIdSlaveOrder = "2011514581";
     public String clientCodeSlaveOrder = "770001454000";
 
+    public String investIdSlaveSynchronizePositionResolver = "7ca7f018-d0ad-481c-87cb-5ddb3190bc73";
+    public String contractIdSlaveSynchronizePositionResolver = "2000010575";
+    public String clientCodeSynchronizePositionResolver = "NEI927787185";
+
 
 }
