@@ -1,6 +1,7 @@
 package ru.qa.tinkoff.investTracking.services;
 
 import com.datastax.driver.core.querybuilder.Delete;
+import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
@@ -130,4 +131,18 @@ public class MasterPortfolioValueDao {
             masterPortfolioValue.getMinimumValue(),
             masterPortfolioValue.getValue());
     }
+
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public MasterPortfolioValue getMasterPortfolioValueByStrategyIdAndCut(UUID strategyId, Date start) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "and cut > ?";
+
+        return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId, start);
+
+    }
+
 }
