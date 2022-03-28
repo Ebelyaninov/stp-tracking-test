@@ -36,6 +36,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -671,7 +672,169 @@ public class CalculateMasterPortfolioValueTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1762482")
+    @DisplayName("1762482 CalculateMasterPortfolioValue. Найдена запись в таблице master_portfolio_value. Minimum_value заполнен.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
+    void C1762482() {
+        BigDecimal minPriceIncrement = new BigDecimal("0.001");
+        String baseMoney = "119335.55";
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // cоздаем записи по портфелям
+        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
+        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
+        steps.createMasterPortfolioTwoPosition(20, 3, "119335.55", contractIdMaster, strategyId);
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //добавляем запись MasterPortfolioValue
+        createMasterPortfolioValue(35, 5, strategyId, new BigDecimal(1000), new BigDecimal(1500));
+        //создаем команду CALCULATE
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_VALUE,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateFireg = fmtFireg.format(cutTime);
+        // формируем список позиций для запроса prices MD
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        //вызываем метод MD и сохраняем prices в Map
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
+        // получаем данные для расчета по облигациям
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
+        //выполняем расчеты стоимости портфеля
+        BigDecimal valuePos1 = BigDecimal.ZERO;
+        BigDecimal valuePos2 = BigDecimal.ZERO;
+        Iterator it = pricesPos.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
+            }
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
+                String priceTs = pair.getValue().toString();
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
+            }
+        }
+        BigDecimal valuePortfolio = valuePos1.add(valuePos2)
+            .add(new BigDecimal(baseMoney));
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        Date start = Date.from(cutTime.minusDays(1).toInstant());
+        // получаем запись в masterPortfolioValue
+        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+        // проверяем данные записи
+        assertThat("minimum_value", masterPortfolioValue.getMinimumValue().intValue(), is(1000));
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1764406")
+    @DisplayName("1764406 CalculateMasterPortfolioValue. Не найдена запись в таблице master_portfolio_value. Minimum_value не заполнен.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
+    void C1764406() {
+        BigDecimal minPriceIncrement = new BigDecimal("0.001");
+        String baseMoney = "119335.55";
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // cоздаем записи по портфелям
+        steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
+        steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
+        steps.createMasterPortfolioTwoPosition(20, 3, "119335.55", contractIdMaster, strategyId);
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду CALCULATE
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_VALUE,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateFireg = fmtFireg.format(cutTime);
+        // формируем список позиций для запроса prices MD
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        //вызываем метод MD и сохраняем prices в Map
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
+        // получаем данные для расчета по облигациям
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
+        //выполняем расчеты стоимости портфеля
+        BigDecimal valuePos1 = BigDecimal.ZERO;
+        BigDecimal valuePos2 = BigDecimal.ZERO;
+        Iterator it = pricesPos.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            if (pair.getKey().equals(instrument.instrumentSBER)) {
+                valuePos1 = new BigDecimal(steps.quantitySBER).multiply((BigDecimal) pair.getValue());
+            }
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
+                String priceTs = pair.getValue().toString();
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
+            }
+        }
+        BigDecimal valuePortfolio = valuePos1.add(valuePos2)
+            .add(new BigDecimal(baseMoney));
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        Date start = Date.from(cutTime.minusDays(1).toInstant());
+        Integer minValue = null;
+        // получаем запись в masterPortfolioValue
+        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+        // проверяем данные записи
+        assertThat("minimum_value", masterPortfolioValue.getMinimumValue(), is(minValue));
+    }
+
+
     //методы для работы тестов**********************************************************************
+
+    @SneakyThrows
+    void createMasterPortfolioValue(int minusDays, int minusHours, UUID strategyId,
+                                    BigDecimal minimumValue, BigDecimal value) {
+
+        masterPortfolioValue = MasterPortfolioValue.builder()
+            .strategyId(strategyId)
+            .cut(Date.from(OffsetDateTime.now().minusDays(minusDays).minusHours(minusHours).toInstant()))
+            .minimumValue(minimumValue)
+            .value(value)
+            .build();
+        masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
+
+    }
+
+
     @Step("Создаем одну позицию в портфеле мастера в табл. master_portfolio: ")
     List getPosListOne(String ticker, String tradingClearingAccount, String quantity,
                        Tracking.Portfolio.Position positionAction, Date date) {

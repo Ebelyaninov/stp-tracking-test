@@ -15,6 +15,6 @@ import java.util.UUID;
 public class MasterPortfolioValue {
     private UUID strategyId;
     private Date cut;
-    private BigDecimal value;
     private BigDecimal minimumValue;
+    private BigDecimal value;
 }
