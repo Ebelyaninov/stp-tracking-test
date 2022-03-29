@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -61,7 +62,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleInitializeCommandErrorTest {
 
@@ -86,18 +88,25 @@ public class HandleInitializeCommandErrorTest {
     @Autowired
     StpSiebel stpSiebel;
 
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
 
     MasterPortfolio masterPortfolio;
     String contractId;
     UUID strategyId;
     String siebelIdMaster;
+    String title;
+    String description;
+    UUID investId;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        title = "Autotest " + String.valueOf(randomNumber);
+        description = "new test стратегия autotest";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
 
     @AfterEach
@@ -130,18 +139,6 @@ public class HandleInitializeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
     void C640030() {
         strategyId = UUID.randomUUID();
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе активная
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -171,13 +168,6 @@ public class HandleInitializeCommandErrorTest {
     @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
     void C640028() {
         strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //формируем событие для топика kafka tracking.master.command
         long unscaled = 4800000;
         int scale = 1;
