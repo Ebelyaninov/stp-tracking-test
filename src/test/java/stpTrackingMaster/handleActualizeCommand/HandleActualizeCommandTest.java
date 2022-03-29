@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -68,7 +69,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleActualizeCommandTest {
     @Autowired
@@ -98,8 +100,6 @@ public class HandleActualizeCommandTest {
     @Autowired
     StpSiebel stpSiebel;
 
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     MasterPortfolio masterPortfolio;
     MasterSignal masterSignal;
@@ -117,8 +117,15 @@ public class HandleActualizeCommandTest {
 
     String tickerPos = "MTS0620";
     String tradingClearingAccountPos = "TKCBM_TCAB";
-
+    String title;
+    String description;
     UUID strategyId;
+    UUID investIdMaster;
+    UUID investIdSlaveActiveSubscription;
+    String contractIdSlaveActiveSubscription;
+    UUID investIdSlaveBlockedSubscription;
+    String contractIdSlaveBlockedSubscription;
+    UUID investIdSlave;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -126,7 +133,24 @@ public class HandleActualizeCommandTest {
         siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
         siebelIdSlaveActive = stpSiebel.siebelIdSlaveActiveStpTrackingMaster;
         siebelIdSlaveBlocked = stpSiebel.siebelIdSlaveBlockedStpTrackingMaster;
-
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        title = "Autotest " + String.valueOf(randomNumber);
+        description = "new test стратегия autotest";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slaveActiveSubscription в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveActive =steps.getBrokerAccounts(siebelIdSlaveActive);
+        investIdSlaveActiveSubscription = resAccountSlaveActive.getInvestId();
+        contractIdSlaveActiveSubscription = resAccountSlaveActive.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slaveBlockedSubscription в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveBlockedSubscription = steps.getBrokerAccounts(siebelIdSlaveBlocked);
+        investIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getInvestId();
+        contractIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
 
     @AfterEach
@@ -182,33 +206,11 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662388() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -274,34 +276,12 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719882() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         Double dynamicLimitQuantity = 100d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -369,34 +349,12 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C720132() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         Double dynamicLimitQuantity = 0d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -469,32 +427,10 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663357() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -573,24 +509,11 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663495() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -662,32 +585,10 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C666901() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 2;
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlave)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -763,43 +664,11 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1244154() {
-
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdMaster)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slaveActiveSubscription в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlaveActive = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlaveActive)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlaveActiveSubscription = resAccountSlaveActive.getInvestId();
-        String contractIdSlaveActiveSubscription = resAccountSlaveActive.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slaveBlockedSubscription в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlaveBlockedSubscription = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(siebelIdSlaveBlocked)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getInvestId();
-        String contractIdSlaveBlockedSubscription = resAccountSlaveBlockedSubscription.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -884,18 +753,10 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324954() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 1;
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountSlave.getInvestId();
-        contractIdMaster = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -943,18 +804,10 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324919() {
-
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 1;
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountSlave.getInvestId();
-        contractIdMaster = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,

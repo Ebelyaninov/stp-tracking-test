@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
+import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
@@ -54,14 +56,8 @@ public class StpTrackingMasterSteps {
     private final ExchangePositionService exchangePositionService;
     private final ByteArrayReceiverService kafkaReceiver;
     private final StringToByteSenderService kafkaSender;
-
-
-    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
-
-    ExchangePositionApi exchangePositionApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.Config.apiConfig()).exchangePosition();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
-        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
+    private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    private final ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -138,7 +134,7 @@ public class StpTrackingMasterSteps {
             createExPosition.setTrackingAllowed(trackingAllowed);
             createExPosition.setTradingClearingAccount(tradingClearingAccount);
             //вызываем метод createExchangePosition
-            exchangePositionApi.createExchangePosition()
+            exchangePositionApiAdminCreator.get().createExchangePosition()
                 .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
@@ -391,7 +387,7 @@ public class StpTrackingMasterSteps {
     }
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
-        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
