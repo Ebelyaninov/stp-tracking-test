@@ -244,7 +244,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
         idempotencyKey = UUID.randomUUID();
         id = UUID.randomUUID();
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -301,7 +301,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378814() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -363,7 +363,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378788() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -417,7 +417,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378818() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -473,7 +473,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1578634(Byte state) {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -539,7 +539,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378815() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -599,7 +599,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378834() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -654,7 +654,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378822() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
@@ -711,7 +711,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378786() {
         //создаем клиента, контракт и стратегию
-        steps.createClientWintContractAndStrategy(investIdMaster,
+        steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
