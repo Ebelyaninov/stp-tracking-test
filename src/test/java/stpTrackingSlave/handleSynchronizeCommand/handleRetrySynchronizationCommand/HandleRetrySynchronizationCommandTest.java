@@ -111,7 +111,7 @@ public class HandleRetrySynchronizationCommandTest {
     UUID strategyId;
     long subscriptionId;
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "1-556WLMK";
+    String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
     public String value;
 
     String description = "description test стратегия autotest update adjust base currency";
@@ -874,26 +874,28 @@ public class HandleRetrySynchronizationCommandTest {
     }
 
 
-    private static Stream<Arguments> provideOperationAndAction() {
+    private static Stream<Arguments> provideOperationAndActionAndState() {
         return Stream.of(
-            Arguments.of(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION, 0),
-            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1)
+            Arguments.of(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION, 0, null),
+            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1, null),
+            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1, (byte) 2)
         );
     }
 
     @SneakyThrows
     @ParameterizedTest
-    @MethodSource("provideOperationAndAction")
+    @MethodSource("provideOperationAndActionAndState")
     @AllureId("1575128")
-    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)")
+    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)" +
+                 "C1773720. Нашли запись в таблице slave_order_2 и slave_order_2.state = 2 -> выставляем ту же заявку.")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
-    void C1575128(Tracking.PortfolioCommand.Operation command, int action) {
+    void C1575128(Tracking.PortfolioCommand.Operation command, int action, Byte state) {
         //Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION;
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
-        BigDecimal orderQty = new BigDecimal("33");
+        BigDecimal orderQty = new BigDecimal("100");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
         //получаем данные по клиенту master в api сервиса счетов
@@ -929,8 +931,8 @@ public class HandleRetrySynchronizationCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
-            action, instrument.classCodeAAPL,3, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            action, instrument.classCodeAAPL,33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
+            state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
         if (command == Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION) {
             steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
@@ -947,7 +949,8 @@ public class HandleRetrySynchronizationCommandTest {
         assertThat("action != " + action, getSlaveOrder.get().getAction().toString(), is(String.valueOf(action)));
         assertThat("getQuantity != " + orderQty, getSlaveOrder.get().getQuantity().toString(), is(orderQty.toString()));
         assertThat("getPrice != " + priceOrder, getSlaveOrder.get().getPrice().toString(), is(priceOrder.toString()));
-        assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("2"));
+        assertThat("compared_to_master_version  != выставленой заявке 33", getSlaveOrder.get().getComparedToMasterVersion().toString(), is("33"));
+        assertThat("getAttemptsCount != 2", getSlaveOrder.get().getAttemptsCount().toString(), is("2"));
         assertThat("getIdempotencyKey != " + orderKey, getSlaveOrder.get().getIdempotencyKey(), is(orderKey));
         assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
         assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
@@ -1116,7 +1119,8 @@ public class HandleRetrySynchronizationCommandTest {
     @NullAndEmptySource
     private Stream<Arguments> provideActionTickerTradingClearingAccountAndAttemptsCount() {
         return Stream.of(
-            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2, null, null),
+            //Логика с Портфель синхронизируется - выставляем ту же заявку,
+            //Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2, null, null),
             Arguments.of(1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1, "0", 3),
             Arguments.of(0, instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1, "1", 3),
             Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1, "1", 3)
