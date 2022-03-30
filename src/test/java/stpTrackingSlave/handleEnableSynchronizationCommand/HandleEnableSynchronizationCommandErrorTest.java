@@ -10,6 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -39,6 +44,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -458,12 +464,14 @@ public class HandleEnableSynchronizationCommandErrorTest {
 
 
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(bytes = 2)
     @AllureId("1578634")
-    @DisplayName("1578634 Определяем, находится ли портфель slave'а в процессе синхронизации. order.state = null")
+    @DisplayName("1578634 Определяем, находится ли портфель slave'а в процессе синхронизации. order.state = null или order.state = 2")
     @Subfeature("Альтернативные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
-    void C1578634() {
+    void C1578634(Byte state) {
         //создаем клиента, контракт и стратегию
         steps.createClientWintContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
@@ -491,7 +499,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(3), null, instrument.tickerFB, instrument.tradingClearingAccountFB);
+            id, new BigDecimal(500), new BigDecimal(3), state, instrument.tickerFB, instrument.tradingClearingAccountFB);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -516,7 +524,7 @@ public class HandleEnableSynchronizationCommandErrorTest {
         assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerFB));
         assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
         assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("state заполнен", slaveOrder.getState(), is(nullValue()));
+        assertThat("state заполнен", slaveOrder.getState(), is(state));
         assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(1));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
 
