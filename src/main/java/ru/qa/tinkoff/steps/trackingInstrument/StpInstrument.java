@@ -213,6 +213,7 @@ public class StpInstrument {
     public String tickerHKD = "HKDRUB";
     public String tradingClearingAccountHKD = "MB9885503216";
     public String classCodeHKD = "EES_CETS";
+    public String instrumentHKD = tickerHKD + "_" + classCodeHKD;
 
     //нет в кеше exchangePositionCache
     public String tickerTEST = "TEST";
