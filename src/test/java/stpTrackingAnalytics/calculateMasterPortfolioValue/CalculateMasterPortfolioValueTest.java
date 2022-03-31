@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
@@ -65,8 +66,8 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
-
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateMasterPortfolioValueTest {
     @Autowired
@@ -102,7 +103,6 @@ public class CalculateMasterPortfolioValueTest {
 
     MasterPortfolioValue masterPortfolioValue;
     String contractIdMaster;
-   //String SIEBEL_ID_MASTER = "5-192WBUXCI";
     UUID strategyId;
     UUID investIdMaster;
 

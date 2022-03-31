@@ -7,6 +7,7 @@ import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -69,7 +71,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateMasterPortfolioTopPositionsTest {
 
@@ -134,6 +137,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        await().pollDelay(Duration.ofSeconds(1));
         checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
@@ -250,6 +254,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioTopPositions(strategyId);
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao

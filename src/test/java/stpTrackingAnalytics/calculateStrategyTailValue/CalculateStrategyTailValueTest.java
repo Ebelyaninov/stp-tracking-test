@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
@@ -73,7 +74,8 @@ import static org.junit.Assert.assertEquals;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateStrategyTailValueTest {
     @Autowired
@@ -364,7 +366,7 @@ public class CalculateStrategyTailValueTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcriptionDeleteOrDraft(investIdSlave, contractIdSlave, null, ContractState.untracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.untracked,
             strategyId, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         createSlavePortfolio();
@@ -440,7 +442,7 @@ public class CalculateStrategyTailValueTest {
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcriptionDeleteOrDraft(investIdSlave, contractIdSlave, null, ContractState.untracked,
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.untracked,
             strategyId, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         createSlavePortfolio();

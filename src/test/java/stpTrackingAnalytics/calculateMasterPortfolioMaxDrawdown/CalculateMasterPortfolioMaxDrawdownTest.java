@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
@@ -67,7 +68,8 @@ import static org.hamcrest.Matchers.notNullValue;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class CalculateMasterPortfolioMaxDrawdownTest {
@@ -106,9 +108,18 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
     MasterPortfolioMaxDrawdown masterPortfolioMaxDrawdown;
+    UUID investIdMaster;
 
     UUID strategyId;
     String description = "new test стратегия autotest";
+
+    @BeforeAll
+    void getDataFromAccount (){
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+    }
 
     @AfterEach
     void deleteClient() {
@@ -153,10 +164,6 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983303(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -204,7 +211,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -221,10 +228,6 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983084(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -274,7 +277,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -291,10 +294,6 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C983216(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -325,7 +324,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             .collect(Collectors.toList());
         BigDecimal maxDrawdown = BigDecimal.ZERO;
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -342,10 +341,6 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
     void C980851(Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -389,7 +384,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500)).until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);

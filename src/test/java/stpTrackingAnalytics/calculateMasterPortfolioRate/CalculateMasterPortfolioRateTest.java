@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioRate;
@@ -69,8 +70,8 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
-
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateMasterPortfolioRateTest {
     @Autowired
@@ -512,6 +513,7 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioRate(strategyId);
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
@@ -706,6 +708,7 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioRate(strategyId);
         await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
@@ -781,6 +784,7 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioRate(strategyId);
         await().atMost(Duration.ofSeconds(5)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
