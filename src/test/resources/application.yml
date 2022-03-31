@@ -92,6 +92,7 @@ app:
     tracking-cache-api-base-url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-social-strategy-base-url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
     tracking-admin-api-base-url: https://invest-qa.tinkoff.ru/tracking/admin/v1/
+    trading-fireg-api-base-url: http://trading-test.tinkoff.ru/v1/fireg
 
 
 #      investTracking:

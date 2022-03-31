@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailDiffRate;
@@ -68,7 +69,8 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateStrategyTailDiffRateTest {
     @Autowired
