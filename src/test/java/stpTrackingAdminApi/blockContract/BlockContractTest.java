@@ -14,22 +14,28 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -55,7 +61,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class BlockContractTest {
@@ -76,9 +84,8 @@ public class BlockContractTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpTrackingAdminSteps adminSteps;
-
-    String siebelIdMaster = "5-CQNPKPNH";
-    String siebelIdSlave = "5-22NDYVFEE";
+    @Autowired
+    StpSiebel siebel;
 
     String contractIdSlave;
     String contractIdMaster;
@@ -93,11 +100,11 @@ public class BlockContractTest {
     @BeforeAll
     void getDataClients() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -148,9 +155,9 @@ public class BlockContractTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288706() {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
@@ -165,8 +172,8 @@ public class BlockContractTest {
         checkEventParams(event, "UPDATED", contractIdMaster, "UNTRACKED", true);
         //Находим в БД автоследования контракт и проверяем его поля
         checkContractParamDB(contractIdMaster, investIdMaster, null, "untracked", null, true);
-
     }
+
 
     @SneakyThrows
     @Test
@@ -176,12 +183,11 @@ public class BlockContractTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288017() {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId)
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract
@@ -208,12 +214,12 @@ public class BlockContractTest {
     @Description("Метод для наложения технической блокировки на договор ведомого.")
     void C1288490() {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,null, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //Вызываем метод blockContract 2 раза
@@ -233,32 +239,25 @@ public class BlockContractTest {
     }
 
 
-
-
-
     //Проверяем параметры события
     void checkEventParams(Tracking.Event event, String action, String ContractIdSlave, String state, boolean blocked) {
         assertThat("Action события не равен", event.getAction().toString(), is(action));
         assertThat("ID договора не равен", (event.getContract().getId()), is(ContractIdSlave));
         assertThat("State не равен Tracked", (event.getContract().getState().toString()), is(state));
         assertThat("Blocked не равен true", (event.getContract().getBlocked()), is(true));
-
     }
 
     void checkContractParamDB(String contractId, UUID clientId, String role, String state, UUID strategyId, boolean blocked ) {
         Contract getDataFromContract = contractService.getContract(contractId);
         assertThat("ContractId не равен", getDataFromContract.getId(), is(contractId));
         assertThat("номер клиента не равен", getDataFromContract.getClientId(), is(clientId));
-//        assertThat("роль в контракте не равна", getDataFromContract.getRole(), is(role));
         assertThat("state не равен", getDataFromContract.getState().toString(), is(state));
         assertThat("ID стратегии не равно", getDataFromContract.getStrategyId(), is(strategyId));
         assertThat("статус блокировки не равен", getDataFromContract.getBlocked(), is(true));
     }
 
     public static int randomNumber(int min, int max) {
-
         int number = min + (int) (Math.random() * max);
-
         return number;
     }
 }

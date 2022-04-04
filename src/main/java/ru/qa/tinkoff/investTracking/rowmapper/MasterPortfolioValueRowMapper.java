@@ -14,6 +14,7 @@ public class MasterPortfolioValueRowMapper implements RowMapper<MasterPortfolioV
             .strategyId(row.getUUID("strategy_id"))
             .cut(row.get("cut", java.util.Date.class))
             .value(row.getDecimal("value"))
+            .minimumValue(row.getDecimal("minimum_value"))
             .build();
     }
 }

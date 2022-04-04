@@ -1,6 +1,7 @@
 package ru.qa.tinkoff.investTracking.services;
 
 import com.datastax.driver.core.querybuilder.Delete;
+import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,17 @@ public class MasterPortfolioValueDao {
             "from invest_tracking.master_portfolio_value " +
             "where strategy_id = ? ";
         return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId);
+    }
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public List<MasterPortfolioValue> getListMasterPortfolioValueByStrategyIdAndSortedByCut(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "ORDER BY cut DESC";
+        List<MasterPortfolioValue> result = cqlTemplate.query(query, masterPortfolioValueRowMapper, strategyId);
+        return result;
     }
 
     public List<Pair<LocalDateTime, BigDecimal>> getMasterPortfolioValuesByStrategyId(UUID strategyId, Date start, Date end) {
@@ -109,13 +121,28 @@ public class MasterPortfolioValueDao {
     @Step("Добавляем запись в master_portfolio_value")
     @SneakyThrows
     public void insertIntoMasterPortfolioValue(MasterPortfolioValue masterPortfolioValue) {
-        String query = "insert into invest_tracking.master_portfolio_value (strategy_id, cut, value) " +
-            "values (?, ?, ?)";
+        String query = "insert into invest_tracking.master_portfolio_value (strategy_id, cut, minimum_value, value) " +
+            "values (?, ?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
         cqlTemplate.execute(query,
             masterPortfolioValue.getStrategyId(),
             timestamp,
+            masterPortfolioValue.getMinimumValue(),
             masterPortfolioValue.getValue());
     }
+
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public MasterPortfolioValue getMasterPortfolioValueByStrategyIdAndCut(UUID strategyId, Date start) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "and cut > ?";
+
+        return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId, start);
+
+    }
+
 }

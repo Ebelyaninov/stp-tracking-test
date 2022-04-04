@@ -17,11 +17,13 @@ public class StpInstrument {
     public String briefNameAAPL = "Apple";
     public String imageAAPL = "US0378331005.png";
     public String currencyAAPL = "usd";
+    public String instrumentAAPL = tickerAAPL + "_" + classCodeAAPL;
 
 
     public String tickerABBV = "ABBV";
     public String tradingClearingAccountABBV = "TKCBM_TCAB";
     public String classCodeABBV = "SPBXM";
+    public String instrumentABBV = tickerABBV + "_" + classCodeABBV;
 
     public String tickerSBER = "SBER";
     public String tradingClearingAccountSBER = "L01+00002F00";
@@ -160,7 +162,9 @@ public class StpInstrument {
 
     public String tickerALFAperp = "ALFAperp";
     public String tradingClearingAccountALFAperp = "TKCBM_TCAB";
-    public String instrumentALFAperp = "ALFAperp_SPBBND";
+    public String classCodeALFAperp = "SPBBND";
+    public String instrumentALFAperp = tickerALFAperp + "_" + classCodeALFAperp;
+
 
     public String tickerXS1589324075 = "XS1589324075";
     public String tradingClearingAccountXS1589324075 = "L01+00000F00";
@@ -187,10 +191,13 @@ public class StpInstrument {
     public String tickerUSDRUB = "USDRUB";
     public String tradingClearingAccountUSDRUB = "MB9885503216";
     public String classCodeUSDRUB = "EES_CETS";
+    public String instrumentUSDRUB = tickerUSDRUB + "_" + classCodeUSDRUB;
+
 
     public String tickerGBP = "GBPRUB";
     public String tradingClearingAccountGBP = "MB9885503216";
     public String classCodeGBP = "EES_CETS";
+    public String instrumentGBP = tickerGBP + "_" + classCodeGBP;
 
     public String tickerJPY = "JPYRUB";
     public String tradingClearingAccountJPY = "MB9885503216";
@@ -206,6 +213,7 @@ public class StpInstrument {
     public String tickerHKD = "HKDRUB";
     public String tradingClearingAccountHKD = "MB9885503216";
     public String classCodeHKD = "EES_CETS";
+    public String instrumentHKD = tickerHKD + "_" + classCodeHKD;
 
     //нет в кеше exchangePositionCache
     public String tickerTEST = "TEST";
@@ -237,5 +245,21 @@ public class StpInstrument {
     public String tickerQCOM = "QCOM";
     public String tradingClearingAccountQCOM = "L01+00000SPB";
     public String classCodeQCOM = "SPBXM";
+
+
+    public String tickerTUSD = "TUSD";
+    public String tradingClearingAccountTUSD = "L01+00000F00";
+    public String classCodeTUSD = "TQTD";
+    public String instrumentTUSD = tickerTUSD + "_" + classCodeTUSD;
+
+    public String tickerTECH = "TECH";
+    public String tradingClearingAccountTECH = "L01+00000SPB";
+    public String classCodeTECH = "SPBXM";
+    public String instrumentTECH = tickerTECH + "_" + classCodeTECH;
+
+    public String tickerBANEP = "BANEP";
+    public String tradingClearingAccountBANEP = "L01+00000F00";
+
+
 
 }

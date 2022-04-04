@@ -36,6 +36,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -72,6 +74,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     KafkaAutoConfiguration.class
 
 })
@@ -100,6 +103,9 @@ public class RouteRetryCommandTest {
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
+    @Autowired
+    StpSiebel siebel;
+
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -113,8 +119,7 @@ public class RouteRetryCommandTest {
     String contractIdMaster;
     String contractIdSlave = "2013919085";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "4-1V1UVPX8";
-    String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
+
     String ticker = "ABBV";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
@@ -185,7 +190,7 @@ public class RouteRetryCommandTest {
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
+            .siebelIdPath(siebel.siebelMasterRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -193,7 +198,7 @@ public class RouteRetryCommandTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .siebelIdPath(siebel.siebelSlaveRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -261,9 +266,14 @@ public class RouteRetryCommandTest {
         return Stream.of(
             Arguments.of("SPB", "ABBV", "TKCBM_TCAB", TRACKING_SPB_RETRYER_COMMAND, "90.18"),
             Arguments.of("MOEX_PLUS", "FXRB", "L01+00002F00", TRACKING_MOEXPLUS_RETRYER_COMMAND, "1826"),
-            Arguments.of("MOEX", "YNDX", "L01+00002F00", TRACKING_MOEX_RETRYER_COMMAND, "5220"),
+            Arguments.of("MOEX", "MSTT", "L01+00000F00", TRACKING_MOEX_RETRYER_COMMAND, "84.4"),
             Arguments.of("SPB_MORNING", "INTC", "TKCBM_TCAB", TRACKING_SPB_MORNING_RETRYER_COMMAND, "142.55"),
-            Arguments.of("FX", "USD000UTSTOM", "MB9885503216", TRACKING_FX_RETRYER_COMMAND, "74.2575")
+            Arguments.of("FX", "USD000UTSTOM", "MB9885503216", TRACKING_FX_RETRYER_COMMAND, "74.2575"),
+            Arguments.of("SPB_MORNING_WEEKEND", "FB", "TKCBM_TCAB", TRACKING_SPB_MORNING_WEEKEND_RETRYER_COMMAND, "500"),
+            Arguments.of("SPB_WEEKEND", "SNAP", "L01+00000SPB", TRACKING_SPB_WEEKEND_RETRYER_COMMAND, "40"),
+            Arguments.of("SPB_RU_MORNING", "FGEN", "TKCBM_TCAB", TRACKING_SPB_RU_MORNING_RETRYER_COMMAND, "63.2"),
+            Arguments.of("MOEX_MORNING", "YNDX", "Y02+00001F00", TRACKING_MOEX_MORNING_RETRYER_COMMAND, "3517.6"),
+            Arguments.of("FX_WEEKEND", "USDRUB", "MB9885503216", TRACKING_FX_WEEKEND_RETRYER_COMMAND, "120.38")
         );
     }
 
@@ -284,7 +294,7 @@ public class RouteRetryCommandTest {
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
+            .siebelIdPath(siebel.siebelMasterRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -292,7 +302,7 @@ public class RouteRetryCommandTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .siebelIdPath(siebel.siebelSlaveRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))

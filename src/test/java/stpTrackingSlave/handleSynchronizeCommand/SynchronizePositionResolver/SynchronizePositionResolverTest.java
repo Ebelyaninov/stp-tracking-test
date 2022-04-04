@@ -21,9 +21,15 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -63,6 +69,9 @@ import static org.hamcrest.Matchers.notNullValue;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class
 })
 
 public class SynchronizePositionResolverTest {
@@ -92,6 +101,12 @@ public class SynchronizePositionResolverTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate stpMockSlaveDate;
 
 
     SlavePortfolio slavePortfolio;
@@ -102,13 +117,18 @@ public class SynchronizePositionResolverTest {
     String contractIdSlave;
     UUID strategyId;
     long subscriptionId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "5-CQNPKPNH";
+    String SIEBEL_ID_MASTER ;
+    String SIEBEL_ID_SLAVE;
     BigDecimal askPriceAdditionalRate = new BigDecimal("0.002");
 
     String description = "description: autotest by SynchronizePositionResolverTest";
 
     public String value;
+
+    @BeforeAll void createDataForTests() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
+    }
 
     @AfterEach
     void deleteClient() {
@@ -168,10 +188,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("690419")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C690419.SynchronizePositionResolver.Выбор позиции.Обрабатываем позиции.Slave_portfolio_position.quantity_diff < 0")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C690419() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -185,7 +208,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -236,10 +259,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695626")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C695626.SynchronizePositionResolver.Обрабатываем позиции.Slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache = 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695626() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -253,7 +279,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -305,10 +331,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("1323820")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1323820.SynchronizePositionResolver.Обрабатываем позиции.Slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache = 'money'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323820() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -322,7 +351,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -355,12 +384,10 @@ public class SynchronizePositionResolverTest {
         checkComparedToMasterVersion(2);
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         BigDecimal quantityDiff = BigDecimal.ZERO;
-        for (int i = 0; i < slavePortfolio.getPositions().size(); i++) {
-            if (instrument.tickerUSDRUB.equals(slavePortfolio.getPositions().get(i).getTicker())) {
-                quantityDiff = slavePortfolio.getPositions().get(i).getQuantityDiff();
-                break;
-            }
-        }
+        List<SlavePortfolio.Position> positionUSDRUB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerUSDRUB))
+            .collect(Collectors.toList());
+        quantityDiff = positionUSDRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
@@ -372,10 +399,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("1323880")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1323880.SynchronizePositionResolver.Обрабатываем позиции.Slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache = 'money' и 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323880() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -389,7 +419,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -439,10 +469,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("1349227")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("1349227.SynchronizePositionResolver.Обрабатываем позиции.Slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache = 'money' GBP и 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1349227() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -456,7 +489,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -506,10 +539,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695911")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("695911.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций, у которых slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache = 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695911() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -523,7 +559,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -601,10 +637,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695957")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("695957.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций, у которых slave_portfolio_position.quantity_diff < 0 и type из exchangePositionCache != 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695957() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -618,7 +657,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -698,11 +737,14 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695978")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C695978.SynchronizePositionResolver.Обрабатываем позиции. Slave_portfolio_position.quantity_diff > 0 " +
         "и type из exchangePositionCache IN ('bond', 'etf')")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695978() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -716,7 +758,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -767,11 +809,14 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("695986")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("695986.SynchronizePositionResolver. Обрабатываем позиции.Несколько позиций, " +
         "у которых slave_portfolio_position.quantity_diff > 0 и type из exchangePositionCache IN ('bond', 'etf')")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695986() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -785,7 +830,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -879,10 +924,13 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("697301")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("6697301.SynchronizePositionResolver.Обрабатываем позиции. Slave_portfolio_position.quantity_diff > 0 и type = 'share'")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697301() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -896,7 +944,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -989,11 +1037,14 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("697225")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("697225.SynchronizePositionResolver.Обрабатываем позиции.Несколько позиций," +
         " у которых slave_portfolio_position.quantity_diff > 0,первая позиция списка, для покупки которой хватает денег")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697225() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1007,7 +1058,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1082,11 +1133,14 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("1518574")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("1518574.SynchronizePositionResolver.Slave_portfolio_position.quantity_diff > 0" +
         " и slave_portfolio.base_money_position.quantity достаточно для 1 lot первой позиции и 1 lot второй позиции")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1518574() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1100,7 +1154,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1194,11 +1248,14 @@ public class SynchronizePositionResolverTest {
     @SneakyThrows
     @Test
     @AllureId("1695490")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("1695490.SynchronizePositionResolver.Обрабатываем позиции.Slave_portfolio_position.quantity_diff > 0" +
         " выбираем максимальное число лотов, на которое хватает свободных денег")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1695490() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1212,7 +1269,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
@@ -1300,15 +1357,17 @@ public class SynchronizePositionResolverTest {
     }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("1518564")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("1518564.SynchronizePositionResolver. Slave_portfolio_position.quantity_diff > 0 " +
         "и slave_portfolio.base_money_position.quantity не достаточно ни для одной позиции")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1518564() {
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1322,7 +1381,7 @@ public class SynchronizePositionResolverTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре

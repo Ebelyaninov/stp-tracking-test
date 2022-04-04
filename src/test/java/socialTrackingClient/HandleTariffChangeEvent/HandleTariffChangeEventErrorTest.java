@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
@@ -23,7 +24,9 @@ import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -37,6 +40,7 @@ import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
 import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.tariff.ChangeTariff;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -67,12 +71,13 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     KafkaOldConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleTariffChangeEventErrorTest {
 
     UtilsTest utilsTest = new UtilsTest();
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -87,9 +92,11 @@ public class HandleTariffChangeEventErrorTest {
     StrategyService strategyService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String SIEBEL_ID_MASTER = "4-1NLJQ9HH";
-    String SIEBEL_ID_SLAVE = "5-8NL1RLT1";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
     String contractIdMaster;
     String contractIdSlave;
     UUID investIdMaster;
@@ -99,13 +106,14 @@ public class HandleTariffChangeEventErrorTest {
     String description = "new test стратегия autotest";
     OffsetDateTime time = OffsetDateTime.now();
     java.sql.Timestamp startTime = new java.sql.Timestamp(time.toInstant().toEpochMilli());
-
     Subscription subscription;
     Contract contractSlave;
     Client clientSlave;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterForClient;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveForClient;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
@@ -161,9 +169,9 @@ public class HandleTariffChangeEventErrorTest {
     @Description("Обработка событий об изменении тарифа")
     void C1348240() {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем запись о договоре клиента в tracking.contract
         createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.untracked,
             strategyId, SubscriptionStatus.draft,  false, startTime, null);
@@ -206,9 +214,9 @@ public class HandleTariffChangeEventErrorTest {
     @Description("Обработка событий об изменении тарифа")
     void C1348239(SubscriptionStatus subscriptionStatus, ContractState contractState) {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //Добавляем подписку slave
         java.sql.Timestamp endTime = null;
         if (subscriptionStatus.equals(SubscriptionStatus.inactive)){
@@ -248,9 +256,9 @@ public class HandleTariffChangeEventErrorTest {
     @Description("Обработка событий об изменении тарифа")
     void C1692017() {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //Добавляем подписку slave
         clientSlave = clientService.createClient(investIdSlave, ClientStatusType.none, null, ClientRiskProfile.conservative);
         UUID strategyIdBeforeUpdate = UUID.randomUUID();
@@ -301,7 +309,6 @@ public class HandleTariffChangeEventErrorTest {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(null)
             .setBlocked(false);

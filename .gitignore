@@ -13,3 +13,5 @@ build/
 **/build/
 *-dev.yml
 ajcore*.txt
+# Ignore my test documentation
+testMethods

@@ -3,20 +3,16 @@ openapi: 3.0.3
 info:
   title: Tinkoff Investments Tracking cache API
   description: Tracking cache API
-  contact:
-    name: Andrey Belyaev
-    email: an.v.belyaev@tinkoff.ru
   version: 1.0.0
-
-servers:
-  - url:  http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/cache/v1/
-    description: тестовый стенд
-  - url: http://trading.tinkoff.local
-    description: боевой стенд
 
 tags:
   - name: cache
     description: Кэш
+
+servers:
+  - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    description: stp-tracking-api
+
 
 paths:
 

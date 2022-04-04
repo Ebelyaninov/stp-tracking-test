@@ -5,6 +5,7 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailDiffRate;
@@ -25,8 +27,10 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -39,6 +43,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -63,7 +68,9 @@ import static org.hamcrest.Matchers.notNullValue;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateStrategyTailDiffRateTest {
     @Autowired
@@ -96,16 +103,12 @@ public class CalculateStrategyTailDiffRateTest {
     StrategyTailDiffRateDao strategyTailDiffRateDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel siebel;
 
     StrategyTailDiffRate strategyTailDiffRate;
     String contractIdMaster;
     SlavePortfolio slavePortfolio;
-    Client clientSlave;
-    String SIEBEL_ID_MASTER = "5-192WBUXCI";
-
-    String siebelIdSlaveOne = "5-1P87U0B13";
-    String siebelIdSlaveTwo = "5-7ECGV169";
-    String siebelIdSlaveThree = "5-3CGSIDQR";
 
     String contractIdSlaveOne;
     String contractIdSlaveTwo;
@@ -116,11 +119,12 @@ public class CalculateStrategyTailDiffRateTest {
     UUID investIdSlaveThree;
 
     UUID strategyId;
+    UUID investIdMaster;
 
-    String description = "new test стратегия autotest";
+    String description = "autotest CalculateStrategyTailDiffRateTest";
 
 
-    List<Float> strategyTailDiffRateQuantiles = List.of((float) 0.0, (float)0.5, (float)0.9, (float)0.99, (float)1.0);
+    List<Float> strategyTailDiffRateQuantiles = List.of((float) 0.0, (float) 0.5, (float) 0.9, (float) 0.99, (float) 1.0);
 
 
     @AfterEach
@@ -199,13 +203,32 @@ public class CalculateStrategyTailDiffRateTest {
         });
     }
 
+    @BeforeAll
+    void getDataClients() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveOne);
+        investIdSlaveOne = resAccountSlaveOne.getInvestId();
+        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveTwo);
+        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
+        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveThree);
+        investIdSlaveThree = resAccountSlaveThree.getInvestId();
+        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
+
+    }
+
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
             Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
             Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE)
         );
     }
-
 
 
     @SneakyThrows
@@ -216,19 +239,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1530868(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -271,16 +281,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
-
-
 
 
     @SneakyThrows
@@ -292,19 +298,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1532791(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -347,14 +340,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
 
 
     @SneakyThrows
@@ -365,19 +356,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1530698(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -396,13 +374,13 @@ public class CalculateStrategyTailDiffRateTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Map<Float, Float> result = new LinkedHashMap<>();
-        result.put((float)0.0, (float)0.0);
-        result.put((float)0.5, (float)0.0);
-        result.put((float)0.9, (float)0.0);
-        result.put((float)0.99, (float)0.0);
-        result.put((float)1.0, (float)0.0);
+        result.put((float) 0.0, (float) 0.0);
+        result.put((float) 0.5, (float) 0.0);
+        result.put((float) 0.9, (float) 0.0);
+        result.put((float) 0.99, (float) 0.0);
+        result.put((float) 1.0, (float) 0.0);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -416,19 +394,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1531377(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -470,9 +435,9 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
 //        diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -486,19 +451,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1531774(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -541,9 +493,9 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -557,19 +509,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1534083(Tracking.AnalyticsCommand.Operation operation) {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -612,14 +551,12 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
-
-
 
 
     @SneakyThrows
@@ -630,19 +567,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1533651() {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -677,13 +601,13 @@ public class CalculateStrategyTailDiffRateTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         Map<Float, Float> result = new LinkedHashMap<>();
-        result.put((float)0.0, (float)0.01);
-        result.put((float)0.5, (float)0.1);
-        result.put((float)0.9, (float)0.55);
-        result.put((float)0.99, (float)0.55);
-        result.put((float)1.0, (float)0.55);
+        result.put((float) 0.0, (float) 0.01);
+        result.put((float) 0.5, (float) 0.1);
+        result.put((float) 0.9, (float) 0.55);
+        result.put((float) 0.99, (float) 0.55);
+        result.put((float) 1.0, (float) 0.55);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -697,19 +621,6 @@ public class CalculateStrategyTailDiffRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
     void C1533734() {
-        strategyId = UUID.randomUUID();
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebelIdSlaveOne);
-        investIdSlaveOne = resAccountSlaveOne.getInvestId();
-        contractIdSlaveOne = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveTwo = steps.getBrokerAccounts(siebelIdSlaveTwo);
-        investIdSlaveTwo = resAccountSlaveTwo.getInvestId();
-        contractIdSlaveTwo = resAccountSlaveTwo.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebelIdSlaveThree);
-        investIdSlaveThree = resAccountSlaveThree.getInvestId();
-        contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -753,19 +664,15 @@ public class CalculateStrategyTailDiffRateTest {
         diffRates.add(portfolioDiffRateTwo.floatValue());
         diffRates.add(portfolioDiffRateThree.floatValue());
         //рассчитываем кривизну и записываем результат
-        Map<Float, Float> result =  calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
+        Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
         checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
 
 
-
-
-
-
-
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioOne() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -787,9 +694,9 @@ public class CalculateStrategyTailDiffRateTest {
             baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
         String baseMoneySlaveThree = "871.169";
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
-            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()),instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            "50", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             "3", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            "2", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            "2", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-9.2838"), new BigDecimal("-3.0003"),
             new BigDecimal("-1.9935"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveOne, strategyId, 4, 4,
@@ -797,8 +704,7 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
-
-
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioTwo() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -822,13 +728,14 @@ public class CalculateStrategyTailDiffRateTest {
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.99"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveTwo, strategyId, 4, 4,
             baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
     }
 
+    @Step("Создаем портфель Slave в табл. slave_portfolio: ")
     void createSlavePortfolioThree() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
         Date date = Date.from(utc.toInstant());
@@ -852,7 +759,7 @@ public class CalculateStrategyTailDiffRateTest {
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePos(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()),  new BigDecimal("321.6"),
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), new BigDecimal("321.6"),
             new BigDecimal("106.777"), new BigDecimal("6550"), new BigDecimal("-0.1247"), new BigDecimal("-0.0069"),
             new BigDecimal("0.33"));
         steps.createSlavePortfolioWithPosition(contractIdSlaveThree, strategyId, 4, 4,
@@ -879,9 +786,8 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
-
-
-    BigDecimal getPortfolioDiffRate (String contractIdSlave, UUID strategyId, int version ) {
+    @Step("Рассчитываем portfolioDiffRate для каждого подписчика: ")
+    BigDecimal getPortfolioDiffRate(String contractIdSlave, UUID strategyId, int version) {
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, version);
         BigDecimal portfolioValue = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal portfolioDiffRate = BigDecimal.ZERO;
@@ -902,6 +808,7 @@ public class CalculateStrategyTailDiffRateTest {
     }
 
 
+    @Step("Рассчитываем кривизну портфеля и записываем результат: ")
     public Map<Float, Float> calculateQuantiles(List<Float> probabilities, List<Float> data) {
         if (data == null || data.isEmpty()) {
             throw new IllegalArgumentException("Data cannot be null or empty");
@@ -947,11 +854,11 @@ public class CalculateStrategyTailDiffRateTest {
 
     void createDateStrategyTailDiffRate(UUID strategyId, Date date) {
         Map<Float, Float> values = new LinkedHashMap<>();
-        values.put((float)0.0, (float)0.01);
-        values.put((float)0.5, (float)0.1);
-        values.put((float)0.9, (float)0.55);
-        values.put((float)0.99, (float)0.55);
-        values.put((float)1.0, (float)0.55);
+        values.put((float) 0.0, (float) 0.01);
+        values.put((float) 0.5, (float) 0.1);
+        values.put((float) 0.9, (float) 0.55);
+        values.put((float) 0.99, (float) 0.55);
+        values.put((float) 1.0, (float) 0.55);
         strategyTailDiffRate = StrategyTailDiffRate.builder()
             .strategyId(strategyId)
             .cut(date)
@@ -959,10 +866,6 @@ public class CalculateStrategyTailDiffRateTest {
             .build();
         strategyTailDiffRateDao.insertIntoStrategyTailDiffRate(strategyTailDiffRate);
     }
-
-
-
-
 
 
 }

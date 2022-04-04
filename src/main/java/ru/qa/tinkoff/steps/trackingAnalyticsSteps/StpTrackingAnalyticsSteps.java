@@ -11,6 +11,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.BrokerAccountApiCreator;
+import ru.qa.tinkoff.creator.FiregInstrumentsApiCreator;
+import ru.qa.tinkoff.creator.PricesMDApiCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -51,7 +54,9 @@ public class StpTrackingAnalyticsSteps {
     private final ClientService clientService;
     private final SubscriptionService subscriptionService;
     private final SlavePortfolioDao slavePortfolioDao;
-
+    private final PricesMDApiCreator pricesMDApiCreator;
+    private final BrokerAccountApiCreator brokerAccountApiCreator;
+    private final FiregInstrumentsApiCreator firegInstrumentsApiCreator;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -63,108 +68,20 @@ public class StpTrackingAnalyticsSteps {
     public Contract contract;
 
 
-
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
     @Autowired(required = false)
     StpInstrument instrument;
 
 
-//    public String ticker1 = "SBER";
-//    public String tradingClearingAccount1 = "L01+00002F00";
-
     public String quantitySBER = "50";
-
-//    public String sector1 = "financial";
-//    public String type1 = "share";
-//    public String company1 = "Сбербанк";
-//    public String classCode1 = "TQBR";
-//    public String instrumet1 = ticker1 + "_" + classCode1;
-    public String quantityDiffSBER  = "-0.1247";
-
-//    public String tickerSU29009RMFS6 = "SU29009RMFS6";
-//   public String tradingClearingAccount2 = "L01+00000F00";
-//    public String tradingClearingAccount2 = "L01+00002F00";
-   public String quantitySU29009RMFS6 = "3";
-//   public String classCode2 = "TQOB";
-//   public String sector2 = "government";
-//   public String type2 = "bond";
-//   public String company2 = "ОФЗ";
-//   public String instrumet2 = ticker2 + "_" + classCode2;
-   public String quantityDiff2  = "-0.0069";
-    //
-//    public String ticker3 = "LKOH";
-//    public String tradingClearingAccount3 = "L01+00002F00";
-//    public String tradingClearingAccount3 = "L01+00000F00";
+    public String quantitySU29009RMFS6 = "3";
     public String quantityLKOH = "7";
-//    public String classCode3 = "TQBR";
-//    public String sector3 = "energy";
-//    public String type3 = "share";
-//    public String company3 = "Лукойл";
-//    public String instrumet3 = ticker3 + "_" + classCode3;
-    public String quantityDiffLKOH  = "0.0";
-
-//    public String ticker4 = "SNGSP";
-////    public String tradingClearingAccount4 = "L01+00002F00";
-//    public String tradingClearingAccount4 = "L01+00000F00";
     public String quantitySNGSP = "100";
-//    public String classCode4 = "TQBR";
-//    public String sector4 = "energy";
-//    public String type4 = "share";
-//    public String company4 = "Сургутнефтегаз";
-//    public String instrumet4 = ticker4 + "_" + classCode4;
-
-//    public String ticker5 = "TRNFP";
-//    public String tradingClearingAccount5 = "L01+00000F00";
     public String quantityTRNFP = "4";
-//    public String classCode5 = "TQBR";
-//    public String sector5 = "energy";
-//    public String type5 = "share";
-//    public String company5 = "Транснефть";
-//    public String instrumet5 = ticker5 + "_" + classCode5;
-
-
-//    public String ticker6 = "ESGR";
-//    public String tradingClearingAccount6 = "L01+00000F00";
     public String quantityESGR = "5";
-//    public String classCode6 = "TQTF";
-//    public String sector6 = "other";
-//    public String type6 = "etf";
-//    public String company6 = "РСХБ Управление Активами";
-//    public String instrumet6 = ticker6 + "_" + classCode6;
-
-//    public String ticker7 = "USD000UTSTOM";
-//    public String tradingClearingAccount7 = "MB9885503216";
     public String quantityUSD = "1000";
-//    public String classCode7 = "CETS";
-//    public String sector7 = "money";
-//    public String type7 = "money";
-//    public String company7 = "Денежные средства";
-//    public String instrumet7 = ticker7 + "_" + classCode7;
-
-
-//    public String ticker8 = "YNDX";//
-//    public String tradingClearingAccount8 = "Y02+00001F00";
     public String quantityYNDX = "3";
-//    public String classCode8 = "TQBR";
-//    public String sector8 = "telecom";
-//    public String type8 = "share";
-//    public String company8= "Яндекс";
-//    public String instrumet8 = ticker8 + "_" + classCode8;
-
-
-    PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
-        .ApiClient.Config.apiConfig()).prices();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.
-        api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
-    InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
-        .api(ApiClient.Config.apiConfig()).instruments();
-
-
-//    public StpTrackingAnalyticsSteps() {
-//    }
-
 
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createClientWithContractAndStrategy(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
@@ -587,27 +504,10 @@ public class StpTrackingAnalyticsSteps {
 
     // получаем данные от ценах от MarketData
     public Map<String, BigDecimal> getPriceFromMarketAllDataWithDate(List<String> instrumentList, String type, String date, int size) {
-//        Response res = pricesApi.mdInstrumentsPrices()
-//            .instrumentsIdsQuery(ListInst)
-//            .requestIdQuery("111")
-//            .systemCodeQuery("111")
-//            .typesQuery(type)
-//            .tradeTsQuery(date)
-//            .respSpec(spec -> spec.expectStatusCode(200))
-//            .execute(response -> response);
-
-//        List<String> instrumentList = new ArrayList<>();
-//        instrumentList.add(instrument.instrumentSBER);
-//        instrumentList.add(instrument.instrumentSU29009RMFS6);
-//        instrumentList.add(instrument.instrumentLKOH);
-//        instrumentList.add(instrument.instrumentSNGSP);
-//        instrumentList.add(instrument.instrumentTRNFP);
-//        instrumentList.add(instrument.instrumentESGR);
-//        instrumentList.add(instrument.instrumentUSD);
 
         Map<String, BigDecimal> pricesPos2 = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            Response res2 = pricesApi.mdInstrumentPrices()
+            Response res2 = pricesMDApiCreator.get().mdInstrumentPrices()
                 .instrumentIdPath(instrumentList.get(i))
                 .typesQuery(type)
                 .tradeTsQuery(date)
@@ -620,12 +520,6 @@ public class StpTrackingAnalyticsSteps {
                 new BigDecimal(res2.getBody().jsonPath().getString("prices[" + 0 + "].price_value")));
         }
         return pricesPos2;
-//        Map<String, BigDecimal> pricesPos = new HashMap<>();
-//        for (int i = 0; i < size; i++) {
-//            pricesPos.put(res.getBody().jsonPath().getString("instrument_id[" + i + "]"),
-//                new BigDecimal(res.getBody().jsonPath().getString("prices[" + i + "].price_value[0]")));
-//        }
-//        return pricesPos;
     }
 
     public BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,
@@ -703,15 +597,15 @@ public class StpTrackingAnalyticsSteps {
 
     // получаем данные от ценах от MarketData
     public String getPriceFromMarketDataWithDate(String instrumentId, String type, String date) {
-        Response res = pricesApi.mdInstrumentsPrices()
-            .instrumentsIdsQuery(instrumentId)
+        Response res = pricesMDApiCreator.get().mdInstrumentPrices()
+            .instrumentIdPath(instrumentId)
             .requestIdQuery("111")
             .systemCodeQuery("111")
             .typesQuery(type)
             .tradeTsQuery(date)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
-        String price = res.getBody().jsonPath().getString("prices.price_value[0][0]");
+        String price = res.getBody().jsonPath().getString("prices[" + 0 + "].price_value");
         return price;
     }
 
@@ -730,7 +624,7 @@ public class StpTrackingAnalyticsSteps {
 
 
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
-        GetBrokerAccountsResponse resAccount = brokerAccountApi.getBrokerAccountsBySiebel()
+        GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
@@ -753,6 +647,9 @@ public class StpTrackingAnalyticsSteps {
             .setState(contractState)
             .setStrategyId(strategyId)
             .setBlocked(false);
+        if(contractState.equals(ContractState.untracked)){
+            contractSlave.setStrategyId(null);
+        }
         contractSlave = contractService.saveContract(contractSlave);
         String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
         Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
@@ -768,35 +665,6 @@ public class StpTrackingAnalyticsSteps {
         subscription = subscriptionService.saveSubscription(subscription);
     }
 
-
-    //метод создает клиента, договор и стратегию в БД автоследования
-    public void createSubcriptionDeleteOrDraft(UUID investId, String contractId, ContractRole contractRole, ContractState contractState,
-                                             UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                             java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
-        //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, null);
-        // создаем запись о договоре клиента в tracking.contract
-        contractSlave = new Contract()
-            .setId(contractId)
-            .setClientId(clientSlave.getId())
-//            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(null)
-            .setBlocked(false);
-        contractSlave = contractService.saveContract(contractSlave);
-        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
-        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
-        //создаем запись подписке клиента
-        subscription = new Subscription()
-            .setSlaveContractId(contractId)
-            .setStrategyId(strategyId)
-            .setStartTime(dateStart)
-            .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd)
-            .setBlocked(blocked);
-            //.setPeriod(localDateTimeRange);
-        subscription = subscriptionService.saveSubscription(subscription);
-    }
 
     public void createSlavePortfolioWithPosition(String contractIdSlave, UUID strategyId, int version, int comparedToMasterVersion,
                                                  String money,Date date, List<SlavePortfolio.Position> positionList) {
@@ -968,7 +836,7 @@ public class StpTrackingAnalyticsSteps {
 
     public List<String> getDateBondFromInstrument (String ticker, String classCode, String dateFireg) {
         List<String> dateBond = new ArrayList<>();
-        Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
+        Response resp = firegInstrumentsApiCreator.get().instrumentsInstrumentIdAccruedInterestsGet()
             .instrumentIdPath(ticker)
             .idKindQuery("ticker")
             .classCodeQuery(classCode)
@@ -983,13 +851,5 @@ public class StpTrackingAnalyticsSteps {
         return dateBond;
 
     }
-
-
-
-
-
-
-
-
 
 }

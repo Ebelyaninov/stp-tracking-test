@@ -32,6 +32,8 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
@@ -70,6 +72,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     KafkaAutoConfiguration.class
 
 })
@@ -98,6 +101,9 @@ public class Handle30DelayRetryCommandTest {
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
+    @Autowired
+    StpSiebel siebel;
+
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -110,8 +116,6 @@ public class Handle30DelayRetryCommandTest {
     String contractIdMaster;
     String contractIdSlave = "2013919085";
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-5CNFBO6Z";
-    String SIEBEL_ID_SLAVE = "5-LZ9SSTLK";
     String ticker = "ABBV";
     String tradingClearingAccount = "TKCBM_TCAB";
     String classCode = "SPBXM";
@@ -182,7 +186,7 @@ public class Handle30DelayRetryCommandTest {
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_MASTER)
+            .siebelIdPath(siebel.siebelMasterRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -190,7 +194,7 @@ public class Handle30DelayRetryCommandTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         GetBrokerAccountsResponse resAccountSlave = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID_SLAVE)
+            .siebelIdPath(siebel.siebelSlaveRetryer)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
@@ -198,7 +202,7 @@ public class Handle30DelayRetryCommandTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, contractIdMaster, ContractRole.master,
+        createClientWithContractAndStrategy(siebel.siebelMasterRetryer, investIdMaster, contractIdMaster, ContractRole.master,
             ContractState.untracked, strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре

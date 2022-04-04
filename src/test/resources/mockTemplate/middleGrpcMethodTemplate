@@ -41,7 +41,7 @@
                     {
                         "balance": {
                             "unscaled": "{{usdUnscaledPrice}}",
-                            "scale": 0
+                            "scale": "{{usdScaledQty}}"
                         },
                         "blocked": {
                             "unscaled": "0",
@@ -63,8 +63,8 @@
                             "scale": 0
                         },
                         "kind": "T365",
-                        "ticker": "AAPL",
-                        "account_id": "TKCBM_TCAB"
+                        "ticker": "{{ticker}}",
+                        "account_id": "{{tradingAccount}}"
                     }
                 ],
                 "futures": [],

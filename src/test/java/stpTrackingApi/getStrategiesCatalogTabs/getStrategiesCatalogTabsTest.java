@@ -8,7 +8,6 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,50 +17,27 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.GetStrategiesCatalogResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategiesCatalogTabsResponse;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.Currency;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategiesResponse;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.LiteStrategy;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.Subscription;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
-import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Epic("getStrategiesCatalogTabs - Получение вкладок для фильтрации в каталоге стратегий")
@@ -74,7 +50,9 @@ import static org.hamcrest.Matchers.nullValue;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 
 public class getStrategiesCatalogTabsTest {
@@ -89,10 +67,18 @@ public class getStrategiesCatalogTabsTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    String siebelId = "4-LQB8FKN";
+    String siebelId;
 
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
+
+    @BeforeAll
+    void conf() {
+        siebelId = stpSiebel.siebelIdApiMaster;
+    }
 
     private static Stream<Arguments> provideRequiredParam() {
         return Stream.of(
@@ -111,7 +97,7 @@ public class getStrategiesCatalogTabsTest {
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500852(String name, String version, String platform) {
         //вызываем метод получения вкладок для фильтрации
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader(siebelId)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -140,7 +126,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500855() {
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")
             .xAppVersionHeader("5.0")
@@ -161,7 +147,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1501045() {
-        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        StrategyApi.GetStrategiesCatalogTabsOper getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader("1-LQB8FKN")
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")
@@ -183,7 +169,7 @@ public class getStrategiesCatalogTabsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
     void C1500830() {
-        GetStrategiesCatalogTabsResponse getStrategiesCatalogTabs = strategyApi.getStrategiesCatalogTabs()
+        GetStrategiesCatalogTabsResponse getStrategiesCatalogTabs = strategyApiCreator.get().getStrategiesCatalogTabs()
             .xTcsSiebelIdHeader(siebelId)
             .xPlatformHeader("ios")
             .xAppNameHeader("invest")

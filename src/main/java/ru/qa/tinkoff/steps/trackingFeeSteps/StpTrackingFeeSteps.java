@@ -10,6 +10,8 @@ import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.investTracking.entities.Context;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -29,14 +31,15 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 
-import ru.qa.tinkoff.swagger.trackingCache.api.CacheApi;
-import ru.qa.tinkoff.swagger.trackingCache.model.Entity;
+import ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi;
+import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -50,8 +53,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingCache.invoker.ResponseSpecBuilders.validatedWith;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
+import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
 
 @Slf4j
 @Service
@@ -68,12 +71,13 @@ public class StpTrackingFeeSteps {
     private final SlavePortfolioDao slavePortfolioDao;
     private final ManagementFeeDao managementFeeDao;
     private final ResultFeeDao resultFeeDao;
+    private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
         .ApiClient.Config.apiConfig()).prices();
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingCache.invoker.ApiClient.Config.apiConfig()).cache();
+    CacheApi cacheApi = ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.api(ru.qa.tinkoff.swagger.trackingApiCache.invoker.ApiClient.Config.apiConfig()).cache();
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ru.qa.tinkoff.swagger.fireg.invoker.ApiClient.Config.apiConfig()).instruments();
 
@@ -382,7 +386,23 @@ public class StpTrackingFeeSteps {
         log.info("Все сообщения из {} топика вычитаны", topic.getName());
     }
 
+    @Step("Переместить offset для всех партиций Kafka топика {topic.name} в конец очереди")
+    public void resetOffsetToEnd(Topics topic) {
+        log.info("Сброс offset для топика {}", topic.getName());
 
+        boostedReceiver.getKafkaConsumer().subscribe(Collections.singletonList(topic.getName()));
+        boostedReceiver.getKafkaConsumer().poll(Duration.ofSeconds(5));
+        Map<TopicPartition, Long> endOffsets = boostedReceiver.getKafkaConsumer()
+            .endOffsets(boostedReceiver.getKafkaConsumer().assignment());
+        HashMap<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+        endOffsets.forEach((p, o) -> {
+            log.info("Для partition: {} последний offset: {}", p.partition(), o);
+            offsets.put(p, new OffsetAndMetadata(o));
+        });
+        boostedReceiver.getKafkaConsumer().commitSync(offsets);
+        log.info("Offset для всех партиций Kafka топика {} перемещены в конец очереди", topic.getName());
+        boostedReceiver.getKafkaConsumer().unsubscribe();
+    }
 
     public BigDecimal getPorfolioValueTwoInstruments(String instrumet1, String instrumet2,String dateTs,
                                                  String quantity1,String quantity2, BigDecimal baseMoney) {

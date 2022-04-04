@@ -3,13 +3,11 @@ package stpTrackingAnalytics.calculateMasterPortfolioTopPositions;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioTopPositions;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
@@ -36,6 +35,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -71,7 +71,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateMasterPortfolioTopPositionsTest {
 
@@ -136,8 +137,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        await().pollDelay(Duration.ofSeconds(1));
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -197,7 +199,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -252,8 +254,9 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -402,6 +405,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
     // методы для работы тестов*************************************************************************
 
+    @Step("Переводим значение stratedyId в byte: ")
     public byte[] bytes(UUID uuid) {
         return ByteBuffer.allocate(16)
             .putLong(uuid.getMostSignificantBits())
@@ -413,7 +417,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         return ByteString.copyFrom(bytes(uuid));
     }
 
-
+    @Step("Создаем записи по сигналам мастера в табл. master_signal: ")
     void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
                             String price, String quantity, int action) {
         LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
@@ -503,6 +507,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
     }
 
 
+    @Step("Сортируем полученные позиции и выбираем первые 3 из них")
     List<TopPosition> getExpectedListPosition(Map<PositionId, Long> positionIdLongMap) {
         List<TopPosition> expectedList = positionIdLongMap.entrySet().stream()
             .sorted((o1, o2) -> {
@@ -533,6 +538,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
     // ожидаем версию портфеля slave
     void checkMasterPortfolioTopPositions(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositions(strategyId);
             if (masterPortfolioTopPositions.getStrategyId() == null) {
                 Thread.sleep(5000);

@@ -21,5 +21,6 @@ public class MasterSignal {
     private final BigDecimal price;
     private final Date createdAt;
     private final BigDecimal tailOrderQuantity;
+    private final Double dynamicLimitQuantity;
 
 }

@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.repositories.ClientRepository;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -155,6 +157,33 @@ public class ClientService {
         Client client = clientRepository.findByIdAndMasterStatus (clientId, masterStatus);
         log.info("Successfully find contract {}", clientId);
         Allure.addAttachment("Найденный клиент", "application/json", objectMapper.writeValueAsString(clientId));
+        return client;
+    }
+
+    @Step("Поиск клиента по статусу")
+    @SneakyThrows
+    public List<Client> getFindClientByMaster(Integer limit) {
+        List<Client> client = clientRepository.findClientByMaster(limit);
+        log.info("Successfully find clients {}", limit);
+        Allure.addAttachment("Найденные клиенты - ведущие", "application/json", objectMapper.writeValueAsString(client));
+        return client;
+    }
+
+    @Step("Поиск клиента по статусу с ограничением по курсору")
+    @SneakyThrows
+    public List<Client> getFindListClientsByMasterByPositionAndLimit(Integer position, Integer limit) {
+        List<Client> client = clientRepository.findListClientsByMasterByPositionAndLimit(position, limit);
+        log.info("Successfully find clients {}", limit);
+        Allure.addAttachment("Найденные клиенты - ведущие", "application/json", objectMapper.writeValueAsString(client));
+        return client;
+    }
+
+    @Step("Поиск клиента по статусу и сортировкой по курсору")
+    @SneakyThrows
+    public List<Client> getFindClientByMasterFirstPosition(Integer limit) {
+        List<Client> client = clientRepository.findClientByMasterFirstPosition(limit);
+        log.info("Successfully find clients {}", limit);
+        Allure.addAttachment("Найденные клиенты - ведущие", "application/json", objectMapper.writeValueAsString(client));
         return client;
     }
 }

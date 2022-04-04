@@ -12,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.SignalApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
@@ -20,19 +23,27 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.SignalApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetSignalsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.Signal;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.StrategyService;
+import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,10 +64,12 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     InvestTrackingAutoConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    StpTrackingInstrumentConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class GetSignalsTest {
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -73,23 +86,23 @@ public class GetSignalsTest {
     MasterSignalDao masterSignalDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    SignalApiAdminCreator signalApiAdminCreator;
 
     String xApiKey = "x-api-key";
-    String key= "tracking";
+    String key = "tracking";
     String keyRead = "tcrm";
-
-    SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
-
-    String siebelIdMaster = "5-DYNN1E3S";
     String contractIdMaster;
     UUID strategyId;
     LocalDateTime localDateTime;
     UUID investIdMaster;
 
     @BeforeAll
-    void getDataFromAccount(){
+    void getDataFromAccount() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
@@ -99,12 +112,14 @@ public class GetSignalsTest {
         strategyId = UUID.randomUUID();
         localDateTime = LocalDateTime.now();
         int randomNumber = 0 + (int) (Math.random() * 1000);
-        String title = "Autotest" +String.valueOf(randomNumber);
+        String title = "Autotest" + String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        stpTrackingAdminSteps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1));
+        stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
+            strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+
     }
 
     @AfterEach
@@ -147,7 +162,7 @@ public class GetSignalsTest {
 
         List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
         GetSignalsResponse getdataFromResponce = getSignalsResponse(strategyId);
-       //Сортируем версию по убыванию
+        //Сортируем версию по убыванию
         getAllMasterSignals.stream()
             .sorted(Comparator.comparing(MasterSignal::getVersion).reversed())
             .collect(Collectors.toList());
@@ -157,7 +172,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForSBER = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
             .findFirst();
 
@@ -165,7 +180,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForAPPL =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForAPPL = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
             .findFirst();
 
@@ -195,7 +210,7 @@ public class GetSignalsTest {
         createMasterSignal(0, 1, 3, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "500.37", "10", 13);
         List<MasterSignal> getAllMasterSignals = masterSignalDao.getAllMasterSignal(strategyId);
-        GetSignalsResponse getdataFromResponce = signalApi.getSignals()
+        GetSignalsResponse getdataFromResponce = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -214,7 +229,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForSBER = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
             .findFirst();
 
@@ -222,7 +237,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForAPPL =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForAPPL = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
             .findFirst();
 
@@ -236,7 +251,6 @@ public class GetSignalsTest {
         checkItemsFromResponce(getItemsForAAPL, getDataFromDaoForAPPL, "buy", StrategyCurrency.usd);
         checkItemsFromResponce(getItemsForSBER, getDataFromDaoForSBER, "sell", StrategyCurrency.usd);
     }
-
 
 
     @SneakyThrows
@@ -279,7 +293,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerSBER))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForSBER =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForSBER = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerSBER))
             .findFirst();
 
@@ -295,7 +309,7 @@ public class GetSignalsTest {
             .filter(res -> res.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
 
-        Optional<MasterSignal> getDataFromDaoForAAPL =  getAllMasterSignals.stream()
+        Optional<MasterSignal> getDataFromDaoForAAPL = getAllMasterSignals.stream()
             .filter(signals -> signals.getTicker().equals(instrument.tickerAAPL))
             .findFirst();
         //Проверяем items
@@ -326,7 +340,7 @@ public class GetSignalsTest {
 
         GetSignalsResponse getSignalsResponse;
 
-        for (int i = 0; i < 110; i++){
+        for (int i = 0; i < 110; i++) {
             createMasterSignal(0, 3, i, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
                 "4289.37", "10", 11);
         }
@@ -340,7 +354,7 @@ public class GetSignalsTest {
     }
 
 
-    void createMasterSignal (int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
+    void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
                             String price, String quantity, int action) {
         LocalDateTime newLocalDateTime = localDateTime.minusDays(minusDays).minusHours(minusHours);
         Date convertedDatetime = Date.from(newLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
@@ -358,8 +372,8 @@ public class GetSignalsTest {
         masterSignalDao.insertIntoMasterSignal(masterSignal);
     }
 
-    GetSignalsResponse getSignalsResponse (UUID strategyId) {
-         GetSignalsResponse getSignalsResponse = signalApi.getSignals()
+    GetSignalsResponse getSignalsResponse(UUID strategyId) {
+        GetSignalsResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -371,8 +385,8 @@ public class GetSignalsTest {
         return getSignalsResponse;
     }
 
-    GetSignalsResponse getSignalsResponseWithLimitAndCursor (UUID strategyId, String cursor, int limit) {
-        GetSignalsResponse getSignalsResponse = signalApi.getSignals()
+    GetSignalsResponse getSignalsResponseWithLimitAndCursor(UUID strategyId, String cursor, int limit) {
+        GetSignalsResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -386,11 +400,11 @@ public class GetSignalsTest {
         return getSignalsResponse;
     }
 
-    void checkItemsFromResponce (List<Signal> items, Optional<MasterSignal> masterSignal, String action, StrategyCurrency currency){
+    void checkItemsFromResponce(List<Signal> items, Optional<MasterSignal> masterSignal, String action, StrategyCurrency currency) {
 
         OffsetDateTime offsetDateTime = masterSignal.get().getCreatedAt().toInstant().atOffset(ZoneOffset.ofHours(3));
         assertThat("createdAt != " + offsetDateTime, items.get(0).getCreatedAt().toInstant().atOffset(ZoneOffset.ofHours(3)),
-         is(offsetDateTime));
+            is(offsetDateTime));
         assertThat("quantity != " + masterSignal.get().getQuantity(), items.get(0).getQuantity(),
             is(masterSignal.get().getQuantity()));
         assertThat("action != " + action, items.get(0).getAction().toString(),
@@ -403,12 +417,12 @@ public class GetSignalsTest {
             is(masterSignal.get().getTicker()));
         assertThat("exchangePosition.tradingClearingAccount != " + masterSignal.get().getTradingClearingAccount(), items.get(0).getExchangePosition().getTradingClearingAccount(),
             is(masterSignal.get().getTradingClearingAccount()));
-        assertThat("version != "+ masterSignal.get().getVersion(), items.get(0).getVersion(),
+        assertThat("version != " + masterSignal.get().getVersion(), items.get(0).getVersion(),
             is(masterSignal.get().getVersion()));
     }
 
-    void checkCursoreAndHasNextCursor (GetSignalsResponse getSignalsResponse, String nextCursor, Boolean hasNext){
-        if(nextCursor == "null"){
+    void checkCursoreAndHasNextCursor(GetSignalsResponse getSignalsResponse, String nextCursor, Boolean hasNext) {
+        if (nextCursor == "null") {
             nextCursor = null;
         }
         assertThat("nextCursor != " + nextCursor, getSignalsResponse.getNextCursor(),

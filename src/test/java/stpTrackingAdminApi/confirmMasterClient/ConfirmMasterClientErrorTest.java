@@ -15,24 +15,24 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.entities.BrokerAccount;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -51,21 +51,27 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
-public class ConfirmMasterClientErrorTest {
-    ClientApi clientApi = ApiClient.api(ApiClient.Config.apiConfig()).client();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-    String SIEBEL_ID = "5-GA3OLBWB";
-    String xApiKey = "x-api-key";
-    String keyRead = "tcrm";
 
+public class ConfirmMasterClientErrorTest {
     @Autowired
     ProfileService profileService;
     @Autowired
     ClientService clientService;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    ApiAdminCreator<ClientApi> clientApiAdminCreator;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+
+    String xApiKey = "x-api-key";
+    String keyRead = "tcrm";
 
     private static Stream<Arguments> provideStringsForHeadersConfirmMasterClient() {
         return Stream.of(
@@ -80,18 +86,18 @@ public class ConfirmMasterClientErrorTest {
     @DisplayName("C455794.ConfirmMasterClient.Валидация запроса: передача обязательных параметров")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
-    void C455794(String name,  String login) {
+    void C455794(String name, String login) {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
-        ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .clientIdPath(investId)
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -103,7 +109,7 @@ public class ConfirmMasterClientErrorTest {
         confirmMasterClient.execute(ResponseBodyData::asString);
         //проверяем, что запись о клиенте не появилась в tracking.client
         Optional<Client> clientOpt = clientService.findClient(investId);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
     @Test
@@ -113,8 +119,8 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C263126() {
         //вызываем метод confirmMasterClient с невалидным значением clientId (не UUID)
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -130,16 +136,16 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455854() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient со значением Login > 20 символов
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admintracking_admin1232422353456")
@@ -147,7 +153,7 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(investId);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
     @Test
@@ -157,15 +163,15 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C467544() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient без параметра api-key
-        clientApi.confirmMasterClient()
+        clientApiAdminCreator.get().confirmMasterClient()
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -173,7 +179,7 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(investId);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
     @Test
@@ -183,16 +189,16 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455861() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "trackidngc"))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "trackidngc"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -200,7 +206,7 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(investId);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
 
@@ -211,16 +217,16 @@ public class ConfirmMasterClientErrorTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1705432() {
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, keyRead))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -228,7 +234,7 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(investId);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
     @Test
@@ -239,8 +245,8 @@ public class ConfirmMasterClientErrorTest {
     void C263127() {
         UUID invest_id = UUID.fromString("f45bfa77-3f63-4c1d-a7fb-8ee863333933");
         //вызываем метод confirmMasterClient с несуществующим значением clientId
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -248,7 +254,7 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(invest_id);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 
     @Test
@@ -259,8 +265,8 @@ public class ConfirmMasterClientErrorTest {
     void C455922() {
         UUID invest_id = UUID.fromString("f749bb39-df42-4469-94d3-5d503531d1b7");
         //вызываем метод confirmMasterClient
-        clientApi.confirmMasterClient()
-            .reqSpec(r->r.addHeader(xApiKey, "tracking"))
+        clientApiAdminCreator.get().confirmMasterClient()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
@@ -268,6 +274,6 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(422))
             .execute(response -> response.asString());
         Optional<Client> clientOpt = clientService.findClient(invest_id);
-        assertThat("запись по клиенту не равно",  clientOpt.isPresent(), is(false));
+        assertThat("запись по клиенту не равно", clientOpt.isPresent(), is(false));
     }
 }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
@@ -19,7 +20,9 @@ import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -31,6 +34,7 @@ import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.tariff.ChangeTariff;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -59,7 +63,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     KafkaOldConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleTariffChangeEventTest {
 
@@ -79,9 +85,11 @@ public class HandleTariffChangeEventTest {
     StrategyService strategyService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    String SIEBEL_ID_MASTER = "4-1NLJQ9HH";
-    String SIEBEL_ID_SLAVE = "5-8NL1RLT1";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_SLAVE;
     String contractIdMaster;
     String contractIdSlave;
     UUID investIdMaster;
@@ -98,6 +106,8 @@ public class HandleTariffChangeEventTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterForClient;
+        SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveForClient;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
@@ -153,9 +163,9 @@ public class HandleTariffChangeEventTest {
     @Description("Обработка событий об изменении тарифа")
     void C1348238() {
         //Добавляем стратегию мастеру
-        steps.createClientWintContractAndStrategyWithProfile(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //Добавляем подписку slave
         clientSlave = clientService.createClient(investIdSlave, ClientStatusType.none, null, ClientRiskProfile.aggressive);
         // создаем запись о договоре клиента в tracking.contract

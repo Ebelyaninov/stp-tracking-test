@@ -5,18 +5,23 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.api.configuration.RestClientApiConfigurationProperties;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker.ApiClient;
 
 @EnableConfigurationProperties(RestClientApiConfigurationProperties.class)
 @Component
 @RequiredArgsConstructor
-public class ClientApiAdminCreator extends ApiAdminCreator<ClientApi>{
+public class StrategySocialApiCreator extends ApiSocialStrategyCreator<StrategyApi> {
     private final RestClientApiConfigurationProperties properties;
     private final Environment env;
-    @Override
-    public ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi get() {
-        return ApiClient.api(getConfig(properties.getTrackingApiAdminBaseUri())).client();
-    }
 
+    @Override
+    public StrategyApi get() {
+        String trackingApiSocialStrategyBaseUrl = properties.getTrackingApiSocialStrategyBaseUrl();
+        ApiClient.Config config = getConfig(trackingApiSocialStrategyBaseUrl);
+        return ApiClient.api(config).strategy();
+
+
+
+    }
 }

@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
@@ -25,9 +26,11 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.Tariff.api.TariffApi;
 import ru.qa.tinkoff.swagger.Tariff.invoker.ApiClient;
@@ -50,6 +53,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -76,7 +80,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingApiStepsConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    TariffDataBaseAutoConfiguration.class
+    TariffDataBaseAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class HandleRiskProfileEventTest {
 
@@ -110,15 +116,13 @@ public class HandleRiskProfileEventTest {
     TariffService tariffService;
     @Autowired
     ContractTariffService contractTariffService;
+    @Autowired
+    StpSiebel stpSiebel;
 
-    TariffApi tariffApi = ApiClient.api(ApiClient.Config.apiConfig()).tariff();
-    SubscriptionBlockRepository subscriptionBlockRepository;
-
-    String SIEBEL_ID_MASTER = "1-3HRG6FI";
-    //String SIEBEL_ID_AGRESSIVE = "5-775DOBIB";
-    String SIEBEL_ID_AGRESSIVE = "3-2VE3QMJ9M";
-    String SIEBEL_ID_MEDIUM = "5-4HSBIRY7";
-    String SIBEL_ID_CONSERVATIVE = "5-LGGA88YZ";
+    String SIEBEL_ID_MASTER;
+    String SIEBEL_ID_AGRESSIVE;
+    String SIEBEL_ID_MEDIUM;
+    String SIBEL_ID_CONSERVATIVE;
     String contractIdMaster;
     String contractIdAgressive;
     String contractIdMedium;
@@ -131,7 +135,7 @@ public class HandleRiskProfileEventTest {
     UUID investIdMedium;
     UUID investIdCOnservative;
     UUID strategyId = UUID.fromString("7c89e263-58dd-4977-abd7-8228e69a0115");
-    String title = "Cтратегия для" + SIEBEL_ID_MASTER;
+    String title;
     String description = "new test стратегия autotest";
     OffsetDateTime time = OffsetDateTime.now();
     java.sql.Timestamp startTime = new java.sql.Timestamp(time.toInstant().toEpochMilli());
@@ -143,6 +147,11 @@ public class HandleRiskProfileEventTest {
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID_MASTER = stpSiebel.siebelIdMasterForClient;
+        SIEBEL_ID_AGRESSIVE = stpSiebel.siebelIdAgressiveForClient;
+        SIEBEL_ID_MEDIUM = stpSiebel.siebelIdMediumForClient;
+        SIBEL_ID_CONSERVATIVE = stpSiebel.siebelIdConservativeForClient;
+        title = "Cтратегия для " + SIEBEL_ID_MASTER;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
@@ -281,6 +290,18 @@ public class HandleRiskProfileEventTest {
                 clientService.deleteClient(clientService.getClient(investIdCOnservative));
             } catch (Exception e) {
             }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdAgressive);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdConservative);
+            } catch (Exception e) {
+            }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMedium);
+            } catch (Exception e) {
+            }
         });
     }
 
@@ -300,7 +321,7 @@ public class HandleRiskProfileEventTest {
         stpTrackingSlaveSteps.createSubcription(investIdCOnservative, contractIdConservative, null, ContractState.tracked,
             ClientRiskProfile.conservative, strategyId, SubscriptionStatus.active, startTime,null,true);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        steps.resetOffsetToEnd(TRACKING_CONTRACT_EVENT);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
@@ -310,7 +331,8 @@ public class HandleRiskProfileEventTest {
         //Проверяем, что не сняли блокировку с подписки
         checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active,  true, null);
         //Проверяем, что не отправили событие в топик tracking.contract.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative)).collect(Collectors.toList());
         assertThat("Отправили событие в топик", messages.size(), equalTo(0));
     }
 
@@ -348,13 +370,13 @@ public class HandleRiskProfileEventTest {
 
         String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(2))
             .until(() -> subscriptionService.findSubcription(contractIdConservative).get().getBlocked(), equalTo(false));
         //Проверить, что не изменили risk_profile = aggressive
         checkClient(investIdCOnservative, ClientRiskProfile.aggressive);
@@ -375,20 +397,20 @@ public class HandleRiskProfileEventTest {
 
         if (messagesFromTrackingSubsctiptionFirst.get(0).getKey().equals(contractIdConservative)){
             messageForFirstSubscription = filterMessageByKey(messagesFromTrackingSubsctiptionFirst, contractIdConservative);
-            checkMessageFromSubscriptionEvent(messageForFirstSubscription, contractIdConservative, "UPDATED", subscriptionId);
+            checkMessageFromSubscriptionEvent(messageForFirstSubscription, contractIdConservative, "UPDATED", subscriptionId, false);
         }
         else {
             messageForFirstSubscription = filterMessageByKey(messagesFromTrackingSubsctiptionFirst, secondContractId.toString());
-            checkMessageFromSubscriptionEvent(messageForFirstSubscription, secondContractId.toString(), "UPDATED", secondSubscriptionId);
+            checkMessageFromSubscriptionEvent(messageForFirstSubscription, secondContractId.toString(), "UPDATED", secondSubscriptionId, false);
         }
 
         if (messagesFromTrackingSubscriptionSecond.get(0).getKey().equals(secondContractId.toString())){
             messageForSecondSubscription = filterMessageByKey(messagesFromTrackingSubscriptionSecond, secondContractId.toString());
-            checkMessageFromSubscriptionEvent(messageForSecondSubscription, secondContractId.toString(), "UPDATED", secondSubscriptionId);
+            checkMessageFromSubscriptionEvent(messageForSecondSubscription, secondContractId.toString(), "UPDATED", secondSubscriptionId, false);
         }
         else {
             messageForSecondSubscription = filterMessageByKey(messagesFromTrackingSubscriptionSecond, contractIdConservative);
-            checkMessageFromSubscriptionEvent(messageForSecondSubscription, contractIdConservative, "UPDATED", subscriptionId);
+            checkMessageFromSubscriptionEvent(messageForSecondSubscription, contractIdConservative, "UPDATED", subscriptionId, false);
         }
 
         //Проверяем 2 события из топика TRACKING_DELAY_COMMAND
@@ -437,8 +459,8 @@ public class HandleRiskProfileEventTest {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
         String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
@@ -455,7 +477,7 @@ public class HandleRiskProfileEventTest {
         List<Pair<String, byte[]>> messagesFromDelayCommand = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
 
         Tracking.Event messageForSubscription = filterMessageByKey(messagesFromTrackingSubsctiptionFirst, contractIdMedium);
-        checkMessageFromSubscriptionEvent(messageForSubscription, contractIdMedium, "UPDATED", subscriptionId);
+        checkMessageFromSubscriptionEvent(messageForSubscription, contractIdMedium, "UPDATED", subscriptionId, false);
 
         Tracking.PortfolioCommand getFirstDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommand, contractIdMedium);
         checkMessageFromDelayCommand(getFirstDelayedMessage, contractIdMedium, "RETRY_SYNCHRONIZATION","now()");
@@ -478,20 +500,21 @@ public class HandleRiskProfileEventTest {
 
         Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdMedium).getId();
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.MODERATE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.MODERATE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubcription(contractIdMedium).get().getBlocked(), equalTo(true));
+        OffsetDateTime time = OffsetDateTime.now();
         //Проверить, что изменили risk_profile = moderate
         checkClient(investIdMedium, ClientRiskProfile.moderate);
         //Проверяем, что  заблокировали подписку
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.active,  true, null);
         SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdMedium).getId());
-        assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0,21), equalTo(time.toString().substring(0,21)));
+        assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0,18), equalTo(time.toString().substring(0,18)));
         assertThat("upper(period) !=  ", getDataFromSubscriptionBlock.getPeriod().upper(), equalTo(null));
         assertThat("subscriptionBlockReason !=  risk-profile" , getDataFromSubscriptionBlock.getReason(), equalTo(SubscriptionBlockReason.RISK_PROFILE.getAlias()));
         //Ищем и проверяем событие в топике tracking.contract.event
@@ -499,7 +522,7 @@ public class HandleRiskProfileEventTest {
         List<Pair<String, byte[]>> messagesFromDelayCommand = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
 
         Tracking.Event messageForSubscription = filterMessageByKey(messagesFromTrackingSubsctiptionFirst, contractIdMedium);
-        checkMessageFromSubscriptionEvent(messageForSubscription, contractIdMedium, "UPDATED", subscriptionId);
+        checkMessageFromSubscriptionEvent(messageForSubscription, contractIdMedium, "UPDATED", subscriptionId, true);
     }
 
 
@@ -551,7 +574,7 @@ public class HandleRiskProfileEventTest {
         subscriptionService.saveSubscription(subscription);
 
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
@@ -626,8 +649,8 @@ public class HandleRiskProfileEventTest {
         String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionIdFirst + 2).getPeriod().lower().toString();
 
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
@@ -685,8 +708,8 @@ public class HandleRiskProfileEventTest {
         contractSlave = contractService.saveContract(contractSlave);
 
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
+        steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, riskProfileForUpdate).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, riskProfileForUpdate).toByteArray();
@@ -696,9 +719,13 @@ public class HandleRiskProfileEventTest {
         //Проверить, что изменили risk_profile
         checkClient(investIdCOnservative, riskProfileAfterUpdate);
         //Проверяем, что не отправили событие в топик tracking.contract.event
-        List<Pair<String, byte[]>> messagesFomSubscription = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messagesFomSubscription = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative))
+            .collect(Collectors.toList());
         assertThat("Отправили событие в топик", messagesFomSubscription.size(), equalTo(0));
-        List<Pair<String, byte[]>> messagesFromDelayCommand = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messagesFromDelayCommand = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative))
+            .collect(Collectors.toList());
         assertThat("Отправили событие в топик", messagesFromDelayCommand.size(), equalTo(0));
     }
 
@@ -757,12 +784,19 @@ public class HandleRiskProfileEventTest {
     }
 
     //проверяем параметры команды по синхронизации
-    void checkMessageFromSubscriptionEvent (Tracking.Event registrationMessage, String contractId, String action, Long subscriptionId) {
+    void checkMessageFromSubscriptionEvent (Tracking.Event registrationMessage, String contractId, String action, Long subscriptionId, Boolean subscriptionIsBlocked) {
+        SubscriptionBlock subscriptionBlock = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId);
         assertThat("action не равен " + action, registrationMessage.getAction().toString(), is(action));
         UUID getStrategyId =  utilsTest.getGuidFromByteArray(registrationMessage.getSubscription().getStrategy().getId().toByteArray());
         assertThat("strategyId не равен " + strategyId, getStrategyId, is(strategyId));
+        assertThat("title не равен " + title, registrationMessage.getSubscription().getStrategy().getTitle(), is(title));
         assertThat("ID контракта не равен " + contractId, registrationMessage.getSubscription().getContractId(), is(contractId));
         assertThat("subscriptionId не равно " + subscriptionId, registrationMessage.getSubscription().getId(), is(subscriptionId));
+        assertThat("subscription.block.id не равно " + subscriptionBlock.getId(), registrationMessage.getSubscription().getBlock().getId(), is(subscriptionBlock.getId()));
+        assertThat("subscription.block.period.started_at не равно " + subscriptionBlock.getPeriod().lower(), registrationMessage.getSubscription().getBlock().getPeriod().getStartedAt().getSeconds(), is(((LocalDateTime) subscriptionBlock.getPeriod().lower()).toEpochSecond(ZoneOffset.ofHours(3))));
+        if (subscriptionIsBlocked != true) {
+            assertThat("subscription.block.period.ended_at не равно " + subscriptionBlock.getPeriod().upper(), registrationMessage.getSubscription().getBlock().getPeriod().getEndedAt().getSeconds(), is(((LocalDateTime) subscriptionBlock.getPeriod().upper()).toEpochSecond(ZoneOffset.ofHours(3))));
+        }
     }
 
     //проверяем параметры команды по синхронизации

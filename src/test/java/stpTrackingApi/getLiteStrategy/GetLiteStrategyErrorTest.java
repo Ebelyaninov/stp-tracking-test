@@ -16,12 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
-import ru.qa.tinkoff.creator.StrategyApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
@@ -54,7 +56,8 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StrategyApiCreator.class
+    ApiCreatorConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetLiteStrategyErrorTest {
     @Autowired
@@ -67,11 +70,12 @@ public class GetLiteStrategyErrorTest {
     StpTrackingApiSteps steps;
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
+    @Autowired
+    StpSiebel stpSiebel;
 
     String contractIdMaster;
     UUID strategyId;
-
-    String siebelIdMaster = "5-YEYXMQZR";
+    String siebelIdMaster;
     String title;
     String description;
     UUID investIdMaster;
@@ -79,12 +83,14 @@ public class GetLiteStrategyErrorTest {
 
     @BeforeAll
     void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
         title = steps.getTitleStrategy();
         description = "new test стратегия клиента " + siebelIdMaster;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractIdMaster);
     }
 
     @AfterEach
@@ -93,8 +99,7 @@ public class GetLiteStrategyErrorTest {
 
             try {
                 strategyService.deleteStrategy(steps.strategyMaster);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
             }
             try {
                 contractService.deleteContract(steps.contractMaster);
@@ -116,7 +121,7 @@ public class GetLiteStrategyErrorTest {
         strategyId = UUID.randomUUID();
         ErrorResponse getLiteStrategyErrorResponse = getLiteStrategyErrorResponse(strategyId, 422);
         //Проверяем ответ
-        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "StrategyNotFound","Стратегия не найдена");
+        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "StrategyNotFound", "Стратегия не найдена");
     }
 
     @Test
@@ -127,9 +132,9 @@ public class GetLiteStrategyErrorTest {
     void C1346580() {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
 
         ErrorResponse getLiteStrategyErrorResponse = strategyApiCreator.get().getLiteStrategy()
             .xAppNameHeader("invest")
@@ -139,7 +144,7 @@ public class GetLiteStrategyErrorTest {
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.as(ErrorResponse.class));
         //Проверяем ответ
-        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "InsufficientPrivileges","Недостаточно прав");
+        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "InsufficientPrivileges", "Недостаточно прав");
     }
 
     private static Stream<Arguments> provideStringsForHeadersGetLiteStrategy() {
@@ -160,33 +165,33 @@ public class GetLiteStrategyErrorTest {
     void C1346577(String xAppName, String xAppVersionHeader, String xPlatformHeader, Boolean stringStrategy) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyFee(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), "0.3", "0.05", false, null,"TEST","TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
 
         StrategyApi.GetLiteStrategyOper getLiteStrategyError = strategyApiCreator.get().getLiteStrategy()
             .strategyIdPath(strategyId)
             .xTcsSiebelIdHeader(siebelIdMaster)
             .respSpec(spec -> spec.expectStatusCode(400));
-        if (stringStrategy.equals(true)){
+        if (stringStrategy.equals(true)) {
             getLiteStrategyError = getLiteStrategyError.strategyIdPath("test");
         }
-        if (xAppName != null){
+        if (xAppName != null) {
             getLiteStrategyError = getLiteStrategyError.xAppNameHeader(xAppName);
         }
-        if (xAppVersionHeader != null){
+        if (xAppVersionHeader != null) {
             getLiteStrategyError = getLiteStrategyError.xAppVersionHeader(xAppVersionHeader);
         }
-        if (xPlatformHeader != null){
+        if (xPlatformHeader != null) {
             getLiteStrategyError = getLiteStrategyError.xPlatformHeader(xPlatformHeader);
         }
         ErrorResponse getLiteStrategyErrorResponse = getLiteStrategyError
             .execute(response -> response.as(ErrorResponse.class));
         //Проверяем ответ
-        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "Error","Сервис временно недоступен");
+        checkGetLiteStrategyErrorResponse(getLiteStrategyErrorResponse, "Error", "Сервис временно недоступен");
     }
 
-    ErrorResponse getLiteStrategyErrorResponse (UUID strategyId, int statusCode) {
+    ErrorResponse getLiteStrategyErrorResponse(UUID strategyId, int statusCode) {
         ErrorResponse getLiteStrategyErrorResponse = strategyApiCreator.get().getLiteStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -198,7 +203,7 @@ public class GetLiteStrategyErrorTest {
         return getLiteStrategyErrorResponse;
     }
 
-    void checkGetLiteStrategyErrorResponse (ErrorResponse getLiteStrategyResponse, String errorCode, String errorMessage){
+    void checkGetLiteStrategyErrorResponse(ErrorResponse getLiteStrategyResponse, String errorCode, String errorMessage) {
         assertThat("errorCode не равно " + errorCode, getLiteStrategyResponse.getErrorCode(), is(errorCode));
         assertThat("errorMessage не равно " + errorMessage, getLiteStrategyResponse.getErrorMessage(), is(errorMessage));
     }

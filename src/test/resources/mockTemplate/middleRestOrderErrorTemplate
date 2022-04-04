@@ -1,0 +1,35 @@
+{
+    "httpRequest": {
+        "method": "POST",
+        "path": "/api/miof/order/execute",
+        "body": {
+            "type": "JSON",
+            "json": {
+                "ticker": "{{ticker}}",
+                "lots": "${json-unit.ignore-element}",
+                "price": "${json-unit.ignore-element}",
+                "side": "{{action}}",
+                "agreementId": "{{contractId}}",
+                "classCode": "{{classCode}}",
+                "timeInForce": "{{timeInForce}}",
+                "orderType": "Limit",
+                "isPurchaseFromCard": false,
+                "appName": "tracking",
+                "orderRequestId": "${json-unit.ignore-element}"
+            }
+        }
+    },
+    "httpResponse": {
+        "statusCode": 202,
+        "body": {
+            "payload": {
+                "message": "{{message}}",
+                "code": "{{code}}",
+                "info": {}
+            },
+            "trackingId": "hr17x7QG3D",
+            "time": "2021-02-21T16:02:36.565406+03:00",
+            "status": "Error"
+        }
+    }
+}

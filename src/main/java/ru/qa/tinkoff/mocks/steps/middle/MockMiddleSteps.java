@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
 import ru.qa.tinkoff.mocks.model.middle.MiddleGRPCMethodEnhancer;
 import ru.qa.tinkoff.mocks.model.middle.MiddleRestOrderEnhancer;
+import ru.qa.tinkoff.mocks.model.middle.MiddleRestOrderErrorEnhancer;
 
 import static io.restassured.RestAssured.given;
 
@@ -52,9 +53,9 @@ public class MockMiddleSteps {
         return createBodyJSON.toString();
     }
 
-    public String createBodyForGrpc (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String quantityAAPL){
+    public String createBodyForGrpc (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String usdScaledQty, String quantityAAPL, String ticker, String tradingAccont){
         String body = TextResourceEnhancer.enhance(
-            new MiddleGRPCMethodEnhancer(agreementId, eurUnscaledPrice, rubUnscaledPrice, usdUnscaledPrice, quantityAAPL));
+            new MiddleGRPCMethodEnhancer(agreementId, eurUnscaledPrice, rubUnscaledPrice, usdUnscaledPrice, usdScaledQty, quantityAAPL, ticker, tradingAccont));
         return body;
     }
 
@@ -85,5 +86,26 @@ public class MockMiddleSteps {
             .when().put(urlForRestOrder)
             .then().statusCode(201);
     }
+
+
+    public String createBodyForRestOrderError (String ticker, String action, String contractId, String classCode, String timeInForce,
+                                          String message, String code, String clientCode){
+        String body = TextResourceEnhancer.enhance(
+            new MiddleRestOrderErrorEnhancer(ticker, action, contractId, classCode, timeInForce, message, code, clientCode));
+        return body;
+    }
+
+
+    public void createRestOrderError (String body){
+        given()
+            .log()
+            .all()
+            .header("Accept", "*/*")
+            .body(body)
+            .when().put(urlForRestOrder)
+            .then().statusCode(201);
+    }
+
+
 
 }

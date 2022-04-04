@@ -29,7 +29,9 @@ import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -69,7 +71,8 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
-    KafkaOldConfiguration.class
+    KafkaOldConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class HandleAdjustEventTest {
     @Autowired
@@ -102,6 +105,8 @@ public class HandleAdjustEventTest {
     OldKafkaService oldKafkaService;
     @Autowired
     ResultFeeDao resultFeeDao;
+    @Autowired
+    StpSiebel stpSiebel;
 
 
 
@@ -113,12 +118,18 @@ public class HandleAdjustEventTest {
     List<SlaveAdjust> slaveAdjustList;
     UUID strategyId;
 
-    String siebelIdMaster = "1-51Q76AT";
-    String siebelIdSlave = "5-1P87U0B13";
+    String siebelIdMaster;
+    String siebelIdSlave;
     String operCode = "MNY_CHANGED_INP";
 
     String description = "new test стратегия autotest";
     String operId = "2321010121";
+
+    @BeforeAll
+    void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
+    }
 
     @AfterEach
     void deleteClient() {

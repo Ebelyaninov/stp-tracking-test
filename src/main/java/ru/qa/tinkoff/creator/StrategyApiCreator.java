@@ -11,7 +11,7 @@ import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 @EnableConfigurationProperties(RestClientApiConfigurationProperties.class)
 @Component
 @RequiredArgsConstructor
-public class StrategyApiCreator  extends ApiCreator<StrategyApi> {
+public class StrategyApiCreator extends ApiCreator<StrategyApi> {
     private final RestClientApiConfigurationProperties properties;
     private final Environment env;
 

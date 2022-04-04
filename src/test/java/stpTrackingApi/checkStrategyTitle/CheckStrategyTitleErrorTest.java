@@ -13,29 +13,31 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.CheckStrategyTitleRequest;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -43,15 +45,16 @@ import static org.hamcrest.Matchers.*;
 @Feature("TAP-10732")
 @Owner("ext.ebelyaninov")
 @DisplayName("stp-tracking-api")
-@Tags({@Tag("stp-tracking-api"),@Tag("checkStrategyTitle")})
+@Tags({@Tag("stp-tracking-api"), @Tag("checkStrategyTitle")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class CheckStrategyTitleErrorTest {
@@ -60,10 +63,13 @@ public class CheckStrategyTitleErrorTest {
     ClientService clientService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-    StrategyApi strategyApi;
 
-    String SIEBEL_ID = "5-LFCI8UPV";
+    String SIEBEL_ID;
     String title = "Самый уникаЛьный и неповторим!";
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     LocalDateTime currentDate = (LocalDateTime.now());
@@ -72,13 +78,10 @@ public class CheckStrategyTitleErrorTest {
 
     UUID investId;
 
-    @BeforeAll
-    void conf() {
-        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    }
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();
@@ -90,18 +93,19 @@ public class CheckStrategyTitleErrorTest {
         step("Удаляем клиента автоследования", () -> {
             try {
                 clientService.deleteClient(client);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         });
     }
 
-    private static Stream<Arguments> provideStringsForHeadersCheckTitle () {
+    private static Stream<Arguments> provideStringsForHeadersCheckTitle() {
         return Stream.of(
             Arguments.of(null, "android", "5.0.1", "Самый уникаЛьный и неповторим!"),
             Arguments.of("trading-invest", null, "4.5.6", "Самый уникаЛьный и неповторим!"),
             Arguments.of("trading", "ios", null, "Самый уникаЛьный и неповторим!"),
             Arguments.of("trading", "ios", null, null),
             Arguments.of("trading", "ios", null, "")
-            );
+        );
     }
 
     @Test
@@ -109,7 +113,7 @@ public class CheckStrategyTitleErrorTest {
     @DisplayName("С1184393.CheckStrategyTitle. Параметр title > 30 символов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод предназначен для проверки названия стратегии перед его фиксацией: валидно ли оно для использования и не занято ли")
-    void С1184393() {
+    void C1184393() {
         String title = "Самый уникаЛьный и неповторим!+";
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
@@ -117,7 +121,7 @@ public class CheckStrategyTitleErrorTest {
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -140,14 +144,14 @@ public class CheckStrategyTitleErrorTest {
     @DisplayName("С1184398.CheckStrategyTitle. Не передан заголовок x-tcs-siebel-id")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод предназначен для проверки названия стратегии перед его фиксацией: валидно ли оно для использования и не занято ли")
-    void С1184398() {
+    void C1184398() {
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
 
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -175,7 +179,7 @@ public class CheckStrategyTitleErrorTest {
         createClient(investId, ClientStatusType.registered, null);
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
-        StrategyApi.CheckStrategyTitleOper checkStrategyTitle = strategyApi.checkStrategyTitle()
+        StrategyApi.CheckStrategyTitleOper checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .body(request)
             .xB3ParentspanidHeader("a2fb4a1d1a96d312")
             .xB3SampledHeader("1")

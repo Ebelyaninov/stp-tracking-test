@@ -15,21 +15,21 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.PlatformTransactionManager;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.SptTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetStrategiesResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -42,7 +42,6 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -67,11 +66,12 @@ import static org.hamcrest.Matchers.nullValue;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class GetStrategiesTest {
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -84,16 +84,27 @@ public class GetStrategiesTest {
     StpTrackingAdminSteps steps;
     @Autowired
     StrategyService strategyService;
-    //    @Autowired
-//    PlatformTransactionManager billingTransactionManager;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
+
+
+    SocialProfile socialProfile;
     Client client;
     Contract contract;
     Strategy strategy;
-    String SIEBEL_ID = "5-JDFC5N71";
     String xApiKey = "x-api-key";
-    String keyRead = "tcrm";
     String key = "tracking";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
+
+    UUID investId;
+    String contractId;
+
+    String title;
+    String description;
+    Integer score;
+    UUID strategyId;
 
     @AfterEach
     void deleteClient() {
@@ -113,6 +124,19 @@ public class GetStrategiesTest {
         });
     }
 
+    @BeforeAll
+    void getDataClients() {
+        title = "Стратегия Autotest - Заголовок";
+        description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
+        score = 2;
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        socialProfile = steps.getProfile(siebel.siebelIdAdmin);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+    }
+
     private static Stream<Arguments> provideLimit() {
         return Stream.of(
             Arguments.of(1),
@@ -130,7 +154,7 @@ public class GetStrategiesTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1041091(Integer limit) {
         //вызываем метод getStrategys
-        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(limit)
@@ -148,20 +172,12 @@ public class GetStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1041616() {
-        String title = "Стратегия Autotest - Заголовок";
-        String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
-        Integer score = 2;
         String percent = "0";
-        UUID strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -170,7 +186,7 @@ public class GetStrategiesTest {
         client = clientService.getClient(contract.getClientId());
         String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
         //вызываем метод getStrategys
-        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(1)
@@ -196,20 +212,13 @@ public class GetStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1705738() {
-        String title = "Стратегия Autotest - Заголовок";
-        String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
-        Integer score = 2;
         String percent = "0";
-        UUID strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -218,7 +227,7 @@ public class GetStrategiesTest {
         client = clientService.getClient(contract.getClientId());
         String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
         //вызываем метод getStrategys
-        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(1)
@@ -244,24 +253,17 @@ public class GetStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1041090() {
-        String title = "Стратегия Autotest - Заголовок";
-        String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
-        Integer score = 2;
-        UUID strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         Integer position = strategys.get(size - 1).getPosition();
         //вызываем метод getStrategys
-        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(position)
@@ -279,23 +281,15 @@ public class GetStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1043600() {
-        String title = "Стратегия Autotest - Заголовок";
-        String description = "Общий, недетализированный план, охватывающий длительный период времени, способ достижения сложной цели, позднее вообще какой-либо деятельности человека.";
-        Integer score = 2;
-        UUID strategyId = UUID.randomUUID();
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys
-        GetStrategiesResponse responseExep = strategyApi.getStrategies()
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .cursorQuery(strategys.get(size - 2).getPosition())
@@ -306,7 +300,7 @@ public class GetStrategiesTest {
         assertThat("Крайний strategy.position не равно", responseExep.getNextCursor(), is(strategys.get(size - 1).getPosition().toString()));
         assertThat("hasNext не равно", responseExep.getHasNext(), is(false));
         //вызываем метод getStrategys
-        GetStrategiesResponse responseEx = strategyApi.getStrategies()
+        GetStrategiesResponse responseEx = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .cursorQuery(strategys.get(size - 3).getPosition())
@@ -382,7 +376,7 @@ public class GetStrategiesTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1041093(String name, String login) {
         //вызываем метод confirmMasterClient
-        StrategyApi.GetStrategiesOper getStrategies = strategyApi.getStrategies()
+        StrategyApi.GetStrategiesOper getStrategies = strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(400));
         if (name != null) {
@@ -402,7 +396,7 @@ public class GetStrategiesTest {
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1041133() {
         //получаем данные по клиенту  в api сервиса счетов
-        strategyApi.getStrategies()
+        strategyApiStrategyApiAdminCreator.get().getStrategies()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -415,7 +409,7 @@ public class GetStrategiesTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1041134() {
-        strategyApi.getStrategies()
+        strategyApiStrategyApiAdminCreator.get().getStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")

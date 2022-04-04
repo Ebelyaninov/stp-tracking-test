@@ -42,6 +42,10 @@ message ExchangePosition {
   // Код класса инструмента вне биржи (например, сплитованные валюты)
   google.protobuf.StringValue otc_class_code = 8;
 
+   // Признак применения динамических лимитов для инструмента при выставлении сигнала
+  bool dynamic_limits = 9;
+
+
   message OrderQuantityLimit {
 
     // Идентификатор периода
@@ -121,6 +125,19 @@ message Subscription {
 
   // Идентификатор подписки
   int64 id = 3;
+
+    // Блокировка подписки
+    SubscriptionBlock block = 4;
+}
+
+// Блокировка подписки на стратегию
+message SubscriptionBlock {
+
+    // Идентификатор блокировки
+    int64 id = 1;
+
+    // Период действия блокировки
+    TimestampPeriod period = 2;
 }
 
 // Договор
@@ -141,6 +158,16 @@ message Contract {
     // Отслеживается
     TRACKED = 1;
   }
+}
+
+// Временной период
+message TimestampPeriod {
+
+    // Метка времени начала периода (включая)
+    google.protobuf.Timestamp started_at = 1;
+
+    // Метка времени окончания периода (исключая)
+    google.protobuf.Timestamp ended_at = 2;
 }
 
 // Команда для выполнения над портфелем
@@ -324,7 +351,12 @@ message Signal {
 
     // Кол-во единиц актива в заявках хвоста, порожденных сигналом
     Decimal tail_order_quantity = 3;
+
+    // Значение лимита, которое было применено при проверке объема заявки
+    google.protobuf.DoubleValue dynamic_limit_quantity = 4;
 }
+
+
 
 // Команда для расчета аналитических показателей
 message AnalyticsCommand {

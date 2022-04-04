@@ -17,15 +17,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -35,13 +38,13 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.*;
 import java.util.List;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -59,7 +62,9 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class DeleteSubscriptionTest {
     @Autowired
@@ -78,18 +83,18 @@ public class DeleteSubscriptionTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
-
-    SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<SubscriptionApi> subscriptionApiCreator;
 
     Strategy strategyMaster;
-    Contract contractMaster;
-    Client clientMaster;
     Client clientSlave;
     Contract contractSlave;
     Subscription subscription;
-    String siebelIdMaster = "5-2G2O9XVOR";
-    String siebelIdSlave = "4-167TES05";
-    String description = "new test стратегия autotest";
+    String siebelIdMaster;
+    String siebelIdSlave;
+    String description = "стратегия autotest DeleteSubscription";
     String contractIdMaster;
     UUID investIdMaster;
     UUID investIdSlave;
@@ -98,6 +103,8 @@ public class DeleteSubscriptionTest {
 
     @BeforeEach
     void getDataForTests() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -108,6 +115,8 @@ public class DeleteSubscriptionTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.createEventInTrackingContractEvent(contractIdMaster);
+        steps.createEventInTrackingContractEvent(contractIdSlave);
     }
 
     @AfterEach
@@ -153,12 +162,12 @@ public class DeleteSubscriptionTest {
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C535360() throws Exception {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1, LocalDateTime.now());
+            StrategyStatus.active, 1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,  ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -173,7 +182,7 @@ public class DeleteSubscriptionTest {
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафкаtracking.subscription.event все offset
         steps.resetOffsetToLate(TRACKING_SUBSCRIPTION_EVENT);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -230,12 +239,12 @@ public class DeleteSubscriptionTest {
         } catch (Exception e) {
         }
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 1, LocalDateTime.now());
+            StrategyStatus.active, 1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,  ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //находим подписку и проверяем по ней данные
@@ -253,7 +262,7 @@ public class DeleteSubscriptionTest {
         //вычитываем из топика кафка tracking.fee.calculate.command все offset
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_COMMAND);
         LocalDateTime time = LocalDateTime.now().withNano(0);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -305,12 +314,12 @@ public class DeleteSubscriptionTest {
     @Description("Метод создания подписки на торговую стратегию ведомым.")
     void C1219549() throws Exception {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         strategyMaster = strategyService.getStrategy(strategyId);
@@ -327,7 +336,7 @@ public class DeleteSubscriptionTest {
         assertThat("номера клиента не равно", clientSlave.getMasterStatus().toString(), is("none"));
         //вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -361,16 +370,17 @@ public class DeleteSubscriptionTest {
     @Description("Метод удаления подписки на торговую стратегию ведомым.")
     void C1526348() {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy11(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
-            ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active, 1, LocalDateTime.now());
+            ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,
+            1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //создаем подписку с активным статусом, но заблокированную в contract
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
-        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,  ContractState.tracked,
             strategyId, SubscriptionStatus.active, new Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, true);
         //вызываем метод удаления подписки
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

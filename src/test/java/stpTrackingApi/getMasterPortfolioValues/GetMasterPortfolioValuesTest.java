@@ -5,12 +5,10 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
@@ -28,46 +27,32 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.AnalyticsApi;
-import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterPortfolioValuesResponse;
-import ru.qa.tinkoff.swagger.tracking.model.GetUntrackedContractsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
-import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 
 @Slf4j
 @Epic("getMasterPortfolioValues- Получение стоимостей виртуального портфеля")
@@ -80,7 +65,9 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class,
 })
 public class GetMasterPortfolioValuesTest {
     @Autowired
@@ -101,15 +88,26 @@ public class GetMasterPortfolioValuesTest {
     StpTrackingApiSteps steps;
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
-
-    AnalyticsApi analyticsApi = ApiClient.api(ApiClient.Config.apiConfig()).analytics();
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<AnalyticsApi> analyticsApiCreator;
 
     String contractIdMaster;
     MasterPortfolioValue masterPortfolioValue;
     Strategy strategy;
-    String siebelIdMaster = "1-BABKO0G";
-    String siebelIdSlave = "5-42ASJ9C7";
+    String siebelIdMaster;
+    String siebelIdSlave;
     UUID strategyId;
+    String description = "стратегия autotest GetMasterPortfolioValues";
+    String title;
+
+    @BeforeAll
+    void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+        title = steps.getTitleStrategy();
+    }
 
     @AfterEach
     void deleteClient() {
@@ -130,10 +128,12 @@ public class GetMasterPortfolioValuesTest {
                 masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyId(strategyId);
             } catch (Exception e) {
             }
+            try {
+                steps.createEventInTrackingContractEvent(contractIdMaster);
+            } catch (Exception e) {
+            }
         });
     }
-
-
 
 
     @Test
@@ -142,44 +142,40 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113203() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
-       //изменяем время активации стратегии
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
         strategy.setActivationTime(updateTime);
         strategyService.saveStrategy(strategy);
         //создаем записи о стоимости портфеля
         createDateMasterPortfolioValue();
-       //вызываем метод GetMasterPortfolioValues
-       GetMasterPortfolioValuesResponse expecResponse =
-        analyticsApi.getMasterPortfolioValues()
-            .xAppNameHeader("invest")
-            .xAppVersionHeader("4.5.6")
-            .xPlatformHeader("ios")
-            .strategyIdPath(strategyId)
-            .xTcsSiebelIdHeader(siebelIdSlave)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetMasterPortfolioValuesResponse.class));
-       //рассчитываем относительную доходность но основе выбранных точек Values
-       BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size()-1))
-           .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)),4, RoundingMode.HALF_UP))
-           .subtract(new BigDecimal("1"))
-           .multiply(new BigDecimal("100"))
-           .setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        //вызываем метод GetMasterPortfolioValues
+        GetMasterPortfolioValuesResponse expecResponse =
+            analyticsApiCreator.get().getMasterPortfolioValues()
+                .xAppNameHeader("invest")
+                .xAppVersionHeader("4.5.6")
+                .xPlatformHeader("ios")
+                .strategyIdPath(strategyId)
+                .xTcsSiebelIdHeader(siebelIdSlave)
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response.as(GetMasterPortfolioValuesResponse.class));
+        //рассчитываем относительную доходность но основе выбранных точек Values
+        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
+            .subtract(new BigDecimal("1"))
+            .multiply(new BigDecimal("100"))
+            .setScale(2, BigDecimal.ROUND_HALF_EVEN);
         assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
     }
-
 
 
     @Test
@@ -188,18 +184,15 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113428() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -212,10 +205,10 @@ public class GetMasterPortfolioValuesTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = formatter.format(fromTime);
         //вызываем метод GetMasterPortfolioValues
-        GetMasterPortfolioValuesResponse expecResponse =getMasterPortfolioValuesLimitFrom(dateTs, 3);
+        GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 3);
         //рассчитываем относительную доходность но основе выбранных точек Values
-        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size()-1))
-            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)),4, RoundingMode.HALF_UP))
+        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
@@ -229,18 +222,15 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113429() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -253,7 +243,7 @@ public class GetMasterPortfolioValuesTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = formatter.format(fromTime);
         //вызываем метод GetMasterPortfolioValues
-        GetMasterPortfolioValuesResponse expecResponse =getMasterPortfolioValuesLimitFrom(dateTs, 3);
+        GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 3);
         double relativeYield = 0.0;
         assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield));
     }
@@ -265,18 +255,15 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113918() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -289,15 +276,14 @@ public class GetMasterPortfolioValuesTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = formatter.format(fromTime);
         //вызываем метод GetMasterPortfolioValues
-        GetMasterPortfolioValuesResponse expecResponse =getMasterPortfolioValuesLimitFrom(dateTs, 2);
-        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size()-1))
-            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)),4, RoundingMode.HALF_UP))
+        GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 2);
+        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
         assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
     }
-
 
 
     @Test
@@ -306,18 +292,15 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C981546() throws JsonProcessingException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -327,7 +310,7 @@ public class GetMasterPortfolioValuesTest {
         createDateMasterPortfolioValue();
         //вызываем метод GetMasterPortfolioValues
         GetMasterPortfolioValuesResponse expecResponse =
-            analyticsApi.getMasterPortfolioValues()
+            analyticsApiCreator.get().getMasterPortfolioValues()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")
@@ -340,8 +323,6 @@ public class GetMasterPortfolioValuesTest {
         assertThat("relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield));
         assertThat("Количество values не равно", expecResponse.getValues().size(), is(1));
     }
-
-
 
 
     private static Stream<Arguments> provideRequiredParam() {
@@ -360,7 +341,7 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113987(String name, String version, String platform) {
         strategyId = UUID.randomUUID();
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(400));
@@ -391,7 +372,7 @@ public class GetMasterPortfolioValuesTest {
     void C996561() {
         strategyId = UUID.randomUUID();
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -415,7 +396,7 @@ public class GetMasterPortfolioValuesTest {
     void C981551() {
         strategyId = UUID.randomUUID();
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -438,20 +419,17 @@ public class GetMasterPortfolioValuesTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C996507() {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " +String.valueOf(randomNumber);
-        String description = "new test стратегия autotest";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, false);
+            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // вызываем метод CreateSignal
-        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApi.getMasterPortfolioValues()
+        AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -467,7 +445,6 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-
     void createDateMasterPortfolioValue(UUID strategyId, int days, int hours, String value) {
         masterPortfolioValue = MasterPortfolioValue.builder()
             .strategyId(strategyId)
@@ -478,9 +455,9 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    GetMasterPortfolioValuesResponse getMasterPortfolioValuesLimitFrom (String dateTs, int limit) {
+    GetMasterPortfolioValuesResponse getMasterPortfolioValuesLimitFrom(String dateTs, int limit) {
         GetMasterPortfolioValuesResponse expecResponse =
-            analyticsApi.getMasterPortfolioValues()
+            analyticsApiCreator.get().getMasterPortfolioValues()
                 .xAppNameHeader("invest")
                 .xAppVersionHeader("4.5.6")
                 .xPlatformHeader("ios")

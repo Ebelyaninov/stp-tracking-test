@@ -13,6 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -22,8 +25,10 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -69,9 +74,13 @@ import static ru.qa.tinkoff.matchers.ContractIsNotBlockedMatcher.contractIsNotBl
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     GrpcServicesAutoConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class UnblockContractTest {
+
     @Autowired
     MiddleGrpcService middleGrpcService;
     @Autowired
@@ -96,31 +105,27 @@ public class UnblockContractTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
-
-
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
     String xApiKey = "x-api-key";
     String key = "tracking";
-
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
     Contract contract;
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "5-JEF71TBN";
     UUID investIdMaster;
     UUID investIdSlave;
-
 
     @BeforeAll
     void getDataFromAccount() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -131,7 +136,7 @@ public class UnblockContractTest {
         strategyId = UUID.randomUUID();
         String description = "new test стратегия autotest";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
     }
@@ -220,7 +225,7 @@ public class UnblockContractTest {
         //Вычитываем из топика kafka: tracking.master.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //Вызываем метод на разблокировку контракта
-        Response unblockContract = contractApi.unblockContract()
+        Response unblockContract = contractApiAdminCreator.get().unblockContract()
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")

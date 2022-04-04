@@ -18,13 +18,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.SignalApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
@@ -36,6 +41,7 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -56,10 +62,12 @@ import static org.hamcrest.Matchers.is;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class GetSignalsErrorTest {
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -74,14 +82,13 @@ public class GetSignalsErrorTest {
     StrategyService strategyService;
     @Autowired
     MasterSignalDao masterSignalDao;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    SignalApiAdminCreator signalApiAdminCreator;
 
     String xApiKey = "x-api-key";
     String key= "tracking";
-
-
-    SignalApi signalApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).signal();
-
-    String siebelIdMaster = "5-DYNN1E3S";
     String contractIdMaster;
     UUID strategyId;
     LocalDateTime localDateTime;
@@ -90,7 +97,7 @@ public class GetSignalsErrorTest {
     @BeforeAll
     void getDataFromAccount(){
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
@@ -103,9 +110,10 @@ public class GetSignalsErrorTest {
         String title = "Autotest" +String.valueOf(randomNumber);
         String description = "new test стратегия autotest";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        stpTrackingAdminSteps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1));
+        stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(1), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
     }
 
     @AfterEach
@@ -153,7 +161,7 @@ public class GetSignalsErrorTest {
     @Description("Получение списка сигналов на стратегии")
     void C1458346() {
 
-        signalApi.getSignals()
+        signalApiAdminCreator.get().getSignals()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -180,7 +188,7 @@ public class GetSignalsErrorTest {
 
         strategyService.deleteStrategy(stpTrackingAdminSteps.strategy);
 
-        SignalApi.GetSignalsOper updateGetSignals = signalApi.getSignals()
+        SignalApi.GetSignalsOper updateGetSignals = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppVersionHeader("4.5.6")
@@ -208,7 +216,7 @@ public class GetSignalsErrorTest {
 
 
     ErrorResponse getSignalsResponse (UUID strategyId, int statusCode) {
-        ErrorResponse getSignalsResponse = signalApi.getSignals()
+        ErrorResponse getSignalsResponse = signalApiAdminCreator.get().getSignals()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")

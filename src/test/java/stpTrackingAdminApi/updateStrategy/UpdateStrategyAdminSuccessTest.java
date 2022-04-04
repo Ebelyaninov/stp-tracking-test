@@ -17,6 +17,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
@@ -25,12 +29,13 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
-import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.StrategyTest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequestOwner;
@@ -44,7 +49,6 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -60,6 +64,7 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
+
 @Slf4j
 @Epic("updateStrategy - Обновление стратегии администратором")
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -72,26 +77,13 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
-
+    InvestTrackingAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class UpdateStrategyAdminSuccessTest {
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient
-        .api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
-
-    Strategy strategy;
-    String SIEBEL_ID = "4-1UBHYQ63";
-    String xApiKey = "x-api-key";
-    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
-    String title;
-    String description;
-    Profile profile;
-    SocialProfile socialProfile;
-    UUID investId;
-    String contractId;
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -106,17 +98,34 @@ public class UpdateStrategyAdminSuccessTest {
     ClientService clientService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+
+    Strategy strategy;
+    String xApiKey = "x-api-key";
+    BigDecimal expectedRelativeYield = new BigDecimal(10.00);
+    String title;
+    String description;
+    Profile profile;
+    SocialProfile socialProfile;
+    UUID investId;
+    String contractId;
+
 
     @BeforeAll
     void createTestData() {
         title = steps.getTitleStrategy();
         description = "Стратегия Autotest 001 - Описание";
         //Находим клиента в БД social
-        profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        socialProfile = steps.getProfile(SIEBEL_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApi.getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
             .brokerTypeQuery("broker")
             .brokerStatusQuery("opened")
             .isBlockedQuery(false)
@@ -159,10 +168,10 @@ public class UpdateStrategyAdminSuccessTest {
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
-
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -177,7 +186,7 @@ public class UpdateStrategyAdminSuccessTest {
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
 //        //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -198,7 +207,7 @@ public class UpdateStrategyAdminSuccessTest {
         checkParamEvent(event, "UPDATED", strategyId, titleUpdate);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -216,12 +225,13 @@ public class UpdateStrategyAdminSuccessTest {
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Получаем данные по клиенту в API-Сервиса счетов
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null, null, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -232,9 +242,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
-
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -247,7 +256,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, scoreUpdate, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -263,12 +272,13 @@ public class UpdateStrategyAdminSuccessTest {
         Integer score = null;
         UUID strategyId = UUID.randomUUID();
         //Находим клиента в БД social
-        Profile profile = profileService.getProfileBySiebelId(SIEBEL_ID);
-        SocialProfile socialProfile = steps.getProfile(SIEBEL_ID);
+        Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
+        SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
         //Создаем клиента в tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null, null, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -277,9 +287,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
-
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -292,7 +301,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, null, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, title, descriptionUpdate, score, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, title, descriptionUpdate, score, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -307,12 +316,13 @@ public class UpdateStrategyAdminSuccessTest {
         String titleUpdate = "New Autotest " + String.valueOf(randomNumber);
         String shortDescriptionUpdate = "TEST100";
         String ownerDescription = "OwnerTEST100";
-        Integer scoreUpdate = null ;
+        Integer scoreUpdate = null;
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, null, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -322,7 +332,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -335,7 +345,7 @@ public class UpdateStrategyAdminSuccessTest {
             description, null, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, description, scoreUpdate, Currency.RUB, "draft", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, description, scoreUpdate, Currency.RUB, "draft", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -351,9 +361,10 @@ public class UpdateStrategyAdminSuccessTest {
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -362,9 +373,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
-
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -377,7 +387,7 @@ public class UpdateStrategyAdminSuccessTest {
             description, scoreUpdate, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, title, description, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, title, description, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -390,16 +400,18 @@ public class UpdateStrategyAdminSuccessTest {
         BigDecimal expectedRelativeYield = new BigDecimal(100.00);
         int randomNumber = 0 + (int) (Math.random() * 100);
         Integer score = 1;
-        String titleUpdate ="New Autotest" + String.valueOf(randomNumber);
-        String descriptionUpdate = "New Стратегия Autotest 006 - Описание";;
+        String titleUpdate = "New Autotest" + String.valueOf(randomNumber);
+        String descriptionUpdate = "New Стратегия Autotest 006 - Описание";
+        ;
         Integer scoreUpdate = 5;
         String shortDescriptionUpdate = "TEST100";
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -412,7 +424,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
 
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -425,7 +437,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, scoreUpdate, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "active", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "active", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -437,16 +449,17 @@ public class UpdateStrategyAdminSuccessTest {
     void C839319() {
         int randomNumber = 0 + (int) (Math.random() * 100);
         Integer score = null;
-        String titleUpdate = "New Autotest " +String.valueOf(randomNumber);
+        String titleUpdate = "New Autotest " + String.valueOf(randomNumber);
         String descriptionUpdate = "Стратегия Autotest 007 - Обновленное Описание";
         Integer scoreUpdate = null;
         String shortDescriptionUpdate = "TEST100";
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -454,11 +467,11 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoreUpdate);
-        updateStrategyRequest. setOwner(owner);
+        updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -471,7 +484,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, scoreUpdate, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -482,15 +495,16 @@ public class UpdateStrategyAdminSuccessTest {
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
     void C839399() {
         Integer score = 1;
-        String descriptionUpdate ="New Стратегия Autotest 008 - Описание";
+        String descriptionUpdate = "New Стратегия Autotest 008 - Описание";
         Integer scoreUpdate = null;
         String shortDescriptionUpdate = "TEST100";
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -501,7 +515,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -514,7 +528,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, scoreUpdate, profile);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, title, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, title, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
@@ -531,10 +545,10 @@ public class UpdateStrategyAdminSuccessTest {
         Integer scoreUpdate = 5;
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
-
+            StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         List<StrategyTest> tests = new ArrayList<>();
         tests.add(new StrategyTest().id("derivative"));
         tests.add(new StrategyTest().id("structured_bonds"));
@@ -546,7 +560,6 @@ public class UpdateStrategyAdminSuccessTest {
         tests.add(new StrategyTest().id("foreign_bond"));
         tests.add(new StrategyTest().id("russian_shares"));
         tests.add(new StrategyTest().id("leverage"));
-
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTitle(titleUpdate);
@@ -554,7 +567,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setScore(scoreUpdate);
         updateStrategyRequest.setTests(tests);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -567,7 +580,7 @@ public class UpdateStrategyAdminSuccessTest {
             descriptionUpdate, scoreUpdate, profile);
         //Проверяем обновление массива tests
         Strategy getDataFromStategy = strategyService.getStrategy(strategyId);
-        for (int i = 0; i < tests.size(); i++){
+        for (int i = 0; i < tests.size(); i++) {
             assertThat("test != " + tests.get(i).getId(), getDataFromStategy.getTestsStrategy().get(i).getId(), is(tests.get(i).getId()));
         }
     }
@@ -582,16 +595,16 @@ public class UpdateStrategyAdminSuccessTest {
         Integer score = 1;
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
-
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         List<StrategyTest> tests = new ArrayList<>();
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTests(tests);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -606,14 +619,14 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("test != []", getDataFromStategy.getTestsStrategy().toString(), is("[]"));
     }
 
-     private static Stream<Arguments> provideStringsForSubscriptionStatus() {
-         return Stream.of(
-             Arguments.of(true, true, false, false),
-             Arguments.of(false, false, true, true),
-             Arguments.of(false, true, true, false),
-             Arguments.of(true, false, false, true)
-         );
-      }
+    private static Stream<Arguments> provideStringsForSubscriptionStatus() {
+        return Stream.of(
+            Arguments.of(true, true, false, false),
+            Arguments.of(false, false, true, true),
+            Arguments.of(false, true, true, false),
+            Arguments.of(true, false, false, true)
+        );
+    }
 
 
     @ParameterizedTest
@@ -632,9 +645,16 @@ public class UpdateStrategyAdminSuccessTest {
         String ownerDescription = "OwnerTEST100";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", buyEnabledForDb, sellEnabledForDb);
+//        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
+//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+//            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield,"TEST", "OwnerTEST", buyEnabledForDb, sellEnabledForDb);
+
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", buyEnabledForDb, sellEnabledForDb, false, "0.2", "0.04");
+
+
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -648,7 +668,7 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setBuyEnabled(buyEnabled);
         updateStrategyRequest.setSellEnabled(sellEnabled);
         //Вызываем метод updateStrategy
-        UpdateStrategyResponse responseUpdateStrategy = strategyApi.updateStrategy()
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
@@ -663,7 +683,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("sellEnabled не равно " + sellEnabled, responseUpdateStrategy.getSellEnabled(), is(sellEnabled));
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate,ownerDescription,expectedRelativeYield);
+        checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
         assertThat("buyEnabled не равно " + buyEnabled, strategy.getBuyEnabled(), is(buyEnabled));
         assertThat("sellEnabled не равно " + sellEnabled, strategy.getSellEnabled(), is(sellEnabled));
     }
@@ -692,7 +712,7 @@ public class UpdateStrategyAdminSuccessTest {
     }
 
     void checkParamDB(UUID strategyId, String contractId, String title, String description, Integer score,
-                      Currency currency, String status, StrategyRiskProfile riskProfile, String shortDescriptionUpdate,String ownerDescription,BigDecimal expectedRelativeYield) {
+                      Currency currency, String status, StrategyRiskProfile riskProfile, String shortDescriptionUpdate, String ownerDescription, BigDecimal expectedRelativeYield) {
         assertThat("номера стратегии не равно", strategy.getId(), is(strategyId));
         assertThat("номера договора клиента не равно", strategy.getContract().getId(), is(contractId));
         assertThat("название стратегии не равно", (strategy.getTitle()), is(title));

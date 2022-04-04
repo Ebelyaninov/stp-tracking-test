@@ -6,6 +6,7 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -15,22 +16,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
+import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
+import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
-import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -44,7 +49,9 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,6 +60,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
+
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @Epic("activateStrategy - Активация стратегии")
@@ -65,12 +73,12 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class ActivateStrategySuccessTest {
-
-    StrategyApi strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -87,21 +95,24 @@ public class ActivateStrategySuccessTest {
     StpTrackingAdminSteps steps;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
+    @Autowired
+    MasterPortfolioValueDao masterPortfolioValueDao;
 
-
-
-    Client client;
     Strategy strategy;
-    String SIEBEL_ID = "5-55RUONV5";
     String xApiKey = "x-api-key";
-    String key= "tracking";
-    MasterPortfolio masterPortfolio;
+    String key = "tracking";
     String contractId;
+    UUID investId;
     UUID strategyId;
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String description = "Autotest  - ActivateStrategy";
     Integer score = 5;
-
+    String siebelId;
+    MasterPortfolioValue masterPortfolioValue;
 
     @AfterEach
     void deleteClient() {
@@ -122,7 +133,20 @@ public class ActivateStrategySuccessTest {
                 masterPortfolioDao.deleteMasterPortfolio(contractId, strategyId);
             } catch (Exception e) {
             }
+            try {
+                masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
         });
+    }
+
+    @BeforeAll
+    void getDataClients() {
+        siebelId = siebel.siebelIdAdmin;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
 
 
@@ -133,21 +157,20 @@ public class ActivateStrategySuccessTest {
     void C457274() throws Exception {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
+       //создаем запись в табл.master_portfolio_value  по стоимости портфеля
+        createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -174,7 +197,6 @@ public class ActivateStrategySuccessTest {
     }
 
 
-
     @Test
     @AllureId("457351")
     @DisplayName("C457351.ActivateStrategy. Успешный ответ при повторной активации")
@@ -182,21 +204,21 @@ public class ActivateStrategySuccessTest {
     void C457351() throws Exception {
         String title = steps.getTitleStrategy();
         strategyId = UUID.randomUUID();
-        //Получаем данные по клиенту в API-Сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
-        steps.createClientWithContractAndStrategy(investId, null, contractId,null,  ContractState.untracked,
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, score, expectedRelativeYield,"TEST", "OwnerTEST", true, true);
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
+        //создаем запись в табл.master_portfolio_value  по стоимости портфеля
+        createDateMasterPortfolioValue(strategyId, 0, 4, "525.12", "6551.10");
+        createDateMasterPortfolioValue(strategyId, 0, 2, "723.62", "6551.10");
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод activateStrategy
-        Response responseActiveStrategy = strategyApi.activateStrategy()
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -220,7 +242,7 @@ public class ActivateStrategySuccessTest {
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
-        strategyApi.activateStrategy()
+        strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -259,5 +281,17 @@ public class ActivateStrategySuccessTest {
         assertThat("валюта стратегии не равно", strategy.getBaseCurrency().toString(), is(baseCurrency.getValue()));
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is(status));
         assertThat("риск-профиль стратегии не равно", strategy.getRiskProfile().toString(), is(riskProfile.toString()));
+    }
+
+    //дополнительные методы методы для работы тестов***************************************************
+    @Step("Создаем запись в master_portfolio_value: ")
+    void createDateMasterPortfolioValue(UUID strategyId, int days, int hours,  String minimumValue, String value) {
+        masterPortfolioValue = MasterPortfolioValue.builder()
+            .strategyId(strategyId)
+            .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
+            .minimumValue(new BigDecimal(minimumValue))
+            .value(new BigDecimal(value))
+            .build();
+        masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
     }
 }

@@ -9,7 +9,8 @@ info:
   version: 1.1.0
 
 servers:
-  - url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
+  - url: http://social-tracking-strategy.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/strategy/v1/
+ # - url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
  #- url: http://invest-qa.tinkoff.ru/tracking/social-tracking-strategy/v1/
 
     description: тестовый стенд

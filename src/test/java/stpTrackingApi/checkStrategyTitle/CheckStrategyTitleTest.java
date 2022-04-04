@@ -11,24 +11,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.CheckStrategyTitleRequest;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
@@ -40,7 +42,8 @@ import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -56,12 +59,12 @@ import static org.hamcrest.Matchers.*;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
-public class СheckStrategyTitleTest {
-
+public class CheckStrategyTitleTest {
     @Autowired
     ClientService clientService;
     @Autowired
@@ -72,30 +75,26 @@ public class СheckStrategyTitleTest {
     ContractService contractService;
     @Autowired
     TrackingService trackingService;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
-
-    StrategyApi strategyApi;
     Contract contract;
     Strategy strategy;
-
-    String SIEBEL_ID = "5-LFCI8UPV";
+    String SIEBEL_ID;
     String title = "Самый уникаЛьный и неповторим!";
     String traceId = "5b23a9529c0f48bc5b23a9529c0f48bc";
     LocalDateTime currentDate = (LocalDateTime.now());
     String contractId;
     Client client;
-
     UUID investId;
 
     @BeforeAll
-    void conf() {
-        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    }
-
-    @BeforeAll
     void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(stpSiebel.siebelIdApiMaster);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
     }
@@ -200,7 +199,7 @@ public class СheckStrategyTitleTest {
         //Создаем клиента
         createClient(investId, ClientStatusType.registered, null);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -233,7 +232,7 @@ public class СheckStrategyTitleTest {
         CheckStrategyTitleRequest request = new CheckStrategyTitleRequest()
             .title(title);
 
-        Response checkStrategyTitle = strategyApi.checkStrategyTitle()
+        Response checkStrategyTitle = strategyApiCreator.get().checkStrategyTitle()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

@@ -13,20 +13,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.util.UUID;
+
 import static io.qameta.allure.Allure.step;
 
 @Slf4j
@@ -40,13 +45,14 @@ import static io.qameta.allure.Allure.step;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class,
-    StpTrackingAdminStepsConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class,
+    AdminApiCreatorConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class EnableContractSynchronizationErrorTest {
 
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
 
     @Autowired
     ClientService clientService;
@@ -56,16 +62,15 @@ public class EnableContractSynchronizationErrorTest {
     TrackingService trackingService;
     @Autowired
     StpTrackingAdminSteps steps;
-
-
-    String siebelIdSlave = "4-LQB8FKN";
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
     String notContractIdSlave = "123456789";
     String longContractIdSlave = "123456789000000000";
     String contractIdSlave;
-
     UUID investIdSlave;
-
     String xApiKey = "x-api-key";
     String key = "tracking";
     String notKey = "counter";
@@ -75,7 +80,7 @@ public class EnableContractSynchronizationErrorTest {
     @BeforeAll
     void getDataClients() {
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -99,7 +104,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398796() {
         //вызываем метод enableContractSynchronization
-        contractApi.enableContractSynchronization()
+        contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -117,7 +122,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1705484() {
         //вызываем метод enableContractSynchronization
-        contractApi.enableContractSynchronization()
+        contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -134,7 +139,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398790() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .contractIdPath(contractIdSlave)
@@ -142,10 +147,9 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
-
     }
 
     @SneakyThrows
@@ -156,7 +160,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1407957() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking")
             .contractIdPath(contractIdSlave)
@@ -164,7 +168,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
     }
@@ -178,7 +182,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398809() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -187,7 +191,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-14-B12", "Сервис временно недоступен");
     }
@@ -200,7 +204,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398806() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -209,7 +213,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-14-B12", "Сервис временно недоступен");
     }
@@ -222,7 +226,7 @@ public class EnableContractSynchronizationErrorTest {
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C1398807() {
         //вызываем метод enableContractSynchronization
-        Response enableContractSynch = contractApi.enableContractSynchronization()
+        Response enableContractSynch = contractApiAdminCreator.get().enableContractSynchronization()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -231,7 +235,7 @@ public class EnableContractSynchronizationErrorTest {
             .execute(response -> response);
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = enableContractSynch.as(ErrorResponse.class);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
-        steps.checkHeaders(enableContractSynch,"x-trace-id", "x-server-time");
+        steps.checkHeaders(enableContractSynch, "x-trace-id", "x-server-time");
         //Проверяем тело ответа
         steps.checkErrors(errorResponse, "0344-00-Z99", "Сервис временно недоступен");
     }

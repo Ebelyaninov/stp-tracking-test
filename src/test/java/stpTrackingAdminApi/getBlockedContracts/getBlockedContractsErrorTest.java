@@ -15,26 +15,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,12 +53,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    ContractApiAdminCreator.class,
+    ApiCreatorConfiguration.class
+
 })
 
 public class getBlockedContractsErrorTest {
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -76,10 +75,11 @@ public class getBlockedContractsErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
-
-    String siebelIdMaster = "5-23AZ65JU2";
-    String siebelIdSlave = "4-LQB8FKN";
 
     String contractIdSlave;
     String contractIdMaster;
@@ -89,18 +89,18 @@ public class getBlockedContractsErrorTest {
     UUID strategyId;
 
     String xApiKey = "x-api-key";
-    String key= "tracking";
+    String key = "tracking";
     String notKey = "counter";
     String keyRead = "tcrm";
 
     @BeforeAll
     void getDataClients() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -143,7 +143,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491578() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -158,7 +158,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491608() {
         //вызываем метод getBlockedContracts
-        Response getblockedContracts = contractApi.getBlockedContracts()
+        Response getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xTcsLoginHeader("tracking")
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -182,7 +182,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491580() {
         //вызываем метод getBlockedContracts
-        Response getblockedContracts = contractApi.getBlockedContracts()
+        Response getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(400))
@@ -207,7 +207,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1705706() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, notKey))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(401))
@@ -222,7 +222,7 @@ public class getBlockedContractsErrorTest {
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1705705() {
         //вызываем метод getBlockedContracts
-        contractApi.getBlockedContracts()
+        contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .respSpec(spec -> spec.expectStatusCode(401))

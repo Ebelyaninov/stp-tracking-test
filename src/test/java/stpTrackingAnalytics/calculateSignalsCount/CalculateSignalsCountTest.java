@@ -3,10 +3,7 @@ package stpTrackingAnalytics.calculateSignalsCount;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import io.qameta.allure.AllureId;
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
+import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +15,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.SignalsCount;
@@ -26,12 +24,15 @@ import ru.qa.tinkoff.investTracking.services.SignalsCountDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -59,7 +60,9 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingAnalyticsStepsConfiguration.class
+    StpTrackingAnalyticsStepsConfiguration.class,
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateSignalsCountTest {
     @Autowired
@@ -70,20 +73,12 @@ public class CalculateSignalsCountTest {
     SignalsCountDao signalsCountDao;
     @Autowired
     StpTrackingAnalyticsSteps steps;
+    @Autowired
+    StpInstrument instrument;
+
     SignalsCount signalsCount;
     UUID strategyId;
 
-    final String tickerNok = "NOK";
-    final String tradingClearingAccountNok = "L01+00000SPB";
-
-    final String tickerGazprom = "XS0191754729";
-    final String tradingClearingAccountGazprom = "L01+00000F00";
-
-    final String tickerAbbV = "ABBV";
-    final String tradingClearingAccountAbbV = "TKCBM_TCAB";
-
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
 
     private static Stream<Arguments> cutTime() {
         return Stream.of(
@@ -129,7 +124,7 @@ public class CalculateSignalsCountTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -164,7 +159,7 @@ public class CalculateSignalsCountTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -187,20 +182,19 @@ public class CalculateSignalsCountTest {
         strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
-        //создаем записи по сигналу на разные позиции
-        createMasterSignal(31, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 5, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 5, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(4, 2, 6, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 6, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 7, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 7, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 8, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -216,7 +210,7 @@ public class CalculateSignalsCountTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
 //        Thread.sleep(5000);
         checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -227,11 +221,11 @@ public class CalculateSignalsCountTest {
         assertThat("количество сигналов по стратегии не равно", signalsCount.getValue(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //добавляем еще сигналы
-        createMasterSignal(1, 1, 9, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(1, 1, 9, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "2", 12);
-        createMasterSignal(0, 2, 10, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 10, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 11, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 11, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
@@ -252,19 +246,19 @@ public class CalculateSignalsCountTest {
         strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
-        createMasterSignal(31, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 4, strategyId, instrument. tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 5, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 5, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(4, 2, 6, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 6, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 7, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 7, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 8, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
         ByteString strategyIdByte = byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -278,7 +272,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -289,11 +283,11 @@ public class CalculateSignalsCountTest {
         assertThat("количество сигналов по стратегии не равно", signalsCount.getValue(), is(count));
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
         //добавляем еще сигналы
-        createMasterSignal(1, 1, 9, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(1, 1, 9, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "2", 12);
-        createMasterSignal(0, 2, 10, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 10, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 11, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 11, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
 //        Thread.sleep(3000);
         //отправляем событие в топик kafka tracking.analytics.command повторно
@@ -325,6 +319,7 @@ public class CalculateSignalsCountTest {
 // методы для работы тестов*************************************************************************
 
     //методы для перевода стратегии в byte
+    @Step("Переводим значение stratedyId в byte: ")
     public byte[] bytes(UUID uuid) {
         return ByteBuffer.allocate(16)
             .putLong(uuid.getMostSignificantBits())
@@ -339,27 +334,27 @@ public class CalculateSignalsCountTest {
 
     //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignal(UUID strategyId) {
-        createMasterSignal(31, 1, 2, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
-        createMasterSignal(30, 2, 3, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(30, 2, 3, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "6", 11);
-        createMasterSignal(29, 2, 4, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(29, 2, 4, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.98", "7", 12);
-        createMasterSignal(5, 4, 5, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(5, 4, 5, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(4, 2, 6, strategyId, tickerApple, tradingClearingAccountApple,
+        createMasterSignal(4, 2, 6, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "107.81", "1", 12);
-        createMasterSignal(3, 1, 7, strategyId, tickerAbbV, tradingClearingAccountAbbV,
+        createMasterSignal(3, 1, 7, strategyId, instrument.tickerABBV, instrument.tradingClearingAccountABBV,
             "90.18", "3", 11);
-        createMasterSignal(2, 1, 8, strategyId, tickerGazprom, tradingClearingAccountGazprom,
+        createMasterSignal(2, 1, 8, strategyId, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
             "190.18", "1", 12);
-        createMasterSignal(0, 2, 9, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 2, 9, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.17", "4", 12);
-        createMasterSignal(0, 1, 10, strategyId, tickerNok, tradingClearingAccountNok,
+        createMasterSignal(0, 1, 10, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
     }
 
-
+    @Step("Создаем записи по сигналам мастера в табл. master_signal: ")
     void createMasterSignal(int minusDays, int minusHours, int version, UUID strategyId, String ticker, String tradingClearingAccount,
                             String price, String quantity, int action) {
         LocalDateTime time = LocalDateTime.now().minusDays(minusDays).minusHours(minusHours);
@@ -382,6 +377,7 @@ public class CalculateSignalsCountTest {
     // ожидаем версию портфеля slave
     void checkMasterSignalsCount(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
+            Thread.sleep(3000);
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId);
             if (signalsCount.getStrategyId() == null) {
                 Thread.sleep(5000);

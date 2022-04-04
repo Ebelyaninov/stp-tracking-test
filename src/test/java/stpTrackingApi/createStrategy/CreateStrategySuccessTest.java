@@ -8,7 +8,6 @@ import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hamcrest.core.IsNull;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,8 +17,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
@@ -32,12 +32,16 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking.model.*;
+import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
+import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyResponse;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
+import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -58,7 +62,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -81,21 +84,18 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 @Tags({@Tag("stp-tracking-api"), @Tag("createStrategy")})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {
-//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingApiStepsConfiguration.class
-
+    StpTrackingApiStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    StrategyApi strategyApi;
-//    @Autowired
-//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -110,18 +110,18 @@ public class CreateStrategySuccessTest {
     StrategyService strategyService;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    ApiCreator<StrategyApi> strategyApiCreator;
 
     Client client;
     Contract contract;
     Strategy strategy;
     MasterPortfolio masterPortfolio;
     MasterPortfolioPositionRetention masterPortfolioPositionRetention;
-
-
-    @BeforeAll
-    void conf() {
-        strategyApi = ApiClient.api(ApiClient.Config.apiConfig()).strategy();
-    }
 
     @AfterEach
     void deleteClient() {
@@ -151,7 +151,12 @@ public class CreateStrategySuccessTest {
 
     String contractId;
     UUID strategyId;
-    String SIEBEL_ID = "5-EVTLCGZ5";
+    String SIEBEL_ID;
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+    }
 
     @Test
     @AllureId("263384")
@@ -232,7 +237,7 @@ public class CreateStrategySuccessTest {
         CreateStrategyRequest request = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, baseMoney, positionRetentionId, feeRate);
         //Вызываем метод CreateStrategy
-        Response expectedResponse = strategyApi.createStrategy()
+        Response expectedResponse = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -307,7 +312,7 @@ public class CreateStrategySuccessTest {
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
         checkParamMasterPortfolio(1, baseMoney);
         //Вызываем метод второй раз
-        strategyApi.createStrategy()
+        strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -355,7 +360,7 @@ public class CreateStrategySuccessTest {
         request.setPositionRetentionId(positionRetentionId);
 //        request.setFeeRate(feeRate);
         //Вызываем метод CreateStrategy
-        Response expectedResponse = strategyApi.createStrategy()
+        Response expectedResponse = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
@@ -545,7 +550,6 @@ public class CreateStrategySuccessTest {
     }
 
 
-
     private static Stream<Arguments> strategy() {
         return Stream.of(
             Arguments.of(ru.qa.tinkoff.tracking.entities.enums.StrategyStatus.draft, null),
@@ -569,16 +573,16 @@ public class CreateStrategySuccessTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
-        steps.createClientWintContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            strategyStatus, 0, date, false);
+            strategyStatus, 0, date, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         strategy = strategyService.getStrategy(strategyId);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");
-        CreateStrategyRequest createStrategyRequest = createStrategyRequest (Currency.RUB, contractId, description,
+        CreateStrategyRequest createStrategyRequest = createStrategyRequest(Currency.RUB, contractId, description,
             StrategyRiskProfile.CONSERVATIVE, title, basemoney, "days", feeRate);
         //Вызываем метод CreateStrategy
-        StrategyApi.CreateStrategyOper createSignal = strategyApi.createStrategy()
+        StrategyApi.CreateStrategyOper createSignal = strategyApiCreator.get().createStrategy()
             .xTcsSiebelIdHeader(SIEBEL_ID)
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -592,7 +596,6 @@ public class CreateStrategySuccessTest {
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("К договору уже привязана другая торговая стратегия"));
     }
-
 
 
     //*** Методы для работы тестов ***
@@ -618,7 +621,7 @@ public class CreateStrategySuccessTest {
 
     @Step("Создание стратегии, вызов метода createStrategy")
     CreateStrategyResponse createStrategy(String siebelId, CreateStrategyRequest request) {
-        CreateStrategyResponse createdStrategy = strategyApi.createStrategy()
+        CreateStrategyResponse createdStrategy = strategyApiCreator.get().createStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

@@ -4,6 +4,7 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,11 +26,14 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Subscription;
@@ -70,7 +74,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class CalculateResultFeeTest {
     @Autowired
@@ -103,9 +108,15 @@ public class CalculateResultFeeTest {
     SlaveAdjustDao slaveAdjustDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
+
+    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker.
+        ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
+
 
     Client clientSlave;
     String contractIdMaster;
@@ -118,8 +129,8 @@ public class CalculateResultFeeTest {
     UUID investIdSlave;
     SlaveAdjust slaveAdjust;
     String operId = "2321010121";
-    String siebelIdMaster = "1-51Q76AT";
-    String siebelIdSlave = "5-1P87U0B13";
+    String siebelIdMaster;
+    String siebelIdSlave;
 
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
@@ -132,6 +143,8 @@ public class CalculateResultFeeTest {
 
     @BeforeAll
     void getDataFromAccount() {
+        siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
+        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
@@ -276,7 +289,7 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ожидаем записи в result_fee
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(2), subscriptionId);
         //проверяем полученные данные
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
@@ -380,7 +393,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(2), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -618,7 +631,7 @@ public class CalculateResultFeeTest {
         //создаем портфели slave
         createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
         //перемещаем в топике tracking.fee.calculate.command Offset в конец очереди сообщений
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -774,7 +787,7 @@ public class CalculateResultFeeTest {
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 3,
             startFirst, endFirst, context, new BigDecimal("65162.5"), endFirst);
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         createCommandResult(subscriptionId);
         // проверяем, что команда в tracking.fee.calculate.command не улетает
         await().atMost(Duration.ofSeconds(20))
@@ -1052,7 +1065,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -1107,8 +1120,9 @@ public class CalculateResultFeeTest {
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, 2,
             2, baseMoneyVersionFour, positionListVersionThree, Date.from(OffsetDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).toInstant()));
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         createCommandResult(subscriptionId);
+        checkComparedToFeeVersion(1, subscriptionId);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
@@ -1273,10 +1287,10 @@ public class CalculateResultFeeTest {
             OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), "rub", false, slaveAdjustValueSecond.toString());
 
         //вычитываем все события из топика tracking.fee.calculate.command
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
 
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -1401,6 +1415,7 @@ public class CalculateResultFeeTest {
         if (porfolioValue.compareTo(BigDecimal.ZERO) < 0) {
             porfolioValue = new BigDecimal("0");
         }
+        checkComparedToFeeVersion(5, subscriptionId);
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 5);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(porfolioValue));
         //Переопределяем HWM, сумма заводов + HWM
@@ -1611,7 +1626,7 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1))
             .until(
                 () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
                 notNullValue());
@@ -1700,7 +1715,7 @@ public class CalculateResultFeeTest {
         }
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -1881,9 +1896,9 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500))
             .until(
-                () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4),
+                () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9),
                 notNullValue());
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioOnePeriod));
@@ -1985,7 +2000,7 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ждем появления записи в табл. result_fee
-        checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
+        checkComparedToFeeVersion(versionsList.get(1), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
@@ -2030,11 +2045,11 @@ public class CalculateResultFeeTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
-        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
+        steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ожидаем записи в result_fee
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(2)).until(() ->
             resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0), notNullValue());
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -2054,6 +2069,152 @@ public class CalculateResultFeeTest {
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(new BigDecimal("0")));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(new BigDecimal("0")));
     }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1626800")
+    @DisplayName("1626800 CalculateResultFee.Добавление метки времени created_at. created_at = now () utc")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1626800() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(40));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(40);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаём портфели slave
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolio(contractIdSlave, strategyId, 1, 1, "17564",
+            positionList, Date.from(OffsetDateTime.now().minusDays(40).toInstant()));
+        //вычитываем все события из топика tracking.fee.calculate.command
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommandResult(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.fee.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        checkComparedToFeeVersion(1, subscriptionId);
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        //проверяем полученное событие в tracking.fee.calculate.command
+        assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
+        assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
+        assertThat("portfolioValue не равен", feeCommand.getManagement().getPortfolioValue().getScale(), is(0));
+        //проверяем запись в таблице management_fee
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1);
+        assertThat("contractID не равен", resultFee.getContractId(), is(contractIdSlave));
+        assertThat("strategyID не равен", resultFee.getStrategyId(), is(strategyId));
+        assertThat("Version не равен", resultFee.getVersion(), is(1));
+        assertThat("created_at не равен", resultFee.getCreatedAt().toInstant().getEpochSecond(), is(feeCommand.getCreatedAt().getSeconds()));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1626799")
+    @DisplayName("1626799 CalculateResultFee.Добавление метки времени created_at, после отписки от стратегии.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1626799() {
+        strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, "40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаём портфели slave
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolio(contractIdSlave, strategyId, 1, 1, "17564",
+            positionList, Date.from(OffsetDateTime.now().minusDays(40).toInstant()));
+        //вычитываем все события из топика tracking.fee.calculate.command
+        kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
+        //отписываемся от стратегии
+        subscriptionApi.deleteSubscription()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .contractIdQuery(contractIdSlave)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(ResponseBodyData::asString);
+        //получаем подписку
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        checkComparedToFeeVersion(1, subscriptionId);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_FEE_CALCULATE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.CalculateFeeCommand feeCommand = Tracking.CalculateFeeCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.fee.calculate.command:  {}", feeCommand);
+        //проверяем полученное событие в tracking.fee.calculate.command
+        assertThat("subscriptionId подписки не равен", feeCommand.getSubscription().getId(), is(subscriptionId));
+        assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
+        assertThat("portfolioValue не равен", feeCommand.getManagement().getPortfolioValue().getScale(), is(0));
+        checkComparedToFeeVersion(1, subscriptionId);
+        //проверяем запись в таблице management_fee
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1);
+        assertThat("contractID не равен", resultFee.getContractId(), is(contractIdSlave));
+        assertThat("strategyID не равен", resultFee.getStrategyId(), is(strategyId));
+        assertThat("Version не равен", resultFee.getVersion(), is(1));
+        assertThat("created_at не равен", resultFee.getCreatedAt().toInstant().getEpochSecond(), is(feeCommand.getCreatedAt().getSeconds()));
+    }
+
+
 
 
     // методы для работы тестов*****************************************************************
@@ -2553,13 +2714,15 @@ public class CalculateResultFeeTest {
 
     @Step("Ожидаем записи в табл.result_fee: ")
     void checkComparedToFeeVersion(int version, long subscriptionId) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
-            if (resultFee.getVersion() != version) {
-                Thread.sleep(5000);
-            }
-        }
+//        for (int i = 0; i < 5; i++) {
+//            Thread.sleep(3000);
+//            resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version);
+//            if (resultFee.getVersion() != version) {
+//                Thread.sleep(5000);
+//            }
+//        }
+        await().atMost(Duration.ofSeconds(6)).pollDelay(Duration.ofSeconds(5)).until(() ->
+            resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version), notNullValue());
     }
 
     @Step("Отправляем команду в TRACKING_CONTRACT_EVENT: ")

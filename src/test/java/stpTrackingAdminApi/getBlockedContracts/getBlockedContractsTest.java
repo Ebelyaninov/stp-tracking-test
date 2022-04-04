@@ -13,14 +13,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetBlockedContractsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
@@ -30,6 +34,7 @@ import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -55,13 +60,14 @@ import static org.hamcrest.Matchers.is;
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    InvestTrackingAutoConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    InvestTrackingAutoConfiguration.class,
+    ContractApiAdminCreator.class,
+    ApiCreatorConfiguration.class
+
 })
 
 public class getBlockedContractsTest {
-
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -76,10 +82,11 @@ public class getBlockedContractsTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAdminSteps steps;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    ContractApiAdminCreator contractApiAdminCreator;
 
-
-    String siebelIdMaster = "5-23AZ65JU2";
-    String siebelIdSlave = "4-LQB8FKN";
 
     String contractIdSlave;
     String contractIdMaster;
@@ -87,20 +94,19 @@ public class getBlockedContractsTest {
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
-
     Integer defaultLimit = 30;
-
     String xApiKey = "x-api-key";
     String key= "tracking";
+    String description = "Autotest get block contract";
 
     @BeforeAll
     void getDataClients() {
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
@@ -142,13 +148,12 @@ public class getBlockedContractsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491521() {
-        String title = "Autotest" + randomNumber(0,100);
-        String description = "Autotest get block contract";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategyNew(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,ContractState.tracked, strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
@@ -163,7 +168,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -199,7 +204,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -231,7 +236,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
@@ -262,7 +267,7 @@ public class getBlockedContractsTest {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
         //вызываем метод getBlockedContracts
-        GetBlockedContractsResponse getblockedContracts = contractApi.getBlockedContracts()
+        GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")

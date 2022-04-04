@@ -28,6 +28,8 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
@@ -57,6 +59,7 @@ import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     KafkaOldConfiguration.class
 })
 public class HandleSocialEventTest {
@@ -74,6 +77,8 @@ public class HandleSocialEventTest {
     ProfileService profileService;
     @Autowired
     ClientService clientService;
+    @Autowired
+    StpSiebel siebel;
 
 
     @AfterEach
@@ -85,7 +90,7 @@ public class HandleSocialEventTest {
         });
     }
 
-    final String SIEBLE_ID = "5-CY9LDKA7";
+
 
     @SneakyThrows
     @Test
@@ -96,9 +101,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503903() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.confirmed);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -114,7 +119,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(image))
                 .build())
@@ -145,9 +150,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503904() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         String nickName = profile.getNickname();
         //формируем событие для топика kafka social.event
@@ -162,7 +167,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName)
                 .setImage(utilsTest.buildByteString(UUID.fromString("f651139b-6879-463a-94b1-2f45e79b701d")))
                 .build())
@@ -195,9 +200,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503909() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         String nickName = profile.getNickname();
         //формируем событие для топика kafka social.event
@@ -212,7 +217,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName + "12345")
                 .build())
             .build();
@@ -242,9 +247,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C507663() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.registered);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.registered);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         //формируем событие для топика kafka social.event
         OffsetDateTime now = OffsetDateTime.now();
@@ -258,7 +263,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .build())
             .build();
         //кодируем событие по protobuf схеме social и переводим в byteArray
@@ -287,10 +292,10 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503902() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.confirmed);
 //        UUID investId = UUID.fromString("f5b3a54b-0ea3-44f4-af13-50e33d92646b");
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -307,7 +312,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(profileId))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(UUID.fromString("f651139b-6879-463a-94b1-2f45e79b701d")))
                 .build())
@@ -339,9 +344,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503906() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.confirmed);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.confirmed);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -357,7 +362,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.DELETED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(UUID.fromString("f651139b-6879-463a-94b1-2f45e79b701d")))
                 .build())
@@ -388,9 +393,9 @@ public class HandleSocialEventTest {
         "(объект client.social_profile) посредством обработки событий от системы Social.")
     void C503908() {
         //создаем запись в tracking.client, из БД Social заполняем инфо о профайле
-        UUID investId = createClient(SIEBLE_ID, ClientStatusType.none);
+        UUID investId = createClient(siebel.siebelSocial, ClientStatusType.none);
         //получаем данные по профайлу
-        profile = profileService.getProfileBySiebelId(SIEBLE_ID);
+        profile = profileService.getProfileBySiebelId(siebel.siebelSocial);
         UUID key = profile.getId();
         UUID image = profile.getImage();
         String nickName = profile.getNickname();
@@ -406,7 +411,7 @@ public class HandleSocialEventTest {
             .setAction(Social.Event.Action.UPDATED)
             .setProfile(Social.Profile.newBuilder()
                 .setId(utilsTest.buildByteString(key))
-                .setSiebelId(SIEBLE_ID)
+                .setSiebelId(siebel.siebelSocial)
                 .setNickname(nickName + "12345")
                 .setImage(utilsTest.buildByteString(image))
                 .build())
