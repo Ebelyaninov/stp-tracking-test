@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.creator.adminCreator.TimeLineApiAdminCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -30,13 +31,13 @@ import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
 import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 
 import java.math.BigDecimal;
@@ -63,6 +64,7 @@ public class StpTrackingAdminSteps {
     private final ExchangePositionService exchangePositionService;
     private final SubscriptionService subscriptionService;
     private final ContractApiAdminCreator contractApiAdminCreator;
+    private final ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
     private final TimeLineApiAdminCreator timeLineApiAdminCreator;
     private final SlavePortfolioDao slavePortfolioDao;
     private final InvestAccountCreator<ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi> brokerAccountApiCreator;
@@ -169,6 +171,8 @@ public class StpTrackingAdminSteps {
 //            .setImage(profile.getImage().toString());
         return socialProfile;
     }
+
+
     @Step("Cоздаем запись в tracking.exchange_position по инструменту")
     //создаем запись в tracking.exchange_position по инструменту
     public void createExchangePosition(String ticker, String tradingClearingAccount, ExchangePositionExchange exchangePositionExchange,
@@ -188,6 +192,32 @@ public class StpTrackingAdminSteps {
             .setDynamicLimits(false);
         exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
     }
+
+
+    //создаем запись в tracking.update_position по инструменту
+    public void updateExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
+                                       Boolean trackingAllowed, Integer dailyQuantityLimit, List<OrderQuantityLimit> orderQuantityLimitList ) {
+        //формируем тело запроса
+        UpdateExchangePositionRequest updateExPosition = new UpdateExchangePositionRequest();
+        updateExPosition.exchange(exchange);
+        updateExPosition.dailyQuantityLimit(dailyQuantityLimit);
+        updateExPosition.setOrderQuantityLimits(orderQuantityLimitList);
+        updateExPosition.setTicker(ticker);
+        updateExPosition.setTrackingAllowed(trackingAllowed);
+        updateExPosition.setTradingClearingAccount(tradingClearingAccount);
+        updateExPosition.setDynamicLimits(false);
+        exchangePositionApiAdminCreator.get().updateExchangePosition()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("android")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExPosition)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse.class));
+    }
+
 
     @Step("Cоздаем запись по портфелю мастера")
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,

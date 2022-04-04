@@ -12,6 +12,7 @@ public class StpInstrument {
 
     public String tickerAAPL = "AAPL";
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";
+    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
     public String typeAAPL = "share";
     public String classCodeAAPL = "SPBXM";
     public String briefNameAAPL = "Apple";
