@@ -75,11 +75,13 @@ public class StpTrackingAnalyticsSteps {
 
 
     public String quantitySBER = "50";
+    public String quantitySBERZero = "0";
     public String quantitySU29009RMFS6 = "3";
     public String quantityLKOH = "7";
     public String quantitySNGSP = "100";
     public String quantityTRNFP = "4";
     public String quantityESGR = "5";
+    public String quantityESGRZero = "-5";
     public String quantityUSD = "1000";
     public String quantityYNDX = "3";
 
@@ -163,6 +165,39 @@ public class StpTrackingAnalyticsSteps {
             .ticker(instrument.tickerSBER)
             .tradingClearingAccount(instrument.tradingClearingAccountSBER)
             .quantity(new BigDecimal(quantitySBER))
+            .changedAt(date)
+            .lastChangeDetectedVersion(2)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
+            .changedAt(date)
+            .lastChangeDetectedVersion(3)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+
+        OffsetDateTime timeChangedAt = OffsetDateTime.now().minusDays(days);
+        Date changedAt = Date.from(timeChangedAt.toInstant());
+        createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMaster, version, money, changedAt);
+    }
+
+
+    // создаем портфель ведущего с позициями в кассандре
+    public void createMasterPortfolioTwoPositionWithZero(int days, int version, String money, String contractIdMaster, UUID strategyId) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(days);
+        Date date = Date.from(utc.toInstant());
+
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBERZero))
             .changedAt(date)
             .lastChangeDetectedVersion(2)
             .lastChangeAction((byte) positionAction.getAction().getActionValue())
@@ -465,6 +500,81 @@ public class StpTrackingAnalyticsSteps {
 
 
 
+    // создаем портфель ведущего с позициями в кассандре
+    public void createMasterPortfolioSevenPositionWithZero(int days, int version, String money, String contractIdMaster, UUID strategyId) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(days);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .quantity(new BigDecimal(quantitySBERZero))
+            .changedAt(date)
+            .lastChangeDetectedVersion(2)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerSU29009RMFS6)
+            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .quantity(new BigDecimal(quantitySU29009RMFS6))
+            .changedAt(date)
+            .lastChangeDetectedVersion(3)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerLKOH)
+            .tradingClearingAccount(instrument.tradingClearingAccountLKOH)
+            .quantity(new BigDecimal(quantityLKOH))
+            .changedAt(date)
+            .lastChangeDetectedVersion(4)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerSNGSP)
+            .tradingClearingAccount(instrument.tradingClearingAccountSNGSP)
+            .quantity(new BigDecimal(quantitySNGSP))
+            .changedAt(date)
+            .lastChangeDetectedVersion(4)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerTRNFP)
+            .tradingClearingAccount(instrument.tradingClearingAccountTRNFP)
+            .quantity(new BigDecimal(quantityTRNFP))
+            .changedAt(date)
+            .lastChangeDetectedVersion(5)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerESGR)
+            .tradingClearingAccount(instrument.tradingClearingAccountESGR)
+            .quantity(new BigDecimal(quantityESGRZero))
+            .changedAt(date)
+            .lastChangeDetectedVersion(6)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionListMaster.add(MasterPortfolio.Position.builder()
+            .ticker(instrument.tickerUSD)
+            .tradingClearingAccount(instrument.tradingClearingAccountUSD)
+            .quantity(new BigDecimal(quantityUSD))
+            .changedAt(date)
+            .lastChangeDetectedVersion(7)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        OffsetDateTime timeChangedAt = OffsetDateTime.now().minusDays(days);
+        Date changedAt = Date.from(timeChangedAt.toInstant());
+        createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMaster, version, money, changedAt);
+    }
+
+
+
+
+
+
 
     //создаем портфель master в cassandra
    public void createMasterPortfolioWithChangedAt(String contractIdMaster, UUID strategyId, List<MasterPortfolio.Position> positionList, int version, String money, Date date) {
@@ -578,6 +688,58 @@ public class StpTrackingAnalyticsSteps {
 
         return valuePortfolio;
     }
+
+
+
+    public BigDecimal getValuePortfolioWithZero(Map<String, BigDecimal> pricesPos, String nominal,
+                                        BigDecimal minPriceIncrement, String aciValue,String baseMoney) {
+
+        BigDecimal valuePos2 = BigDecimal.ZERO;
+        BigDecimal valuePos3 = BigDecimal.ZERO;
+        BigDecimal valuePos4 = BigDecimal.ZERO;
+        BigDecimal valuePos5 = BigDecimal.ZERO;
+
+        BigDecimal valuePos7 = BigDecimal.ZERO;
+        Iterator it = pricesPos.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
+                String priceTs = pair.getValue().toString();
+                BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
+                    .scaleByPowerOfTen(-2);
+                BigDecimal minPriceIncrementNew = minPriceIncrement
+                    .multiply(new BigDecimal(nominal))
+                    .scaleByPowerOfTen(-2);
+                BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
+                    .multiply(minPriceIncrementNew);
+                BigDecimal price =roundPrice
+                    .add(new BigDecimal(aciValue));
+                valuePos2 = new BigDecimal(quantitySU29009RMFS6).multiply(price);
+            }
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(quantityLKOH).multiply((BigDecimal) pair.getValue());
+            }
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(quantitySNGSP).multiply((BigDecimal) pair.getValue());
+            }
+            if (pair.getKey().equals(instrument.instrumentTRNFP)) {
+                valuePos5 = new BigDecimal(quantityTRNFP).multiply((BigDecimal) pair.getValue());
+            }
+
+            if (pair.getKey().equals(instrument.instrumentUSD)) {
+                valuePos7 = new BigDecimal(quantityUSD).multiply((BigDecimal) pair.getValue());
+            }
+        }
+        BigDecimal valuePortfolio = valuePos2
+            .add(valuePos3)
+            .add(valuePos4)
+            .add(valuePos5)
+            .add(valuePos7)
+            .add(new BigDecimal(baseMoney));
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        return valuePortfolio;
+    }
+
 
 
     public BigDecimal valuePosBonds(String priceTs, String nominal,BigDecimal minPriceIncrement, String aciValue, BigDecimal valuePos) {
@@ -790,6 +952,44 @@ public class StpTrackingAnalyticsSteps {
     }
 
 
+    public List<SlavePortfolio.Position> createListSlavePositionWithFourPosLight(String ticker1, String tradingClearingAccount1,
+                                                                                  String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
+                                                                                  String quantityPos2, Date date2, String ticker3, String tradingClearingAccount3,
+                                                                                  String quantityPos3, Date date3, String ticker4, String tradingClearingAccount4,
+                                                                                 String quantityPos4, Date date4)    {
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .quantity(new BigDecimal(quantityPos1))
+            .changedAt(date1)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .quantity(new BigDecimal(quantityPos2))
+            .changedAt(date2)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .quantity(new BigDecimal(quantityPos3))
+            .changedAt(date3)
+            .lastChangeAction(null)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(ticker4)
+            .tradingClearingAccount(tradingClearingAccount4)
+            .quantity(new BigDecimal(quantityPos4))
+            .changedAt(date4)
+            .lastChangeAction(null)
+            .build());
+        return positionList;
+    }
+
+
     public List<SlavePortfolio.Position> createListSlavePositionWithThreePos(String ticker1, String tradingClearingAccount1,
                                                                                   String quantityPos1, Date date1, String ticker2, String tradingClearingAccount2,
                                                                                   String quantityPos2, Date date2, String ticker3, String tradingClearingAccount3,
@@ -825,6 +1025,9 @@ public class StpTrackingAnalyticsSteps {
             .build());
         return positionList;
     }
+
+
+
 
     public String getTitleStrategy(){
         int randomNumber = 0 + (int) (Math.random() * 1000);

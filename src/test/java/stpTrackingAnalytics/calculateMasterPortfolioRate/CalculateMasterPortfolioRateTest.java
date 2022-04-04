@@ -193,7 +193,6 @@ public class CalculateMasterPortfolioRateTest {
         DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateTs = fmt.format(cutTimeForMd);
         String dateFireg = fmtFireg.format(cutTime);
-
         List<String> instrumentList = new ArrayList<>();
         instrumentList.add(instrument.instrumentSBER);
         instrumentList.add(instrument.instrumentSU29009RMFS6);
@@ -202,12 +201,9 @@ public class CalculateMasterPortfolioRateTest {
         instrumentList.add(instrument.instrumentTRNFP);
         instrumentList.add(instrument.instrumentESGR);
         instrumentList.add(instrument.instrumentUSD);
-
         Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 7);
         //получаем параметры для расчета стоимости портфеля bonds
-
         List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
-
         String aciValue = getBondDate.get(0);
         String nominal = getBondDate.get(1);
         //группируем данные по показателям
@@ -896,6 +892,83 @@ public class CalculateMasterPortfolioRateTest {
     }
 
 
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideAnalyticsCommand")
+    @AllureId("1781965")
+    @DisplayName("C1781965.CalculateMasterPortfolioRat.Расчет долей виртуального портфеля")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
+    void C1781965(Tracking.AnalyticsCommand.Operation operation) {
+        String baseMoney = "16551.10";
+        BigDecimal minPriceIncrement = new BigDecimal("0.001");
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfoliosWithZero();
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        OffsetDateTime cutTimeForMd = cutTime.minusHours(3);
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_RATE, strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateTs = fmt.format(cutTimeForMd);
+        String dateFireg = fmtFireg.format(cutTime);
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        instrumentList.add(instrument.instrumentTRNFP);
+        instrumentList.add(instrument.instrumentUSD);
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 5);
+        //получаем параметры для расчета стоимости портфеля bonds
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
+        //группируем данные по показателям
+        Map<PositionDateFromFireg, BigDecimal> positionIdMap = getPositionsMapWithZero(pricesPos, nominal,
+            minPriceIncrement, aciValue, baseMoney);
+        BigDecimal valuePortfolio = steps.getValuePortfolioWithZero(pricesPos, nominal,
+            minPriceIncrement, aciValue, baseMoney);
+        Map<String, BigDecimal> sectors = getSectors(positionIdMap, baseMoney);
+        Map<String, BigDecimal> types = getTypes(positionIdMap, baseMoney);
+        Map<String, BigDecimal> companys = getCompanys(positionIdMap, baseMoney);
+        //определяем стоимость каждой группы
+        sectors.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        types.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        companys.replaceAll((s, BigDecimal) -> BigDecimal.divide(valuePortfolio, 4, RoundingMode.HALF_DOWN));
+        //исключаем группу позиций с деньгами
+        BigDecimal typeRateSum = calculateSumWithoutMoneyGroup(sectors, "money");
+        BigDecimal sectorRateSum = calculateSumWithoutMoneyGroup(types, "money");
+        BigDecimal companyRateSum = calculateSumWithoutMoneyGroup(companys, "Денежные средства");
+        //обрабатываем оставшуюся группу с денежными позициями
+        sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
+        types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
+        companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
+        checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).until(() ->
+            masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
+        LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
+            ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
+            ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
+        //Проверяем параметры
+        checkParam(sectors, types, companys, cut, cutInCommand);
+    }
+
+
 //методы для работы тестов*******************************************************************************
 
     //группируем данные по показателям
@@ -964,6 +1037,61 @@ public class CalculateMasterPortfolioRateTest {
         return positionIdMap;
     }
 
+
+    //группируем данные по показателям
+    @Step("Считаем стоимость позиции в портфеле и добавляем данные в Map: ")
+    Map<PositionDateFromFireg, BigDecimal> getPositionsMapWithZero(Map<String, BigDecimal> pricesPos, String nominal,
+                                                           BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
+        log.info("Считаем стоимость позиции в портфеле");
+        BigDecimal valuePos2 = BigDecimal.ZERO;
+        BigDecimal valuePos3 = BigDecimal.ZERO;
+        BigDecimal valuePos4 = BigDecimal.ZERO;
+        BigDecimal valuePos5 = BigDecimal.ZERO;
+        BigDecimal valuePos7 = BigDecimal.ZERO;
+
+        Iterator it = pricesPos.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
+                String priceTs = pair.getValue().toString();
+                BigDecimal priceBefore = new BigDecimal(priceTs).multiply(new BigDecimal(nominal))
+                    .scaleByPowerOfTen(-2);
+                BigDecimal minPriceIncrementNew = minPriceIncrement
+                    .multiply(new BigDecimal(nominal))
+                    .scaleByPowerOfTen(-2);
+                BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
+                    .multiply(minPriceIncrementNew);
+                BigDecimal price = roundPrice
+                    .add(new BigDecimal(aciValue));
+                valuePos2 = new BigDecimal(steps.quantitySU29009RMFS6).multiply(price);
+                log.info("Считаем стоимость позиции " + instrument.instrumentSU29009RMFS6 + "в портфеле: " + valuePos2);
+            }
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentLKOH + "в портфеле: " + valuePos3);
+            }
+            if (pair.getKey().equals(instrument.instrumentSNGSP)) {
+                valuePos4 = new BigDecimal(steps.quantitySNGSP).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentSNGSP + "в портфеле: " + valuePos4);
+            }
+            if (pair.getKey().equals(instrument.instrumentTRNFP)) {
+                valuePos5 = new BigDecimal(steps.quantityTRNFP).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentTRNFP + "в портфеле: " + valuePos5);
+            }
+            if (pair.getKey().equals(instrument.instrumentUSD)) {
+                valuePos7 = new BigDecimal(steps.quantityUSD).multiply((BigDecimal) pair.getValue());
+                log.info("Считаем стоимость позиции " + instrument.instrumentUSD + "в портфеле: " + valuePos7);
+            }
+        }
+        Map<PositionDateFromFireg, BigDecimal> positionIdMap = new HashMap<>();
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.typeSU29009RMFS6, instrument.sectorSU29009RMFS6, instrument.companySU29009RMFS6), valuePos2);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerLKOH, instrument.tradingClearingAccountLKOH, instrument.typeLKOH, instrument.sectorLKOH, instrument.companyLKOH), valuePos3);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerSNGSP, instrument.tradingClearingAccountSNGSP, instrument.typeSNGSP, instrument.sectorSNGSP, instrument.companySNGSP), valuePos4);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerTRNFP, instrument.tradingClearingAccountTRNFP, instrument.typeTRNFP, instrument.sectorTRNFP, instrument.companyTRNFP), valuePos5);
+        positionIdMap.put(new PositionDateFromFireg(instrument.tickerUSD, instrument.tradingClearingAccountUSD, instrument.typeUSD, instrument.sectorUSD, instrument.companyUSD), valuePos7);
+        return positionIdMap;
+    }
+
     @Step("Считаем стоимость портфеля: ")
     BigDecimal getValuePortfolio(Map<String, BigDecimal> pricesPos, String nominal,
                                  BigDecimal minPriceIncrement, String aciValue, String baseMoney) {
@@ -1020,6 +1148,9 @@ public class CalculateMasterPortfolioRateTest {
         log.info("valuePortfolio:  {}", valuePortfolio);
         return valuePortfolio;
     }
+
+
+
 
     //группируем данные по показателям
     @Step("Группируем данные по показателям Sectors: ")
@@ -1080,6 +1211,11 @@ public class CalculateMasterPortfolioRateTest {
         steps.createMasterPortfolioSixPosition(6, 7, "34545.78", contractIdMaster, strategyId);
         steps.createMasterPortfolioSevenPosition(3, 8, "16551.10", contractIdMaster, strategyId);
     }
+
+    void createMasterPortfoliosWithZero() {
+        steps.createMasterPortfolioSevenPositionWithZero(3, 8, "16551.10", contractIdMaster, strategyId);
+    }
+
 
 
     @Step("Создаем одну позицию для мастера в master_portfolio: ")

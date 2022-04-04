@@ -20,22 +20,22 @@ configurations.implementation {
 
 repositories {
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/inv-platform-core/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/inv-platform-core/")
     }
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/mvn-tap/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/mvn-tap/")
     }
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/mvn-maven-proxy/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/mvn-maven-proxy/")
     }
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/mvn-invest-sdet-releases/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/mvn-invest-sdet-releases/")
     }
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/mvn-confluent-proxy/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/mvn-confluent-proxy/")
     }
     maven {
-        url = uri("http://nexus-new.tcsbank.ru/content/repositories/gradle-plugins/")
+        url = uri("https://nexus.tcsbank.ru/content/repositories/gradle-plugins/")
     }
 }
 
