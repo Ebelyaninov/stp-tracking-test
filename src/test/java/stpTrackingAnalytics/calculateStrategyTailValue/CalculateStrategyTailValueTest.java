@@ -639,6 +639,85 @@ public class CalculateStrategyTailValueTest {
     }
 
 
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideAnalyticsCommand")
+    @AllureId("1788035")
+    @DisplayName("C1788035.CalculateStrategyTailValue.Портфель slave попадает на заданную метку времени среза." +
+        "Массива positions обрабатываемого портфеля, у которого quantity <= 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
+    void C1788035(Tracking.AnalyticsCommand.Operation operation) {
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
+        steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //создаем портфель для ведомого
+        createSlavePortfolioWithZero();
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.STRATEGY_TAIL_VALUE,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        // формируем список позиций для запроса prices MD
+        List<String> instrumentList = new ArrayList<>();
+//        instrumentList.add(instrument.instrumentSBER);
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateFireg = fmtFireg.format(cutTime);
+
+        //вызываем метод MD и сохраняем prices в Map
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 2);
+        // получаем данные для расчета по облигациям
+        List<String> getDateFromFireg = getIntrumentdate(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+        String aciValue = getDateFromFireg.get(0);
+        String nominal = getDateFromFireg.get(1);
+        //выполняем расчеты стоимости портфеля
+        BigDecimal valuePos1 = BigDecimal.ZERO;
+        BigDecimal valuePos2 = BigDecimal.ZERO;
+        BigDecimal valuePos3 = BigDecimal.ZERO;
+        Iterator it = pricesPos.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            if (pair.getKey().equals(instrument.instrumentSU29009RMFS6)) {
+                String priceTs = pair.getValue().toString();
+                valuePos2 = steps.valuePosBonds(priceTs, nominal, minPriceIncrement, aciValue, valuePos2);
+            }
+            if (pair.getKey().equals(instrument.instrumentLKOH)) {
+                valuePos3 = new BigDecimal(steps.quantityLKOH).multiply((BigDecimal) pair.getValue());
+            }
+        }
+        BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3)
+            .add(new BigDecimal("3993.13"));
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        checkStrategyTailValue(strategyId);
+        await().atMost(TEN_SECONDS).until(() ->
+            strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
+        strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
+        assertThat("value стоимости портфеля не равно", strategyTailValue.getValue(), is(valuePortfolio));
+    }
+
+
+
+
     List<String> getIntrumentdate(String ticker, String classCode, String date) {
         List<String> dateFromFireg = new ArrayList<>();
         Response resp = instrumentsApi.instrumentsInstrumentIdAccruedInterestsGet()
@@ -681,6 +760,43 @@ public class CalculateStrategyTailValueTest {
             steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 4, 4,
             baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
+    }
+
+
+    void createSlavePortfolioWithZero() {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(20);
+        Date date = Date.from(utc.toInstant());
+        String baseMoneySlave = "29576.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 1,
+            baseMoneySlave, date, positionList);
+        String baseMoneySlaveOne = "28126.23";
+        List<SlavePortfolio.Position> positionListOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
+            baseMoneySlaveOne, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), positionListOnePos);
+        String baseMoneySlaveTwo = "27806.13";
+        List<SlavePortfolio.Position> positionListTwoPos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
+            baseMoneySlaveTwo, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), positionListTwoPos);
+        String baseMoneySlaveThree = "4193.13";
+        List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()))            ;
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 4, 4,
+            baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
+        String baseMoneySlaveFour = "3993.13";
+        List<SlavePortfolio.Position> positionListFour = steps.createListSlavePositionWithFourPosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            steps.quantitySBERZero, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerESGR, instrument.tradingClearingAccountESGR,
+            steps.quantityESGRZero, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()))            ;
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 5, 4,
+            baseMoneySlaveFour, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()), positionListFour);
+
     }
 
     void checkStrategyTailValue(UUID strategyId) throws InterruptedException {

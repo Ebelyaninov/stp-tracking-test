@@ -187,7 +187,7 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         BigDecimal valuePortfolio = (new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -270,7 +270,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3).add(valuePos4)
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -739,7 +739,9 @@ public class CalculateMasterPortfolioValueTest {
         log.info("valuePortfolio:  {}", valuePortfolio);
         Date start = Date.from(cutTime.minusDays(1).toInstant());
         // получаем запись в masterPortfolioValue
-        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+//        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+            masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start), notNullValue());
         // проверяем данные записи
         assertThat("minimum_value", masterPortfolioValue.getMinimumValue().intValue(), is(1000));
     }
@@ -812,9 +814,72 @@ public class CalculateMasterPortfolioValueTest {
         Date start = Date.from(cutTime.minusDays(1).toInstant());
         Integer minValue = null;
         // получаем запись в masterPortfolioValue
-        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+//        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+            masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start), notNullValue());
         // проверяем данные записи
         assertThat("minimum_value", masterPortfolioValue.getMinimumValue(), is(minValue));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideAnalyticsCommand")
+    @AllureId("1779559")
+    @DisplayName("C1779559.CalculateMasterPortfolioValue.Расчет стоимости виртуального портфеля" +
+        " с разными инструментами: share, bond, etf, money.Позиции в портфеле с quantity <= 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
+    void C1779559(Tracking.AnalyticsCommand.Operation operation) {
+        String baseMoney = "16551.10";
+        BigDecimal minPriceIncrement = new BigDecimal("0.001");
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
+        createMasterPortfoliosWithZero();
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_VALUE, strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //получаем цены по позициям от маркет даты
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter fmtFireg = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String dateTs = fmt.format(cutTime.minusHours(3));
+        String dateFireg = fmtFireg.format(cutTime);
+        // формируем список позиций для запроса prices MD
+        List<String> instrumentList = new ArrayList<>();
+        instrumentList.add(instrument.instrumentSU29009RMFS6);
+        instrumentList.add(instrument.instrumentLKOH);
+        instrumentList.add(instrument.instrumentSNGSP);
+        instrumentList.add(instrument.instrumentTRNFP);
+        instrumentList.add(instrument.instrumentUSD);
+        //вызываем метод MD и сохраняем prices в Map
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(instrumentList, "last", dateTs, 5);
+        // получаем данные для расчета по облигациям
+        List<String> getBondDate = steps.getDateBondFromInstrument(instrument.tickerSU29009RMFS6, instrument.classCodeSU29009RMFS6, dateFireg);
+        String aciValue = getBondDate.get(0);
+        String nominal = getBondDate.get(1);
+        //выполняем расчеты стоимости портфеля
+        BigDecimal valuePortfolio = steps.getValuePortfolioWithZero(pricesPos, nominal,
+            minPriceIncrement, aciValue, baseMoney);
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+            masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
+        assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
+        LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
+            ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
+            ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
+        assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
     }
 
 
@@ -904,5 +969,10 @@ public class CalculateMasterPortfolioValueTest {
         steps.createMasterPortfolioSixPosition(6, 7, "34545.78", contractIdMaster, strategyId);
         steps.createMasterPortfolioSevenPosition(3, 8, "16551.10", contractIdMaster, strategyId);
     }
+
+    void createMasterPortfoliosWithZero() {
+        steps.createMasterPortfolioSevenPositionWithZero(3, 8, "16551.10", contractIdMaster, strategyId);
+    }
+
 
 }
