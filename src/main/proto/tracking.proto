@@ -112,6 +112,17 @@ message Strategy {
 
   // Название
   string title = 2;
+
+  // Статус
+  Status status = 3;
+
+  enum Status {
+    // Черновик
+    DRAFT = 0;
+    // Активная
+    ACTIVE = 1;
+  }
+
 }
 
 // Подписка на стратегию
