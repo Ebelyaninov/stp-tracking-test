@@ -189,7 +189,7 @@ public class ActivateStrategySuccessTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
-        checkEventParam(event, "CREATED", strategyId, title);
+        checkEventParam(event, "UPDATED", strategyId, title);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -237,7 +237,7 @@ public class ActivateStrategySuccessTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
-        checkEventParam(event, "CREATED", strategyId, title);
+        checkEventParam(event, "UPDATED", strategyId, title);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -268,6 +268,7 @@ public class ActivateStrategySuccessTest {
         assertThat("Action события не равен", event.getAction().toString(), is(action));
         assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId));
         assertThat("ID стратегии не равен", (event.getStrategy().getTitle()), is(title));
+        assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.ACTIVE.toString()));
     }
 
     //Проверяем параметры стратегии

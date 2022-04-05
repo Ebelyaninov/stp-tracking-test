@@ -7,6 +7,7 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
@@ -49,6 +50,7 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -58,6 +60,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -104,6 +107,7 @@ public class UpdateStrategyAdminSuccessTest {
     StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
     @Autowired
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    UtilsTest utilsTest = new UtilsTest();
 
     Strategy strategy;
     String xApiKey = "x-api-key";
@@ -204,14 +208,15 @@ public class UpdateStrategyAdminSuccessTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         log.info("Команда в tracking.event:  {}", event);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
+    @SneakyThrows
     @AllureId("482511")
     @Subfeature("Успешные сценарии")
     @DisplayName("C482511.UpdateStrategy. Успешное обновление стратегии админом, статус 'draft'")
@@ -242,6 +247,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -254,13 +261,22 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", titleUpdate, "usd", "aggressive",
             descriptionUpdate, scoreUpdate, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
+    @SneakyThrows
     @AllureId("482513")
     @Subfeature("Успешные сценарии")
     @DisplayName("C482513.UpdateStrategy. Успешное обновление стратегии админом, только description")
@@ -287,6 +303,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -299,13 +317,22 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", title, "usd", "aggressive",
             descriptionUpdate, null, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
         checkParamDB(strategyId, contractId, title, descriptionUpdate, score, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
+    @SneakyThrows
     @AllureId("482514")
     @Subfeature("Успешные сценарии")
     @DisplayName("C482514.UpdateStrategy. Успешное обновление стратегии админом, только title")
@@ -331,6 +358,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -343,14 +372,23 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", titleUpdate, "rub", "conservative",
             description, null, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
         checkParamDB(strategyId, contractId, titleUpdate, description, scoreUpdate, Currency.RUB, "draft", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
     @AllureId("838783")
+    @SneakyThrows
     @Subfeature("Успешные сценарии")
     @DisplayName("C838783.UpdateStrategy. Успешное обновление стратегии админом, только score")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
@@ -373,6 +411,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -385,14 +425,23 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "active", title, "rub", "conservative",
             description, scoreUpdate, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
         checkParamDB(strategyId, contractId, title, description, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
     @AllureId("482516")
+    @SneakyThrows
     @Subfeature("Успешные сценарии")
     @DisplayName("C482516.UpdateStrategy. Успешное обновление title, score,description, expected_relative_yield, short_description, owner_description")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
@@ -422,7 +471,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
-
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -435,14 +485,23 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "active", titleUpdate, "usd", "aggressive",
             descriptionUpdate, scoreUpdate, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "active", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
     @AllureId("839319")
+    @SneakyThrows
     @Subfeature("Успешные сценарии")
     @DisplayName("C839319.UpdateStrategy. Успешное обновление title & description стратегии, score = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
@@ -470,6 +529,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -482,14 +543,23 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", titleUpdate, "usd", "aggressive",
             descriptionUpdate, scoreUpdate, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
     @AllureId("839399")
+    @SneakyThrows
     @Subfeature("Успешные сценарии")
     @DisplayName("C839399.UpdateStrategy.Успешное обновление стратегии description & score = null")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
@@ -514,6 +584,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setOwner(owner);
         updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
         updateStrategyRequest.setShortDescription("TEST100");
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -526,13 +598,22 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", title, "usd", "aggressive",
             descriptionUpdate, scoreUpdate, profile);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
         checkParamDB(strategyId, contractId, title, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
 
     @Test
+    @SneakyThrows
     @AllureId("1363648")
     @DisplayName("C1363648.UpdateStrategy. Обновили стратегию с массивом тестирования из настроек strategy-test-ids")
     @Subfeature("Успешные сценарии")
@@ -566,6 +647,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoreUpdate);
         updateStrategyRequest.setTests(tests);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -578,8 +661,18 @@ public class UpdateStrategyAdminSuccessTest {
         //Проверяем, данные которые вернулись в responseUpdateStrategy
         checkParamResponse(responseUpdateStrategy, strategyId, "draft", titleUpdate, "rub", "conservative",
             descriptionUpdate, scoreUpdate, profile);
-        //Проверяем обновление массива tests
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> filteredMessages = messages.stream()
+            .filter(key -> key.getKey().equals(strategyId)).collect(Collectors.toList());
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
+        //Находим в БД автоследования стратегию и проверяем ее поля
         Strategy getDataFromStategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, getDataFromStategy);
         for (int i = 0; i < tests.size(); i++) {
             assertThat("test != " + tests.get(i).getId(), getDataFromStategy.getTestsStrategy().get(i).getId(), is(tests.get(i).getId()));
         }
@@ -587,6 +680,7 @@ public class UpdateStrategyAdminSuccessTest {
 
 
     @Test
+    @SneakyThrows
     @AllureId("1363651")
     @DisplayName("C1363651.UpdateStrategy. Обновили стратегию с пустым массивом настроек strategy-test-ids и только с данным массивом")
     @Subfeature("Успешные сценарии")
@@ -603,6 +697,8 @@ public class UpdateStrategyAdminSuccessTest {
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setTests(tests);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -614,8 +710,19 @@ public class UpdateStrategyAdminSuccessTest {
             .execute(response -> response.as(UpdateStrategyResponse.class));
         //Проверяем ответ
         assertThat("test != []", responseUpdateStrategy.getTests().toString(), is("[]"));
-        //Проверяем обновление массива tests
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> test = messages.stream()
+            .filter(key -> key.getKey().equals(strategyId.toString())).collect(Collectors.toList());
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Команда в tracking.event:  {}", event);
+        //Находим в БД автоследования стратегию и проверяем ее поля
         Strategy getDataFromStategy = strategyService.getStrategy(strategyId);
+        checkParamEvent(event, "UPDATED", strategyId, getDataFromStategy.getTitle(), getDataFromStategy);
+        //Проверяем обновление массива tests
         assertThat("test != []", getDataFromStategy.getTestsStrategy().toString(), is("[]"));
     }
 
@@ -667,6 +774,8 @@ public class UpdateStrategyAdminSuccessTest {
         updateStrategyRequest.setShortDescription("TEST100");
         updateStrategyRequest.setBuyEnabled(buyEnabled);
         updateStrategyRequest.setSellEnabled(sellEnabled);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -726,10 +835,10 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("ownerDescription не равно", strategy.getOwnerDescription(), is(ownerDescription));
     }
 
-    void checkParamEvent(Tracking.Event event, String action, UUID strategyId, String title) {
+    void checkParamEvent(Tracking.Event event, String action, UUID strategyId, String title, Strategy strategy) {
         assertThat("action события не равен", event.getAction().toString(), is("UPDATED"));
         assertThat("ID стратегии не равен", uuid(event.getStrategy().getId()), is(strategyId));
         assertThat("название стратегии не равен", (event.getStrategy().getTitle()), is(title));
-
+        assertThat("status не равен strategy.status записи после обновления", event.getStrategy().getStatus().toString().toLowerCase(), is(strategy.getStatus().toString()));
     }
 }

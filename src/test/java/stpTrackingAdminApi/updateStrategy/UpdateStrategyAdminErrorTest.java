@@ -8,6 +8,7 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,6 +51,7 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,7 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @Slf4j
 @Epic("updateStrategy - Обновление стратегии администратором")
@@ -895,6 +898,8 @@ public class UpdateStrategyAdminErrorTest {
         updateStrategyRequest.setTitle(titleUpdate);
         updateStrategyRequest.setDescription(descriptionUpdate);
         updateStrategyRequest.setScore(scoreUpdate);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         //Вызываем метод updateStrategy
         Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -912,6 +917,9 @@ public class UpdateStrategyAdminErrorTest {
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkParamDB(strategyId, contractId, title, description, score, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        assertThat("Отправили событие, если не обновили стратегию", messages.size(), is(0));
     }
 
     @Test
