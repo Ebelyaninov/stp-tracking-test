@@ -213,7 +213,7 @@ public class GetLiteStrategyTest {
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
-        assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(relativeYield.doubleValue()));
+        assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(relativeYield));
         assertThat("Isoverloaded стратегии не равно" + overloadedFalse, getLiteStrategy.getIsOverloaded(), is(overloadedFalse));
 
     }
@@ -264,7 +264,7 @@ public class GetLiteStrategyTest {
         assertThat("owner id стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getId(), is(profile.getId()));
         assertThat("owner nickname стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getNickname(), is(profile.getNickname()));
         assertThat("owner image стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getImage(), is(profile.getImage()));
-        assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(0.0));
+        assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(new BigDecimal("0")));
         assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues(), is(portfolioValuesPoints));
         assertThat("portfolioValues стратегии не равно", getLiteStrategy.getIsOverloaded(), is(overloadedTrue));
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),

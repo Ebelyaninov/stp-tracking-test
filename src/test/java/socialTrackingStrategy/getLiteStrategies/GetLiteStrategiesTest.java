@@ -10,8 +10,6 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Awaitility;
-import org.checkerframework.checker.units.qual.A;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
@@ -19,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -30,25 +27,22 @@ import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
-import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.*;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.Currency;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategiesResponse;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.LiteStrategy;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyCharacteristic;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -138,6 +132,7 @@ public class GetLiteStrategiesTest {
     String quantityFXDE = "5";
     String quantitySU29009RMFS6 = "7";
     String quantityUSD = "2000";
+    BigDecimal masterValueAdditionalRate = new BigDecimal("0.05");
 
     @AfterEach
     void deleteClient() {
@@ -260,81 +255,38 @@ public class GetLiteStrategiesTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1140313() throws JsonProcessingException, InterruptedException {
-        int randomNumber = 0 + (int) (Math.random() * 100);
-        String title = "Autotest " + String.valueOf(randomNumber);
-        //String expectedRelativeYieldResult = "58";
-        String description = "new test стратегия autotest";
-        strategyId = UUID.fromString("c139978f-fd13-4071-9563-89e574cab05b");
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, expectedRelativeYield, "TEST", "TEST11");
-        //изменяем время активации стратегии
+        UUID strategyId = UUID.fromString("185f3deb-40d2-4d5e-9763-53b278ea4085");
         strategy = strategyService.getStrategy(strategyId);
-        final int daysAgo = 366;
-        LocalDateTime from = LocalDateTime.now().minusDays(daysAgo);
-        strategy.setActivationTime(from);
-        strategyService.saveStrategy(strategy);
-        //добавляем записи о стоимости портфеля за разные периода
-        createPortfolioValuesDate(from, date);
-        //считаем точку
-        BigDecimal normalizedMinMaxDif = new BigDecimal("99").subtract(new BigDecimal("0"));
-        BigDecimal minMaxDif = new BigDecimal("109268.75").subtract(new BigDecimal("68349.11"));
-        BigDecimal point = new BigDecimal("96268.75")
-            .subtract(new BigDecimal("68349.11"))
-            .divide(minMaxDif, 4, RoundingMode.HALF_UP)
-            .multiply(normalizedMinMaxDif)
-            .add(new BigDecimal("0"));
-        List<BigDecimal> portfolioValuesPoints = new ArrayList<>();
-        portfolioValuesPoints.add(BigDecimal.valueOf(0));
-        portfolioValuesPoints.add(BigDecimal.valueOf(68));
-        portfolioValuesPoints.add(BigDecimal.valueOf(99));
-
-        //создаем запись о стоимости портфеля
-       createDateMasterPortfolioTopPositions(strategyId,0,1);
-
-            //считаем recommended-base-money-position-quantity
-            BigDecimal recommendedBaseMoneyPositionQuantity = new BigDecimal("109268.75")
-            .add(new BigDecimal("109268.75").multiply(new BigDecimal("0.05")));
-        recommendedBaseMoneyPositionQuantity = roundDecimal(recommendedBaseMoneyPositionQuantity);
+        String expectedRelativeYieldResult = strategy.getExpectedRelativeYield().toString();
+        String count = strategy.getSlavesCount().toString();
+        String shortDescription = strategy.getShortDescription();
+        String ownerDescription = strategy.getOwnerDescription();
+        //создаем запись о топе продаваемой позиции
+        createDateMasterPortfolioTopPositions(strategyId, 0, 1);
+        //считаем recommended-base-money-position-quantity
+        //получаем последнее значение по стоимости портфеля из master_portfolio_value
+        BigDecimal masterPortfolioValueLast = masterPortfolioValueDao.getMasterPortfolioValueLastByStrategyId(strategyId).getValue();
+        BigDecimal recommendedBaseMoneyPositionQuantity = masterPortfolioValueLast
+            .add(masterPortfolioValueLast.multiply(masterValueAdditionalRate));
+        // Округляем полученное значение вверх до ближайшего целого числа,
+        // кратного значению настройки currency.recommended-base-money-position-quantity-multiplicity по ключу = strategy.base_currency.
+        recommendedBaseMoneyPositionQuantity = roundDecimalUSD(recommendedBaseMoneyPositionQuantity);
         String str = String.format("%,d", recommendedBaseMoneyPositionQuantity.intValue());
-        String rubbleSymbol = "₽";
+        String rubbleSymbol = "$";
         String recommendedBaseMoney = str.replace(",", " ") + " " + rubbleSymbol;
         //рассчитываем относительную доходность но основе выбранных точек Values
-        BigDecimal relativeYield = (new BigDecimal("109268.75")
-            .divide(new BigDecimal("68349.11"), 4, RoundingMode.HALF_UP))
+        BigDecimal relativeYield = (masterPortfolioValueDao.getMasterPortfolioValueLastByStrategyId(strategyId).getValue()
+            .divide(masterPortfolioValueDao.getMasterPortfolioValueFirstByStrategyId(strategyId).getValue(), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-
-        //вызываем метод getLiteStrategy
-        for (int i = 0; i < 7; i++) {
-            GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            List<LiteStrategy> LiteStrategy = getLiteStrategies.getItems().stream()
-                .filter(ls -> ls.getId().toString().equals(strategyId.toString()))
-                .collect(Collectors.toList());
-
-            if (LiteStrategy.size() == 1) {
-                break;
-            }
-            Thread.sleep(25000);
-        }
-
+        //вызываем метод getLiteStrategies
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        //отбираем из ответа стратегию для проверки
         List<LiteStrategy> liteStrategy = new ArrayList<>();
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
             if (getLiteStrategies.getItems().get(i).getId().toString().equals(strategyId.toString())) {
@@ -351,28 +303,26 @@ public class GetLiteStrategiesTest {
             liteStrategy.get(0).getCharacteristics().stream()
                 .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals("slaves-count"))
                 .collect(Collectors.toList());
+        //проверяем полученные данные
         assertThat("идентификатор стратегии не равно", liteStrategy.get(0).getId(), is(strategyId));
         assertThat("value recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getValue(),
             is(recommendedBaseMoney));
         assertThat("subtitle recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getSubtitle(),
             is("советуем вложить"));
         assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
-            is("2" + "\u00A0" + "000"));
+            is(count.charAt(0) + "\u00A0" + count.substring(1)));
         assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
             is("подписаны"));
-        assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues(), is(portfolioValuesPoints));
-        assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield.doubleValue()));
+//        assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues(), is(portfolioValuesPoints));
+        assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield));
         Allure.step("проверка Characteristics",
             () -> assertAll(
-                () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is("58% в год")),
-                () -> assertThat("short-description не равно", liteStrategy.get(0).getCharacteristics().get(4).getValue(), is("TEST")),
-                () -> assertThat("owner-description не равно", liteStrategy.get(0).getCharacteristics().get(5).getValue(), is("TEST11")),
-                () -> assertThat("master-portfolio-top-positions.value не равно", liteStrategy.get(0).getCharacteristics().get(6).getValue(),is("RU0009029540.png,minfin.png")),
-                () -> assertThat("master-portfolio-top-positions.subtitle не равно", liteStrategy.get(0).getCharacteristics().get(6).getSubtitle(),is("Топ торгуемых бумаг"))
-
+                () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is(expectedRelativeYieldResult + "% в год")),
+                () -> assertThat("short-description не равно", liteStrategy.get(0).getCharacteristics().get(4).getValue(), is(shortDescription)),
+                () -> assertThat("owner-description не равно", liteStrategy.get(0).getCharacteristics().get(5).getValue(), is(ownerDescription))
+//                () -> assertThat("master-portfolio-top-positions.value не равно", liteStrategy.get(0).getCharacteristics().get(6).getValue(), is("US0378331005.png")),
+//                () -> assertThat("master-portfolio-top-positions.subtitle не равно", liteStrategy.get(0).getCharacteristics().get(6).getSubtitle(), is("Топ торгуемых бумаг"))
             ));
-
-
     }
 
 
@@ -469,7 +419,7 @@ public class GetLiteStrategiesTest {
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWintContractAndStrategyWithOutProfile(investIdMaster, null, contractIdMaster,  ContractState.untracked,
+        steps.createClientWintContractAndStrategyWithOutProfile(investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 2000, LocalDateTime.now(), "0.3", "0.05", false);
         Thread.sleep(15000);
@@ -594,6 +544,16 @@ public class GetLiteStrategiesTest {
             integer.add(BigInteger.valueOf(5000)).subtract(mod));
     }
 
+    BigDecimal roundDecimalUSD(BigDecimal recommendedBaseMoneyPositionQuantity) {
+        BigInteger integer = recommendedBaseMoneyPositionQuantity.setScale(0, RoundingMode.UP).toBigInteger();
+        BigInteger mod = integer.mod(BigInteger.valueOf(100));
+        if (mod.compareTo(BigInteger.ZERO) == 0) {
+            return new BigDecimal(integer);
+        }
+        return new BigDecimal(
+            integer.add(BigInteger.valueOf(100)).subtract(mod));
+    }
+
     void createPortfolioValuesDate(LocalDateTime from, Date date) {
         long diffMs = Duration.between(from, LocalDateTime.now()).getSeconds() * 1000;
         BigDecimal interval = BigDecimal.valueOf(diffMs).divide(BigDecimal.valueOf(100 - 1), RoundingMode.HALF_UP);
@@ -615,14 +575,9 @@ public class GetLiteStrategiesTest {
     void createDateMasterPortfolioTopPositions(UUID strategyId, int days, int hours) {
         List<MasterPortfolioTopPositions.TopPositions> topPositions = new ArrayList<>();
         topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
-            .ticker(instrument.tickerSBER)
-            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .ticker(instrument.tickerAAPL)
+            .tradingClearingAccount(instrument.tradingClearingAccountAAPL)
             .signalsCount(3)
-            .build());
-        topPositions.add(MasterPortfolioTopPositions.TopPositions.builder()
-            .ticker(instrument.tickerSU29009RMFS6)
-            .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
-            .signalsCount(7)
             .build());
         masterPortfolioTopPositions = MasterPortfolioTopPositions.builder()
             .strategyId(strategyId)
@@ -630,6 +585,6 @@ public class GetLiteStrategiesTest {
             .positions(topPositions)
             .build();
         masterPortfolioTopPositionsDao.insertIntoMasterPortfolioTopPositions(masterPortfolioTopPositions);
-
     }
+
 }

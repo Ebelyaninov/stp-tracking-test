@@ -174,7 +174,7 @@ public class GetMasterPortfolioValuesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield(), is(relativeYield));
     }
 
 
@@ -212,7 +212,7 @@ public class GetMasterPortfolioValuesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield(), is(relativeYield));
     }
 
 
@@ -244,8 +244,7 @@ public class GetMasterPortfolioValuesTest {
         String dateTs = formatter.format(fromTime);
         //вызываем метод GetMasterPortfolioValues
         GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 3);
-        double relativeYield = 0.0;
-        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield(), is(new BigDecimal("0")));
     }
 
 
@@ -282,7 +281,7 @@ public class GetMasterPortfolioValuesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
-        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield().doubleValue(), is(relativeYield.doubleValue()));
+        assertThat("Значение relativeYield не равно", expecResponse.getRelativeYield(), is(relativeYield));
     }
 
 
