@@ -48,6 +48,41 @@ public class MasterPortfolioValueDao {
         return result;
     }
 
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public List<BigDecimal> getMasterPortfolioValuesByStrategyId(UUID strategyId) {
+        String query = "select value " +
+            "from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "ORDER BY cut ASC ";
+        return cqlTemplate.query(query,
+            (row, rownum) -> {
+                BigDecimal value = row.get("value", BigDecimal.class);
+                return value;
+            }, strategyId);
+
+    }
+
+
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public MasterPortfolioValue getMasterPortfolioValueLastByStrategyId(UUID strategyId) {
+        String query = "select * from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "ORDER BY cut DESC limit 1";
+        return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId);
+    }
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public MasterPortfolioValue getMasterPortfolioValueFirstByStrategyId(UUID strategyId) {
+        String query = "select * from invest_tracking.master_portfolio_value " +
+            "where strategy_id = ? " +
+            "ORDER BY cut ASC limit 1";
+        return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId);
+    }
+
     public List<Pair<LocalDateTime, BigDecimal>> getMasterPortfolioValuesByStrategyId(UUID strategyId, Date start, Date end) {
         var query = "select cut, value " +
             "from invest_tracking.master_portfolio_value " +
@@ -144,5 +179,6 @@ public class MasterPortfolioValueDao {
         return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId, start);
 
     }
+
 
 }

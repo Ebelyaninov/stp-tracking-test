@@ -20,10 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.creator.ApiCreator;
-import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.StrategyApiCreator;
-import ru.qa.tinkoff.creator.StrategySocialApiCreator;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -113,6 +110,8 @@ public class GetStrategiesCatalogTest {
     ApiCreator<StrategyApi> strategyApiCreator;
     @Autowired
     StrategySocialApiCreator strategySocialApiCreator;
+    @Autowired
+    CacheApiApiCreator cacheApiApiCreator;
 
 
     private Random random = new Random();
@@ -419,6 +418,7 @@ public class GetStrategiesCatalogTest {
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
+
         //выбираем из списка только те стратерии у которых риск-профиль консервативный
         List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
             .filter(liteStrategy -> liteStrategy.getRiskProfile() == StrategyRiskProfile.CONSERVATIVE)
@@ -732,7 +732,7 @@ public class GetStrategiesCatalogTest {
         assertThat("socialProfile.nickname стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getNickname(),
             is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getNickname()));
         assertThat("relativeYield стратегии не равно", getStrategiesCatalog.getItems().get(0).getRelativeYield(),
-            is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield()));
+            is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield().doubleValue()));
         assertThat("portfolioValues стратегии не равно", getStrategiesCatalog.getItems().get(0).getPortfolioValues(),
             is(liteStrategies.get(liteStrategies.size() - 1).getPortfolioValues()));
         assertThat("characteristics.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getId(),
@@ -775,7 +775,7 @@ public class GetStrategiesCatalogTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
 //            проверяем, данные в сообщении
-        assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
+        assertThat("Идентификатор следующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
             is(nullValue()));
 
     }
@@ -975,7 +975,7 @@ public class GetStrategiesCatalogTest {
             if (compare != 0) {
                 return compare;
             }
-            compare = Double.compare(o1.getRelativeYield(), o2.getRelativeYield());
+            compare = Double.compare(o1.getRelativeYield().doubleValue(), o2.getRelativeYield().doubleValue());
             if (compare != 0) {
                 return compare;
             }

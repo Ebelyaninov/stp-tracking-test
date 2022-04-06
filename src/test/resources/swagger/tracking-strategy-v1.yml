@@ -279,7 +279,7 @@ components:
         relativeYield:
           description: Относительная доходность стратегии за все время (в процентах)
           type: number
-          format: double
+          format: decimal
         portfolioValues:
           description: Стоимости виртуального портфеля
           type: array
