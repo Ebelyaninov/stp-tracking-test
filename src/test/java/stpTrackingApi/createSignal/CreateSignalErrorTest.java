@@ -1718,6 +1718,58 @@ public class CreateSignalErrorTest {
 
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1430349")
+    @DisplayName("1430349 Лимит концентрации. action = buy. risk-profile = conservative. positionRate > max-position-rate")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1430349() {
+        BigDecimal price = new BigDecimal("2422");
+        int quantityRequest = 1;
+        int version = 2;
+        String tailValue = "150000";
+        double money = 48250;
+        double quantityPosMasterPortfolio = 3.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(2), 4, "0.2", "0.02",false, new BigDecimal(10),
+            "WOW", "TestMan");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
+            "3");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ru.qa.tinkoff.swagger.tracking.model.ErrorResponse.class);
+        // проверяем тело ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Превышен лимит концентрации по позиции");
+    }
+
+
+
     //*** Методы для работы тестов ***
     //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client
     void getExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
