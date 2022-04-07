@@ -419,20 +419,20 @@ public class HandleRiskProfileEventTest {
 
         if (messagesFromDelayCommand.get(0).getKey().equals(contractIdConservative)){
             getFirstDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommand, contractIdConservative);
-            checkMessageFromDelayCommand(getFirstDelayedMessage, contractIdConservative, "RETRY_SYNCHRONIZATION","now()");
+            checkMessageFromDelayCommand(getFirstDelayedMessage, contractIdConservative, "SYNCHRONIZE","now()");
         }
         else {
             getFirstDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommand, secondContractId.toString());
-            checkMessageFromDelayCommand(getFirstDelayedMessage, secondContractId.toString(), "RETRY_SYNCHRONIZATION","now()");
+            checkMessageFromDelayCommand(getFirstDelayedMessage, secondContractId.toString(), "SYNCHRONIZE","now()");
         }
 
         if (messagesFromDelayCommandSecond.get(0).getKey().equals(secondContractId.toString())){
             getSecondDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommandSecond, secondContractId.toString());
-            checkMessageFromDelayCommand(getSecondDelayedMessage, secondContractId.toString(), "RETRY_SYNCHRONIZATION","now()");
+            checkMessageFromDelayCommand(getSecondDelayedMessage, secondContractId.toString(), "SYNCHRONIZE","now()");
         }
         else {
             getSecondDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommandSecond, contractIdConservative);
-            checkMessageFromDelayCommand(getSecondDelayedMessage, contractIdConservative, "RETRY_SYNCHRONIZATION","now()");
+            checkMessageFromDelayCommand(getSecondDelayedMessage, contractIdConservative, "SYNCHRONIZE","now()");
         }
 
     }
@@ -480,7 +480,7 @@ public class HandleRiskProfileEventTest {
         checkMessageFromSubscriptionEvent(messageForSubscription, contractIdMedium, "UPDATED", subscriptionId, false);
 
         Tracking.PortfolioCommand getFirstDelayedMessage = filterMessageByKeyForDelayCommand(messagesFromDelayCommand, contractIdMedium);
-        checkMessageFromDelayCommand(getFirstDelayedMessage, contractIdMedium, "RETRY_SYNCHRONIZATION","now()");
+        checkMessageFromDelayCommand(getFirstDelayedMessage, contractIdMedium, "SYNCHRONIZE","now()");
     }
 
     @SneakyThrows
