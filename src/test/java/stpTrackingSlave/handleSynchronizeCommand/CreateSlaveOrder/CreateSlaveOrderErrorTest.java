@@ -266,7 +266,7 @@ public class CreateSlaveOrderErrorTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
-        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("SYNCHRONIZE"));
     }
 
 
