@@ -114,6 +114,7 @@ public class HandleRetrySynchronizationCommandTest {
     String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
     public String value;
 
+
     String description = "description test стратегия autotest update adjust base currency";
 
 
@@ -687,7 +688,7 @@ public class HandleRetrySynchronizationCommandTest {
     @AllureId("1575130")
     @DisplayName("С1575130. Запись не найдена - портфель не синхронизируется")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575130() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -723,7 +724,7 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на  повторную синхронизацию
-        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave).stream()
                 .filter(getSlaveOrder -> getSlaveOrder.getAttemptsCount().equals(1))
@@ -744,7 +745,7 @@ public class HandleRetrySynchronizationCommandTest {
     @AllureId("1575132")
     @DisplayName("C1575132. Запись найдена в slave_order И slave_order.state = 1")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575132() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -788,7 +789,7 @@ public class HandleRetrySynchronizationCommandTest {
             0, instrument.classCodeAAPL, 3,null, orderKey, orderKey, priceOrder, orderQty,
             (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
-        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave).stream()
                 .filter(getSlaveOrder -> getSlaveOrder.getAttemptsCount().equals(1))
@@ -811,7 +812,7 @@ public class HandleRetrySynchronizationCommandTest {
     @AllureId("1575133")
     @DisplayName("C1575133. Запись найдена в slave_order И slave_order.state = 0(отклонена)")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575133() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -855,7 +856,7 @@ public class HandleRetrySynchronizationCommandTest {
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), orderKey, priceOrder, orderQty,
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
-        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave).stream()
                 .filter(getSlaveOrder -> getSlaveOrder.getAttemptsCount().equals(2))
@@ -889,7 +890,7 @@ public class HandleRetrySynchronizationCommandTest {
     @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)" +
                  "C1773720. Нашли запись в таблице slave_order_2 и slave_order_2.state = 2 -> выставляем ту же заявку.")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575128(Tracking.PortfolioCommand.Operation command, int action, Byte state) {
         //Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION;
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -934,11 +935,8 @@ public class HandleRetrySynchronizationCommandTest {
             action, instrument.classCodeAAPL,33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
             state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
-        if (command == Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION) {
-            steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
-        } else {
-            steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        }
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave).stream()
                 .filter(getSlaveOrder -> getSlaveOrder.getAttemptsCount().equals(2))
@@ -963,7 +961,7 @@ public class HandleRetrySynchronizationCommandTest {
     @AllureId("1499847")
     @DisplayName("C1499847. Ограничиваем выставление заявки настройкой order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1499847() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -999,7 +997,7 @@ public class HandleRetrySynchronizationCommandTest {
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на  повторную синхронизацию
-        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем, кол-во попыток на выставление заявки = 126
@@ -1039,7 +1037,7 @@ public class HandleRetrySynchronizationCommandTest {
     @AllureId("1652853")
     @DisplayName("С1652853. Новое рассчитанное значение attempts_count > значения настройки order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1652853() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -1087,7 +1085,7 @@ public class HandleRetrySynchronizationCommandTest {
             1, instrument.classCodeAAPL,3,  new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
             (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //отправляем команду на  повторную синхронизацию
-        steps.createCommandRetrySynTrackingSlaveCommand(contractIdSlave);
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
@@ -1134,7 +1132,7 @@ public class HandleRetrySynchronizationCommandTest {
     @DisplayName("C1656925.Портфель не синхронизируется. Работа с параметром attempts_count в случае если параметры ticker,trading_clearing_account и action " +
         "найденной неисполненной заявки в slave_order_2 совпали/не совпали с ticker,trading_clearing_account и action найденной позиции на этапе Выбора позиции для синхронизации")
     @Subfeature("Успешные сценарии")
-    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию RETRY_SYNCHRONIZATION")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1656925(int actionSlave, String tickerSlave, String tradingClearingAccountSlave, int attemptsCount, Byte state, Integer comparedToMasterVersion) {
         Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.SYNCHRONIZE;
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
