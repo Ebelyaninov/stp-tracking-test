@@ -12,7 +12,7 @@ public class StpInstrument {
 
     public String tickerAAPL = "AAPL";
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";
-    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
+//    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
     public String typeAAPL = "share";
     public String classCodeAAPL = "SPBXM";
     public String briefNameAAPL = "Apple";
@@ -47,6 +47,7 @@ public class StpInstrument {
     public String instrumentFB = tickerFB + "_" + classCodeFB;
 
     public String tickerNOK = "NOK";
+    public String classCodeNOK = "SPBXM";
     public String tradingClearingAccountNOK = "L01+00000SPB";
     public String briefNameNOK = "Nokia";
     public String imageNOK = "US6549022043.png";
@@ -54,12 +55,14 @@ public class StpInstrument {
 
 
     public String tickerFXDE = "FXDE";
+    public String classCodeFXDE = "TQTF";
     public String tradingClearingAccountFXDE = "L01+00002F00";
     public String briefNameFXDE = "FinEx Акции немецких компаний";
     public String imageFXDE = "IE00BD3QJN10.png";
     public String typeFXDE = "etf";
 
     public String tickerFXGD = "FXGD";
+    public String classCodeFXGD = "TQTF";
     public String tradingClearingAccountFXGD = "L01+00000F00";
 
 
@@ -151,13 +154,16 @@ public class StpInstrument {
 
 
     public String tickerXS0587031096 = "XS0587031096";
+    public String classCodeXS0587031096 = "RPEU";
     public String tradingClearingAccountXS0587031096 = "L01+00000SPB";
 
     public String tickerTRUR = "TRUR";
+    public String classCodeTRUR = "TQTF";
     public String tradingClearingAccountTRUR = "L01+00000F00";
 
 
     public String tickerXS0424860947 = "XS0424860947";
+    public String classCodeXS0424860947 = "TQOD";
     public String tradingClearingAccountXS0424860947 = "L01+00000F00";
 
 
@@ -168,6 +174,7 @@ public class StpInstrument {
 
 
     public String tickerXS1589324075 = "XS1589324075";
+    public String classCodeXS1589324075 = "TQOD";
     public String tradingClearingAccountXS1589324075 = "L01+00000F00";
 
 
@@ -231,15 +238,19 @@ public class StpInstrument {
 
 
     public String tickerXS0088543190 = "XS0088543190";
+    public String classCodeXS0088543190 = "SBTBSLT";
     public String tradingClearingAccountXS0088543190 = "L01+00002F00";
 
     public String tickerNMR = "NMR";
+    public String classCodeNMR = "NMR";
     public String tradingClearingAccountNMR = "NDS000000001";
 
     public String tickerBCR = "BCR";
+    public String classCodeBCR = "SPBXM";
     public String tradingClearingAccountBCR = "L01+00000SPB";
 
     public String tickerBRJ1 = "BRJ1";
+    public String classCodeBRJ1 = "SPBFUT";
     public String tradingClearingAccountBRJ1 = "U800";
 
 
@@ -259,6 +270,7 @@ public class StpInstrument {
     public String instrumentTECH = tickerTECH + "_" + classCodeTECH;
 
     public String tickerBANEP = "BANEP";
+    public String classCodeBANEP = "TQBR";
     public String tradingClearingAccountBANEP = "L01+00000F00";
 
 
