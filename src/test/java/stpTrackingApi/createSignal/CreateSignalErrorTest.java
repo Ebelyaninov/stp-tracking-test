@@ -1535,12 +1535,12 @@ public class CreateSignalErrorTest {
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "15000");
         //устанавливаем значения limit для проверяемого инструмента
-        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL1, Exchange.SPB,
+        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
             true, 1000, orderQuantityListAll(4, "default", 0, "main_trading",
                 0, "additional_liquidity", 0, "primary"));
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
-            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL1, version);
+            price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
         // вызываем метод CreateSignal
         Response createSignal = signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
