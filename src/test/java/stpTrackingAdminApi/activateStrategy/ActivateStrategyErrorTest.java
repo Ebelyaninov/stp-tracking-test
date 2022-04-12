@@ -12,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -24,6 +27,7 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
@@ -36,6 +40,7 @@ import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
@@ -47,11 +52,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -91,6 +98,10 @@ public class ActivateStrategyErrorTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
+
+
     String description = "Autotest  - ActivateStrategy";
     Integer score = 1;
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
@@ -137,6 +148,7 @@ public class ActivateStrategyErrorTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdAdmin);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
     }
 
 
@@ -354,8 +366,8 @@ public class ActivateStrategyErrorTest {
         JSONObject jsonObject = new JSONObject(activateStrategy.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("0344-01-B15"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Не найдена минимальная сумма стратегии"));
+        assertThat("код ошибки не равно", errorCode, is("0344-01-B17"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Не найдена запись о стоимости master портфеля в бд"));
     }
 
 
@@ -393,6 +405,45 @@ public class ActivateStrategyErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Не найдена минимальная сумма стратегии"));
     }
 
+    @Test
+    @AllureId("C1807541")
+    @DisplayName("C1807541.ActivateStrategy.Не указано значение value в таблице master_portfolio_value в базе Cassandra")
+    @Description("Метод для администратора для активации (публикации) стратегии.")
+    void C1807541() throws Exception {
+        String title = steps.getTitleStrategy();
+        strategyId = UUID.randomUUID();
+        //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = new ArrayList<>();
+        steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
+        //создаем запись в табл.master_portfolio_value  по стоимости портфеля
+        createDateMasterPortfolioValue(strategyId, 0, 4, "100", null);
+        //Вызываем метод activateStrategy
+        StrategyApi.ActivateStrategyOper activateStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .respSpec(spec -> spec.expectStatusCode(422));
+        activateStrategy.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(activateStrategy.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("0344-01-B16"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Не найдена стоимость master портфеля"));
+    }
+
+
+
+
+
+
 //дополнительные методы методы для работы тестов***************************************************
     @Step("Создаем запись в master_portfolio_value: ")
     void createDateMasterPortfolioValue(UUID strategyId, int days, int hours, String minimumValue, String value) {
@@ -400,7 +451,7 @@ public class ActivateStrategyErrorTest {
             .strategyId(strategyId)
             .cut(Date.from(OffsetDateTime.now().minusDays(days).minusHours(hours).toInstant()))
             .minimumValue(minimumValue == null ? null : new BigDecimal(minimumValue))
-            .value(new BigDecimal(value))
+            .value(value == null ? null : new BigDecimal(value))
             .build();
         masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
     }
