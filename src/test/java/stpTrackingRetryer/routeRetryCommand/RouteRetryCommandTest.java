@@ -60,6 +60,7 @@ import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
@@ -255,7 +256,7 @@ public class RouteRetryCommandTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
         //проверяем параметры команды по синхронизации
-        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("createAt не равен", time.toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(createAt.truncatedTo(ChronoUnit.SECONDS)));
@@ -273,7 +274,8 @@ public class RouteRetryCommandTest {
             Arguments.of("SPB_WEEKEND", "SNAP", "L01+00000SPB", TRACKING_SPB_WEEKEND_RETRYER_COMMAND, "40"),
             Arguments.of("SPB_RU_MORNING", "FGEN", "TKCBM_TCAB", TRACKING_SPB_RU_MORNING_RETRYER_COMMAND, "63.2"),
             Arguments.of("MOEX_MORNING", "YNDX", "Y02+00001F00", TRACKING_MOEX_MORNING_RETRYER_COMMAND, "3517.6"),
-            Arguments.of("FX_WEEKEND", "USDRUB", "MB9885503216", TRACKING_FX_WEEKEND_RETRYER_COMMAND, "120.38")
+            Arguments.of("FX_WEEKEND", "USDRUB", "MB9885503216", TRACKING_FX_WEEKEND_RETRYER_COMMAND, "120.38"),
+            Arguments.of("FX_MTL", "USDRUB", "MB9885503216", TRACKING_FX_MTL_RETRYER_COMMAND, "127.38")
         );
     }
 
@@ -350,15 +352,28 @@ public class RouteRetryCommandTest {
         OffsetDateTime time = OffsetDateTime.now();
         createCommandTrackingDelayExCommand(contractIdSlave, exchange, time);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
+        await().pollDelay(Duration.ofNanos(500));
+        List<Pair<String, byte[]>> messagesFromRouteTopic = kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messagesFromSlaveCommand = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5));
+        //Получаем событие из routeTopic
+        Pair<String, byte[]> messageFromRouteTopic = messagesFromRouteTopic.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
-        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено из топика " + topic));
+        Tracking.PortfolioCommand commandKafkaFromRouteTopic = Tracking.PortfolioCommand.parseFrom(messageFromRouteTopic.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafkaFromRouteTopic.getCreatedAt().getSeconds(), commandKafkaFromRouteTopic.getCreatedAt().getNanos());
+        //проверяем параметры команды из routeTopic (routeRetryCommand)
+        assertThat("Operation команды не равен", commandKafkaFromRouteTopic.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
+        assertThat("ContractId команды не равен", commandKafkaFromRouteTopic.getContractId(), is(contractIdSlave));
+        //Получаем данные из slaveCommand (handle<Exchange>RetryCommand)
+        Pair<String, byte[]> messageFromSlaveCommand = messagesFromSlaveCommand.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено из топика slaveCommand"));
+        Tracking.PortfolioCommand commandKafkaFromSlaveCommand = Tracking.PortfolioCommand.parseFrom(messageFromSlaveCommand.getValue());
         //проверяем параметры команды по синхронизации
-        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
-        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
+        assertThat("Operation команды не равен", commandKafkaFromSlaveCommand.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
+        assertThat("ContractId команды не равен", commandKafkaFromSlaveCommand.getContractId(), is(contractIdSlave));
     }
 
 
@@ -396,7 +411,7 @@ public class RouteRetryCommandTest {
         //отправляем команду на синхронизацию
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
-            .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
+            .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())
