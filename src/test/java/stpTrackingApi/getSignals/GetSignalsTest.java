@@ -37,6 +37,7 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
+import ru.qa.tinkoff.swagger.tracking.model.GetOrdersResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetSignalsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Signal;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -125,7 +126,7 @@ public class GetSignalsTest {
     @BeforeAll
     void conf() {
         siebelIdMaster = stpSiebel.siebelIdApiMaster;
-        siebelIdSlave = stpSiebel.siebelIdApiSlave;
+        siebelIdSlave = stpSiebel.siebelIdMasterStpTrackingMaster;
         title = steps.getTitleStrategy();
         description = "стратегия autotest GetSignals";
     }
@@ -490,6 +491,44 @@ public class GetSignalsTest {
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
         checkParam(masterSignal, getSignals);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1814799")
+    @DisplayName("1814799 GetSignals.Запрос от slave. subscription.blocked = true")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
+    void C1814799() {
+        //создаем список позиций в портфеле мастера
+        List<MasterPortfolio.Position> masterPos = createListMasterPosition(steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        //создаем запись в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
+        //создаем записи по сигналу на разные позиции
+        createTestDateToMasterSignal(strategyId);
+        //получаем данные от сервиса счетов о slave
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true, false);
+        //вызываем метод для получения списка сделок (сигналов) стратегии
+        GetSignalsResponse getSignals = strategyApiCreator.get().getSignals()
+            .strategyIdPath(strategyId)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdSlave)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetSignalsResponse.class));
+        //проверяем что вернулся пустой список сигналов
+        assertThat("items != []", getSignals.getItems().toString(), is("[]"));
     }
 
 
