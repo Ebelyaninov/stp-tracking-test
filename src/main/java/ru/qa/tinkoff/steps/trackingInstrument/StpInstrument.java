@@ -33,8 +33,8 @@ public class StpInstrument {
     public String companySBER = "Сбербанк";
     public String classCodeSBER = "TQBR";
     public String instrumentSBER = tickerSBER + "_" + classCodeSBER;
-    public String briefNameSBER ="Сбербанк России";
-    public String imageSBER ="RU0009029540.png";
+    public String briefNameSBER ="Сбер Банк";
+    public String imageSBER ="sber.png";
 
 
     public String tickerFB = "FB";

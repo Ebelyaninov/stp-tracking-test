@@ -287,16 +287,14 @@ public class GetStrategyTest {
         Boolean checkStrategyCharacteristicsExpectedRelativeYield =
             getStrategy.getCharacteristics().get(0).getItems().stream()
                 .anyMatch(strategyCharacteristic -> strategyCharacteristic.getId().equals("expected-relative-yield"));
-        BigDecimal managementFee = new BigDecimal("0.05")
-            .multiply(BigDecimal.valueOf(100))
-            .divide(new BigDecimal("12"), 3, BigDecimal.ROUND_HALF_UP);
+
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
         assertThat("Тип характеристики не равно", strategyCharacteristics.get(0).getType(), is(GetStrategyResponseCharacteristics.TypeEnum.CONDITION));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Комиссия за управление"));
-        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is(managementFee.toString() + " %"));
+        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is("0,417%"));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(1).getTitle(), is("Комиссия за результат"));
         assertThat("Получили expected-relative-yield", checkStrategyCharacteristicsExpectedRelativeYield, is(false));
-        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(1).getValue(), is("30.0 %"));
+        assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(1).getValue(), is("30,0%"));
         assertThat("isOverload != false", getStrategy.getIsOverloaded(), is(false));
     }
 
@@ -351,6 +349,7 @@ public class GetStrategyTest {
         assertThat("Id стратегии не равно", getStrategy.getId(), is(strategyMaster.getId()));
         assertThat("status не равно", getStrategy.getStatus().toString(), is(strategyMaster.getStatus().toString()));
         assertThat("title не равно", getStrategy.getTitle(), is(strategyMaster.getTitle()));
+        assertThat("валюта не равно", getStrategy.getBaseCurrency(), is(ru.qa.tinkoff.swagger.tracking.model.Currency.RUB));
         assertThat("description не равно", getStrategy.getDescription(), is(strategyMaster.getDescription()));
         assertThat("riskProfile не равно", getStrategy.getRiskProfile().toString(), is(strategyMaster.getRiskProfile().toString()));
         assertThat("isOverloaded != true", getStrategy.getIsOverloaded(), is(true));
@@ -1286,7 +1285,7 @@ public class GetStrategyTest {
         createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
         createDateMasterPortfolioMaxDrawdown(strategyId, 1, 2, value);
         BigDecimal maxDrawdownValue = new BigDecimal(value).multiply(new BigDecimal("-1"));
-        String result = maxDrawdownValue.toString() + " %";
+        String result = maxDrawdownValue.toString() + "%";
         // вызываем метод getStrategy
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
