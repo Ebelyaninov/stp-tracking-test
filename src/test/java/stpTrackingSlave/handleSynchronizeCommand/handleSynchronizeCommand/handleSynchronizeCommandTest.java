@@ -1,4 +1,4 @@
-package stpTrackingSlave.handleSynchronizeCommand.handleRetrySynchronizationCommand;
+package stpTrackingSlave.handleSynchronizeCommand.handleSynchronizeCommand;
 
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
@@ -16,7 +16,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cache.support.NullValue;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -40,10 +39,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +50,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -72,7 +67,7 @@ import static org.hamcrest.Matchers.*;
     StpTrackingSlaveStepsConfiguration.class,
     StpInstrument.class
 })
-public class HandleRetrySynchronizationCommandTest {
+public class handleSynchronizeCommandTest {
     @Autowired
     StringToByteSenderService kafkaSender;
     @Autowired
@@ -877,9 +872,8 @@ public class HandleRetrySynchronizationCommandTest {
 
     private static Stream<Arguments> provideOperationAndActionAndState() {
         return Stream.of(
-            Arguments.of(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION, 0, null),
-            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1, null),
-            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1, (byte) 2)
+            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 0, null),
+            Arguments.of(Tracking.PortfolioCommand.Operation.SYNCHRONIZE, 1, null)
         );
     }
 
@@ -887,8 +881,7 @@ public class HandleRetrySynchronizationCommandTest {
     @ParameterizedTest
     @MethodSource("provideOperationAndActionAndState")
     @AllureId("1575128")
-    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)" +
-                 "C1773720. Нашли запись в таблице slave_order_2 и slave_order_2.state = 2 -> выставляем ту же заявку.")
+    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575128(Tracking.PortfolioCommand.Operation command, int action, Byte state) {
@@ -955,6 +948,69 @@ public class HandleRetrySynchronizationCommandTest {
         assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
         assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
     }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1773720")
+    @DisplayName("C1773720. Нашли запись в таблице slave_order_2 и slave_order_2.state = 2 -> выставляем ту же заявку.")
+    @Subfeature("Успешные сценарии")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
+    void C1773720() {
+        //Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION;
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        BigDecimal lot = new BigDecimal("1");
+        BigDecimal orderQty = new BigDecimal("100");
+        BigDecimal priceOrder = new BigDecimal("11.11");
+        UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
+        //создаем подписку для  slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySl = "7000.0";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            new BigDecimal("0.0319"), new BigDecimal("2"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        //создаем запись о выставлении заявки
+        slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
+            1, instrument.classCodeAAPL,33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
+            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        //отправляем команду на  повторную синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+
+        await().pollDelay(Duration.ofSeconds(2)).atMost(FIVE_SECONDS).until(() ->
+            slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave).stream()
+                .filter(getSlaveOrder -> getSlaveOrder.getAttemptsCount().equals(1))
+                .collect(Collectors.toList()).size(), is(1));
+        //проверяем, что завершили операцию и невыставили новую заявку
+        List<SlaveOrder2> getDataFromSlaveOrder = slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave);
+        assertThat("Выставили новую заявку", getDataFromSlaveOrder.size(), is(1));
+    }
+
 
     @SneakyThrows
     @Test
@@ -1124,6 +1180,7 @@ public class HandleRetrySynchronizationCommandTest {
             Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1, "1", 3)
         );
     }
+
 
     @SneakyThrows
     @ParameterizedTest(name = "provideActionTickerTradingClearingAccountAndAttemptsCount")
