@@ -7,10 +7,10 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.12.0
+  version: 1.13.0
 
 servers:
-  - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+  - url: http://trading-test.tcsbank.ru
     description: тестовый стенд
   - url: http://trading.tinkoff.local
     description: боевой стенд
@@ -1187,6 +1187,7 @@ components:
         - id
         - status
         - title
+        - baseCurrency
         - description
         - riskProfile
         - score
@@ -1204,6 +1205,8 @@ components:
           $ref: '#/components/schemas/StrategyStatus'
         title:
           $ref: '#/components/schemas/StrategyTitle'
+        baseCurrency:
+          $ref: '#/components/schemas/Currency'
         description:
           description: Описание стратегии
           type: string
