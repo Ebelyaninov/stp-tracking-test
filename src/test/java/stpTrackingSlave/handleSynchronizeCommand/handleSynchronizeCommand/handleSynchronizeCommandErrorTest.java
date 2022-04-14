@@ -1,4 +1,4 @@
-package stpTrackingSlave;
+package stpTrackingSlave.handleSynchronizeCommand.handleSynchronizeCommand;
 
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
@@ -67,7 +67,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class
 })
-public class HandleSynchronizeCommandTest {
+public class handleSynchronizeCommandErrorTest {
     @Autowired
     StringToByteSenderService kafkaSender;
     @Autowired
@@ -165,7 +165,7 @@ public class HandleSynchronizeCommandTest {
     @AllureId("1249454")
     @DisplayName("C1249454.HandleSynchronizeCommand.Проверяем показатели подписки - у подписки blocked = true")
     @Subfeature("Альтернативные сценарии")
-    @Description("Операция для обработки команд, направленных на синхронизацию slave-портфеля.")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1249454() {
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -211,7 +211,7 @@ public class HandleSynchronizeCommandTest {
     @AllureId("672205")
     @DisplayName("C672205.HandleSynchronizeCommand.Портфель master'а не найден")
     @Subfeature("Альтернативные сценарии")
-    @Description("Операция для обработки команд, направленных на синхронизацию slave-портфеля.")
+    @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C672205() {
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
