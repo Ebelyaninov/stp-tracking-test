@@ -431,7 +431,7 @@ public class AnalyzePortfolioErrorTest {
     @Test
     @AllureId("872622")
     @DisplayName("C872622.AnalyzePortfolio.Анализ портфеля.Отфильтровываем недоступные позиции для master." +
-        "Exchange у позиции NOT IN (available-exchanges)")
+        "Exchange available: false")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C872622() {
@@ -470,49 +470,49 @@ public class AnalyzePortfolioErrorTest {
         checkParam(baseMoneySlave, utc);
     }
 
-    @SneakyThrows
-    @Test
-    @AllureId("872630")
-    @DisplayName("C872630.AnalyzePortfolio.Анализ портфеля.Отфильтровываем недоступные позиции для slave." +
-        "Exchange у позиции NOT IN (available-exchanges)")
-    @Subfeature("Альтернативные сценарии")
-    @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
-    void C872630() {
-        strategyId = UUID.randomUUID();
-        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
-        // создаем портфель ведущего с позицией в кассандре
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
-        Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2.0", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
-        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
-        //создаем подписку для slave
-        OffsetDateTime startSubTime = OffsetDateTime.now();
-        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
-            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
-        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-        //получаем идентификатор подписки
-        subscriptionId = subscription.getId();
-        //создаем портфель для ведомого
-        String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerXS0088543190,
-            instrument.tradingClearingAccountXS0088543190,
-            "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
-            new BigDecimal("0.0487"), new BigDecimal("2"));
-        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
-            baseMoneySlave, date, createListSlaveOnePos);
-        //отправляем команду на синхронизацию
-        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        checkComparedToMasterVersion(3);
-        //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-        checkParam(baseMoneySlave, utc);
-    }
+//    @SneakyThrows
+//    @Test
+//    @AllureId("872630")
+//    @DisplayName("C872630.AnalyzePortfolio.Анализ портфеля.Отфильтровываем недоступные позиции для slave." +
+//        "Exchange у позиции NOT IN (available-exchanges)")
+//    @Subfeature("Альтернативные сценарии")
+//    @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
+//    void C872630() {
+//        strategyId = UUID.randomUUID();
+//        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+//        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+//            StrategyStatus.active, 0, LocalDateTime.now());
+//        // создаем портфель ведущего с позицией в кассандре
+//        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+//        Date date = Date.from(utc.toInstant());
+//        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+//            instrument.tradingClearingAccountAAPL, "2.0", date, 2,
+//            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+//        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
+//        //создаем подписку для slave
+//        OffsetDateTime startSubTime = OffsetDateTime.now();
+//        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+//            null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),  null, false);
+//        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+//        //получаем идентификатор подписки
+//        subscriptionId = subscription.getId();
+//        //создаем портфель для ведомого
+//        String baseMoneySlave = "6576.23";
+//        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerXS0088543190,
+//            instrument.tradingClearingAccountXS0088543190,
+//            "2.0", date, 1, new BigDecimal("626.6"), new BigDecimal("0"),
+//            new BigDecimal("0.0487"), new BigDecimal("2"));
+//        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+//            baseMoneySlave, date, createListSlaveOnePos);
+//        //отправляем команду на синхронизацию
+//        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+//        checkComparedToMasterVersion(3);
+//        //получаем портфель slave
+//        await().atMost(FIVE_SECONDS).until(() ->
+//            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+//        checkParam(baseMoneySlave, utc);
+//    }
 
     @SneakyThrows
     @Test

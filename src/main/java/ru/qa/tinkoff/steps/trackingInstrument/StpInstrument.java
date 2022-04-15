@@ -273,6 +273,10 @@ public class StpInstrument {
     public String classCodeBANEP = "TQBR";
     public String tradingClearingAccountBANEP = "L01+00000F00";
 
+    public String tickerGLDRUB = "GLDRUB_TOM";
+    public String classCodeGLDRUB = "CETS";
+    public String tradingClearingAccountGLDRUB = "MB9885503216";
+    public String instrumentGLDRUB = tickerGLDRUB + "_" + classCodeGLDRUB;
 
 
 }
