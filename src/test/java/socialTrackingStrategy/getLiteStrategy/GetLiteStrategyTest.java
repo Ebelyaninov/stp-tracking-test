@@ -471,7 +471,7 @@ public class GetLiteStrategyTest {
         JSONObject jsonObject = new JSONObject(getLiteStrategy.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("0000-01-B01"));
+        assertThat("код ошибки не равно", errorCode, is("0000-01-B07"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
@@ -505,7 +505,7 @@ public class GetLiteStrategyTest {
         JSONObject jsonObject = new JSONObject(getLiteStrategy.execute(ResponseBodyData::asString));
         String errorCode = jsonObject.getString("errorCode");
         String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("0000-01-B01"));
+        assertThat("код ошибки не равно", errorCode, is("0000-01-B07"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
