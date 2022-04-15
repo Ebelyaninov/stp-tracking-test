@@ -84,7 +84,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("stp-tracking-slave")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Tags({@Tag("stp-tracking-slave"), @Tag("analyzePortfolio")})
+@Tags({@Tag("stp-tracking-slave"), @Tag("handleSynchronizeCommand")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
@@ -167,11 +167,11 @@ public class AnalyzePortfolioTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                subscriptionService.deleteSubscription(steps.subscription);
+                subscriptionService.deleteSubscription(subscriptionService.getSubscriptionByContract(contractIdSlave));
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(steps.contractSlave);
+                contractService.deleteContract(contractService.deleteContractById(contractIdSlave));
             } catch (Exception e) {
             }
             try {
@@ -183,7 +183,7 @@ public class AnalyzePortfolioTest {
             } catch (Exception e) {
             }
             try {
-                trackingService.deleteStrategy(steps.strategy);
+                trackingService.deleteStrategy(strategyService.getStrategy(strategyId));
             } catch (Exception e) {
             }
             try {

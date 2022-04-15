@@ -51,6 +51,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -259,7 +260,9 @@ public class CreateSlaveOrderErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
 //        Thread.sleep(5000);
         //смотрим, сообщение, которое поймали в топике kafka tracking.delay.command
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -329,14 +332,16 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         //смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
         //проверяем параметры команды по синхронизации
-        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
         assertThat("createAt в команды не равен", createdAtSlaveOrder.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS),
             is(createAt.atOffset(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)));
@@ -405,7 +410,7 @@ public class CreateSlaveOrderErrorTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
-        assertThat("Операция не равна", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+        assertThat("Операция не равна", commandKafka.getOperation().toString(), is("SYNCHRONIZE"));
     }
 
 
@@ -464,7 +469,9 @@ public class CreateSlaveOrderErrorTest {
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -525,14 +532,16 @@ public class CreateSlaveOrderErrorTest {
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем message топика kafka
         assertThat("ID инструмента не равен", commandKafka.getContractId(), is(contractIdSlave));
-        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("RETRY_SYNCHRONIZATION"));
+        assertThat("Торгово-клиринговый счет не равен", commandKafka.getOperation().toString(), is("SYNCHRONIZE"));
     }
 
 
@@ -662,8 +671,7 @@ public class CreateSlaveOrderErrorTest {
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
         Instant createdAtSlaveOrder = createdAt.toInstant();
@@ -671,7 +679,9 @@ public class CreateSlaveOrderErrorTest {
         Integer state = null;
         assertThat("State не равно", slaveOrder2.getState(), is(state));
         //смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -739,11 +749,12 @@ public class CreateSlaveOrderErrorTest {
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -754,7 +765,7 @@ public class CreateSlaveOrderErrorTest {
         checkContractParam(contractIdSlave);
     }
 
-
+    // тест выполняется только с моком
     @SneakyThrows
     @Test
     @AllureId("705844")
@@ -933,8 +944,11 @@ public class CreateSlaveOrderErrorTest {
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        await().pollDelay(Duration.ofNanos(500)).atMost(Duration.ofSeconds(2));
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(2)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -946,7 +960,7 @@ public class CreateSlaveOrderErrorTest {
 
     }
 
-
+    // тест выполняется только с моком
     @SneakyThrows
     @Test
     @AllureId("867341")

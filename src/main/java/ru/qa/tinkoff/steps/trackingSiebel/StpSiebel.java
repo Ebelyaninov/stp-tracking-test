@@ -15,7 +15,6 @@ public class StpSiebel {
     // "5-4LCY1YEB" "5-JEF71TBN" "4-1UBHYQ63" "1-1XHHA7S"
 
     // Admin //
-
     public String siebelIdMasterAdmin = "5-55RUONV5";
     public String siebelIdSlaveAdmin = "5-22NDYVFEE";
 
@@ -27,7 +26,6 @@ public class StpSiebel {
 
 
     // API //
-
     public String siebelIdApiMaster = "4-10YQRW0N";
     public String siebelIdApiSlave = "4-23D6LZT9";
     public String siebelIdApiNotOpen = "5-3MYZ425J";
@@ -42,7 +40,6 @@ public class StpSiebel {
     public String siebelIdSlaveStpTrackingFee = "4-IJ8NBW3";
 
     // Analytics //
-
     public String siebelIdMasterAnalytics = "5-192WBUXCI";
     public String siebelIdMasterAnalytics1 = "5-AJ7L9FNI";
 
@@ -50,14 +47,14 @@ public class StpSiebel {
     public String siebelIdAnalyticsSlaveTwo = "5-7ECGV169";
     public String siebelIdAnalyticsSlaveThree = "5-3CGSIDQR";
 
-    //StpTrackingSlave//
-    public String siebelIdSlaveMaster = "5-GEKUR6VD";
+    //StpTrackingSlave// 5-528RJAU5
+    public String siebelIdSlaveMaster = "4-LEJHC6T";
     public String siebelIdSlaveSlave = "5-JEF71TBN";
 
     public String siebelIdAnalyzeMaster ="1-3Z0IR7O";
     public String siebelIdAnalyzeSlave = "1-BXDUEON";
     public String siebelIdAnalyzeSlaveOnlyBaseMoney = "1-FRT3HXX";
-    public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-HWHTMYS3";
+    public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-8NL1RLT1";
     public String siebelIdAnalyzeMasterError = "5-2383868GN";
     public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";
     public String siebelIdSlaveOrderSlave = "5-23LMDXSIW";
@@ -76,14 +73,12 @@ public class StpSiebel {
     public String siebelIdConservativeForClient = "5-LGGA88YZ";
 
     // stpTrackingRetryer //
-
     public String siebelMasterRetryer = "5-5CNFBO6Z";
     public String siebelSlaveRetryer = "5-LZ9SSTLK";
 
     public String siebelMasterRetryer1 = "4-1V1UVPX8";
 
     // handleSocialEvent //
-
     public String siebelSocial = "1-9JNCS7D"; // необходим не пустой socialProfile
 
 

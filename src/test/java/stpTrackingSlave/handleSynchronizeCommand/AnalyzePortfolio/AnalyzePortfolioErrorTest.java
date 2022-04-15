@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -247,10 +248,12 @@ public class AnalyzePortfolioErrorTest {
 //        //проверяем что после анализа в портфеле slave позиция с правильной валютой
 //        checkParam(baseMoneySlave, utc);
        //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(3)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -315,10 +318,12 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime time = OffsetDateTime.now();
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(10));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(3)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -377,7 +382,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         checkComparedToMasterVersion(3);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         checkParam(baseMoneySlave, utc);
     }
@@ -421,7 +426,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion(3);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         checkParam(baseMoneySlave, utc);
     }
@@ -464,7 +469,7 @@ public class AnalyzePortfolioErrorTest {
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion(3);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //проверяем что после анализа в портфеле slave позиция с правильной валютой
         checkParam(baseMoneySlave, utc);
@@ -723,7 +728,10 @@ public class AnalyzePortfolioErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(3)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave)).collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -734,8 +742,6 @@ public class AnalyzePortfolioErrorTest {
         assertThat("contractId не равен", (event.getContract().getId()), is(contractIdSlave));
         assertThat("статус договора не равен", (event.getContract().getState()), is(Tracking.Contract.State.TRACKED));
         assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
-        //получаем портфель slave
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //проверяем расчеты и содержимое позиции slave
         assertThat("Версия последнего портфеля slave не равна", slavePortfolio.getVersion(), is(1));
         assertThat("Версия последнего портфеля ведущего не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
@@ -784,7 +790,10 @@ public class AnalyzePortfolioErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
+            contractService.getContract(contractIdSlave).getBlocked(), is(true));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(3)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave)).collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -797,8 +806,6 @@ public class AnalyzePortfolioErrorTest {
         assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
         //Проверяем contractSlave
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
-
-
     }
 
 
@@ -839,8 +846,12 @@ public class AnalyzePortfolioErrorTest {
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
+            contractService.getContract(contractIdSlave).getBlocked(), is(true));
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(3)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -853,8 +864,6 @@ public class AnalyzePortfolioErrorTest {
         assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
         //Проверяем contractSlave
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
-
-
     }
 
 

@@ -381,7 +381,7 @@ public class SynchronizePositionResolverTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
+        checkComparedToMasterVersion(3);
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         BigDecimal quantityDiff = BigDecimal.ZERO;
         List<SlavePortfolio.Position> positionUSDRUB = slavePortfolio.getPositions().stream()

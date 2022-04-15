@@ -194,7 +194,8 @@ public class HandleExchangeRetryCommandTest {
             Arguments.of("SPB_WEEKEND", "SNAP", "L01+00000SPB", TRACKING_SPB_WEEKEND_RETRYER_COMMAND, "40"),
             Arguments.of("SPB_RU_MORNING", "FGEN", "TKCBM_TCAB", TRACKING_SPB_RU_MORNING_RETRYER_COMMAND, "63.2"),
             Arguments.of("MOEX_MORNING", "YNDX", "Y02+00001F00", TRACKING_MOEX_MORNING_RETRYER_COMMAND, "3517.6"),
-            Arguments.of("FX_WEEKEND", "USDRUB", "MB9885503216", TRACKING_FX_WEEKEND_RETRYER_COMMAND, "120.38")
+            Arguments.of("FX_WEEKEND", "USDRUB", "MB9885503216", TRACKING_FX_WEEKEND_RETRYER_COMMAND, "120.38"),
+            Arguments.of("FX_MTL", "USDRUB", "MB9885503216", TRACKING_FX_MTL_RETRYER_COMMAND, "127.38")
             );
     }
 
@@ -280,7 +281,7 @@ public class HandleExchangeRetryCommandTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем параметры команды по синхронизации
-        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
     }
 
@@ -319,7 +320,7 @@ public class HandleExchangeRetryCommandTest {
         //отправляем команду на синхронизацию
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
-            .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
+            .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())
