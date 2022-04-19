@@ -1,10 +1,15 @@
 package ru.qa.tinkoff.utils;
 
 import com.google.protobuf.ByteString;
+import com.sun.istack.Nullable;
+import ru.tinkoff.invest.tracking.slave.portfolio.SlavePortfolioOuterClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.UUID;
 
 public class UtilsTest {
@@ -53,6 +58,14 @@ public class UtilsTest {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         message.writeTo(byteArrayOutputStream);
         return byteArrayOutputStream.toByteArray();
+    }
+
+
+    public static Optional<BigDecimal> fromUnscaledDecimal(@Nullable SlavePortfolioOuterClass.Decimal decimal) {
+        if (decimal == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new BigDecimal(new BigInteger(String.valueOf(decimal.getUnscaled())), decimal.getScale()));
     }
 
 }

@@ -23,6 +23,7 @@ public class SlavePortfolioRowMapper implements RowMapper<SlavePortfolio> {
             .baseMoneyPosition(row.get("base_money_position", SlavePortfolio.BaseMoneyPosition.class))
             .targetFeeReserveQuantity(row.getDecimal("target_fee_reserve_quantity"))
             .actualFeeReserveQuantity(row.getDecimal("actual_fee_reserve_quantity"))
+            .value(row.getDecimal("value"))
             .build();
     }
 }

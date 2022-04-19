@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.tracking.slave.portfolio;
+
+// Данные slave-портфеля
+message SlavePortfolio {
+
+    // Номер договора
+    string contract_id = 1;
+
+    // Идентификатор стратегии
+    bytes strategy_id = 2;
+
+    // Версия slave-портфеля
+    int32 version = 3;
+
+    // Версия master-портфеля, с которой производилось сравнение
+    int32 compared_to_master_version = 4;
+
+    // Стоимость slave-портфеля в базовой валюте
+    Decimal value = 5;
+}
+
+// Контейнер для безопасной передачи вещественного числа, обозначающего "деньги"
+message Decimal {
+
+    int64 unscaled = 1;
+
+    int32 scale = 2;
+}

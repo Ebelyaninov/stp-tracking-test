@@ -20,6 +20,7 @@ public class ChangedAtSlavePortfolioRowMapper  implements RowMapper<SlavePortfol
             .changedAt(row.get("changed_at", java.util.Date.class))
             .positions(row.getList("positions", SlavePortfolio.Position.class))
             .baseMoneyPosition(row.get("base_money_position", SlavePortfolio.BaseMoneyPosition.class))
+            .value(row.getDecimal("value"))
             .build();
     }
 }
