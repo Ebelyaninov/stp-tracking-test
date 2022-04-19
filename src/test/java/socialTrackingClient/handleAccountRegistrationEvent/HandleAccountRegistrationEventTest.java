@@ -308,7 +308,9 @@ public class HandleAccountRegistrationEventTest {
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
         //Ищем и проверяем событие в топике tracking.contract.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -452,7 +454,9 @@ public class HandleAccountRegistrationEventTest {
         assertThat("Slaves_count != 0", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(0));
 
         //Проверяем, что не отправили событие в топик tracking.contract.event
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdAgressive))
+            .collect(Collectors.toList());
         //Ищем и проверяем событие в топике tracking.contract.event
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
