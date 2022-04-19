@@ -23,8 +23,12 @@ public class ContractTariffService {
         ContractTariff contract = contractTariffRepository.findContractTariffByContractIdOrderByEndDateDesc (contractId).stream()
                                         .findFirst().get();
         log.info("Successfully find  contract  {}", contract);
-        contract.setTariffId(tariffId);
-        contractTariffRepository.save(contract);
-        log.info("Contract was updated {}", contract);
+        if (contract.getTariffId() != tariffId) {
+            contractTariffRepository.updateContractTariffById(tariffId, contract.getId());
+            log.info("Contract was updated {}", contract);
+        }
+        else {
+            log.info("тариф обновлять не нужно", contract);
+        }
     }
 }
