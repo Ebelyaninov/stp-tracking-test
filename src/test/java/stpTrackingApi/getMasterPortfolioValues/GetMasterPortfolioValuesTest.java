@@ -169,8 +169,8 @@ public class GetMasterPortfolioValuesTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetMasterPortfolioValuesResponse.class));
         //рассчитываем относительную доходность но основе выбранных точек Values
-        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
-            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
+        BigDecimal relativeYield = (expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(expecResponse.getValues().get(0), 4, RoundingMode.HALF_UP)
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
@@ -207,8 +207,10 @@ public class GetMasterPortfolioValuesTest {
         //вызываем метод GetMasterPortfolioValues
         GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 3);
         //рассчитываем относительную доходность но основе выбранных точек Values
-        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
-            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
+        BigDecimal relativeYield = (expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(expecResponse.getValues().get(0), 4, RoundingMode.HALF_UP)
+//        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+//            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
@@ -275,9 +277,12 @@ public class GetMasterPortfolioValuesTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = formatter.format(fromTime);
         //вызываем метод GetMasterPortfolioValues
+
         GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 2);
-        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
-            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
+        BigDecimal relativeYield = (expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+            .divide(expecResponse.getValues().get(0), 4, RoundingMode.HALF_UP)
+//        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
+//            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);

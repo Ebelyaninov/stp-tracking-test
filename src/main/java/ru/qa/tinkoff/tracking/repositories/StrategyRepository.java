@@ -72,4 +72,8 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     Strategy findStrategysByLowerTitle(
         @Param(value = "title") String title);
 
+
+    @Query(nativeQuery = true, value = "select * from strategy order by slaves_count desc limit 10")
+    List<Strategy> findListStrategysBySlavesCount ();
+
 }

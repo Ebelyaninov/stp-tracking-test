@@ -42,7 +42,7 @@ public class StpInstrument {
     public String typeFB = "share";
     public String classCodeFB = "SPBXM";
     public String briefNameFB = "Meta Platforms";
-    public String imageFB = "metapl.png";
+    public String imageFB = "000000.png";
     public String currencyFB = "usd";
     public String instrumentFB = tickerFB + "_" + classCodeFB;
 
