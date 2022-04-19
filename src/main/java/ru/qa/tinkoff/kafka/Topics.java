@@ -12,6 +12,7 @@ public enum Topics {
     FIREG_INSTRUMENT("fireg.instrument"),
     TRACKING_MASTER_COMMAND("tracking.master.command"),
     TRACKING_SLAVE_COMMAND("tracking.slave.command"),
+    TRACKING_SLAVE_PORTFOLIO("tracking.slave.portfolio"),
     TRACKING_EVENT("tracking.event"),
     TRACKING_30_DELAY_RETRYER_COMMAND("tracking.30.delay.retryer.command"),
     TRACKING_DELAY_COMMAND("tracking.delay.command"),

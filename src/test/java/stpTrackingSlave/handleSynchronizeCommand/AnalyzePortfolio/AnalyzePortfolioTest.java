@@ -1,6 +1,7 @@
 package stpTrackingSlave.handleSynchronizeCommand.AnalyzePortfolio;
 
 import com.google.protobuf.Timestamp;
+import com.sun.istack.Nullable;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -9,6 +10,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,7 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
@@ -48,6 +51,8 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.tracking.services.grpc.CapturedResponse;
 import ru.qa.tinkoff.tracking.services.grpc.MiddleGrpcService;
+import ru.qa.tinkoff.utils.UtilsTest;
+import ru.tinkoff.invest.tracking.slave.portfolio.SlavePortfolioOuterClass;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -57,10 +62,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,8 +76,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 
 @Slf4j
@@ -100,6 +101,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 })
 public class AnalyzePortfolioTest {
 
+    @Autowired
+    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StringToByteSenderService kafkaSender;
     @Autowired
@@ -136,6 +139,8 @@ public class AnalyzePortfolioTest {
     StpSiebel stpSiebel;
     @Autowired
     StpMockSlaveDate stpMockSlaveDate;
+
+    UtilsTest utilsTest = new UtilsTest();
 
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
@@ -307,6 +312,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "0", nullValue());
@@ -408,6 +414,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "2.0", notNullValue());
@@ -516,6 +523,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(positionABBV, priceMaster, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
             instrument.tradingClearingAccountABBV, "0", nullValue());
@@ -591,6 +599,11 @@ public class AnalyzePortfolioTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        //получаем значение price из кеша exchangePositionPriceCache
+        BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
@@ -598,10 +611,14 @@ public class AnalyzePortfolioTest {
         List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
             .collect(Collectors.toList());
+        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
+        BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(sellRes));
         assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -717,6 +734,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerALFAperp,
             instrument.tradingClearingAccountALFAperp, "0", nullValue());
@@ -833,6 +851,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue().doubleValue(), is(slavePortfolioTotal.doubleValue()));
         //проверяем параметры позиции с расчетами
         checkPosition(positionSBER, priceSBER, slavePortfolioValue, slavePositionsValue, masterPositionRateSBER, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "0", nullValue());
@@ -951,6 +970,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(positionSBER, priceSBER, slavePortfolioValue, slavePositionsValue, masterPositionRateSBER, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "0", nullValue());
@@ -1481,12 +1501,16 @@ public class AnalyzePortfolioTest {
             contractIdSlave, 2, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
+        //получаем значение price из кеша exchangePositionPriceCache
+        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Проверяем флаг buy_enabled ", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(false));
         assertThat("Проверяем флаг sell_enabled", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
+       // assertThat("value портфеля не равен", slavePortfolio.getValue().doubleValue(), is(slavePortfolioTotal.doubleValue()));
+
     }
 
     @SneakyThrows
@@ -2060,6 +2084,7 @@ public class AnalyzePortfolioTest {
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6445.55"));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         assertThat("Проверяем флаг buy_enabled ", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(false));
         assertThat("Проверяем флаг sell_enabled", slavePortfolio.getPositions().get(0).getSellEnabled(), is(false));
@@ -2163,6 +2188,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "6", notNullValue());
@@ -2276,6 +2302,7 @@ public class AnalyzePortfolioTest {
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6779.70"));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         assertThat("Проверяем флаг buy_enabled ", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", slavePortfolio.getPositions().get(0).getSellEnabled(), is(sellRes));
@@ -2379,6 +2406,7 @@ public class AnalyzePortfolioTest {
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7211.24"));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "8", notNullValue());
@@ -2505,6 +2533,7 @@ public class AnalyzePortfolioTest {
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("6445.55"));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "5", notNullValue());
@@ -2630,6 +2659,7 @@ public class AnalyzePortfolioTest {
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7211.24"));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "8", notNullValue());
@@ -2751,6 +2781,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "6", notNullValue());
@@ -2881,6 +2912,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
@@ -3000,6 +3032,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
@@ -3103,7 +3136,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
-        BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
         BigDecimal slavePositionRate = BigDecimal.ZERO;
         BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
             .divide(priceAAPL, 4, BigDecimal.ROUND_HALF_UP);
@@ -3210,7 +3243,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
-        BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
         BigDecimal slavePositionRate = BigDecimal.ZERO;
         BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
             .divide(priceAAPL, 4, BigDecimal.ROUND_HALF_UP);
@@ -3318,6 +3351,7 @@ public class AnalyzePortfolioTest {
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
+        assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "50", notNullValue());
@@ -3408,6 +3442,106 @@ public class AnalyzePortfolioTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1827893")
+    @Tags({@Tag("qa"), @Tag("qa2")})
+    @DisplayName("1827893 Анализ портфеля. Отправка события в топик tracking.slave.portfolio")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C1827893() {
+        mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
+            stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
+            stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerALFAperp, instrument.classCodeALFAperp,
+            "105", "100", "105");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
+            "Buy", "1", "1");
+        //получаем данные для перерасчета бумаги типа облигация
+        List<String> list = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, SIEBEL_ID_MASTER);
+        String aci = list.get(0);
+        String nominal = list.get(1);
+        String minPrIncrement = list.get(2);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, "2.0", date, 3, positionAction);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "12259.17", masterPos);
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked, null,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave
+        String baseMoneySlave = "6657.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            baseMoneySlave, date, positionList);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_SLAVE_PORTFOLIO);
+        //отправляем команду на синхронизацию
+        OffsetDateTime time = OffsetDateTime.now();
+        createCommandSynTrackingSlaveCommand(contractIdSlave, time);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_PORTFOLIO, Duration.ofSeconds(5));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        SlavePortfolioOuterClass.SlavePortfolio portfolioValue = SlavePortfolioOuterClass.SlavePortfolio.parseFrom(message.getValue());
+        //получаем значение price из кеша exchangePositionPriceCache
+        BigDecimal currentNominal = new BigDecimal(nominal);
+        BigDecimal minPriceIncrement = new BigDecimal(minPrIncrement);
+        BigDecimal aciValue = new BigDecimal(aci);
+        BigDecimal getprice = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, instrument.instrumentALFAperp, "last"));
+        //расчитываетм price
+        BigDecimal priceBefore = getprice.multiply(currentNominal)
+            .scaleByPowerOfTen(-2);
+        BigDecimal minPriceIncrementNew = minPriceIncrement
+            .multiply(currentNominal)
+            .scaleByPowerOfTen(-2);
+        BigDecimal roundPrice = priceBefore.divide(minPriceIncrementNew, 0, RoundingMode.HALF_UP)
+            .multiply(minPriceIncrementNew);
+        BigDecimal price = roundPrice
+            .add(aciValue);
+        //получаем портфель slave
+        await().atMost(TEN_SECONDS).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //сохраняем в списки значения по позициям в портфеле
+        List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerALFAperp))
+            .collect(Collectors.toList());
+        BigDecimal slavePositionsValue = (position.get(0).getQuantity().multiply(price));
+        BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //Проверяем, данные в сообщении
+        checkEventParams(portfolioValue, contractIdSlave, strategyId, slavePortfolio.getVersion(), slavePortfolio.getComparedToMasterVersion(), slavePortfolioTotal);
+    }
+
 
 
     // методы для работы тестов*************************************************************************
@@ -3466,6 +3600,18 @@ public class AnalyzePortfolioTest {
         assertThat("ChangedAt позиции в портфеле slave не равен", position.get(0).getChangedAt(), is(changedAt));
     }
 
+
+    //Проверяем параметры события
+    void checkEventParams(SlavePortfolioOuterClass.SlavePortfolio event, String ContractIdSlave, UUID strategyId, Integer version, Integer comparedVersion, BigDecimal value) {
+        UUID strategyIds = UtilsTest.getGuidFromByteArray(event.getStrategyId().toByteArray());
+        BigDecimal eventValue = UtilsTest.fromUnscaledDecimal(event.getValue()).get();
+
+        assertThat("ContractId события не равен", (event.getContractId()), is(ContractIdSlave));
+        assertThat("StrategyId не равен", strategyIds, is(strategyId));
+        assertThat("Version не равен", (event.getVersion()), is(version));
+        assertThat("ComparedToMasterVersion не равен", (event.getComparedToMasterVersion()), is(comparedVersion));
+        assertThat("Value не равен", (eventValue.doubleValue()), is(value.doubleValue()));
+    }
 
     // ожидаем версию портфеля slave
     void checkComparedToMasterVersion(int version) throws InterruptedException {
@@ -3547,4 +3693,5 @@ public class AnalyzePortfolioTest {
             .build();
         return command;
     }
+
 }
