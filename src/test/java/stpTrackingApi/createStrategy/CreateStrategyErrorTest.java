@@ -670,7 +670,7 @@ public class CreateStrategyErrorTest {
     @Description("Метод создания стратегии на договоре ведущего")
     void C266607() {
         String SIEBEL_ID1 = "5-20IBIUPTE";
-        String SIEBEL_ID2 = "1-1P424JS";
+        String SIEBEL_ID2 = "1-FPS907W";
         title = "CreateStrategy Autotest 013";
         String description = "New test стратегия Autotest 013";
         //ToDo feeRate was disabled

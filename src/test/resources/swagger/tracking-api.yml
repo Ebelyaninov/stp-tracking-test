@@ -1174,7 +1174,7 @@ components:
           type: array
           items:
             type: number
-            format: double
+            format: decimal
             minimum: 0
         relativeYield:
           description: Относительная доходность виртуального портфеля за выбранный промежуток
@@ -1508,7 +1508,7 @@ components:
         quantity:
           description: Количество единиц актива
           type: number
-          format: double
+          format: decimal
           minimum: 0
           exclusiveMinimum: true
         action:
@@ -1844,7 +1844,7 @@ components:
         relativeYield:
           description: Относительная доходность стратегии за все время (в процентах)
           type: number
-          format: double
+          format: decimal
         portfolioValues:
           description: Стоимости виртуального портфеля
           type: array

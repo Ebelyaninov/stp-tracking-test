@@ -168,4 +168,15 @@ public class StrategyService {
     }
 
 
+    @Step("Поиск стратегий, у которых slaves-count максимальное значения")
+    @SneakyThrows
+    public List<Strategy> findListStrategysBySlavesCount () {
+        List<Strategy> strategy = strategyRepository.findListStrategysBySlavesCount();
+        log.info("Successfully find strategys {}");
+        Allure.addAttachment("По title приведенный к нижнему регистру найденные стратегии",
+            "application/json", objectMapper.writeValueAsString(strategy));
+        return strategy;
+    }
+
+
 }

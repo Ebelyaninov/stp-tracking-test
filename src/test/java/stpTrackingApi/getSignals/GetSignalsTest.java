@@ -662,7 +662,7 @@ public class GetSignalsTest {
         assertThat("createdAt последнего сигнала не равно", getSignals.getItems().get(0).getCreatedAt().toInstant(),
             is(masterSignal.get(0).getCreatedAt().toInstant()));
         assertThat("quantity последнего сигнала не равно", getSignals.getItems().get(0).getQuantity(),
-            is(masterSignal.get(0).getQuantity().doubleValue()));
+            is(masterSignal.get(0).getQuantity()));
         assertThat("action последнего сигнала не равно", getSignals.getItems().get(0).getAction().getValue(),
             is("buy"));
         assertThat("price последнего сигнала не равно", getSignals.getItems().get(0).getPrice().getValue(),
@@ -875,7 +875,7 @@ public class GetSignalsTest {
         assertThat("createdAt последнего сигнала не равно", signal.get(0).getCreatedAt().toInstant(),
             is(masterSignal.get(0).getCreatedAt().toInstant()));
         assertThat("quantity последнего сигнала не равно", signal.get(0).getQuantity(),
-            is(masterSignal.get(0).getQuantity().doubleValue()));
+            is(masterSignal.get(0).getQuantity()));
         assertThat("action последнего сигнала не равно", signal.get(0).getAction().getValue(),
             is("buy"));
         assertThat("price последнего сигнала не равно", signal.get(0).getPrice().getValue(),

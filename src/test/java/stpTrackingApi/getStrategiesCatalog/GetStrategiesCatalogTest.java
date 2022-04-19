@@ -18,9 +18,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
-import ru.qa.tinkoff.creator.*;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.CacheApiApiCreator;
+import ru.qa.tinkoff.creator.StrategySocialApiCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -35,16 +36,11 @@ import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategiesCatalogResponse;
-import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
-import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.*;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.Currency;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -53,7 +49,6 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -61,12 +56,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.shouldBeCode;
-import static ru.qa.tinkoff.swagger.trackingApiCache.invoker.ResponseSpecBuilders.validatedWith;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Epic("getStrategiesCatalog - Получение каталога стратегий")
@@ -112,7 +104,6 @@ public class GetStrategiesCatalogTest {
     StrategySocialApiCreator strategySocialApiCreator;
     @Autowired
     CacheApiApiCreator cacheApiApiCreator;
-
 
     private Random random = new Random();
     String contractIdMaster;
@@ -308,39 +299,6 @@ public class GetStrategiesCatalogTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
     void C1109331() throws InterruptedException {
-        Long getSlaveCountFromTenStrategy;
-        List<UUID> strategyIds = new ArrayList<>();
-        List<String> contractIds = new ArrayList<>();
-        List<UUID> clientIds = new ArrayList<>();
-        List<String> siebelIds = new ArrayList<>();
-        siebelIds.add(siebelIdMaster1);
-        siebelIds.add(siebelIdMaster2);
-        siebelIds.add(siebelIdMaster3);
-        int slaveCount = 10;
-        int score = 5;
-        try {
-            for (int i = 0; i < siebelIds.size(); i++) {
-                UUID strategyId = UUID.randomUUID();
-                String title = "Стратегия Autotest - Заголовок";
-                String description = "Стратегия Autotest - Описание";
-                //получаем данные по договор из сервиса счетов
-                GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIds.get(i));
-                UUID investId = resAccountMaster.getInvestId();
-                String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-                try {
-                    //создаем стратегию на договор
-                    steps.createClientWithContractAndStrategy(siebelIds.get(i), investId, null, contractId, null, ContractState.untracked,
-                        strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                        StrategyStatus.active, slaveCount, LocalDateTime.now(), score, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
-                } catch (Exception e) {
-                    log.error("завис на создании");
-                }
-                slaveCount = slaveCount + 1;
-                score = score - 1;
-                strategyIds.add(strategyId);
-                contractIds.add(contractId);
-                clientIds.add(investId);
-            }
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
             GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
                 .xAppNameHeader("invest")
@@ -350,50 +308,17 @@ public class GetStrategiesCatalogTest {
                 .tabIdQuery("max-slaves-count")
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-            //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-            GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
-                .reqSpec(r -> r.addHeader(xApiKey, key))
-                .xAppNameHeader("stp-tracking-api")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetLiteStrategiesResponse.class));
-            //выбираем из списка метода getLiteStrategies стратерии с количеством подписчиков != 0 и сортируем по убыванию value
-            List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                .filter(liteStrategy -> liteStrategy.getCharacteristics().stream()
-                    .anyMatch(strategyCharacteristic ->
-                        strategyCharacteristic.getId().equals("slaves-count")
-                            && Long.parseLong(strategyCharacteristic.getValue()) != 0))
-                .sorted(new LiteStrategyBySlavesCountComparator().reversed())
-                .collect(Collectors.toList());
-            //Получаем 10 запись из настройки max-slaves-count-limit: 10
-            if (liteStrategies.get(9).getCharacteristics().get(0).getId().equals("slaves-count")) {
-                getSlaveCountFromTenStrategy = Long.parseLong(liteStrategies.get(9).getCharacteristics().get(0).getValue());
-            } else {
-                getSlaveCountFromTenStrategy = Long.parseLong(liteStrategies.get(9).getCharacteristics().get(1).getValue());
-            }
-            //Получаем записи >= value(slave-count) 10-ой записи
-            liteStrategies = liteStrategies.stream()
-                .filter(liteStrategy -> liteStrategy.getCharacteristics().stream()
-                    .anyMatch(strategyCharacteristic ->
-                        strategyCharacteristic.getId().equals("slaves-count")
-                            && Long.parseLong(strategyCharacteristic.getValue()) >= getSlaveCountFromTenStrategy))
-                .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
-                .collect(Collectors.toList());
+            List<Strategy> strategies = strategyService.findListStrategysBySlavesCount();
             //записываем stratedyId в множества и сравниваем их
             Set<UUID> listStrategyIdsFromApi = new HashSet<>();
             for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
                 listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
             }
-            Set<UUID> listStrategyIdsFromSocialApi = new HashSet<>();
-            for (int i = 0; i < liteStrategies.size(); i++) {
-                listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
+            Set<UUID> listStrategyIdsFromDB = new HashSet<>();
+            for (int i = 0; i < strategies.size(); i++) {
+                listStrategyIdsFromDB.add(strategies.get(i).getId());
             }
-            assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
-            //удаляем тестовые данные
-        } finally {
-            strategyService.deleteStrategyByIds(strategyIds);
-            contractService.deleteStrategyByIds(contractIds);
-            clientService.deleteStrategyByIds(clientIds);
-        }
+            assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromDB));
     }
 
 
@@ -418,7 +343,6 @@ public class GetStrategiesCatalogTest {
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
-
         //выбираем из списка только те стратерии у которых риск-профиль консервативный
         List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
             .filter(liteStrategy -> liteStrategy.getRiskProfile() == StrategyRiskProfile.CONSERVATIVE)
@@ -453,14 +377,14 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1105873(String currencyFilter, Currency currency, StrategyCurrency strategyCurrency) throws InterruptedException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster1);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //создаем в БД tracking данные: client, contract, strategy в статусе active
-        steps.createClientWithContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+//        //получаем данные по клиенту master в api сервиса счетов
+//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster1);
+//        UUID investIdMaster = resAccountMaster.getInvestId();
+//        String contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+//        //создаем в БД tracking данные: client, contract, strategy в статусе active
+//        steps.createClientWithContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+//            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+//            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
@@ -502,46 +426,46 @@ public class GetStrategiesCatalogTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий")
     void C1109332() throws InterruptedException {
-        List<UUID> strategyIds = new ArrayList<>();
-        List<String> contractIds = new ArrayList<>();
-        List<UUID> clientIds = new ArrayList<>();
-        List<String> siebelIds = new ArrayList<>();
-        siebelIds.add(siebelIdMaster1);
-        siebelIds.add(siebelIdMaster2);
-        siebelIds.add(siebelIdMaster3);
-        int slaveCount = 8;
-        try {
-            for (String siebelId : siebelIds) {
-                UUID strategyId = UUID.randomUUID();
-                //randomValue
-                //String title = "Стратегия Autotest - Заголовок";
-                String description = "Стратегия Autotest - Описание";
-                //получаем данные по договор из сервиса счетов
-                GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelId);
-                UUID investId = resAccountMaster.getInvestId();
-                String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-                try {
-                    //создаем стратегию
-                    steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, null, ContractState.untracked,
-                        strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                        StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
-                    //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
-                    createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 15, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 13, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 12, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 10, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                    createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-                } catch (Exception e) {
-                    log.error("завис на создании");
-                }
-                slaveCount = slaveCount + 1;
-                strategyIds.add(strategyId);
-                contractIds.add(contractId);
-                clientIds.add(investId);
-            }
+//        List<UUID> strategyIds = new ArrayList<>();
+//        List<String> contractIds = new ArrayList<>();
+//        List<UUID> clientIds = new ArrayList<>();
+//        List<String> siebelIds = new ArrayList<>();
+//        siebelIds.add(siebelIdMaster1);
+//        siebelIds.add(siebelIdMaster2);
+//        siebelIds.add(siebelIdMaster3);
+//        int slaveCount = 8;
+//        try {
+//            for (String siebelId : siebelIds) {
+//                UUID strategyId = UUID.randomUUID();
+//                //randomValue
+//                //String title = "Стратегия Autotest - Заголовок";
+//                String description = "Стратегия Autotest - Описание";
+//                //получаем данные по договор из сервиса счетов
+//                GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelId);
+//                UUID investId = resAccountMaster.getInvestId();
+//                String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+//                try {
+//                    //создаем стратегию
+//                    steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, null, ContractState.untracked,
+//                        strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+//                        StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+//                    //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
+//                    createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 15, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 13, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 12, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 10, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                    createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
+//                } catch (Exception e) {
+//                    log.error("завис на создании");
+//                }
+//                slaveCount = slaveCount + 1;
+//                strategyIds.add(strategyId);
+//                contractIds.add(contractId);
+//                clientIds.add(investId);
+//            }
 
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
             GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
@@ -594,12 +518,12 @@ public class GetStrategiesCatalogTest {
                 listStrategyIdsFromSocialApi.add(liteStrategiesNew.get(i).getId());
             }
             assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
-        } finally {
-            strategyService.deleteStrategyByIds(strategyIds);
-            contractService.deleteStrategyByIds(contractIds);
-            clientService.deleteStrategyByIds(clientIds);
-            masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyIds(strategyIds);
-        }
+//        } finally {
+//            strategyService.deleteStrategyByIds(strategyIds);
+//            contractService.deleteStrategyByIds(contractIds);
+//            clientService.deleteStrategyByIds(clientIds);
+//            masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyIds(strategyIds);
+//        }
     }
 
 
@@ -732,7 +656,7 @@ public class GetStrategiesCatalogTest {
         assertThat("socialProfile.nickname стратегии не равно", getStrategiesCatalog.getItems().get(0).getOwner().getSocialProfile().getNickname(),
             is(liteStrategies.get(liteStrategies.size() - 1).getOwner().getSocialProfile().getNickname()));
         assertThat("relativeYield стратегии не равно", getStrategiesCatalog.getItems().get(0).getRelativeYield(),
-            is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield().doubleValue()));
+            is(liteStrategies.get(liteStrategies.size() - 1).getRelativeYield()));
         assertThat("portfolioValues стратегии не равно", getStrategiesCatalog.getItems().get(0).getPortfolioValues(),
             is(liteStrategies.get(liteStrategies.size() - 1).getPortfolioValues()));
         assertThat("characteristics.id стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getId(),
@@ -741,7 +665,6 @@ public class GetStrategiesCatalogTest {
             is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getValue()));
         assertThat("characteristics.subtitle стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(0).getSubtitle(),
             is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getSubtitle()));
-
         assertThat("characteristics.expected-relative-yield стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(2).getValue(),
             is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(2).getValue()));
 
@@ -777,58 +700,8 @@ public class GetStrategiesCatalogTest {
 //            проверяем, данные в сообщении
         assertThat("Идентификатор следующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
             is(nullValue()));
-
     }
 
-
-//    @Test
-//    @AllureId("1111750")
-//    @DisplayName("C1111750.getStrategies.Получение каталога торговых стратегий, max-limit, default-limit")
-//    @Subfeature("Успешные сценарии")
-//    @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
-//    void C1111750() {
-//        List<UUID> strategyIds = new ArrayList<>();
-//        List<String> contractIds = new ArrayList<>();
-//        List<UUID> clientIds = new ArrayList<>();
-//        List<String> siebelIds = new ArrayList<>();
-//        try {
-//            for (int i = 0; i < 150; i++) {
-//                UUID strategyId = UUID.randomUUID();
-//                String title = "Стратегия Autotest - Заголовок";
-//                String description = "Стратегия Autotest - Описание";
-//                BrokerAccount findValidAccount = billingService.getFirstValid();
-//                UUID investId = findValidAccount.getInvestAccount().getId();
-//                String contractId = findValidAccount.getId();
-//                String siebelId = findValidAccount.getInvestAccount().getSiebelId();
-//                    try {
-//                        steps.createClientWintContractAndStrategyWithProfile(siebelId, investId, contractId, null, ContractState.untracked,
-//                        strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//                        StrategyStatus.active, 4, LocalDateTime.now());
-//                } catch (Exception e) {
-//                    log.error("завис на создании");
-//                }
-//
-//                strategyIds.add(strategyId);
-//                contractIds.add(contractId);
-//                clientIds.add(investId);
-//            }
-//            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApi.getStrategiesCatalog()
-//                .xAppNameHeader("invest")
-//                .xAppVersionHeader("4.5.6")
-//                .xPlatformHeader("ios")
-//                .xTcsSiebelIdHeader(siebelIdMaster2)
-//                .respSpec(spec -> spec.expectStatusCode(200))
-//                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-//            //проверяем, данные в сообщении
-//                assertThat("Количество возвращаемых записей не равно", getStrategiesCatalog.getItems().size(), is(100));
-//
-//        } finally {
-//
-//            strategyService.deleteStrategyByIds(strategyIds);
-//            contractService.deleteStrategyByIds(contractIds);
-//            clientService.deleteStrategyByIds(clientIds);
-//        }
-//    }
 
 
     @Test
@@ -837,131 +710,45 @@ public class GetStrategiesCatalogTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий")
     void C1559100() throws InterruptedException {
-        List<UUID> strategyIds = new ArrayList<>();
-        List<String> contractIds = new ArrayList<>();
-        List<UUID> clientIds = new ArrayList<>();
-        List<String> siebelIds = new ArrayList<>();
-        List<UUID> strategyIdList = new ArrayList<>();
-        siebelIds.add(siebelIdMaster1);
-        siebelIds.add(siebelIdMaster2);
-        int slaveCount = 8;
-        int iForInsert = 0;
-        try {
-            for (String siebelId : siebelIds) {
-                UUID strategyId = UUID.randomUUID();
-                strategyIdList.add(strategyId);
-                String description = "Стратегия Autotest - Описание";
-                //получаем данные по договор из сервиса счетов
-                GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelId);
-                UUID investId = resAccountMaster.getInvestId();
-                String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-                try {
-                    if (siebelIds.get(iForInsert).equals(siebelIdMaster2)) {
-                        //создаем стратегию
-                        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, null, ContractState.untracked,
-                            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                            StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
-                        //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
-                        createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 15, 4, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 13, 1, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 12, 4, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 10, 1, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(51, 99)).toString());
-                        iForInsert++;
-                    } else {
-                        //создаем стратегию
-                        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, null, ContractState.untracked,
-                            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-                            StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, "0.2", "0.04",
-                            false, new BigDecimal(58.00), "TEST", "TEST11");
-                        //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
-                        createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(1200, 2600)).toString());
-                        createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(4000, 4600)).toString());
-                        createDateMasterPortfolioValue(strategyId, 15, 4, BigDecimal.valueOf(getRandomDouble(46000, 4800)).toString());
-                        createDateMasterPortfolioValue(strategyId, 13, 1, BigDecimal.valueOf(getRandomDouble(4700, 4800)).toString());
-                        createDateMasterPortfolioValue(strategyId, 12, 4, BigDecimal.valueOf(getRandomDouble(4800, 4900)).toString());
-                        createDateMasterPortfolioValue(strategyId, 10, 1, BigDecimal.valueOf(getRandomDouble(4800, 4900)).toString());
-                        createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(4800, 4900)).toString());
-                        createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(4800, 4999)).toString());
-                        iForInsert++;
-                    }
-
-
-                } catch (Exception e) {
-                    log.error("завис на создании");
-                }
-                slaveCount = slaveCount + 1;
-                strategyIds.add(strategyId);
-                contractIds.add(contractId);
-                clientIds.add(investId);
-            }
-
-            //Ожидаем обновление кэша
-
-            for (int i = 0; i < 10; i++) {
-                //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
-                GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
-                    .reqSpec(r -> r.addHeader(xApiKey, key))
-                    .xAppNameHeader("stp-tracking-api")
-                    .respSpec(spec -> spec.expectStatusCode(200))
-                    .execute(response -> response.as(GetLiteStrategiesResponse.class));
-
-                String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2);
-                double courseUSD = Double.parseDouble(price);
-                //выбираем из списка только те стратерии у есть рекомендованая начальная сумма
-                List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-                    .filter(liteStrategy -> liteStrategy.getCharacteristics().stream()
-                        .anyMatch(strategyCharacteristic ->
-                            strategyCharacteristic.getId().equals("recommended-base-money-position-quantity")))
-                    .sorted(new RecommendedBaseMoneyPositionQuantityComparator(courseUSD))
-                    .collect(Collectors.toList());
-
-                var getStrategy = liteStrategies.stream()
-                    .filter(s -> s.getId().equals(strategyIdList.get(1)))
-                    .collect(Collectors.toList());
-                if (getStrategy.size() == 1) {
-                    i = 31;
-                    Thread.sleep(10000);
-                    log.info("Задержка 10с");
-                } else {
-                    Thread.sleep(31000);
-                    log.info("Ожидаем обновление кэша");
-                }
-            }
-
-            //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
-            GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
-                .xAppNameHeader("invest")
-                .xAppVersionHeader("4.5.6")
-                .xPlatformHeader("ios")
-                .xTcsSiebelIdHeader(siebelIdMaster2)
-                .tabIdQuery("min-recommended-money-quantity")
-                .respSpec(spec -> spec.expectStatusCode(200))
-                .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-
-            var getRecomendedForUsd = getStrategiesCatalog.getItems().stream()
-                .filter(id -> id.getId().equals(strategyIdList.get(1)))
-                .collect(Collectors.toList());
-
-            var getRecomendedForRub = getStrategiesCatalog.getItems().stream()
-                .filter(id -> id.getId().equals(strategyIdList.get(0)))
-                .collect(Collectors.toList());
-            //После сортировки получаем 2 стратегии с мин ценой. USD 100$ и 10000RUB
-            assertThat("Не нашли стратегию с рекомендованой валютой 100$", getRecomendedForUsd.get(0).getId(), is(strategyIdList.get(1)));
-            assertThat("Не нашли стратегию с рекомендованой валютой 10000 RUB", getRecomendedForRub.get(0).getId(), is(strategyIdList.get(0)));
-
-        } finally {
-            strategyService.deleteStrategyByIds(strategyIds);
-            contractService.deleteStrategyByIds(contractIds);
-            clientService.deleteStrategyByIds(clientIds);
-            masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyIds(strategyIds);
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .tabIdQuery("min-recommended-money-quantity")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        //вызываем метод getLiteStrategies получения облегченных данных списка торговых стратегий
+        GetLiteStrategiesResponse getLiteStrategiesResponse = strategySocialApiCreator.get().getLiteStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategiesResponse.class));
+        String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2);
+        double courseUSD = Double.parseDouble(price);
+        //выбираем из списка только те стратерии у есть рекомендованая начальная сумма
+        List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
+            .filter(liteStrategy -> liteStrategy.getCharacteristics().stream()
+                .anyMatch(strategyCharacteristic ->
+                    strategyCharacteristic.getId().equals("recommended-base-money-position-quantity")))
+            .sorted(new RecommendedBaseMoneyPositionQuantityComparator(courseUSD))
+            .collect(Collectors.toList());
+        int percentile = (int) Math.ceil(25 * liteStrategies.size() / 100);
+        var result = new ArrayList<>(liteStrategies.subList(0, percentile));
+        Collections.reverse(result);
+        //записываем stratedyId в множества и сравниваем их
+        List<UUID> listStrategyIdsFromApi = new ArrayList<>();
+        for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
+            listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
         }
+        Collections.sort(listStrategyIdsFromApi);
+        List<UUID> listStrategyIdsFromSocialApi = new ArrayList<>();
+        for (int i = 0; i < result.size(); i++) {
+            listStrategyIdsFromSocialApi.add(result.get(i).getId());
+        }
+        Collections.sort(listStrategyIdsFromSocialApi);
     }
-
-
     double getRandomDouble(double from, double to) {
         double v = random.nextDouble();
         return from + (to - from) * v;
@@ -980,9 +767,6 @@ public class GetStrategiesCatalogTest {
                 return compare;
             }
             return compare;
-
-            // если по score и relativeYield объекты равны - сравниваем по ID, для удобства сравнения
-//            return o1.getId().compareTo(o2.getId());
         }
 
     }
