@@ -234,7 +234,9 @@ public class HandleLimitEventTest {
             .collect(Collectors.toList());
         //считаем значение BaseMoneyPosition в ответе из miof
         double quantityCurrencyMiof = listMoney.get(0).getBalance().getUnscaled()
-            * Math.pow(10, -1 * listMoney.get(0).getBalance().getScale());
+            * Math.pow(10, -1 * listMoney.get(0).getBalance().getScale()) +
+            listMoney.get(0).getBlocked().getUnscaled()
+            * Math.pow(10, -1 * listMoney.get(0).getBlocked().getScale());
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -434,7 +436,8 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1507329() {
-        String siebelIdSlave = "1-51P8KN5";
+//        String siebelIdSlave = "1-51P8KN5";
+        String siebelIdSlave = "1-40X673G";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -445,7 +448,7 @@ public class HandleLimitEventTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
-        String clientCodeSlave = "KMV144216105";
+        String clientCodeSlave = "GEM540810121";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -620,7 +623,8 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1481355() {
-        String SIEBEL_ID_SLAVE = "1-FRT3HXX";
+//        String SIEBEL_ID_SLAVE = "1-FRT3HXX";
+        String SIEBEL_ID_SLAVE = "1-8CFFSE9";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -629,7 +633,7 @@ public class HandleLimitEventTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = "DDO250635210";
+        String clientCodeSlave = "MAV021377764";
         contractIdSlaves.add(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -741,7 +745,8 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1346552() {
-        String siebelIdSlave = "4-1L32TQUJ";
+//        String siebelIdSlave = "4-1L32TQUJ";
+        String siebelIdSlave = "4-1KRIRCZ1";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
