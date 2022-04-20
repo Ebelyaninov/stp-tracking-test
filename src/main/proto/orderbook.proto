@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.tracking.orderbook;
+
+import "google/protobuf/timestamp.proto";
+
+// Измененный стакан
+message Orderbook {
+    // Идентификатор инструмента
+    string instrument_id = 1;
+
+    // Метка времени начала окна наблюдений
+    google.protobuf.Timestamp started_at = 2;
+
+    // Метка времени окончания окна наблюдений
+    google.protobuf.Timestamp ended_at = 3;
+
+    // Минимальный агрегированный объем стакана на продажу
+    double bid_minimum_lots = 4;
+
+    // Минимальный агрегированный объем стакана на покупку
+    double ask_minimum_lots = 5;
+}

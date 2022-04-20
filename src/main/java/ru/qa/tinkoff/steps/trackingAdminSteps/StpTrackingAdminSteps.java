@@ -2,6 +2,8 @@ package ru.qa.tinkoff.steps.trackingAdminSteps;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.protobuf.Int32Value;
+import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -20,6 +22,7 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
@@ -39,8 +42,11 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.tinkoff.invest.tracking.orderbook.OrderbookOuterClass;
+import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -59,6 +65,7 @@ public class StpTrackingAdminSteps {
     private final ContractService contractService;
     private final TrackingService trackingService;
     private final ClientService clientService;
+    private final StringToByteSenderService kafkaSender;
     private final ByteArrayReceiverService kafkaReceiver;
     private final ProfileService profileService;
     private final ExchangePositionService exchangePositionService;
@@ -196,7 +203,7 @@ public class StpTrackingAdminSteps {
 
     //создаем запись в tracking.update_position по инструменту
     public void updateExchangePosition(String ticker, String tradingClearingAccount, Exchange exchange,
-                                       Boolean trackingAllowed, Integer dailyQuantityLimit, List<OrderQuantityLimit> orderQuantityLimitList ) {
+                                       Boolean trackingAllowed, Integer dailyQuantityLimit, List<OrderQuantityLimit> orderQuantityLimitList, boolean dynamicLimit ) {
         //формируем тело запроса
         UpdateExchangePositionRequest updateExPosition = new UpdateExchangePositionRequest();
         updateExPosition.exchange(exchange);
@@ -205,7 +212,7 @@ public class StpTrackingAdminSteps {
         updateExPosition.setTicker(ticker);
         updateExPosition.setTrackingAllowed(trackingAllowed);
         updateExPosition.setTradingClearingAccount(tradingClearingAccount);
-        updateExPosition.setDynamicLimits(false);
+        updateExPosition.setDynamicLimits(dynamicLimit);
         exchangePositionApiAdminCreator.get().updateExchangePosition()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
             .xAppNameHeader("invest")
@@ -331,6 +338,34 @@ public class StpTrackingAdminSteps {
         //insert запись в cassandra
         slavePortfolioDao.insertIntoSlavePortfolioWithChangedAt(contractIdSlave, strategyId, version, comparedToMasterVersion,
             baseMoneyPosition, positionList, date);
+    }
+
+
+    @Step("Создаем событие на апдейт лимитов позиции")
+    public  Tracking.ExchangePosition updatePositionLimitsWithNullCommand(String ticker, String tradindClearingAccount, int dailyLimit) {
+        //отправляем событие на изменение лимитов
+        Tracking.ExchangePosition command = Tracking.ExchangePosition.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradindClearingAccount)
+            .setTrackingAllowed(true)
+            .setDailyQuantityLimit(Int32Value.of(dailyLimit))
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder().build())
+            .setDynamicLimits(false)
+            .build();
+        return command;
+    }
+
+    //  метод отправляет команду на апдейт инструмента.
+    public void createCommandUpdatePosition(String ticker, String tradindClearingAccount, int dailyLimit) {
+        //создаем команду
+        Tracking.ExchangePosition command = updatePositionLimitsWithNullCommand(ticker, tradindClearingAccount, dailyLimit);
+        log.info("Команда в tracking.exchange-position:  {}", command);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        String keyCommand = "\n" +
+            "\u0004" + ticker + "\u0012\f" + tradindClearingAccount;
+        //отправляем событие в топик kafka tracking.slave.command
+        kafkaSender.send(Topics.EXCHANGE_POSITION, keyCommand, eventBytes);
     }
 
 }

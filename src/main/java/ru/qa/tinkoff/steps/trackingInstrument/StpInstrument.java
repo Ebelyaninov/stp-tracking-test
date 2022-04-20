@@ -28,6 +28,7 @@ public class StpInstrument {
 
     public String tickerSBER = "SBER";
     public String tradingClearingAccountSBER = "L01+00002F00";
+    public String tradingClearingAccountSBER1 = "L01+00000F00";
     public String sectorSBER = "financial";
     public String typeSBER = "share";
     public String companySBER = "Сбербанк";

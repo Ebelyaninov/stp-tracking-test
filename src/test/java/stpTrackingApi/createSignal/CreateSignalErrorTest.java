@@ -59,6 +59,7 @@ import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -67,8 +68,11 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 
 @Slf4j
@@ -1537,7 +1541,7 @@ public class CreateSignalErrorTest {
         //устанавливаем значения limit для проверяемого инструмента
         adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
             true, 1000, orderQuantityListAll(4, "default", 0, "main_trading",
-                0, "additional_liquidity", 0, "primary"));
+                0, "additional_liquidity", 0, "primary"), false);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
@@ -1588,7 +1592,7 @@ public class CreateSignalErrorTest {
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "3510000");
         //устанавливаем значения limit для проверяемого инструмента
         adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
-            true, 22845, orderQuantityList(100, "additional_liquidity"));
+            true, 22845, orderQuantityList(100, "additional_liquidity"), false);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
@@ -1642,7 +1646,7 @@ public class CreateSignalErrorTest {
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
         //устанавливаем значения limit для проверяемого инструмента
         adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
-            true, 22845, orderQuantityList(10, "default"));
+            true, 22845, orderQuantityList(10, "default"), false);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
@@ -1696,7 +1700,7 @@ public class CreateSignalErrorTest {
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
         //устанавливаем значения limit для проверяемого инструмента
         adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
-            true, 22845, orderQuantityList(10, "default"));
+            true, 22845, orderQuantityList(10, "default"), false);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
             price, quantityRequest, strategyId, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, version);
@@ -1716,6 +1720,197 @@ public class CreateSignalErrorTest {
 
     }
 
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1807503")
+    @DisplayName("1807503 Объем заявки. Покупка. period = null. dynamicsLimit = false")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1807503() {
+        BigDecimal price = new BigDecimal("135");
+        int quantityRequest = 10;
+        int version = 4;
+        String tailValue = "150000";
+        double money = 100000.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWithTestsContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
+            "WOW", "TestMan");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //устанавливаем значения limit для проверяемого инструмента
+        //adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
+        //    true, 111, orderQuantityList(52, "default"), true);
+        adminSteps.createCommandUpdatePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, 100);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(500))
+            .execute(response -> response);
+        ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        //проверяем ответ ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Сервис временно недоступен");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1803801")
+    @DisplayName("1803801 Объем заявки. Покупка. period = default. tailOrderQuantity > limit. dynamicsLimit = true.")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1803801() {
+        BigDecimal price = new BigDecimal("135");
+        int quantityRequest = 300;
+        int version = 4;
+        String tailValue = "15000000";
+        double money = 100000.0;
+        double quantityPosMasterPortfolio = 0.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWithTestsContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
+            "WOW", "TestMan");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
+            true, 115000, orderQuantityList(52, "default"), true);
+        //рассчёты
+        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
+            .multiply(price)
+            .add(new BigDecimal(Double.toString(money)));
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        //Получаем цену покупки
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
+            price, quantityRequest, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ru.qa.tinkoff.swagger.tracking.model.ErrorResponse.class);
+        // проверяем тело ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Превышен объем заявки");
+
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1803792")
+    @DisplayName("1803792 Объем заявки. Продажа. period = default. tailOrderQuantity > limit. dynamics = true")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1803792() {
+        BigDecimal price = new BigDecimal("135");
+        int quantityRequest = 300;
+        int version = 4;
+        String tailValue = "15000000";
+        double money = 100000.0;
+        double quantityPosMasterPortfolio = 300.0;
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
+        log.info("Получаем локальное время: {}", now);
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking стратегию на ведущего
+        steps.createClientWithTestsContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
+            "WOW", "TestMan");
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
+            "300");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
+            true, 115000, orderQuantityList(52, "default"), true);
+        //рассчёты
+        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
+            .multiply(price)
+            .add(new BigDecimal(Double.toString(money)));
+        //Рассчитываем объем выставляемого сигнала
+        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        //Рассчитываем долю сигнала относительно всего портфеля
+        BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
+        //Определяем объем заявок на ведомых в случае выставления сигнала
+        BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
+        //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
+        //Получаем цену покупки
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
+            price, quantityRequest, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER, version);
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ru.qa.tinkoff.swagger.tracking.model.ErrorResponse.class);
+        // проверяем тело ошибки
+        adminSteps.checkErrors(errorResponse, "Error", "Превышен объем заявки");
+
+
+    }
 
 
     @SneakyThrows
