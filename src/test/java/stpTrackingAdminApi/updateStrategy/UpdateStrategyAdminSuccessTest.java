@@ -7,6 +7,7 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
+import jnr.ffi.annotations.In;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -37,10 +38,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
-import ru.qa.tinkoff.swagger.tracking_admin.model.StrategyTest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequestOwner;
-import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
@@ -63,6 +61,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.getLifecycle;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -795,6 +794,60 @@ public class UpdateStrategyAdminSuccessTest {
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
         assertThat("buyEnabled не равно " + buyEnabled, strategy.getBuyEnabled(), is(buyEnabled));
         assertThat("sellEnabled не равно " + sellEnabled, strategy.getSellEnabled(), is(sellEnabled));
+    }
+
+    //Проверка обновление null, для парметров expected_relative_yield \ short_description \ owner_description \ score
+    //FeeRate пока не исправили
+    private static Stream<Arguments> nullValueFor () {
+        return Stream.of(
+            Arguments.of(null, "shortDescriptionUpdate", "ownerDescription", 1),
+            Arguments.of(new BigDecimal(10.00), null, "ownerDescription", 2),
+            Arguments.of(new BigDecimal(15.00), "shortDescriptionUpdate", null, 3),
+            Arguments.of(new BigDecimal(20.00), "shortDescriptionUpdate", "ownerDescription", null)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("nullValueFor")
+    @AllureId("1829154")
+    @DisplayName("C1829154.UpdateStrategy. Обновление параметров значением null")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C1829154 (BigDecimal expectedRelativeYield, String shortDescription, String ownerDescription, Integer scoreUpdated) {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        Integer score = 1;
+        UUID strategyId = UUID.randomUUID();
+        //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        Strategy strategyBeforeUpdate = strategyService.getStrategy(strategyId);
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequestOwner updateStrategyRequestOwner = new UpdateStrategyRequestOwner();
+        updateStrategyRequestOwner.setDescription(ownerDescription);
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setShortDescription(shortDescription);
+        updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
+        updateStrategyRequest.setOwner(updateStrategyRequestOwner);
+        updateStrategyRequest.setScore(scoreUpdated);
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
+        //Вызываем метод updateStrategy
+        UpdateStrategyResponse responseUpdateStrategy = strategyApiStrategyApiAdminCreator.get().updateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(UpdateStrategyResponse.class));
+        //Проверяем, данные которые вернулись в responseUpdateStrategy
+        checkParamResponse(responseUpdateStrategy, strategyId, "draft", strategyBeforeUpdate.getTitle(), "rub", "conservative",
+            description, scoreUpdated, profile);
+        //Находим в БД автоследования стратегию и проверяем ее поля
+        strategy = strategyService.getStrategy(strategyId);
+        checkParamDB(strategyId, contractId, strategyBeforeUpdate.getTitle(), description, scoreUpdated, Currency.RUB, "draft", StrategyRiskProfile.CONSERVATIVE, shortDescription, ownerDescription, expectedRelativeYield);
     }
 
 

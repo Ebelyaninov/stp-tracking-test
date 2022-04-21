@@ -157,6 +157,9 @@ public class StpTrackingAdminSteps {
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(buyEnabled)
             .setSellEnabled(sellEnabled);
+        if (strategyStatus.equals(StrategyStatus.draft)){
+            strategy.setActivationTime(null);
+        }
         strategy = trackingService.saveStrategy(strategy);
     }
 
