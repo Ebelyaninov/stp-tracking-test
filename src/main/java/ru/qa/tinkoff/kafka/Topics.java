@@ -30,6 +30,7 @@ public enum Topics {
     TRACKING_FX_RETRYER_COMMAND("tracking.fx.retryer.command"),
     TRACKING_FX_WEEKEND_RETRYER_COMMAND("tracking.fx-weekend.retryer.command"),
     TRACKING_FX_MTL_RETRYER_COMMAND("tracking.fx-mtl.retryer.command"),
+    TRACKING_MOEX_WEEKEND_RETRYER_COMMAND("tracking.moex-weekend.retryer.command"),
     TRACKING_FEE_COMMAND("tracking.fee.command"),
     MIOF_POSITIONS_RAW("miof.positions.raw"),
     TRACKING_CONTRACT_EVENT("tracking.contract.event"),
