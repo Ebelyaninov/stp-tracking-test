@@ -33,6 +33,7 @@ import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
 
 import java.util.UUID;
 
@@ -71,6 +72,33 @@ public class ConfirmMasterClientSuccessTest {
     StpSiebel siebel;
     @Autowired
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    ContractService contractService;
+
+    UUID investId;
+    String contractId;
+
+    @BeforeAll
+    void deleteClientAndContract() {
+        step("Удаляем клиента автоследования", () -> {
+            GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+                .siebelIdPath(siebel.siebelIdAdmin)
+                .brokerTypeQuery("broker")
+                .brokerStatusQuery("opened")
+                .respSpec(spec -> spec.expectStatusCode(200))
+                .execute(response -> response.as(GetBrokerAccountsResponse.class));
+            investId = resAccountMaster.getInvestId();
+            contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+            try {
+                contractService.deleteContractById(contractId);
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(client);
+            } catch (Exception e) {
+            }
+        });
+    }
 
     @AfterEach
     void deleteClient() {
@@ -89,13 +117,13 @@ public class ConfirmMasterClientSuccessTest {
         //находим клиента в БД social
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
+//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+//            .siebelIdPath(siebel.siebelIdAdmin)
+//            .brokerTypeQuery("broker")
+//            .brokerStatusQuery("opened")
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+//        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -128,13 +156,13 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
+//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+//            .siebelIdPath(siebel.siebelIdAdmin)
+//            .brokerTypeQuery("broker")
+//            .brokerStatusQuery("opened")
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+//        UUID investId = resAccountMaster.getInvestId();
         createClient(investId, ClientStatusType.registered, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
@@ -170,13 +198,13 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
+//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+//            .siebelIdPath(siebel.siebelIdAdmin)
+//            .brokerTypeQuery("broker")
+//            .brokerStatusQuery("opened")
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+//        UUID investId = resAccountMaster.getInvestId();
 //        //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
@@ -211,13 +239,13 @@ public class ConfirmMasterClientSuccessTest {
 //            .setImage(profile.getImage().toString())
             ;
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
+//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+//            .siebelIdPath(siebel.siebelIdAdmin)
+//            .brokerTypeQuery("broker")
+//            .brokerStatusQuery("opened")
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+//        UUID investId = resAccountMaster.getInvestId();
         //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
@@ -332,13 +360,13 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         //находим данные клиента в сервисе счетов: договор БС, investId
         //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
+//        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+//            .siebelIdPath(siebel.siebelIdAdmin)
+//            .brokerTypeQuery("broker")
+//            .brokerStatusQuery("opened")
+//            .respSpec(spec -> spec.expectStatusCode(200))
+//            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+//        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))

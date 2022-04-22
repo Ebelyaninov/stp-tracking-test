@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -233,10 +234,12 @@ public class UnblockContractTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(response -> response);
         //получаем портфель slave
-        await().atMost(Duration.ofSeconds(3))
+        await().pollDelay(Duration.ofNanos(500)).atMost(Duration.ofSeconds(3))
             .until(() -> contract = contractService.getContract(contractIdSlave), contractIsNotBlockedMatcher());
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
