@@ -208,6 +208,7 @@ public class EnableContractSynchronizationTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .sorted(Collections.reverseOrder())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));

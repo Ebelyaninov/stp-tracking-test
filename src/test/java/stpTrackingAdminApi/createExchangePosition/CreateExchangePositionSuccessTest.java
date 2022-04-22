@@ -252,10 +252,11 @@ public class CreateExchangePositionSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521346() throws Exception {
+        String ticker = "test";
         String tradingClearingAccount = "NDS000000001";
         String exchange = "MOEX";
         Integer dailyQuantityLimit = 1000;
-        String otcTicker = "EUR_RUB";
+        String otcTicker = "EUR_RUB_tt";
         String otcClassCode = "CETS";
         //вычитываем все события из tracking.exchange-position
         resetOffsetToLate(EXCHANGE_POSITION);
@@ -270,7 +271,7 @@ public class CreateExchangePositionSuccessTest {
         orderQuantityLimit.setLimit(500);
         orderQuantityLimit.setPeriodId("main_trading");
         orderQuantityLimitList.add(orderQuantityLimit);
-        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(instrument.tickerEURRUBTOM,
+        CreateExchangePositionRequest сreateExchangePositionRequest = createBodyRequestParamOct(ticker,
             tradingClearingAccount, orderQuantityLimitList, Exchange.MOEX, true, dailyQuantityLimit, otcTicker, otcClassCode);
         //вызываем метод createExchangePosition
         ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionResponse expecResponse = exchangePositionApiAdminCreator.get().createExchangePosition()
@@ -292,7 +293,7 @@ public class CreateExchangePositionSuccessTest {
         Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.parseFrom(message.getKey());
         Tracking.ExchangePosition exchangePositionKafka = Tracking.ExchangePosition.parseFrom(message.getValue());
         //проверяем, что пришло в ответ от метода createExchangePosition
-        assertThat("ID инструмента не равен", expecResponse.getTicker(), is(instrument.tickerEURRUBTOM));
+        assertThat("ID инструмента не равен", expecResponse.getTicker(), is(ticker));
         assertThat("Торгово-клиринговый счет не равен", expecResponse.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("Код биржи не равен", expecResponse.getExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", expecResponse.getTrackingAllowed(), is(true));
@@ -304,10 +305,10 @@ public class CreateExchangePositionSuccessTest {
         assertThat("Внебиржевой тикер инструмента не равен", expecResponse.getOtcTicker(), is(otcTicker));
         assertThat("Внебиржевой код класса инструмента не равен", expecResponse.getOtcClassCode(), is(otcClassCode));
         //проверяем ключ сообщения топика kafka
-        assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(instrument.tickerEURRUBTOM));
+        assertThat("ID инструмента не равен", exchangePositionId.getTicker(), is(ticker));
         assertThat("Торгово-клиринговый счет не равен", exchangePositionId.getTradingClearingAccount(), is(tradingClearingAccount));
         //проверяем message топика kafka
-        assertThat("ID инструмента не равен", exchangePositionKafka.getTicker(), is(instrument.tickerEURRUBTOM));
+        assertThat("ID инструмента не равен", exchangePositionKafka.getTicker(), is(ticker));
         assertThat("Торгово-клиринговый счет не равен", exchangePositionKafka.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("Код биржи не равен", exchangePositionKafka.getExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePositionKafka.getTrackingAllowed(), is(true));
@@ -319,7 +320,7 @@ public class CreateExchangePositionSuccessTest {
         assertThat("Внебиржевой тикер инструмента не равен", exchangePositionKafka.getOtcTicker().getValue(), is(otcTicker));
         assertThat("Внебиржевой код класса инструмента не равен", exchangePositionKafka.getOtcClassCode().getValue(), is(otcClassCode));
         //проверяем запись в tracking.exchange_position
-        exchangePosition = exchangePositionService.getExchangePositionByTicker(instrument.tickerEURRUBTOM, tradingClearingAccount);
+        exchangePosition = exchangePositionService.getExchangePositionByTicker(ticker, tradingClearingAccount);
         assertThat("Код биржи не равен", exchangePosition.getExchangePositionExchange().toString(), is(exchange));
         assertThat("Признак разрешённой для торговли в автоследовании позиции не равен", exchangePosition.getTrackingAllowed(), is(true));
         assertThat("Лимит количества единиц по сессии не равен", exchangePosition.getDailyQuantityLimit(), is(dailyQuantityLimit));

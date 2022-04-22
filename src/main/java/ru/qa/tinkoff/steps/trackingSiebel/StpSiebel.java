@@ -19,8 +19,8 @@ public class StpSiebel {
     public String siebelIdSlaveAdmin = "5-22NDYVFEE";
 
     public String siebelIdAdmin = "5-55RUONV5";
-    public String siebelIdEmptyNick = "1-9X6NHTJ";
-    public String siebelIdNullImage = "5-421S5P27";
+    public String siebelIdEmptyNick = "4-1OJEJVLA";
+    public String siebelIdNullImage = "5-IB7NPAPB";
     public String siebelIdNotBroker = "5-11FZVG5DZ";
     public String siebelIdNotOpen = "5-5AV7MQT1";
 

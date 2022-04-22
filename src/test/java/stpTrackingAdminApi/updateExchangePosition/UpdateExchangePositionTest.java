@@ -29,16 +29,17 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateExchangePositionRequest;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.ExchangePosition;
 import ru.qa.tinkoff.tracking.entities.enums.ExchangePositionExchange;
 import ru.qa.tinkoff.tracking.services.database.ExchangePositionService;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -85,7 +86,7 @@ public class UpdateExchangePositionTest {
     private static Stream<Arguments> provideUpdateExchangePosition() {
         return Stream.of(
             Arguments.of(null, null),
-            Arguments.of("EUR_RUB", "CETS")
+            Arguments.of("EUR_RUB_test", "CETS")
         );
     }
 
@@ -176,7 +177,7 @@ public class UpdateExchangePositionTest {
         String ticker = "EUR_RUB__TOM";
         String tradingClearingAccount = "MB9885503216";
         String exchange = "SPB";
-        String otcTicker = "EUR_RUB";
+        String otcTicker = "EUR_RUB_test";
         String otcClassCode = "CETS";
         Integer limit = 100;
         Integer dailyQuantityLimit = 200;
@@ -549,7 +550,7 @@ public class UpdateExchangePositionTest {
         String ticker = "EUR_RUB__TOM";
         String tradingClearingAccount = "MB9885503216";
         String exchange = "SPB";
-        String otcTickerOld = "EUR_RUB";
+        String otcTickerOld = "EUR_RUB_test";
         String otcClassCode = "CETS";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -601,7 +602,7 @@ public class UpdateExchangePositionTest {
         String ticker = "EUR_RUB__TOM";
         String tradingClearingAccount = "MB9885503216";
         String exchange = "SPB";
-        String otcTicker = "EUR_RUB";
+        String otcTicker = "EUR_RUB_test";
         String otcClassCodeOld = "CETS";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -868,7 +869,7 @@ public class UpdateExchangePositionTest {
         String ticker = "EUR_RUB__TOM";
         String tradingClearingAccount = "MB9885503216";
         String exchange = "SPB";
-        String otcTicker = "EUR_RUB";
+        String otcTicker = "EUR_RUB_test";
         String otcClassCode = "CETS";
         Integer limit = 100;
         Integer dailyQuantityLimit = 200;
@@ -950,20 +951,27 @@ public class UpdateExchangePositionTest {
     //создаем запись в tracking.exchange_position по инструменту
     public void createExchangePosition(String ticker, String tradingClearingAccount, ExchangePositionExchange exchangePositionExchange,
                                        String otcTicker, String otcClassCode, Boolean dynamicLimits) {
-        Map<String, Integer> mapValue = new HashMap<String, Integer>();
-        mapValue.put("default", 100);
-        mapValue.put("primary", 100);
-        exchangePosition = new ru.qa.tinkoff.tracking.entities.ExchangePosition()
-            .setTicker(ticker)
-            .setTradingClearingAccount(tradingClearingAccount)
-            .setExchangePositionExchange(exchangePositionExchange)
-            .setTrackingAllowed(false)
-            .setDailyQuantityLimit(200)
-            .setOrderQuantityLimits(mapValue)
-            .setOtcTicker(otcTicker)
-            .setOtcClassCode(otcClassCode)
-            .setDynamicLimits(dynamicLimits);
-        exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
+        List<ExchangePosition> exchangePositionExist = exchangePositionService.getExchangePositionOrderByTickerAndTraAndTradingClearingAccount().stream()
+            .filter(getTickerAndClearAccount -> getTickerAndClearAccount.getTicker().equals(ticker) && getTickerAndClearAccount.getTradingClearingAccount().equals(tradingClearingAccount))
+            .collect(Collectors.toList());
+
+        if (exchangePositionExist.size() == 0){
+            //exchangePositionService.deleteExchangePositionsByKey(ticker, tradingClearingAccount);
+            Map<String, Integer> mapValue = new HashMap<String, Integer>();
+            mapValue.put("default", 100);
+            mapValue.put("primary", 100);
+            exchangePosition = new ru.qa.tinkoff.tracking.entities.ExchangePosition()
+                .setTicker(ticker)
+                .setTradingClearingAccount(tradingClearingAccount)
+                .setExchangePositionExchange(exchangePositionExchange)
+                .setTrackingAllowed(false)
+                .setDailyQuantityLimit(200)
+                .setOrderQuantityLimits(mapValue)
+                .setOtcTicker(otcTicker)
+                .setOtcClassCode(otcClassCode)
+                .setDynamicLimits(dynamicLimits);
+            exchangePosition = exchangePositionService.saveExchangePosition(exchangePosition);
+        }
     }
 
 

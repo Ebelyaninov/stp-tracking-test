@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -72,6 +73,28 @@ public class ConfirmMasterClientErrorTest {
 
     String xApiKey = "x-api-key";
     String keyRead = "tcrm";
+    UUID investId;
+
+
+    @BeforeAll
+    void deleteClient() {
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        investId = resAccountMaster.getInvestId();
+    }
+
+    @BeforeEach
+    void getDataFromAccount (){
+        try {
+            clientService.deleteClientById(investId);
+        } catch (Exception e) {
+        }
+    }
 
     private static Stream<Arguments> provideStringsForHeadersConfirmMasterClient() {
         return Stream.of(
@@ -87,14 +110,6 @@ public class ConfirmMasterClientErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455794(String name, String login) {
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient
         ClientApi.ConfirmMasterClientOper confirmMasterClient = clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -135,14 +150,6 @@ public class ConfirmMasterClientErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455854() {
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient со значением Login > 20 символов
         clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
@@ -162,15 +169,6 @@ public class ConfirmMasterClientErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C467544() {
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        //вызываем метод confirmMasterClient без параметра api-key
         clientApiAdminCreator.get().confirmMasterClient()
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -188,14 +186,6 @@ public class ConfirmMasterClientErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C455861() {
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
         clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, "trackidngc"))
@@ -216,14 +206,6 @@ public class ConfirmMasterClientErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для администратора для подтверждения клиенту статуса ведущего")
     void C1705432() {
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(siebel.siebelIdAdmin)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
         //вызываем метод confirmMasterClient с неверным значением api-key
         clientApiAdminCreator.get().confirmMasterClient()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))

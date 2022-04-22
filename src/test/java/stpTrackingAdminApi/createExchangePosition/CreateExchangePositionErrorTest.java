@@ -317,7 +317,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521225() {
-        String ticker = "EUR_RUB__TOM";
+        String ticker = "EUR_RUB_TOM";
         String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -348,7 +348,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521238() {
-        String ticker = "EUR_RUB__TOM";
+        String ticker = "EUR_RUB_TOM";
         String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -379,7 +379,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521243() {
-        String ticker = "EUR_RUB__TOM";
+        String ticker = "EUR_RUB_TOM";
         String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";
@@ -410,7 +410,7 @@ public class CreateExchangePositionErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод необходим для добавления разрешенной биржевой позиции для автоследования.")
     void C521250() {
-        String ticker = "EUR_RUB__TOM";
+        String ticker = "EUR_RUB_TOM";
         String tradingClearingAccount = "NDS000000001";
         Integer limit = 100;
         String period = "additional_liquidity";

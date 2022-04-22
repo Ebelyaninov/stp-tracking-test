@@ -218,7 +218,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, false, false, "0.2", "0.04");
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
