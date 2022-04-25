@@ -853,6 +853,105 @@ public class HandleActualizeCommandTest {
         assertThat("Action для позиции в портфеле slave не равно", position.get(0).getLastChangeAction().toString(), is("12"));
     }
 
+    //В Middle должны быть инструменты KZT (1000) \ BYN (100) \ XAU (200) \ XAG (300)
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa")})
+    @AllureId("1842225")
+    @DisplayName("C1842225.HandleActualizeCommand Парсинг новых валют из настройки money-tickers")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
+        "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды < version из ответа")
+    void C1842225() {
+        String SIEBEL_ID_SLAVE = "4-108T3KDJ";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в БД сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        ru.tinkoff.invest.miof.Client.GetClientPositionsReq clientPositionsReq = ru.tinkoff.invest.miof.Client.GetClientPositionsReq.newBuilder()
+            .setAgreementId(contractIdSlave)
+            .build();
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions =
+            middleGrpcService.getClientPositions(clientPositionsReq);
+        int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
+        //получаем базовую валюту
+        double middleQuantityBaseMoney = getBaseMoneyFromMiddle(clientPositions, "RUB");
+        // создаем портфель slave с позицией в кассандре и версией портфеля меньше чем в middle на 3
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
+            "3", date);
+        String baseMoneySl = "3000.0";
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 3, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        OffsetDateTime time = OffsetDateTime.now();
+        //формируем команду на актуализацию для slave, с версией меньше чем в middle на 1
+        Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, versionMiddle - 1,
+            steps.createPosInCommand(instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, 2, Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, false);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
+        //проверяем, что портфель не создан по условию version из команды < version из ответа, то сохраняем в кэш actualizeCommandCache
+        Optional<SlavePortfolio> portfolio = slavePortfolioDao.findLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle - 1);
+        assertThat("запись по портфелю не равно", portfolio.isPresent(), is(false));
+        //проверяем, что заявка не выставлялась
+        Optional<SlaveOrder2> order = slaveOrder2Dao.findSlaveOrder2(contractIdSlave);
+        assertThat("запись по портфелю не равно", order.isPresent(), is(false));
+        //формируем новую команду на актуализацию для slave с версией равной версии в middle
+        Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 588486, contractIdSlave,
+            versionMiddle, time, Tracking.Portfolio.Action.MONEY_BUY_TRADE, true);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
+        checkComparedSlaveVersion(versionMiddle);
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        //Проверяем парсинг валюты KZT -> ticker KZTRUB_TOM
+        List<SlavePortfolio.Position> positionKZT = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerKZT))
+            .collect(Collectors.toList());
+        assertThat("Ticker для позиции в портфеле slave не равно", positionKZT.get(0).getTicker(), is(instrument.tickerKZT));
+        assertThat("TradingClearingAccount для позиции в портфеле slave не равно", positionKZT.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountKZT));
+        assertThat("Quantity для позиции в портфеле slave не равно", positionKZT.get(0).getQuantity(), is(new BigDecimal("1000")));
+        //Проверяем парсинг валюты BYN -> ticker KZTRUB_TOM
+        List<SlavePortfolio.Position> positionBYN = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerBYN))
+            .collect(Collectors.toList());
+        assertThat("Ticker для позиции в портфеле slave не равно", positionBYN.get(0).getTicker(), is(instrument.tickerBYN));
+        assertThat("TradingClearingAccount для позиции в портфеле slave не равно", positionBYN.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountBYN));
+        assertThat("Quantity для позиции в портфеле slave не равно", positionBYN.get(0).getQuantity(), is(new BigDecimal("100")));
+        //Проверяем парсинг валюты XAU -> ticker BYNRUB_TOM
+        List<SlavePortfolio.Position> positionXAU = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerXAU))
+            .collect(Collectors.toList());
+        assertThat("Ticker для позиции в портфеле slave не равно", positionXAU.get(0).getTicker(), is(instrument.tickerXAU));
+        assertThat("TradingClearingAccount для позиции в портфеле slave не равно", positionXAU.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXAU));
+        assertThat("Quantity для позиции в портфеле slave не равно", positionXAU.get(0).getQuantity(), is(new BigDecimal("200")));
+        //Проверяем парсинг валюты XAG -> ticker SLVRUB_TOM
+        List<SlavePortfolio.Position> positionXAG = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerXAG))
+            .collect(Collectors.toList());
+        assertThat("Ticker для позиции в портфеле slave не равно", positionXAG.get(0).getTicker(), is(instrument.tickerXAG));
+        assertThat("TradingClearingAccount для позиции в портфеле slave не равно", positionXAG.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXAG));
+        assertThat("Quantity для позиции в портфеле slave не равно", positionXAG.get(0).getQuantity(), is(new BigDecimal("300")));
+    }
+
 
     //должно быть 5 яндексов по позициям в мидле
     @SneakyThrows
