@@ -279,5 +279,21 @@ public class StpInstrument {
     public String tradingClearingAccountGLDRUB = "MB9885503216";
     public String instrumentGLDRUB = tickerGLDRUB + "_" + classCodeGLDRUB;
 
+    public String tickerKZT = "KZTRUB_TOM";
+    public String tradingClearingAccountKZT = "MB9885503216";
+    public String classCodeKZT = "CETS";
+
+    public String tickerBYN = "BYNRUB_TOM";
+    public String tradingClearingAccountBYN = "MB9885503216";
+    public String classCodeBYN = "CETS";
+
+    public String tickerXAU = "GLDRUB_TOM";
+    public String tradingClearingAccountXAU = "MB9885503216";
+    public String classCodeXAU = "CETS";
+
+    public String tickerXAG = "SLVRUB_TOM";
+    public String tradingClearingAccountXAG = "MB9885503216";
+    public String classCodeXAG = "CETS";
+
 
 }
