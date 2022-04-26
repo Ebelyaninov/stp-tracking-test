@@ -86,6 +86,7 @@ public class CheckStrategyTitleErrorTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @AfterEach

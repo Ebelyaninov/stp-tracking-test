@@ -75,6 +75,7 @@ public class StpTrackingAdminSteps {
     private final TimeLineApiAdminCreator timeLineApiAdminCreator;
     private final SlavePortfolioDao slavePortfolioDao;
     private final InvestAccountCreator<ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi> brokerAccountApiCreator;
+    private final StrategyService strategyService;
 
     @Autowired(required = false)
     private final MasterPortfolioDao masterPortfolioDao;
@@ -369,6 +370,19 @@ public class StpTrackingAdminSteps {
             "\u0004" + ticker + "\u0012\f" + tradindClearingAccount;
         //отправляем событие в топик kafka tracking.slave.command
         kafkaSender.send(Topics.EXCHANGE_POSITION, keyCommand, eventBytes);
+    }
+
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String contractId, UUID clientId) {
+        try {
+            strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractId).get());
+        } catch (Exception e) {}
+        try {
+            contractService.deleteContract(contractService.getContract(contractId));
+        } catch (Exception e) {}
+        try {
+            clientService.deleteClient(clientService.getClient(clientId));
+        } catch (Exception e) {}
     }
 
 }

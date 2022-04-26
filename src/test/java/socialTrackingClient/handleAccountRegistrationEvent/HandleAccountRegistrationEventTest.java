@@ -172,11 +172,20 @@ public class HandleAccountRegistrationEventTest {
         contractTariffService.updateTariffIdByContract(tariffID, contractIdAgressive, time);
         contractTariffService.updateTariffIdByContract(tariffID, contractIdConservative, time);
         contractTariffService.updateTariffIdByContract(tariffID, contractIdMedium, time);
+        steps.deleteDataFromDb(contractIdAgressive, investIdAgressive);
+        steps.deleteDataFromDb(contractIdConservative, investIdCOnservative);
+        steps.deleteDataFromDb(contractIdMedium, investIdMedium);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
+
+            try {
+                subscriptionBlockService.deleteSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdConservative).getId());
+            } catch (Exception e) {
+            }
 
             try {
                 subscriptionBlockService.deleteSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdAgressive).getId());
@@ -303,7 +312,7 @@ public class HandleAccountRegistrationEventTest {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd' 'HH");
         String dateNow = (formatter.format(dateNowOne));
 
-        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active, false);
+        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -353,7 +362,7 @@ public class HandleAccountRegistrationEventTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
         String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
-        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, false);
+        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -392,7 +401,7 @@ public class HandleAccountRegistrationEventTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
         String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
-        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, false);
+        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -633,7 +642,7 @@ public class HandleAccountRegistrationEventTest {
         checkContract(contractIdConservative, investIdCOnservative, ContractState.untracked, null);
 
         //Проверяем, что добавили подписку в статусе draft
-        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.draft, false);
+        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.draft, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 

@@ -148,7 +148,7 @@ public class CalculateMasterPortfolioRateTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics1);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     private static Stream<Arguments> provideAnalyticsCommand() {

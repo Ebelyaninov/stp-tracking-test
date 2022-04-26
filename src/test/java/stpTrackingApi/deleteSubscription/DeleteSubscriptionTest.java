@@ -117,6 +117,8 @@ public class DeleteSubscriptionTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         steps.createEventInTrackingContractEvent(contractIdMaster);
         steps.createEventInTrackingContractEvent(contractIdSlave);
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach

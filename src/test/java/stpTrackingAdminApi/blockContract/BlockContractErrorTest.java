@@ -118,6 +118,8 @@ public class BlockContractErrorTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @BeforeEach

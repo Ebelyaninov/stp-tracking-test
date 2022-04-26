@@ -220,7 +220,10 @@ public class CalculateStrategyTailDiffRateTest {
         GetBrokerAccountsResponse resAccountSlaveThree = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveThree);
         investIdSlaveThree = resAccountSlaveThree.getInvestId();
         contractIdSlaveThree = resAccountSlaveThree.getBrokerAccounts().get(0).getId();
-
+        steps.deleteDataFromDb(contractIdSlaveOne, investIdSlaveOne);
+        steps.deleteDataFromDb(contractIdSlaveTwo, investIdSlaveTwo);
+        steps.deleteDataFromDb(contractIdSlaveThree, investIdSlaveThree);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     private static Stream<Arguments> provideAnalyticsCommand() {

@@ -136,6 +136,7 @@ public class UpdateStrategyAdminSuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @AfterEach

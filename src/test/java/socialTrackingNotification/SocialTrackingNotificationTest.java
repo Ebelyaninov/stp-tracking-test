@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
-import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringReceiverService;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -27,7 +26,6 @@ import ru.qa.tinkoff.tracking.entities.enums.ClientRiskProfile;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
@@ -66,13 +64,9 @@ public class SocialTrackingNotificationTest {
         @Autowired
         ContractService contractService;
         @Autowired
-        TrackingService trackingService;
-        @Autowired
         StpSiebel stpSiebel;
         @Autowired
         ByteToByteSenderService kafkaSender;
-        @Autowired
-        OldKafkaService oldKafkaService;
         @Autowired
         SocialTrackingNotificationSteps socialTrackingNotificationSteps;
         @Autowired

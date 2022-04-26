@@ -107,6 +107,7 @@ public class GetMasterClientsTest {
         GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
 

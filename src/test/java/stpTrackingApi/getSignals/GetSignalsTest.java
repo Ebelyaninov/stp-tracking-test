@@ -122,6 +122,8 @@ public class GetSignalsTest {
     String quantitySU29009RMFS6 = "7";
     String title;
     String description;
+    UUID investIdMaster;
+    UUID investIdSlave;
 
     @BeforeAll
     void conf() {
@@ -129,15 +131,21 @@ public class GetSignalsTest {
         siebelIdSlave = stpSiebel.siebelIdMasterStpTrackingMaster;
         title = steps.getTitleStrategy();
         description = "стратегия autotest GetSignals";
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные от сервиса счетов о slave
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @BeforeEach
     void createClient() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -333,10 +341,6 @@ public class GetSignalsTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
     void C1311287() {
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(2);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1);
@@ -469,10 +473,6 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, ContractState.tracked,
@@ -509,10 +509,6 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, ContractState.tracked,
@@ -547,10 +543,6 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(2);
         steps.createSubcriptionDraftOrInActive(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.untracked,
@@ -587,10 +579,6 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 4, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalOther(strategyId);
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(2);
         steps.createSubcriptionDraftOrInActive(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.untracked,
@@ -834,10 +822,6 @@ public class GetSignalsTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-        //получаем данные от сервиса счетов о slave
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,  ContractState.tracked,

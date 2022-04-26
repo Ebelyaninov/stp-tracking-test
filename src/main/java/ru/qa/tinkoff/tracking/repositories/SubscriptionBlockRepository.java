@@ -9,6 +9,7 @@ import ru.qa.tinkoff.tracking.entities.SubscriptionBlock;
 
 import javax.transaction.Transactional;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,7 +17,7 @@ public interface SubscriptionBlockRepository extends JpaRepository<SubscriptionB
 
 
     //находим подписку по номеру договора  ведомого: slave_contract_id
-    @Query(nativeQuery = true, value = "select * from subscription_block where subscription_id =:subscriptionId")
+    @Query(nativeQuery = true, value = "select * from subscription_block where subscription_id =:subscriptionId AND reason = 'risk-profile'")
     Optional<SubscriptionBlock> findSubscriptionBlockBySubscriptionId(@Param(value = "subscriptionId") Long subscriptionId);
 
 
@@ -37,4 +38,6 @@ public interface SubscriptionBlockRepository extends JpaRepository<SubscriptionB
                               @Param("period") String period);
 
     SubscriptionBlock  findBySubscriptionId (Long subscriptionId);
+
+    List<SubscriptionBlock> findListBySubscriptionId (Long subscriptionId);
 }

@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheApiCreator;
@@ -35,10 +36,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.*;
 import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
 import ru.tinkoff.trading.tracking.Tracking;
 
@@ -73,6 +71,7 @@ public class StpTrackingApiSteps {
     private final ApiCacheApiCreator<ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi> cacheApiCacheApiCreator;
     private final MarketDataCreator<PricesApi> pricesMDApiCreator;
     private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
+    private final StrategyService strategyService;
 
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
@@ -815,6 +814,20 @@ public class StpTrackingApiSteps {
             .createdAt(createdAt)
             .build();
         masterSignalDao.insertIntoMasterSignal(masterSignal);
+    }
+
+
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String contractId, UUID clientId) {
+        try {
+            strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractId).get());
+        } catch (Exception e) {}
+        try {
+            contractService.deleteContract(contractService.getContract(contractId));
+        } catch (Exception e) {}
+        try {
+            clientService.deleteClient(clientService.getClient(clientId));
+        } catch (Exception e) {}
     }
 
 

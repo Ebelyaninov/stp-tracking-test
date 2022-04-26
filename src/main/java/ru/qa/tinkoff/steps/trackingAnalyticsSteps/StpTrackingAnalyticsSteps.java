@@ -30,10 +30,7 @@ import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.SubscriptionService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -57,6 +54,7 @@ public class StpTrackingAnalyticsSteps {
     private final PricesMDApiCreator pricesMDApiCreator;
     private final BrokerAccountApiCreator brokerAccountApiCreator;
     private final FiregInstrumentsApiCreator firegInstrumentsApiCreator;
+    private final StrategyService strategyService;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -1052,7 +1050,19 @@ public class StpTrackingAnalyticsSteps {
         dateBond.add(aciValue);
         dateBond.add(nominal);
         return dateBond;
+    }
 
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String contractId, UUID clientId) {
+        try {
+            strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractId).get());
+        } catch (Exception e) {}
+        try {
+            contractService.deleteContract(contractService.getContract(contractId));
+        } catch (Exception e) {}
+        try {
+            clientService.deleteClient(clientService.getClient(clientId));
+        } catch (Exception e) {}
     }
 
 }
