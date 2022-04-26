@@ -85,10 +85,22 @@ public class UpdateStrategySuccessTest {
     String SIEBEL_ID;
     String title = "Тест стратегия автотестов";
     String description = "Autotest  - UpdateStrategy";
+    UUID investId;
+    String contractId;
 
     @BeforeAll
     void getData() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+        //получаем данные по клиенту  в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @AfterEach
@@ -119,15 +131,6 @@ public class UpdateStrategySuccessTest {
         UUID strategyId = UUID.randomUUID();
         String titleNew = "Тест стратегия автотестов 01";
         String descriptionNew = "Тестовая стратегия для работы автотестов 01";
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -171,15 +174,6 @@ public class UpdateStrategySuccessTest {
         //получаем текущую дату и время
         UUID strategyId = UUID.randomUUID();
         String titleNew = "Тест стратегия автотестов 01";
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -223,15 +217,6 @@ public class UpdateStrategySuccessTest {
         UUID strategyId = UUID.randomUUID();
         String titleNew = "  Тест стратегия 01    ";
         String descriptionNew = "Тестовая стратегия для работы автотестов 01";
-        //получаем данные по клиенту  в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
-            .siebelIdPath(SIEBEL_ID)
-            .brokerTypeQuery("broker")
-            .brokerStatusQuery("opened")
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetBrokerAccountsResponse.class));
-        UUID investId = resAccountMaster.getInvestId();
-        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем клиента со стратегией в статусе неактивная
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,

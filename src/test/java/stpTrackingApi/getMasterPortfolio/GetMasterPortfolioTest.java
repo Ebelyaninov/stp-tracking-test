@@ -127,11 +127,17 @@ public class GetMasterPortfolioTest {
     String description = "стратегия autotest GetMasterPortfolio";
     String title;
     BigDecimal minPriceIncrement = new BigDecimal("0.0001");
+    UUID investIdMaster;
 
     @BeforeAll
     void getDataFromAccount() {
         SIEBEL_ID_MASTER = stpSiebel.siebelIdApiMaster;
         title = steps.getTitleStrategy();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach
@@ -179,10 +185,6 @@ public class GetMasterPortfolioTest {
     @Description("Метод для получения данных виртуального портфеля ведущего")
     void C1184370() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -254,10 +256,6 @@ public class GetMasterPortfolioTest {
     @Description("Метод для получения данных виртуального портфеля ведущего")
     void C1185517() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -310,10 +308,6 @@ public class GetMasterPortfolioTest {
     @Description(" Метод для получения данных виртуального портфеля ведущего")
     void C1176538() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -348,10 +342,6 @@ public class GetMasterPortfolioTest {
     void C1184401() {
         String quantity1 = "0";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -546,10 +536,6 @@ public class GetMasterPortfolioTest {
     @Description(" Метод для получения данных виртуального портфеля ведущего")
     void C1184442() throws JSONException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -581,10 +567,6 @@ public class GetMasterPortfolioTest {
     @Description("Метод для получения данных виртуального портфеля ведущего")
     void C1184327() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -617,10 +599,6 @@ public class GetMasterPortfolioTest {
         String tradingClearingAccount1 = "TEST";
         String quantity1 = "5";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -706,10 +684,6 @@ public class GetMasterPortfolioTest {
         String tradingClearingAccount1 = "SPNV";
         String quantity1 = "5";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,

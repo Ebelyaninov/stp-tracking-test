@@ -25,6 +25,7 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -55,7 +56,8 @@ import static org.hamcrest.Matchers.is;
     StpTrackingSiebelConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     AdminApiCreatorConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class,
 })
 
 
@@ -70,10 +72,13 @@ public class ConfirmMasterClientErrorTest {
     ApiAdminCreator<ClientApi> clientApiAdminCreator;
     @Autowired
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    StpTrackingAdminSteps adminSteps;
 
     String xApiKey = "x-api-key";
     String keyRead = "tcrm";
     UUID investId;
+    String contractId;
 
 
     @BeforeAll
@@ -86,6 +91,8 @@ public class ConfirmMasterClientErrorTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        adminSteps.deleteDataFromDb(contractId, investId);
     }
 
     @BeforeEach

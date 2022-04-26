@@ -101,12 +101,18 @@ public class GetMasterPortfolioValuesTest {
     UUID strategyId;
     String description = "стратегия autotest GetMasterPortfolioValues";
     String title;
+    UUID investIdMaster;
 
     @BeforeAll
     void getDataFromAccount() {
         siebelIdMaster = stpSiebel.siebelIdApiMaster;
         siebelIdSlave = stpSiebel.siebelIdApiSlave;
         title = steps.getTitleStrategy();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach
@@ -143,10 +149,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113203() throws JsonProcessingException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -185,10 +187,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113428() throws JsonProcessingException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -225,10 +223,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113429() throws JsonProcessingException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -257,10 +251,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C1113918() throws JsonProcessingException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -297,10 +287,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C981546() throws JsonProcessingException {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -424,10 +410,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C996507() {
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,

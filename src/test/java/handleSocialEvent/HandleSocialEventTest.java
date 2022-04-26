@@ -71,8 +71,6 @@ public class HandleSocialEventTest {
     ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
-//    @Autowired
-//    BillingService billingService;
     @Autowired
     ProfileService profileService;
     @Autowired

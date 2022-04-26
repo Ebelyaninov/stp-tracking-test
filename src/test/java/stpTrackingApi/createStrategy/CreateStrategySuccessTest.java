@@ -152,10 +152,16 @@ public class CreateStrategySuccessTest {
     String contractId;
     UUID strategyId;
     String SIEBEL_ID;
+    UUID investId;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
+        investId = resAccountMaster.getInvestId();
+        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @Test
@@ -176,10 +182,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -227,10 +229,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.03);
 //        feeRate.setResult(0.1);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         createClientWithContract(investId, ClientStatusType.registered, null, contractId, null, ContractState.untracked, null);
         //Формируем тело запроса
         BigDecimal baseMoney = new BigDecimal("10000.0");
@@ -287,10 +285,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.05);
 //        feeRate.setResult(0.5);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -343,10 +337,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Получаем данные по Master-клиенту через API сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -391,10 +381,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -447,10 +433,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело для запроса createStrategy
@@ -503,10 +485,6 @@ public class CreateStrategySuccessTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investId = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         BigDecimal baseMoney = new BigDecimal("12000.0");
@@ -569,11 +547,8 @@ public class CreateStrategySuccessTest {
         String description = "Тew test стратегия Autotest 007 - INITIALIZE";
         //ToDo feeRate was disabled
         String feeRate = "disabled";
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
-        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractId, null, ContractState.untracked,
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             strategyStatus, 0, date, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         strategy = strategyService.getStrategy(strategyId);

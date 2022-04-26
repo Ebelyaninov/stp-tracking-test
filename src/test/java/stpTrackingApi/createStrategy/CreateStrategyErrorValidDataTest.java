@@ -21,6 +21,7 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -79,15 +80,25 @@ public class CreateStrategyErrorValidDataTest {
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
+    @Autowired
+    StpTrackingApiSteps steps;
+
 
 
     Client client;
     Contract contract;
     String SIEBEL_ID;
+    UUID investId;
+    String contractId;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+        //Находим investId клиента через API сервиса счетов
+        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
+        investId = brokerAccount.getInvestId();
+        contractId = brokerAccount.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @AfterEach
@@ -118,10 +129,6 @@ public class CreateStrategyErrorValidDataTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = brokerAccount.getInvestId();
-        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -157,10 +164,6 @@ public class CreateStrategyErrorValidDataTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = brokerAccount.getInvestId();
-        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса
@@ -208,10 +211,6 @@ public class CreateStrategyErrorValidDataTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-        //Находим investId клиента через API сервиса счетов
-        GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
-        UUID investId = brokerAccount.getInvestId();
-        String contractId = brokerAccount.getBrokerAccounts().get(0).getId();
         //Создаем клиента в табл. client
         createClient(investId, ClientStatusType.registered, null);
         //Формируем тело запроса

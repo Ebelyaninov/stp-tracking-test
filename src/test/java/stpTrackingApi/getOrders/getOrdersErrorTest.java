@@ -103,12 +103,6 @@ public class getOrdersErrorTest {
     String description;
 
 
-    @BeforeAll
-    void getDataFromAccount() {
-        siebelIdMaster = stpSiebel.siebelIdApiMaster;
-        siebelIdSlave = stpSiebel.siebelIdApiSlave;
-    }
-
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
@@ -141,6 +135,8 @@ public class getOrdersErrorTest {
 
     @BeforeAll
     void getDataClients() {
+        siebelIdMaster = stpSiebel.siebelIdApiMaster;
+        siebelIdSlave = stpSiebel.siebelIdApiSlave;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
@@ -149,6 +145,8 @@ public class getOrdersErrorTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @BeforeEach

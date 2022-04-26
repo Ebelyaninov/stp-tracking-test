@@ -132,6 +132,7 @@ public class CreateSignalErrorTest {
     String SIEBEL_ID;
     String contractIdMaster;
     UUID strategyIdMaxCount = UUID.fromString("982ec1ce-787e-43e2-89b9-5a7466cd581d");
+    UUID investIdMaster;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
@@ -139,6 +140,8 @@ public class CreateSignalErrorTest {
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(stpSiebel.siebelIdApiMaster);
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        investIdMaster = resAccountMaster.getInvestId();
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach

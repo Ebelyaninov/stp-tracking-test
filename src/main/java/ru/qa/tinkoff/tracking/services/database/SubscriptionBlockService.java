@@ -12,6 +12,7 @@ import ru.qa.tinkoff.tracking.entities.enums.SubscriptionBlockReason;
 import ru.qa.tinkoff.tracking.repositories.SubscriptionBlockRepository;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import static ru.qa.tinkoff.utils.AllureUtils.addJsonAttachment;
 
@@ -62,10 +63,10 @@ public class SubscriptionBlockService {
 
     @Step("Поиск записи в subscription_block по id подписки")
     @SneakyThrows
-    public SubscriptionBlock deleteSubscriptionBlockBySubscriptionId (Long subscriptionId) {
+    public List<SubscriptionBlock> deleteSubscriptionBlockBySubscriptionId (Long subscriptionId) {
         log.info("Получен запрос на удаление записи в subscription_block по id подписки: {} ", subscriptionId);
-        SubscriptionBlock subscriptionBlock = subscriptionBlockRepository.findBySubscriptionId(subscriptionId);
-        subscriptionBlockRepository.delete(subscriptionBlock);
+        List<SubscriptionBlock> subscriptionBlock = subscriptionBlockRepository.findListBySubscriptionId(subscriptionId);
+        subscriptionBlockRepository.deleteAll(subscriptionBlock);
         log.info("По subscriptionId: {} найдены записи: {}", subscriptionId, subscriptionBlock);
         addJsonAttachment("Найденные записи: ", subscriptionBlock);
         return subscriptionBlock;

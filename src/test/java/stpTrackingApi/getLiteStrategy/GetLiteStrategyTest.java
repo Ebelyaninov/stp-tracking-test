@@ -87,6 +87,7 @@ public class GetLiteStrategyTest {
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         steps.createEventInTrackingContractEvent(contractIdMaster);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach

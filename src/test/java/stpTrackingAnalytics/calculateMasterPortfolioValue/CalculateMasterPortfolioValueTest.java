@@ -142,7 +142,7 @@ public class CalculateMasterPortfolioValueTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
 

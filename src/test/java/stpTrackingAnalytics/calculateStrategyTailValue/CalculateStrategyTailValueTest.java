@@ -189,7 +189,8 @@ public class CalculateStrategyTailValueTest {
         GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveOne);
         investIdSlave = resAccountSlaveOne.getInvestId();
         contractIdSlave = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
-
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     private static Stream<Arguments> provideAnalyticsCommand() {

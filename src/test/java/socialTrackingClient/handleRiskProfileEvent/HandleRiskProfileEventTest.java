@@ -170,6 +170,10 @@ public class HandleRiskProfileEventTest {
         fourthContracrId = Long.valueOf(contractIdConservative) + 3;
         LocalDate currentDate = (LocalDate.now());
         periodDefoult = "[" + currentDate + ",)";
+        steps.deleteDataFromDb(contractIdAgressive, investIdAgressive);
+        steps.deleteDataFromDb(contractIdConservative, investIdCOnservative);
+        steps.deleteDataFromDb(contractIdMedium, investIdMedium);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
     }
 
     @AfterEach
@@ -667,7 +671,10 @@ public class HandleRiskProfileEventTest {
 
         checkSubscriptionBlock(thirdContractId.toString(), SubscriptionBlockReason.RISK_PROFILE.getAlias(), getLowerPeriod,null);
         //Проверяем, что не отправили событие в топик tracking.contract.event
-        List<Pair<String, byte[]>> messagesFomSubscription = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messagesFomSubscription = kafkaReceiver.receiveBatch(TRACKING_SUBSCRIPTION_EVENT, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdConservative) | key.getKey().equals(secondContractId)
+                                               | key.getKey().equals(thirdContractId) | key.getKey().equals(fourthContracrId))
+            .collect(Collectors.toList());
         assertThat("Отправили событие в топик", messagesFomSubscription.size(), equalTo(0));
         List<Pair<String, byte[]>> messagesFromDelayCommand = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
         assertThat("Отправили событие в топик", messagesFromDelayCommand.size(), equalTo(0));

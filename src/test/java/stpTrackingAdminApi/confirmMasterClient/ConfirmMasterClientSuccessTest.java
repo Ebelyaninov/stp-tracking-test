@@ -25,6 +25,8 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
+import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -39,6 +41,7 @@ import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -56,7 +59,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     InvestTrackingAutoConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     AdminApiCreatorConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class
 })
 
 public class ConfirmMasterClientSuccessTest {
@@ -74,6 +78,8 @@ public class ConfirmMasterClientSuccessTest {
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     @Autowired
     ContractService contractService;
+    @Autowired
+    StpTrackingAdminSteps adminSteps;
 
     UUID investId;
     String contractId;
@@ -89,14 +95,7 @@ public class ConfirmMasterClientSuccessTest {
                 .execute(response -> response.as(GetBrokerAccountsResponse.class));
             investId = resAccountMaster.getInvestId();
             contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-            try {
-                contractService.deleteContractById(contractId);
-            } catch (Exception e) {
-            }
-            try {
-                clientService.deleteClient(client);
-            } catch (Exception e) {
-            }
+            adminSteps.deleteDataFromDb(contractId, investId);
         });
     }
 

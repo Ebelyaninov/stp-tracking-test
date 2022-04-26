@@ -81,6 +81,7 @@ public class GetAuthorizedClientTest {
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         steps.createEventInTrackingContractEvent(contractId);
+        steps.deleteDataFromDb(contractId, investId);
     }
 
     @AfterEach
