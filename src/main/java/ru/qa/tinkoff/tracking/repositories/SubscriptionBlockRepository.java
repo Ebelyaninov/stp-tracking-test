@@ -17,8 +17,10 @@ public interface SubscriptionBlockRepository extends JpaRepository<SubscriptionB
 
 
     //находим подписку по номеру договора  ведомого: slave_contract_id
-    @Query(nativeQuery = true, value = "select * from subscription_block where subscription_id =:subscriptionId AND reason = 'risk-profile'")
-    Optional<SubscriptionBlock> findSubscriptionBlockBySubscriptionId(@Param(value = "subscriptionId") Long subscriptionId);
+    @Query(value = "select * from subscription_block" +
+        " where subscription_id =:subscriptionId AND reason =cast(:reasone as subscription_block_reason)", nativeQuery = true)
+    Optional<SubscriptionBlock> findSubscriptionBlockBySubscriptionIdAndReasone (@Param(value = "subscriptionId") long subscriptionId,
+                                                                                 @Param("reasone") String reasone);
 
 
 //    //находим подписку по номеру договора и статусу
