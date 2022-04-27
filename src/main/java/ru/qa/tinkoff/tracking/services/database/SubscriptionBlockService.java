@@ -31,8 +31,8 @@ public class SubscriptionBlockService {
 
     @Step("Поиск подписки по contractId ведомого")
     @SneakyThrows
-    public SubscriptionBlock getSubscriptionBlockBySubscriptionId(Long subscriptionId) {
-        Optional<SubscriptionBlock> subscription = subscriptionBlockRepository.findSubscriptionBlockBySubscriptionId(subscriptionId);
+    public SubscriptionBlock getSubscriptionBlockBySubscriptionId(Long subscriptionId, String subscriptionBlockReason) {
+        Optional<SubscriptionBlock> subscription = subscriptionBlockRepository.findSubscriptionBlockBySubscriptionIdAndReasone(subscriptionId, subscriptionBlockReason);
         log.info("Successfully find subscriptionBlock {}", subscriptionId);
         Allure.addAttachment("Найденная заблокированная подписка", "application/json", objectMapper.writeValueAsString(subscriptionId));
         return subscription.orElseThrow(() -> new RuntimeException("Не найдена заблокированная подписка"));
@@ -44,7 +44,7 @@ public class SubscriptionBlockService {
         subscriptionBlockRepository
             .saveSubscriptionBlock(subscriptionId, reason.getAlias(), period);
         SubscriptionBlock saved = subscriptionBlockRepository
-            .findSubscriptionBlockBySubscriptionId(subscriptionId)
+            .findSubscriptionBlockBySubscriptionIdAndReasone(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias())
             .orElseThrow(RuntimeException::new);
         log.info("Successfully saved subscriptionBlock {}", saved);
         Allure.addAttachment("Заблокированная подписка", "application/json", objectMapper.writeValueAsString(saved));
@@ -71,6 +71,8 @@ public class SubscriptionBlockService {
         addJsonAttachment("Найденные записи: ", subscriptionBlock);
         return subscriptionBlock;
     }
+
+
 
 
 }

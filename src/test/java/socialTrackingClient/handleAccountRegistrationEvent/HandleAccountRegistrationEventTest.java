@@ -363,6 +363,8 @@ public class HandleAccountRegistrationEventTest {
         String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true);
+        checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION.getAlias());
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -452,7 +454,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         //Проверяем тариф клиента
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(200))
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(400))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubscriptionByContractIdAndStatus(contractIdAgressive, SubscriptionStatus.active).getStatus().equals(SubscriptionStatus.active));
@@ -575,7 +577,9 @@ public class HandleAccountRegistrationEventTest {
         checkClient(investIdMedium, ClientRiskProfile.moderate);
         checkContract(contractIdMedium, investIdMedium, ContractState.untracked, null);
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft,  true);
-        checkSubscriptionBlock(contractIdMedium, SubscriptionBlockReason.RISK_PROFILE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.RISK_PROFILE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION.getAlias());
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
     }
@@ -607,7 +611,9 @@ public class HandleAccountRegistrationEventTest {
 
         checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  true);
         checkContract(contractIdAgressive, investIdAgressive, ContractState.tracked, strategyId);
-        checkSubscriptionBlock(contractIdAgressive, SubscriptionBlockReason.RISK_PROFILE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdAgressive, SubscriptionBlockReason.RISK_PROFILE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdAgressive, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
+        checkSubscriptionBlockWithReasone(contractIdAgressive, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION.getAlias());
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
     }
@@ -809,11 +815,11 @@ public class HandleAccountRegistrationEventTest {
     }
 
     //проверяем блокировку подписки
-    void checkSubscriptionBlock (String contractId, String subscriptionBlockReason) {
+    void checkSubscriptionBlockWithReasone (String contractId, String subscriptionBlockReason) {
         Date dateNowOne = new Date(System.currentTimeMillis());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
         String dateNow = (formatter.format(dateNowOne));
-        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId());
+        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId(), subscriptionBlockReason);
         assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0, 16), equalTo(dateNow));
         assertThat("upper(period) !=  null" , getDataFromSubscriptionBlock.getPeriod().upper(), nullValue());
         assertThat("upper(period) !=  null" , getDataFromSubscriptionBlock.getPeriod().upper(), nullValue());

@@ -372,7 +372,7 @@ public class HandleRiskProfileEventTest {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
         subscriptionBlockService.saveSubscriptionBlock(secondSubscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
 
-        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId).getPeriod().lower().toString();
+        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias()).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
         steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
@@ -461,7 +461,7 @@ public class HandleRiskProfileEventTest {
         String periodDefoult = "[" + currentDate + ",)";
         Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdMedium).getId();
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
-        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId).getPeriod().lower().toString();
+        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias()).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
         steps.resetOffsetToEnd(TRACKING_DELAY_COMMAND);
@@ -517,7 +517,7 @@ public class HandleRiskProfileEventTest {
         checkClient(investIdMedium, ClientRiskProfile.moderate);
         //Проверяем, что  заблокировали подписку
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.active,  true, null);
-        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdMedium).getId());
+        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdMedium).getId(), SubscriptionBlockReason.RISK_PROFILE.getAlias());
         assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0,18), equalTo(time.toString().substring(0,18)));
         assertThat("upper(period) !=  ", getDataFromSubscriptionBlock.getPeriod().upper(), equalTo(null));
         assertThat("subscriptionBlockReason !=  risk-profile" , getDataFromSubscriptionBlock.getReason(), equalTo(SubscriptionBlockReason.RISK_PROFILE.getAlias()));
@@ -650,7 +650,7 @@ public class HandleRiskProfileEventTest {
             .setEndTime(endTime)
             .setSlaveContractId(fourthContracrId.toString());
         subscriptionService.saveSubscription(subscription);
-        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionIdFirst + 2).getPeriod().lower().toString();
+        String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionIdFirst + 2, SubscriptionBlockReason.RISK_PROFILE.getAlias()).getPeriod().lower().toString();
 
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
@@ -779,7 +779,7 @@ public class HandleRiskProfileEventTest {
         Date dateNowOne = new Date(System.currentTimeMillis());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH");
         String dateNow = (formatter.format(dateNowOne));
-        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId());
+        SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId(), SubscriptionBlockReason.RISK_PROFILE.getAlias());
         assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString(), equalTo(lowerPeriod));
         if (upperPeriod != null){
             assertThat("upper(period) !=  " + dateNow, getDataFromSubscriptionBlock.getPeriod().upper().toString().substring(0, 13), equalTo(dateNow));
@@ -792,7 +792,7 @@ public class HandleRiskProfileEventTest {
 
     //проверяем параметры команды по синхронизации
     void checkMessageFromSubscriptionEvent (Tracking.Event registrationMessage, String contractId, String action, Long subscriptionId, Boolean subscriptionIsBlocked) {
-        SubscriptionBlock subscriptionBlock = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId);
+        SubscriptionBlock subscriptionBlock = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias());
         assertThat("action не равен " + action, registrationMessage.getAction().toString(), is(action));
         UUID getStrategyId =  utilsTest.getGuidFromByteArray(registrationMessage.getSubscription().getStrategy().getId().toByteArray());
         assertThat("strategyId не равен " + strategyId, getStrategyId, is(strategyId));
