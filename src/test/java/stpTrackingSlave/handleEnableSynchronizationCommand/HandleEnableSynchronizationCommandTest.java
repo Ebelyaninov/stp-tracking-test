@@ -120,7 +120,7 @@ public class HandleEnableSynchronizationCommandTest {
 
    // String siebelIdMaster = "5-23AZ65JU2";
    // String siebelIdSlave = "4-LQB8FKN";
-    String siebelIdMaster = "1-9X6NHTJ";
+    String siebelIdMaster = "1-CLKT3FQ";
     String siebelIdSlave = "5-6UTY74RE";
 
     Subscription subscription;

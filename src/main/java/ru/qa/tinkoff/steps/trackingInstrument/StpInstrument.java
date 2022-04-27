@@ -150,7 +150,7 @@ public class StpInstrument {
     public String instrumentEURRUBTOM = tickerEURRUBTOM + "_" + classCodeEURRUBTOM;
 
     public String tickerEURRUB = "EURRUB";
-    public String tradingClearingAccountEURRUB = "MB9885503216";
+    public String tradingClearingAccountEURRUB = "MB0253214128";
     public String classCodeEURRUB = "EES_CETS";
 
 

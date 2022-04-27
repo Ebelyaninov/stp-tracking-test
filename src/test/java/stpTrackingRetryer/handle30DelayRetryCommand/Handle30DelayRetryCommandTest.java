@@ -252,7 +252,7 @@ public class Handle30DelayRetryCommandTest {
         OffsetDateTime time1 = OffsetDateTime.now();
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //проверяем параметры команды по синхронизации
-        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION));
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.SYNCHRONIZE));
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdSlave));
         Duration d = Duration.between(time0, time1);
         long sec = d.toSeconds();
@@ -299,7 +299,7 @@ public class Handle30DelayRetryCommandTest {
         //отправляем команду на синхронизацию
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
-            .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
+            .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())

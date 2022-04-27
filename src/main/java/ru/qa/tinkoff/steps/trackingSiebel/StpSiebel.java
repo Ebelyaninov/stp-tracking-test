@@ -53,7 +53,7 @@ public class StpSiebel {
 
     public String siebelIdAnalyzeMaster ="1-3Z0IR7O";
     public String siebelIdAnalyzeSlave = "1-BXDUEON";
-    public String siebelIdAnalyzeSlaveOnlyBaseMoney = "1-FRT3HXX";
+    public String siebelIdAnalyzeSlaveOnlyBaseMoney = "1-1AJ30Q";
     public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-8NL1RLT1";
     public String siebelIdAnalyzeMasterError = "5-2383868GN";
     public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";

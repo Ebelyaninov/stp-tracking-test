@@ -598,8 +598,7 @@ public class HandleUnblockContractCommandTest {
         //отправляем команду на синхронизацию
         steps.createCommandUnBlockContractSlaveCommand(contractIdSlave);
         //получаем портфель slave
-//       Thread.sleep(3000);
-        await().atMost(Duration.ofSeconds(4))
+        await().atMost(Duration.ofSeconds(10))
             .until(() -> contract = contractService.getContract(contractIdSlave),
                 contractIsNotBlockedMatcher());
         assertThat("Версия портфеля slave не равна", contract.getBlocked(), is(false));
@@ -623,7 +622,7 @@ public class HandleUnblockContractCommandTest {
     }
 
 
-    //    в securities 5 позиций по AAPL и 1 по FB
+//    в securities 5 позиций по AAPL и 1 по FB
 //    в money по USD-1000
     @SneakyThrows
     @Test
