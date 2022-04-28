@@ -1076,6 +1076,7 @@ public class handleSynchronizeCommandTest {
             i++;
             if (i == 4) {
                 attemptsCount = 126;
+                Thread.sleep(200);
                 break;
             }
             Thread.sleep(30000);

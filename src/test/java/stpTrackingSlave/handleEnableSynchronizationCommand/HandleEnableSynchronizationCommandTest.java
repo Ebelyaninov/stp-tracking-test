@@ -118,8 +118,6 @@ public class HandleEnableSynchronizationCommandTest {
     UUID investIdSlave;
     UUID investIdMaster;
 
-   // String siebelIdMaster = "5-23AZ65JU2";
-   // String siebelIdSlave = "4-LQB8FKN";
     String siebelIdMaster = "1-CLKT3FQ";
     String siebelIdSlave = "5-6UTY74RE";
 
@@ -160,6 +158,14 @@ public class HandleEnableSynchronizationCommandTest {
             }
             try {
                 clientService.deleteClient(clientService.getClient(investIdMaster));
+            } catch (Exception e) {
+            }
+            try {
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                slavePortfolioDao.deleteSlavePortfolio(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
             try {
@@ -234,6 +240,7 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .sorted(Collections.reverseOrder())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -294,6 +301,7 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
@@ -360,6 +368,7 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике tracking.slave.command
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
@@ -438,6 +447,7 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике tracking.slave.command
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
@@ -446,7 +456,7 @@ public class HandleEnableSynchronizationCommandTest {
         //получаем портфель slave
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //получаем выставленную заявку
-        await().atMost(TEN_SECONDS).until(() ->
+        await().pollDelay(Duration.ofNanos(200)).atMost(TEN_SECONDS).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId), notNullValue());
         //Проверяем данные портфеля
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
@@ -524,18 +534,18 @@ public class HandleEnableSynchronizationCommandTest {
         //Смотрим, сообщение, которое поймали в топике tracking.slave.command
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //Проверяем, данные в сообщении из tracking.slave.command
         checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //получаем портфель slave
-        //Thread.sleep(10000);
+        await().pollDelay(Duration.ofNanos(200)).atMost(Duration.ofSeconds(3)).until(() ->
+            slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         int quantity = (int) Math.round(slavePortfolio.getPositions().get(0).getQuantityDiff().doubleValue());
         //получаем выставленную заявку
-        //Thread.sleep(10000);
-        slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
         List<SlaveOrder2> slaveOrder2List = slaveOrderDao.getSlaveOrders2WithStrategy(contractIdSlave, strategyId);
         int number = slaveOrder2List.size() - 1;
         //Проверяем данные портфеля
