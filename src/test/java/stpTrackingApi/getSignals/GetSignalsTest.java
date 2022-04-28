@@ -62,6 +62,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Epic("getSignals - Получение списка сделок (сигналов) стратегии")
@@ -525,6 +526,8 @@ public class GetSignalsTest {
             .execute(response -> response.as(GetSignalsResponse.class));
         //проверяем что вернулся пустой список сигналов
         assertThat("items != []", getSignals.getItems().toString(), is("[]"));
+        assertThat("hasNext не равно", getSignals.getHasNext(), is(false));
+        assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nullValue()));
     }
 
 
