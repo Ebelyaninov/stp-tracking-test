@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -63,5 +64,15 @@ public class MasterPortfolioPositionRetentionDao {
         Timestamp timestamp = Timestamp.valueOf(ldt);
         cqlTemplate.execute(query, masterPortfolioPositionRetention.getStrategyId(), timestamp,
             masterPortfolioPositionRetention.getValue());
+    }
+
+    @Step("Поиск списка записей в таблице master_portfolio_position_retention")
+    @SneakyThrows
+    public List<MasterPortfolioPositionRetention> getListMasterPortfolioPositionRetention(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_position_retention " +
+            "where strategy_id = ? ";
+         List<MasterPortfolioPositionRetention> result = cqlTemplate.query(query, masterPortfolioPositionRetentionRowMapper, strategyId);
+        return result;
     }
 }
