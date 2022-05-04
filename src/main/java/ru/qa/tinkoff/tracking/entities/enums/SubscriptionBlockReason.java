@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum  SubscriptionBlockReason {
     RISK_PROFILE ("risk-profile"),
-    MINIMUM_VALUE ("minimum-value"),
-    PORTFOLIO_INITIALIZATION ("portfolio-initialization");
+    MINIMUM_VALUE("minimum-value"),
+    PORTFOLIO_INITIALIZATION("portfolio-initialization");
 
     private final String alias;
 }

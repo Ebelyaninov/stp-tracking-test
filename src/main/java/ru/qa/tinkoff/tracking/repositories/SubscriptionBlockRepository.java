@@ -28,16 +28,32 @@ public interface SubscriptionBlockRepository extends JpaRepository<SubscriptionB
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query(value = "insert into subscription_block(subscription_id, reason, period)"
+    @Query(value = "insert into subscription_block(subscription_id, reason, period, version)"
         + " values (" +
         " :subscription_id," +
         " cast (:reason as subscription_block_reason)," +
-        " cast(:period as tsrange)" +
+        " cast (:period as tsrange)," +
+        " :version" +
         ")",
         nativeQuery = true)
     int saveSubscriptionBlock(@Param("subscription_id") long subscriptionId,
                               @Param("reason") String reason,
-                              @Param("period") String period);
+                              @Param("period") String period,
+                              @Param("version") Integer version);
+
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(value = "insert into subscription_block(subscription_id, reason, period)"
+        + " values (" +
+        " :subscription_id," +
+        " cast (:reason as subscription_block_reason)," +
+        " cast (:period as tsrange)" +
+        ")",
+        nativeQuery = true)
+    int saveSubscriptionBlockWithoutVersion(@Param("subscription_id") long subscriptionId,
+                                            @Param("reason") String reason,
+                                            @Param("period") String period);
 
     SubscriptionBlock  findBySubscriptionId (Long subscriptionId);
 

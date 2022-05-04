@@ -40,4 +40,7 @@ public class SubscriptionBlock {
     @Type(type = "daterange")
     @Column(name = "period")
     private Range period;
+
+    @Column(name = "version")
+    private Integer version;
 }

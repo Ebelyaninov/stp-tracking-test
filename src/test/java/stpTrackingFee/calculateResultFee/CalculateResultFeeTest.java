@@ -27,9 +27,11 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.fireg.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -50,6 +52,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Comparators.max;
@@ -74,6 +77,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
+    StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class
 })
@@ -99,6 +103,8 @@ public class CalculateResultFeeTest {
     @Autowired
     StpTrackingFeeSteps steps;
     @Autowired
+    StpTrackingSlaveSteps slaveSteps;
+    @Autowired
     ByteToByteSenderService kafkaSender;
     @Autowired
     StringToByteSenderService kafkaStringToByteSender;
@@ -110,6 +116,8 @@ public class CalculateResultFeeTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    SubscriptionBlockService subscriptionBlockService;
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
@@ -162,7 +170,10 @@ public class CalculateResultFeeTest {
             try {
                 slaveAdjustDao.deleteSlaveAdjustByStrategyAndContract(contractIdSlave, strategyId);
             } catch (Exception e) {
-
+            }
+            try {
+                subscriptionBlockService.deleteSubscriptionBlockBySubscriptionId(subscription.getId());
+            } catch (Exception e) {
             }
             try {
                 subscriptionService.deleteSubscription(steps.subscription);
@@ -2215,6 +2226,278 @@ public class CalculateResultFeeTest {
     }
 
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("1834088")
+    @DisplayName("1834088 CalculateResultFee. Первый расчетный период. Блокировка subscription по minimum_value.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1834088() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(3).minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(4).minusMinutes(5);
+        steps.createSubcriptionWithBlock(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true, 2);
+        //получаем идентификатор подписки
+        Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdSlave).getId();
+        //добавляем запись о блокировке в subscription_block
+        LocalDate startBlock = (LocalDate.now().minusMonths(1).minusDays(1));
+        LocalDate endBlock = (LocalDate.now().minusDays(15));
+        String periodDefault = "[" + startBlock + "," + endBlock + ")";
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefault, 2);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //создаем портфели slave
+        //Портфель 1 версии
+        OffsetDateTime utcStart = OffsetDateTime.now().minusMonths(1).minusDays(10);
+        Date dateStart = Date.from(utcStart.toInstant());
+        String baseMoneySlave = "6657.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+            baseMoneySlave, dateStart, positionList);
+        //Портфель 2 версии
+        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(15);
+        Date dateStart1 = Date.from(utcStart1.toInstant());
+        String baseMoneySlave1 = "7657.23";
+        List<SlavePortfolio.Position> positionList1 = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySlave1, dateStart1, positionList1);
+        //получаем расчетные периоды
+        List<LocalDateTime> determineSettlementPeriods = new ArrayList<>();
+        determineSettlementPeriods = getDetermineSettlementPeriods(contractIdSlave, strategyId, subscriptionId);
+        // достаем из БД портфель, рассчитываем его стоимость и сохранем версию
+        BigDecimal valuePortfolio = BigDecimal.ZERO;
+        Date cutDate = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioAfter(contractIdSlave, strategyId, cutDate);
+        if (slavePortfolio != null) {
+            valuePortfolio = getPortfolioValuePeriod(slavePortfolio, determineSettlementPeriods.get(0));
+        }
+        //считаем первый HighWaterMark для первого расчетного периода, где high water mark еще не рассчитывался
+        Date endedAt = java.sql.Date.valueOf(endBlock);
+        Date cutDate1 = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        BigDecimal highWaterMark = getHighWaterMarkPeriod(endedAt, cutDate1, new BigDecimal("0"), valuePortfolio);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //ожидаем записи в result_fee
+        checkComparedToFeeVersion(slavePortfolio.getVersion(), subscriptionId);
+        //проверяем полученные данные
+        resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, slavePortfolio.getVersion());
+        assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolio));
+        assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMark));
+        assertThat("settlement_period_started не равен окончанию блокировки", resultFee.getSettlementPeriodStartedAt(), is(endedAt));
+
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1836420")
+    @DisplayName("1836420 ResultFee. Первый расчетный период. Блокировка subscription по minimum_value. slave_portfolio.version != subscription_block.version.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1836420() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(3).minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(4).minusMinutes(5);
+        steps.createSubcriptionWithBlock(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true, 2);
+        //получаем идентификатор подписки
+        Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdSlave).getId();
+        //добавляем запись о блокировке в subscription_block
+        LocalDate startBlock = (LocalDate.now().minusMonths(1).minusDays(1));
+        LocalDate endBlock = (LocalDate.now().minusDays(15));
+        String periodDefault = "[" + startBlock + "," + endBlock + ")";
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefault, 3);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //создаем портфели slave
+        //Портфель 1 версии
+        OffsetDateTime utcStart = OffsetDateTime.now().minusMonths(1).minusDays(10);
+        Date dateStart = Date.from(utcStart.toInstant());
+        String baseMoneySlave = "6657.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+            baseMoneySlave, dateStart, positionList);
+        //Портфель 2 версии
+        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(15);
+        Date dateStart1 = Date.from(utcStart1.toInstant());
+        String baseMoneySlave1 = "7657.23";
+        List<SlavePortfolio.Position> positionList1 = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySlave1, dateStart1, positionList1);
+        //получаем расчетные периоды
+        List<LocalDateTime> determineSettlementPeriods = new ArrayList<>();
+        determineSettlementPeriods = getDetermineSettlementPeriods(contractIdSlave, strategyId, subscriptionId);
+        // достаем из БД портфель, рассчитываем его стоимость и сохранем версию
+        BigDecimal valuePortfolio = BigDecimal.ZERO;
+        Date cutDate = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioAfter(contractIdSlave, strategyId, cutDate);
+        if (slavePortfolio != null) {
+            valuePortfolio = getPortfolioValuePeriod(slavePortfolio, determineSettlementPeriods.get(0));
+        }
+        //считаем первый HighWaterMark для первого расчетного периода, где high water mark еще не рассчитывался
+        Date endedAt = java.sql.Date.valueOf(endBlock);
+        Date cutDate1 = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        BigDecimal highWaterMark = getHighWaterMarkPeriod(endedAt, cutDate1, new BigDecimal("0"), valuePortfolio);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //проверяем полученные данные
+        assertThat("появилась запись о начисленной комиссии", resultFeeDao.findResultFee(contractIdSlave, strategyId, subscriptionId, slavePortfolio.getVersion()), is(Optional.empty()));
+
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1836377")
+    @DisplayName("1836377 ResultFee. Первый расчетный период. Блокировка subscription по minimum_value. version = null.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1836377() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(3).minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(4).minusMinutes(5);
+        steps.createSubcriptionWithBlock(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true, 2);
+        //получаем идентификатор подписки
+        Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdSlave).getId();
+        //добавляем запись о блокировке в subscription_block
+        LocalDate startBlock = (LocalDate.now().minusMonths(1).minusDays(1));
+        LocalDate endBlock = (LocalDate.now().minusDays(15));
+        String periodDefault = "[" + startBlock + "," + endBlock + ")";
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefault, null);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //создаем портфели slave
+        //Портфель 1 версии
+        OffsetDateTime utcStart = OffsetDateTime.now().minusMonths(1).minusDays(10);
+        Date dateStart = Date.from(utcStart.toInstant());
+        String baseMoneySlave = "6657.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+            baseMoneySlave, dateStart, positionList);
+        //Портфель 2 версии
+        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(15);
+        Date dateStart1 = Date.from(utcStart1.toInstant());
+        String baseMoneySlave1 = "7657.23";
+        List<SlavePortfolio.Position> positionList1 = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySlave1, dateStart1, positionList1);
+        //получаем расчетные периоды
+        List<LocalDateTime> determineSettlementPeriods = new ArrayList<>();
+        determineSettlementPeriods = getDetermineSettlementPeriods(contractIdSlave, strategyId, subscriptionId);
+        // достаем из БД портфель, рассчитываем его стоимость и сохранем версию
+        BigDecimal valuePortfolio = BigDecimal.ZERO;
+        Date cutDate = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioAfter(contractIdSlave, strategyId, cutDate);
+        if (slavePortfolio != null) {
+            valuePortfolio = getPortfolioValuePeriod(slavePortfolio, determineSettlementPeriods.get(0));
+        }
+        //считаем первый HighWaterMark для первого расчетного периода, где high water mark еще не рассчитывался
+        Date endedAt = java.sql.Date.valueOf(endBlock);
+        Date cutDate1 = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
+        BigDecimal highWaterMark = getHighWaterMarkPeriod(endedAt, cutDate1, new BigDecimal("0"), valuePortfolio);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //проверяем полученные данные
+        assertThat("появилась запись о начисленной комиссии", resultFeeDao.findResultFee(contractIdSlave, strategyId, subscriptionId, slavePortfolio.getVersion()), is(Optional.empty()));
+
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1836261")
+    @DisplayName("1836261 ResultFee. Первый расчетный период. Блокировка subscription по minimum_value. Блокировка активна. Возвращаем пустой started_at.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C1836261() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusMonths(3).minusDays(3));
+        OffsetDateTime utc = OffsetDateTime.now().minusMonths(3).minusDays(3);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6,
+            instrument.tradingClearingAccountSU29009RMFS6, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(10).minusMinutes(5);
+        steps.createSubcriptionWithBlock(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, true, 2);
+        //получаем идентификатор подписки
+        Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdSlave).getId();
+        //добавляем запись о блокировке в subscription_block
+        LocalDate startBlock = (LocalDate.now().minusMonths(1).minusDays(1));
+        //LocalDate endBlock = (LocalDate.now().minusDays(15));
+        String periodDefault = "[" + startBlock  + ",)";
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefault, 2);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //создаем портфели slave
+        //Портфель 1 версии
+        OffsetDateTime utcStart = OffsetDateTime.now().minusMonths(1).minusDays(4);
+        Date dateStart = Date.from(utcStart.toInstant());
+        String baseMoneySlave = "6657.23";
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+            baseMoneySlave, dateStart, positionList);
+        //Портфель 2 версии
+        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(15);
+        Date dateStart1 = Date.from(utcStart1.toInstant());
+        String baseMoneySlave1 = "7657.23";
+        List<SlavePortfolio.Position> positionList1 = new ArrayList<>();
+        slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
+            baseMoneySlave1, dateStart1, positionList1);
+        //формируем и отправляем команду на расчет комисии
+        createCommandResult(subscriptionId);
+        //проверяем полученные данные
+        await().pollDelay(Duration.ofSeconds(3));
+        assertThat("появилась запись о начисленной комиссии", resultFeeDao.findListResultFee(contractIdSlave, strategyId, subscriptionId).size(), is(0));
+
+    }
 
 
     // методы для работы тестов*****************************************************************
