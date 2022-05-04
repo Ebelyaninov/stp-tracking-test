@@ -44,7 +44,7 @@ public class SubscriptionBlockService {
         subscriptionBlockRepository
             .saveSubscriptionBlock(subscriptionId, reason.getAlias(), period);
         SubscriptionBlock saved = subscriptionBlockRepository
-            .findSubscriptionBlockBySubscriptionIdAndReasone(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias())
+            .findSubscriptionBlockBySubscriptionIdAndReasone(subscriptionId, reason.getAlias())
             .orElseThrow(RuntimeException::new);
         log.info("Successfully saved subscriptionBlock {}", saved);
         Allure.addAttachment("Заблокированная подписка", "application/json", objectMapper.writeValueAsString(saved));
