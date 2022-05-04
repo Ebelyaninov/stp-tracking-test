@@ -33,10 +33,7 @@ import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
 
 import ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi;
 import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
-import ru.qa.tinkoff.tracking.entities.Strategy;
-import ru.qa.tinkoff.tracking.entities.Subscription;
+import ru.qa.tinkoff.tracking.entities.*;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
@@ -44,6 +41,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,6 +63,7 @@ public class StpTrackingFeeSteps {
     private final TrackingService trackingService;
     private final ClientService clientService;
     private final SubscriptionService subscriptionService;
+    private final SubscriptionBlockService subscriptionBlockService;
     private final ByteArrayReceiverService kafkaReceiver;
     private final StringToByteSenderService kafkaSender;
     private final MasterPortfolioDao masterPortfolioDao;
@@ -86,6 +85,7 @@ public class StpTrackingFeeSteps {
     public Contract contractMaster;
     public Strategy strategyMaster;
     public Subscription subscription;
+    public SubscriptionBlock subscriptionBlock;
     public Contract contractSlave;
     public Client clientSlave;
 
@@ -540,6 +540,46 @@ public class StpTrackingFeeSteps {
             .setBlocked(blockedSub);
             //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
+
+    }
+
+
+    //метод создает клиента, договор и стратегию в БД автоследования
+    public void createSubcriptionWithBlock(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+                                   UUID strategyId,Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                   java.sql.Timestamp dateEnd, Boolean blockedSub, Integer version) throws JsonProcessingException {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+//            .setRole(contractRole)
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(blockedContract);
+        contractSlave = contractService.saveContract(contractSlave);
+//        LocalDate currentDate = (LocalDate.now());
+//        String periodDefault = "[" + currentDate + ",)";
+//        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
+        //создаем запись подписке клиента
+        subscription = new Subscription()
+            .setSlaveContractId(contractId)
+            .setStrategyId(strategyId)
+            .setStartTime(dateStart)
+            .setStatus(subscriptionStatus)
+            .setEndTime(dateEnd)
+            .setBlocked(blockedSub);
+        //.setPeriod(localDateTimeRange);
+        subscription = subscriptionService.saveSubscription(subscription);
+//        long id = 5000;
+//        subscriptionBlock = new SubscriptionBlock()
+//            .setId(id)
+//            .setSubscriptionId(subscription.getId())
+//            .setReason("minimum-value")
+//            .setPeriod(localDateTimeRange)
+//            .setVersion(version);
+//        subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscription.getId(), SubscriptionBlockReason.MINIMUM_VALUE, localDateTimeRange.toString());
 
     }
 

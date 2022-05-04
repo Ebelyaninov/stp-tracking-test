@@ -243,8 +243,8 @@ public class handleSlavePortfolioErrorTests {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefoult);
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefoult, null);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "3", date);
@@ -301,7 +301,7 @@ public class handleSlavePortfolioErrorTests {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "3", date);
@@ -357,7 +357,7 @@ public class handleSlavePortfolioErrorTests {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "3", date);
@@ -414,7 +414,7 @@ public class handleSlavePortfolioErrorTests {
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         String periodDefoult = "[" + currentDate.minusDays(1) + "," + currentDate + ")";
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "3", date);

@@ -590,7 +590,7 @@ public class GetStrategyTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String periodDefault = "[" + fmt.format(startSubTime) + ",)";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
-            SubscriptionBlockReason.RISK_PROFILE, periodDefault);
+            SubscriptionBlockReason.RISK_PROFILE, periodDefault, null);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -637,7 +637,7 @@ public class GetStrategyTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String periodDefault = "[" + fmt.format(startSubTime) + "," + fmt.format(endTime) + "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
-            SubscriptionBlockReason.RISK_PROFILE, periodDefault);
+            SubscriptionBlockReason.RISK_PROFILE, periodDefault, null);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
@@ -684,7 +684,7 @@ public class GetStrategyTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String periodDefault = "[" + fmt.format(startSubTime) + "," + fmt.format(endTime) + "]";
         subscriptionBlock = subscriptionBlockService.saveSubscriptionBlock(subscriptionId,
-            SubscriptionBlockReason.RISK_PROFILE, periodDefault);
+            SubscriptionBlockReason.RISK_PROFILE, periodDefault, null);
         GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")

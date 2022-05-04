@@ -369,8 +369,8 @@ public class HandleRiskProfileEventTest {
 
         Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdConservative).getId();
         Long secondSubscriptionId = subscriptionService.getSubscriptionByContract(secondContractId.toString()).getId();
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
-        subscriptionBlockService.saveSubscriptionBlock(secondSubscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult, null);
+        subscriptionBlockService.saveSubscriptionBlock(secondSubscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult, null);
 
         String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias()).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
@@ -460,7 +460,7 @@ public class HandleRiskProfileEventTest {
         LocalDate currentDate = (LocalDate.now());
         String periodDefoult = "[" + currentDate + ",)";
         Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdMedium).getId();
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.RISK_PROFILE, periodDefoult, null);
         String getLowerPeriod = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId, SubscriptionBlockReason.RISK_PROFILE.getAlias()).getPeriod().lower().toString();
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
@@ -638,7 +638,7 @@ public class HandleRiskProfileEventTest {
             .setStrategyId(strategyId)
             .setSlaveContractId(thirdContractId.toString());
         subscriptionService.saveSubscription(subscription);
-        subscriptionBlockService.saveSubscriptionBlock(subscriptionIdFirst + 2, SubscriptionBlockReason.RISK_PROFILE, periodDefoult);
+        subscriptionBlockService.saveSubscriptionBlock(subscriptionIdFirst + 2, SubscriptionBlockReason.RISK_PROFILE, periodDefoult, null);
         //добавить  подписку (inactive)
         contractService.saveContract(contractSlave.setId(fourthContracrId.toString()));
         OffsetDateTime time = OffsetDateTime.now();
