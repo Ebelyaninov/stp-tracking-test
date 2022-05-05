@@ -181,44 +181,61 @@ message TimestampPeriod {
     google.protobuf.Timestamp ended_at = 2;
 }
 
+
 // Команда для выполнения над портфелем
 message PortfolioCommand {
 
-  // Номер договора владельца портфеля
-  string contract_id = 1;
+    // Номер договора владельца портфеля
+    string contract_id = 1;
 
-  // Операция для выполнения над портфелем
-  Operation operation = 2;
+    // Операция для выполнения над портфелем
+    Operation operation = 2;
 
-  // Метка времени события, инициировавшего создание команды
-  google.protobuf.Timestamp created_at = 3;
+    // Метка времени события, инициировавшего создание команды
+    google.protobuf.Timestamp created_at = 3;
 
-  // Фрагмент портфеля
-  Portfolio portfolio = 4;
+    // Фрагмент портфеля
+    Portfolio portfolio = 4;
 
-  // Торговый сигнал
-  Signal signal = 5;
+    // Действие, направленное на изменение портфеля
+    oneof action {
+        Signal signal = 5;
+        Dividend dividend = 6;
+    }
 
-  // Операция для выполнения над портфелем
-  enum Operation {
-    // Зарезервированные значения под неиспользованные операции (WITHDRAW_MONEY = 3; RESERVE = 4)
-    reserved 3, 4;
+    // Начисление дивиденда
+    message Dividend {
 
-    // Инициализировать (первично заполнить) портфель
-    INITIALIZE = 0;
-    // Актуализировать портфель согласно полученным изменениям
-    ACTUALIZE = 1;
-    // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
-    SYNCHRONIZE = 2;
-    // Повторить синхронизацию портфеля
-    RETRY_SYNCHRONIZATION = 5 [deprecated = true];
-    // Включить синхронизацию позиций в slave-портфеле в обе стороны
-    ENABLE_SYNCHRONIZATION = 6;
-    // Снять техническую блокировку с договора
-    UNBLOCK_CONTRACT = 7;
-  }
+        // Идентификатор дивиденда
+        int64 id = 1;
+
+        // Идентификатор биржевой позиции, за которую начисляются дивиденды
+        ExchangePositionId exchange_position_id = 2;
+
+        // Сумма выплаты
+        Decimal amount = 3;
+
+        // Валюта выплаты
+        Currency currency = 4;
+    }
+
+    // Операция для выполнения над портфелем
+    enum Operation {
+        // Зарезервированные значения под неиспользованные операции (WITHDRAW_MONEY = 3; RESERVE = 4; RETRY_SYNCHRONIZATION = 5)
+        reserved 3, 4, 5;
+
+        // Инициализировать (первично заполнить) портфель
+        INITIALIZE = 0;
+        // Актуализировать портфель согласно полученным изменениям
+        ACTUALIZE = 1;
+        // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
+        SYNCHRONIZE = 2;
+        // Включить синхронизацию позиций в slave-портфеле в обе стороны
+        ENABLE_SYNCHRONIZATION = 6;
+        // Снять техническую блокировку с договора
+        UNBLOCK_CONTRACT = 7;
+    }
 }
-
 // Фрагмент портфеля
 message Portfolio {
 
