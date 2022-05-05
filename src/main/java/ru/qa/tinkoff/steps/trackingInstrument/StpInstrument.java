@@ -123,7 +123,8 @@ public class StpInstrument {
 
 
     public String tickerYNDX = "YNDX";
-    public String tradingClearingAccountYNDX = "Y02+00001F00";
+    public String tradingClearingAccountYNDX = "L01+00002F00";
+//    public String tradingClearingAccountYNDX = "Y02+00001F00";
     public String classCodeYNDX = "TQBR";
     public String sectorYNDX = "telecom";
     public String typeYNDX = "share";
