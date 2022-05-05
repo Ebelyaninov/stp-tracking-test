@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
@@ -79,7 +81,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     SptTrackingFeeStepsConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateResultFeeTest {
     @Autowired
@@ -118,12 +121,12 @@ public class CalculateResultFeeTest {
     StpSiebel stpSiebel;
     @Autowired
     SubscriptionBlockService subscriptionBlockService;
+    @Autowired
+    ApiCreator<SubscriptionApi> subscriptionApiCreator;
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
 
-    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker.
-        ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
 
 
     Client clientSlave;
@@ -2193,7 +2196,7 @@ public class CalculateResultFeeTest {
         //вычитываем все события из топика tracking.fee.calculate.command
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //отписываемся от стратегии
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")

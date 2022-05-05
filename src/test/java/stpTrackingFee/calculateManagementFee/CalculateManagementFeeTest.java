@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreator;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.Context;
 import ru.qa.tinkoff.investTracking.entities.ManagementFee;
@@ -81,7 +83,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_FEE_COMMAND;
     KafkaAutoConfiguration.class,
     SptTrackingFeeStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 public class CalculateManagementFeeTest {
     @Autowired
@@ -112,6 +115,8 @@ public class CalculateManagementFeeTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    ApiCreator<SubscriptionApi> subscriptionApiCreator;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -119,20 +124,15 @@ public class CalculateManagementFeeTest {
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
 
-    SubscriptionApi subscriptionApi = ru.qa.tinkoff.swagger.tracking.invoker.
-        ApiClient.api(ru.qa.tinkoff.swagger.tracking.invoker.ApiClient.Config.apiConfig()).subscription();
-
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
     Subscription subscription;
     ManagementFee managementFee;
     SlavePortfolio slavePortfolio;
-
     UUID strategyId;
     String siebelIdMaster;
     String siebelIdSlave;
-
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
     BigDecimal minPriceIncrement = new BigDecimal("0.001");
@@ -1503,7 +1503,7 @@ public class CalculateManagementFeeTest {
         //вычитываем все события из топика tracking.fee.calculate.command
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //отписываемся от стратегии
-        subscriptionApi.deleteSubscription()
+        subscriptionApiCreator.get().deleteSubscription()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
