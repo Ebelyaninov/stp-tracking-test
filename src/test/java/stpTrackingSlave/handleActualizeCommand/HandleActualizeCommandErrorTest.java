@@ -1387,6 +1387,84 @@ public class HandleActualizeCommandErrorTest {
         checkContractParam(contractIdSlave);
     }
 
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa")})
+    @AllureId("1856559")
+    @DisplayName("C1856559.HandleActualizeCommand.Подтверждение выставленной ранее заявки," +
+        " получили подтверждение на большее кол-во актива, чем было выставлено в заявке")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
+    void C1856559() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        String baseMoneySl = "7000.0";
+        int version = 2;
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,"0", date, 1, new BigDecimal("107.79"),
+            new BigDecimal("0"), new BigDecimal("0.076"), new BigDecimal("5"));
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, version, 3,
+            baseMoneySl, date, createListSlaveOnePos);
+        BigDecimal slavePosQuantityBefore = new BigDecimal("0");
+        BigDecimal positionQuantity = new BigDecimal("5");
+        //делаем запись о выставленной заявке
+        OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
+        slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
+            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        //формируем команду на актуализацию для slave
+        OffsetDateTime time = OffsetDateTime.now();
+        int posQuantityCommand = 6;
+        Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
+            3, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, posQuantityCommand,
+                Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
+        //вычитываем все события из tracking.event
+        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //получаем портфель slave
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
+            is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.event:  {}", event);
+        //проверяем, данные в сообщении
+        checkEventParam(event);
+        assertThat("contractId не равен", (event.getContract().getId()), is(contractIdSlave));
+        //проверяем запись в базе по договору slave
+        contract = contractService.getContract(contractIdSlave);
+        assertThat("флаг блокировки для контракта не равен", contract.getBlocked(), is(true));
+    }
+
 
 
     // методы для работы тестов*************************************************************************
