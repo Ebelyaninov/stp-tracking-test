@@ -881,7 +881,7 @@ public class handleSynchronizeCommandTest {
     @ParameterizedTest
     @MethodSource("provideOperationAndActionAndState")
     @AllureId("1575128")
-    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (RETRY_SYNCHRONIZATION)")
+    @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (SYNCHRONIZATION)")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575128(Tracking.PortfolioCommand.Operation command, int action, Byte state) {

@@ -484,7 +484,7 @@ public class RouteRetryCommandErrorTest {
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
-            .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
+            .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())

@@ -583,13 +583,13 @@ public class StpTrackingSlaveSteps {
     }
 
 
-    @Step("Отправляем команду на RETRY_SYNCHRONIZATION:")
+    @Step("Отправляем команду на SYNCHRONIZATION:")
     public Tracking.PortfolioCommand createRetrySynchronizationCommand(String contractIdSlave) {
         //отправляем команду на синхронизацию
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractIdSlave)
-            .setOperation(Tracking.PortfolioCommand.Operation.RETRY_SYNCHRONIZATION)
+            .setOperation(Tracking.PortfolioCommand.Operation.SYNCHRONIZE)
             .setCreatedAt(Timestamp.newBuilder()
                 .setSeconds(time.toEpochSecond())
                 .setNanos(time.getNano())
