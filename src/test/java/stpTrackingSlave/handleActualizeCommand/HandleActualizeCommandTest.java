@@ -783,7 +783,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды < version из ответа")
     void C1057608() {
-        String SIEBEL_ID_SLAVE = "5-3HYUEXL7";
+        String SIEBEL_ID_SLAVE = "4-15PIVVNP";
         mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
             instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
             "3000", "0", "0", "4");
@@ -963,7 +963,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды = version из ответа")
     void C1365098() {
-        String SIEBEL_ID_SLAVE = "5-3HYUEXL7";
+        String SIEBEL_ID_SLAVE = "4-15PIVVNP";
         mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
             instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
             "3000", "0", "0", "5");
@@ -975,7 +975,7 @@ public class HandleActualizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        contractIdSlave = "2000010039";
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1035,7 +1035,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.Version текущего портфеля  = 1.Version из команды = Version из ответа")
     void C1365612() {
-        String SIEBEL_ID_SLAVE = "5-3HYUEXL7";
+        String SIEBEL_ID_SLAVE = "4-15PIVVNP";
         mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
             instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
             "3000", "0", "0", "5");
@@ -1047,7 +1047,7 @@ public class HandleActualizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
 //        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        contractIdSlave = "2000010039";
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //       создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
