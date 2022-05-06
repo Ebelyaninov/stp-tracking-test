@@ -1,5 +1,6 @@
 package stpTrackingSlave.handleSynchronizeCommand.handleSynchronizeCommand;
 
+import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -28,13 +29,16 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.tracking.services.grpc.CapturedResponse;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
@@ -51,9 +55,8 @@ import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
+import static org.hamcrest.Matchers.*;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("handleSynchronizeCommand-Обработка команд на синхронизацию")
@@ -66,7 +69,8 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
     TrackingDatabaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class
+    StpTrackingSlaveStepsConfiguration.class,
+    StpInstrument.class
 })
 public class handleSynchronizeCommandErrorTest {
     @Autowired
@@ -95,15 +99,19 @@ public class handleSynchronizeCommandErrorTest {
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingSlaveSteps steps;
+    @Autowired
+    StpInstrument instrument;
+
     SlavePortfolio slavePortfolio;
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
     Contract contractSlave;
+    Subscription subscription;
     UUID strategyId;
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    String SIEBEL_ID_SLAVE = "4-1TG13CMA";
-
+    //String SIEBEL_ID_SLAVE = "4-1TG13CMA";
+    String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
@@ -222,11 +230,11 @@ public class handleSynchronizeCommandErrorTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
-//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
-//        // создаем портфель ведущего с позицией в кассандре
+        // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //создаем подписку для slave c заблокированной подпиской
@@ -260,6 +268,51 @@ public class handleSynchronizeCommandErrorTest {
         assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
         contractSlave = contractService.getContract(contractIdSlave);
         assertThat("блокировка ведомого не равна ", contractSlave.getBlocked(), is(true));
+    }
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("668636")
+    @DisplayName("668636 Не нашли slave_portfolio. Завершаем обработку команды.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на синхронизацию slave-портфеля.")
+    void C668636() {
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //получаем текущую дату
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
+        //создаем подписку на стратегию для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //вычитываем все события из tracking.consumer.command
+        steps.resetOffsetToLate(TRACKING_CONSUMER_COMMAND);
+        //создаём и отправляем команду на синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        //Ищем и проверяем событие в топике tracking.contract.event
+        List<Pair<String, byte[]>> message = kafkaReceiver.receiveBatch(TRACKING_CONSUMER_COMMAND, Duration.ofSeconds(5));
+        assertThat("Отправили событие в топик TRACKING_CONSUMER_COMMAND", message.size(), equalTo(0));
     }
 
 
