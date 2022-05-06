@@ -372,6 +372,8 @@ public class MocksBasicSteps {
         mockMarketDataSteps.clearMocks(tickerAndClassCodeXS0191754729);
         String tickerAndClassCodeAAPL = instrument.tickerAAPL + "_" + instrument.classCodeAAPL;
         mockMarketDataSteps.clearMocks(tickerAndClassCodeAAPL);
+        String tickerAndClassCodeSBER = instrument.tickerSBER + "_" + instrument.classCodeSBER;
+        mockMarketDataSteps.clearMocks(tickerAndClassCodeSBER);
         //Задержка 300мс
         await().pollDelay(Duration.ofMillis(300));
         ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
@@ -408,6 +410,10 @@ public class MocksBasicSteps {
         mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "last", date.toString(), "100.9825"));
         mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "bid", date.toString(), "101.9825"));
         mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "ask", date.toString(), "102.9825"));
+
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeSBER, "last", date.toString(), "123.7"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeSBER, "bid", date.toString(), "123.7"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeSBER, "ask", date.toString(), "126.8"));
 
         //Очищаем мок rest мок MD
         mockMiddleSteps.clearMocksForRestOrder();
