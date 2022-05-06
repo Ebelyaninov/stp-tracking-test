@@ -296,5 +296,8 @@ public class StpInstrument {
     public String tradingClearingAccountXAG = "MB9885503216";
     public String classCodeXAG = "CETS";
 
+    public String tickerMTS0620 = "MTS0620";
+    public String tradingClearingAccountMTS0620 = "L01+00000SPB";
+
 
 }

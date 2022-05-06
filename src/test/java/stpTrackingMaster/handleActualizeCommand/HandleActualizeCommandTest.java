@@ -22,6 +22,7 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
+import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -29,8 +30,10 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -47,6 +50,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -70,7 +74,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     KafkaAutoConfiguration.class,
     StpTrackingMasterStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingInstrumentConfiguration.class,
 })
 public class HandleActualizeCommandTest {
     @Autowired
@@ -99,6 +104,8 @@ public class HandleActualizeCommandTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    StpInstrument instrument;
 
 
     MasterPortfolio masterPortfolio;
@@ -111,12 +118,7 @@ public class HandleActualizeCommandTest {
     String siebelIdSlave;
     String siebelIdSlaveActive;
     String siebelIdSlaveBlocked;
-
-    String ticker = "XS0587031096";
-    String tradingClearingAccount = "TKCBM_TCAB";
-
-    String tickerPos = "MTS0620";
-    String tradingClearingAccountPos = "TKCBM_TCAB";
+    Double dynamicLimitQuantity = 100d;
     String title;
     String description;
     UUID strategyId;
@@ -135,7 +137,7 @@ public class HandleActualizeCommandTest {
         siebelIdSlaveBlocked = stpSiebel.siebelIdSlaveBlockedStpTrackingMaster;
         int randomNumber = 0 + (int) (Math.random() * 100);
         title = "Autotest " + String.valueOf(randomNumber);
-        description = "new test стратегия autotest";
+        description = "autotest HandleActualizeCommandTest for Master";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
@@ -202,7 +204,7 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("662388")
-    @DisplayName("C662388.HandleActualizeCommand.Version из команды - master_portfolio.version найденного портфеля = 1.Buy")
+    @DisplayName("C662388.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1.Buy")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C662388() {
@@ -226,23 +228,22 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
+        Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(10).build();
         Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, price,
-            quantityS, ticker, tradingClearingAccount);
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -263,7 +264,7 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, date, versionPos,
             "12", "10");
     }
 
@@ -271,13 +272,12 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("719882")
-    @DisplayName("C719882.HandleActualizeCommand.Version из команды - master_portfolio.version найденного портфеля = 1.Buy." +
+    @DisplayName("C719882.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1.Buy." +
         "Не найдена запись в master_signal")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C719882() {
         strategyId = UUID.randomUUID();
-        Double dynamicLimitQuantity = 100d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
@@ -297,24 +297,26 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
-//        //создаем подписку на стратегию
-//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
+//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithDynamicLimitQuantity(contractIdMaster, now, version,
+        Tracking.Decimal tailOrderQuantity= Tracking.Decimal.newBuilder()
+            .setUnscaled(0)
+            .setScale(0)
+            .build();
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithOutTailOrderQuantity(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, price,
-            quantityS, ticker, tradingClearingAccount, dynamicLimitQuantity);
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -335,22 +337,21 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, date, versionPos,
             "12", "10");
-        checkParamMasterSignal(now, price, quantityS, dynamicLimitQuantity);
+        checkParamMasterSignal(now, price, quantityS, 0d, tailOrderQuantity);
     }
 
 
     @SneakyThrows
     @Test
     @AllureId("720132")
-    @DisplayName("C720132.HandleActualizeCommand.Version из команды - master_portfolio.version найденного портфеля = 1.Buy." +
-        "Найдена запись в master_signal")
+    @DisplayName("C720132.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1.Buy." +
+        "Найдена запись в master_signal, state = null")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C720132() {
         strategyId = UUID.randomUUID();
-        Double dynamicLimitQuantity = 0d;
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         version = 3;
@@ -370,29 +371,32 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем запись о сигнале
         Byte action = (byte) 12;
         BigDecimal price = new BigDecimal("256");
         BigDecimal quantity = new BigDecimal("2");
-        createMasterSignal(strategyId, version, action, date, price, quantity, null, ticker, tradingClearingAccount);
-//        //создаем подписку на стратегию
-//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
+        createMasterSignal(strategyId, version, action, date, price, quantity, null, instrument.tickerXS0587031096,
+            instrument.tradingClearingAccountXS0587031096, new BigDecimal("200"), dynamicLimitQuantity);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
+//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
+        Tracking.Decimal tailOrderQuantity= Tracking.Decimal.newBuilder()
+            .setUnscaled(200)
+            .setScale(0)
+            .build();
         Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, priceS,
-            quantityS, ticker, tradingClearingAccount);
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -413,17 +417,17 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, date, versionPos,
             "12", "10");
         OffsetDateTime offsetDateTime = date.toInstant().atOffset(ZoneOffset.UTC);
-        checkParamMasterSignal(offsetDateTime, priceS, quantityS, dynamicLimitQuantity);
+        checkParamMasterSignal(offsetDateTime, priceS, quantityS, dynamicLimitQuantity, tailOrderQuantity);
     }
 
 
     @SneakyThrows
     @Test
     @AllureId("663357")
-    @DisplayName("C663357.HandleActualizeCommand.Version из команды - master_portfolio.version найденного портфеля = 1, не передан base_money_position")
+    @DisplayName("C663357.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1, не передан base_money_position")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663357() {
@@ -446,16 +450,12 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
-//        //создаем подписку на стратегию
-//        steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -484,28 +484,35 @@ public class HandleActualizeCommandTest {
         checkParamCommand(portfolioCommand, contractIdSlave, "SYNCHRONIZE", key);
         // проверяем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //сохраняем в списки значения по позициям в портфеле
+        List<MasterPortfolio.Position> positionXS0587031096 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerXS0587031096))
+            .collect(Collectors.toList());
+        List<MasterPortfolio.Position> positionMTS0620 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerMTS0620))
+            .collect(Collectors.toList());
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneyPortfolio));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is("12"));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("10"));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("ticker позиции не равен", positionMTS0620.get(0).getTicker(), is(instrument.tickerMTS0620));
+        assertThat("tradingClearingAccountPos позиции не равен", positionMTS0620.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountMTS0620));
+        assertThat("quantity позиции не равен", positionMTS0620.get(0).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", positionMTS0620.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен",positionMTS0620.get(0).getLastChangeDetectedVersion(), is(versionPos));
         assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
+        assertThat("ticker позиции не равен", positionXS0587031096.get(0).getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccountPos позиции не равен", positionXS0587031096.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
+        assertThat("quantity позиции не равен", positionXS0587031096.get(0).getQuantity().toString(), is("10"));
+        assertThat("ChangedAt позиции не равен",positionXS0587031096.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен",positionXS0587031096.get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", positionXS0587031096.get(0).getLastChangeAction().toString(), is("12"));
     }
 
 
     @SneakyThrows
     @Test
     @AllureId("663495")
-    @DisplayName("C663495.Version из команды - master_portfolio.version найденного портфеля = 1, strategy.status = 'draft'")
+    @DisplayName("C663495.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1, strategy.status = 'draft'")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C663495() {
@@ -529,18 +536,20 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
+//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
+        Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(10).build();
         Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, priceS,
-            quantityS, ticker, tradingClearingAccount);
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -550,30 +559,34 @@ public class HandleActualizeCommandTest {
 //        проверяем портфель мастера
         await().atMost(TEN_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId), notNullValue());
-//        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        List<MasterPortfolio.Position> positionXS0587031096 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerXS0587031096))
+            .collect(Collectors.toList());
+        List<MasterPortfolio.Position> positionMTS0620 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerMTS0620))
+            .collect(Collectors.toList());
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant(), is(date.toInstant()));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is("12"));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("10"));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
-
+        assertThat("ticker позиции не равен", positionMTS0620.get(0).getTicker(), is(instrument.tickerMTS0620));
+        assertThat("tradingClearingAccountPos позиции не равен", positionMTS0620.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountMTS0620));
+        assertThat("quantity позиции не равен", positionMTS0620.get(0).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", positionMTS0620.get(0).getChangedAt().toInstant(), is(date.toInstant()));
+        assertThat("last_change_detected_version позиции не равен", positionMTS0620.get(0).getLastChangeDetectedVersion(), is(versionPos));
+        assertThat("LastChangeAction позиции не равен", positionMTS0620.get(0).getLastChangeAction().toString(), is("12"));
+        assertThat("ticker позиции не равен", positionXS0587031096.get(0).getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccountPos позиции не равен", positionXS0587031096.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
+        assertThat("quantity позиции не равен", positionXS0587031096.get(0).getQuantity().toString(), is("10"));
+        assertThat("ChangedAt позиции не равен", positionXS0587031096.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", positionXS0587031096.get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", positionXS0587031096.get(0).getLastChangeAction().toString(), is("12"));
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
         assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("цена за бумагу в сигнале не равна", masterSignal.getPrice().longValue(), is(priceS.getUnscaled()));
         assertThat("количество ед. актива не равно", masterSignal.getQuantity().longValue(), is(quantityS.getUnscaled()));
-        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(ticker));
-        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
         assertThat("Состояние сигнала  не равно", masterSignal.getState().toString(), is("1"));
     }
 
@@ -581,7 +594,7 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("666901")
-    @DisplayName("C666901.HandleActualizeCommand.Version из команды - master_portfolio.version найденного портфеля = 1.Sell")
+    @DisplayName("C666901.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1.Sell")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C666901() {
@@ -602,21 +615,22 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(ticker, tradingClearingAccount, quantityPos, positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
+        Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(10).build();
         Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version + 1, 0, 0,
-            50000, 1, Tracking.Portfolio.Action.SECURITY_SELL_TRADE, priceS, quantityS, ticker, tradingClearingAccount);
+            50000, 1, Tracking.Portfolio.Action.SECURITY_SELL_TRADE, priceS,
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -640,8 +654,8 @@ public class HandleActualizeCommandTest {
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version + 1));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is("5000.0"));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
         assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
         assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version + 1));
@@ -652,15 +666,15 @@ public class HandleActualizeCommandTest {
         assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("цена за бумагу в сигнале не равна", masterSignal.getPrice().longValue(), is(priceS.getUnscaled()));
         assertThat("количество ед. актива не равно", masterSignal.getQuantity().longValue(), is(quantityS.getUnscaled()));
-        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(ticker));
-        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
         assertThat("Состояние сигнала  не равно", masterSignal.getState().toString(), is("1"));
     }
 
     @SneakyThrows
     @Test
     @AllureId("1244154")
-    @DisplayName("C1244154. Игнорируем заблокированные подписки")
+    @DisplayName("C1244154.HandleActualizeCommand.SaveSignal.Игнорируем заблокированные подписки")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1244154() {
@@ -684,7 +698,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(tickerPos, tradingClearingAccountPos, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем  активную подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -693,16 +707,16 @@ public class HandleActualizeCommandTest {
         //Создаем заблокированную подписку
         steps.createSubcription(UUID.randomUUID(), null, contractIdSlaveBlockedSubscription, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, true, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-        steps.getExchangePosition(ticker, tradingClearingAccount, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
         Tracking.Decimal quantityS = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
+        Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(10).build();
         Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version,
             10, 0, 49850, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, price,
-            quantityS, ticker, tradingClearingAccount);
+            quantityS, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -725,7 +739,7 @@ public class HandleActualizeCommandTest {
         //проверяем параметры команды по синхронизации
         checkParamCommand(portfolioCommand, contractIdSlaveActiveSubscription, "SYNCHRONIZE", key);
         // проверяем портфель мастера
-        checkParamMasterPortfolio(baseMoney, createAt, tickerPos, tradingClearingAccountPos, quantityPos, date, versionPos,
+        checkParamMasterPortfolio(baseMoney, createAt, instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, date, versionPos,
             "12", "10");
         //Удаляем данные
         try {
@@ -749,7 +763,7 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1324954")
-    @DisplayName("C1324954.HandleActualizeCommand.Поле tail_order_quantity. Не передаём параметр")
+    @DisplayName("C1324954.HandleActualizeCommand.SaveSignal.Поле tail_order_quantity. Не передаём параметр")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324954() {
@@ -780,9 +794,9 @@ public class HandleActualizeCommandTest {
             .setUnscaled(256).build();
         Tracking.Decimal quantitySignal = Tracking.Decimal.newBuilder()
             .setUnscaled(2).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version + 1,
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithOutTailOrderQuantity(contractIdMaster, now, version + 1,
             10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE,
-            priceSignal, quantitySignal, ticker, tradingClearingAccount);
+            priceSignal, quantitySignal, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096);
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -800,7 +814,7 @@ public class HandleActualizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1324919")
-    @DisplayName("C1324919.HandleActualizeCommand.Поле tail_order_quantity. Передаём параметр в сообщении")
+    @DisplayName("C1324919.HandleActualizeCommand.SaveSignal.Поле tail_order_quantity. Передаём параметр в сообщении")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1324919() {
@@ -833,10 +847,11 @@ public class HandleActualizeCommandTest {
             .setUnscaled(2).build();
         Tracking.Decimal tailOrderQuantity = Tracking.Decimal.newBuilder()
             .setUnscaled(10).build();
-        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommandWithTailOrderQuantity(contractIdMaster, now, version + 1,
+        Tracking.PortfolioCommand command = steps.createActualizeCommandToTrackingMasterCommand(contractIdMaster, now, version + 1,
             10, 0, 49900, 1, Tracking.Portfolio.Action.SECURITY_BUY_TRADE,
-            priceSignal, quantitySignal, ticker, tradingClearingAccount, tailOrderQuantity);
+            priceSignal, quantitySignal, instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, dynamicLimitQuantity, tailOrderQuantity);
         log.info("Команда в tracking.master.command:  {}", command);
+
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
         String keyMaster = contractIdMaster;
@@ -861,34 +876,44 @@ public class HandleActualizeCommandTest {
     void checkParamMasterPortfolio(BigDecimal baseMoney, Instant createAt, String tickerPos, String tradingClearingAccountPos,
                                    String quantityPos, Date date, int versionPos, String lastChangeAction, String quantity) {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //сохраняем в списки значения по позициям в портфеле
+        List<MasterPortfolio.Position> positionXS0587031096 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerXS0587031096))
+            .collect(Collectors.toList());
+        List<MasterPortfolio.Position> positionMTS0620 = masterPortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerMTS0620))
+            .collect(Collectors.toList());
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(tickerPos));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(tradingClearingAccountPos));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is(quantityPos));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(versionPos));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is(lastChangeAction));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(ticker));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(tradingClearingAccount));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is(quantity));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is(lastChangeAction));
+
+        assertThat("ticker позиции не равен", positionMTS0620.get(0).getTicker(), is(instrument.tickerMTS0620));
+        assertThat("tradingClearingAccountPos позиции не равен", positionMTS0620.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountMTS0620));
+        assertThat("quantity позиции не равен", positionMTS0620.get(0).getQuantity().toString(), is(quantityPos));
+        assertThat("ChangedAt позиции не равен", positionMTS0620.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", positionMTS0620.get(0).getLastChangeDetectedVersion(), is(versionPos));
+        assertThat("LastChangeAction позиции не равен", positionMTS0620.get(0).getLastChangeAction().toString(), is(lastChangeAction));
+
+        assertThat("ticker позиции не равен", positionXS0587031096.get(0).getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccountPos позиции не равен", positionXS0587031096.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
+        assertThat("quantity позиции не равен", positionXS0587031096.get(0).getQuantity().toString(), is(quantity));
+        assertThat("ChangedAt позиции не равен", positionXS0587031096.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", positionXS0587031096.get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", positionXS0587031096.get(0).getLastChangeAction().toString(), is(lastChangeAction));
     }
 
 
-    void checkParamMasterSignal(OffsetDateTime now, Tracking.Decimal price, Tracking.Decimal quantityS, Double dynamicLimitQuantity) {
+    void checkParamMasterSignal(OffsetDateTime now, Tracking.Decimal price, Tracking.Decimal quantityS, Double dynamicLimitQuantity, Tracking.Decimal tailOrderQuantity) {
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
         assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("цена за бумагу в сигнале не равна", masterSignal.getPrice().longValue(), is(price.getUnscaled()));
         assertThat("количество ед. актива не равно", masterSignal.getQuantity().longValue(), is(quantityS.getUnscaled()));
-        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(ticker));
-        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccount бумаги в сигнале не равен", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
         assertThat("Состояние сигнала  не равно", masterSignal.getState().toString(), is("1"));
         assertThat("dynamicLimitQuantity  не равно", masterSignal.getDynamicLimitQuantity(), is(dynamicLimitQuantity));
+        assertThat("tailOrderQuantity  не равно", masterSignal.getTailOrderQuantity().longValue(), is(tailOrderQuantity.getUnscaled()));
     }
 
 
@@ -917,7 +942,7 @@ public class HandleActualizeCommandTest {
 
     //создаем запись в master_signal
     void createMasterSignal(UUID strategyIdMaster, int version, Byte action, Date createAt, BigDecimal price, BigDecimal quantity,
-                            Byte state, String ticker, String tradingClearingAccount) {
+                            Byte state, String ticker, String tradingClearingAccount, BigDecimal tailOrderQuantity, Double dynamicLimitQuantity) {
         MasterSignal masterSignal = MasterSignal.builder()
             .strategyId(strategyIdMaster)
             .version(version)
@@ -928,6 +953,8 @@ public class HandleActualizeCommandTest {
             .state(state)
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .tailOrderQuantity(tailOrderQuantity)
+            .dynamicLimitQuantity(dynamicLimitQuantity)
             .build();
         //insert запись в cassandra master_signal
         masterSignalDao.insertIntoMasterSignal(masterSignal);
@@ -943,8 +970,8 @@ public class HandleActualizeCommandTest {
             .setScale(scale)
             .build();
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
-            .setTicker(ticker)
-            .setTradingClearingAccount(tradingClearingAccount)
+            .setTicker(instrument.tickerXS0587031096)
+            .setTradingClearingAccount(instrument.tradingClearingAccountXS0587031096)
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .setQuantity(quantity)
