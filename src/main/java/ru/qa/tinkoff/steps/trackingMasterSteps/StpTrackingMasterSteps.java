@@ -151,105 +151,8 @@ public class StpTrackingMasterSteps {
     public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithDynamicLimitQuantity(String contractId, OffsetDateTime time, int version,
                                                                                    long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
                                                                                    Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount,Double dynamicLimitQuantity) {
-        Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
-            .setUnscaled(unscaled)
-            .setScale(scale)
-            .build();
-        Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
-            .setUnscaled(unscaledBaseMoney)
-            .setScale(scaleBaseMoney)
-            .build();
-        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
-            .setTicker(ticker)
-            .setTradingClearingAccount(tradingClearingAccount)
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(action).build())
-            .setQuantity(quantity)
-            .build();
-        Tracking.PortfolioCommand command;
-        Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
-            .setQuantity(quantityBaseMoney)
-            .build();
-        Tracking.Portfolio portfolio = Tracking.Portfolio.newBuilder()
-            .setVersion(version)
-            .addPosition(position)
-            .setBaseMoneyPosition(baseMoneyPosition)
-            .build();
-        Tracking.Signal signal = Tracking.Signal.newBuilder()
-            .setPrice(price)
-            .setQuantity(quantityS)
-            .setDynamicLimitQuantity(com.google.protobuf.DoubleValue.newBuilder()
-            .setValue(dynamicLimitQuantity).build())
-            .build();
-
-        command = Tracking.PortfolioCommand.newBuilder()
-            .setContractId(contractId)
-            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
-            .setCreatedAt(Timestamp.newBuilder()
-                .setSeconds(time.toEpochSecond())
-                .setNanos(time.getNano())
-                .build())
-            .setPortfolio(portfolio)
-            .setSignal(signal)
-            .build();
-        return command;
-    }
-
-
-    //Создаем команду в топик кафка tracking.master.command
-    public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommand(String contractId, OffsetDateTime time, int version,
-                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
-                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount) {
-        Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
-            .setUnscaled(unscaled)
-            .setScale(scale)
-            .build();
-        Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
-            .setUnscaled(unscaledBaseMoney)
-            .setScale(scaleBaseMoney)
-            .build();
-        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
-            .setTicker(ticker)
-            .setTradingClearingAccount(tradingClearingAccount)
-            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
-                .setAction(action).build())
-            .setQuantity(quantity)
-            .build();
-        Tracking.PortfolioCommand command;
-        Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
-            .setQuantity(quantityBaseMoney)
-            .build();
-        Tracking.Portfolio portfolio = Tracking.Portfolio.newBuilder()
-            .setVersion(version)
-            .addPosition(position)
-            .setBaseMoneyPosition(baseMoneyPosition)
-            .build();
-        Tracking.Signal signal = Tracking.Signal.newBuilder()
-            .setPrice(price)
-            .setQuantity(quantityS)
-            .build();
-        command = Tracking.PortfolioCommand.newBuilder()
-            .setContractId(contractId)
-            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
-            .setCreatedAt(Timestamp.newBuilder()
-                .setSeconds(time.toEpochSecond())
-                .setNanos(time.getNano())
-                .build())
-            .setPortfolio(portfolio)
-            .setSignal(signal)
-            .build();
-        return command;
-    }
-
-
-    //Создаем команду в топик кафка tracking.master.command
-    public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithTailOrderQuantity(String contractId, OffsetDateTime time, int version,
-                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
-                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
                                                                                    Tracking.Decimal quantityS, String ticker, String tradingClearingAccount,
-                                                                                                        Tracking.Decimal tailOrderQuantity) {
+                                                                                   Double dynamicLimitQuantity, Tracking.Decimal tailOrderQuantity) {
         Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
             .setUnscaled(unscaled)
             .setScale(scale)
@@ -278,6 +181,107 @@ public class StpTrackingMasterSteps {
             .setPrice(price)
             .setQuantity(quantityS)
             .setTailOrderQuantity(tailOrderQuantity)
+            .setDynamicLimitQuantity(com.google.protobuf.DoubleValue.newBuilder()
+            .setValue(dynamicLimitQuantity).build())
+            .build();
+
+        command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractId)
+            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .setPortfolio(portfolio)
+            .setSignal(signal)
+            .build();
+        return command;
+    }
+
+
+    //Создаем команду в топик кафка tracking.master.command
+    public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommand(String contractId, OffsetDateTime time, int version,
+                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
+                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount,
+                                                                                   Double dynamicLimitQuantity, Tracking.Decimal tailOrderQuantity) {
+        Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaled)
+            .setScale(scale)
+            .build();
+        Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaledBaseMoney)
+            .setScale(scaleBaseMoney)
+            .build();
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(action).build())
+            .setQuantity(quantity)
+            .build();
+        Tracking.PortfolioCommand command;
+        Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
+            .setQuantity(quantityBaseMoney)
+            .build();
+        Tracking.Portfolio portfolio = Tracking.Portfolio.newBuilder()
+            .setVersion(version)
+            .addPosition(position)
+            .setBaseMoneyPosition(baseMoneyPosition)
+            .build();
+        Tracking.Signal signal = Tracking.Signal.newBuilder()
+            .setPrice(price)
+            .setQuantity(quantityS)
+            .setTailOrderQuantity(tailOrderQuantity)
+            .setDynamicLimitQuantity(com.google.protobuf.DoubleValue.newBuilder()
+                .setValue(dynamicLimitQuantity).build())
+            .build();
+        command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractId)
+            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .setPortfolio(portfolio)
+            .setSignal(signal)
+            .build();
+        return command;
+    }
+
+
+    //Создаем команду в топик кафка tracking.master.command
+    public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithOutTailOrderQuantity(String contractId, OffsetDateTime time, int version,
+                                                                                   long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
+                                                                                   Tracking.Portfolio.Action action, Tracking.Decimal price,
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount){
+        Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaled)
+            .setScale(scale)
+            .build();
+        Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaledBaseMoney)
+            .setScale(scaleBaseMoney)
+            .build();
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(action).build())
+            .setQuantity(quantity)
+            .build();
+        Tracking.PortfolioCommand command;
+        Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
+            .setQuantity(quantityBaseMoney)
+            .build();
+        Tracking.Portfolio portfolio = Tracking.Portfolio.newBuilder()
+            .setVersion(version)
+            .addPosition(position)
+            .setBaseMoneyPosition(baseMoneyPosition)
+            .build();
+        Tracking.Signal signal = Tracking.Signal.newBuilder()
+            .setPrice(price)
+            .setQuantity(quantityS)
             .build();
         command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractId)

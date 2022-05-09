@@ -100,8 +100,8 @@ public class MasterSignalDao {
     @SneakyThrows
     public void  insertIntoMasterSignal(MasterSignal masterSignal) {
         String query = "insert into invest_tracking.master_signal (strategy_id, version, ticker," +
-            " trading_clearing_account, action, quantity, tail_order_quantity, price, created_at, state) " +
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            " trading_clearing_account, action, quantity, tail_order_quantity, price, created_at, state, dynamic_limit_quantity) " +
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterSignal.getCreatedAt().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
         cqlTemplate.execute(query,
@@ -114,7 +114,8 @@ public class MasterSignalDao {
             masterSignal.getTailOrderQuantity(),
             masterSignal.getPrice(),
             timestamp,
-            masterSignal.getState()
+            masterSignal.getState(),
+            masterSignal.getDynamicLimitQuantity()
         );
     }
 
