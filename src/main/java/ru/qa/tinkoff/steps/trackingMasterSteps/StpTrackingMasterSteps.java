@@ -1,11 +1,9 @@
 package ru.qa.tinkoff.steps.trackingMasterSteps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.protobuf.DoubleValue;
 import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
-import io.restassured.response.ResponseBodyData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +16,15 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
-import ru.qa.tinkoff.swagger.tracking.invoker.ApiClient;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.services.allure.AllureMasterSteps;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
@@ -39,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -58,6 +54,7 @@ public class StpTrackingMasterSteps {
     private final StringToByteSenderService kafkaSender;
     private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     private final ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
+    private final AllureMasterSteps allureSteps;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -67,7 +64,7 @@ public class StpTrackingMasterSteps {
     public Client clientSlave;
 
     //Создаем в БД tracking данные по ведущему (Master-клиент): client, contract, strategy
-    @Step("Создать договор и стратегию в бд автоследования для ведущего клиента {client}")
+    @Step("Создание стратегии мастеру strategyId: \"{strategyId}\" \n в статусе: {strategyStatus}, \n для контракта: {contractId} \n c базовой валютой: {strategyCurrency}")
     @SneakyThrows
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createClientWithContractAndStrategy(UUID investId, ClientRiskProfile riskProfile ,String contractId, ContractRole contractRole, ContractState contractState,
@@ -298,7 +295,7 @@ public class StpTrackingMasterSteps {
     }
 
 
-    @Step("Переместить offset до текущей позиции")
+    @Step("Переместить offset топика {0} до текущей позиции")
     public void resetOffsetToLate(Topics topic) {
         log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", topic.getName());
         await().atMost(Duration.ofSeconds(30))
@@ -361,6 +358,7 @@ public class StpTrackingMasterSteps {
     }
 
     //метод создает клиента, договор и стратегию в БД автоследования
+    @Step("Создание подписки на стратегию strategyId: \"{strategyId}\" \n в статусе: {subscriptionStatus}, \n для контракта slaveContractId: {contractId}")
     public void createSubcription(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
                                   UUID strategyId, SubscriptionStatus subscriptionStatus, Boolean blocked,java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd) throws JsonProcessingException {
@@ -387,9 +385,9 @@ public class StpTrackingMasterSteps {
             .setBlocked(blocked);
             //.setPeriod(localDateTimeRange);
         subscription = subscriptionService.saveSubscription(subscription);
-
     }
 
+    @Step("Получаем данные из сервиса счетов по siebelId: {0}")
     public GetBrokerAccountsResponse getBrokerAccounts (String SIEBEL_ID) {
         GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(SIEBEL_ID)
@@ -398,6 +396,44 @@ public class StpTrackingMasterSteps {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         return resAccount;
+    }
+
+    //Создаем команду в топик кафка tracking.master.command
+    @Step("Создаем событие saveDevidend, для contractId: {contractId}")
+    public Tracking.PortfolioCommand createSaveDividendMasterCommand (String contractId, OffsetDateTime time, long unscaled,
+                                                                      int scale, String ticker, String tradingClearingAccount, Long dividendId, Tracking.Currency currency) {
+        int currencyValue;
+        if (currency.equals(Tracking.Currency.USD)) {
+            currencyValue = Tracking.Currency.USD_VALUE;
+        }
+        else {
+            currencyValue = Tracking.Currency.RUB_VALUE;
+        }
+        Tracking.Decimal amount = Tracking.Decimal.newBuilder()
+            .setUnscaled(unscaled)
+            .setScale(scale)
+            .build();
+        Tracking.ExchangePositionId exchangePositionId = Tracking.ExchangePositionId.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .build();
+        Tracking.PortfolioCommand.Dividend dividend = Tracking.PortfolioCommand.Dividend.newBuilder()
+            .setId(dividendId)
+            .setExchangePositionId(exchangePositionId)
+            .setAmount(amount)
+            .setCurrency(Tracking.Currency.valueOf(currencyValue))
+            .build();
+       Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
+            .setContractId(contractId)
+            .setOperation(Tracking.PortfolioCommand.Operation.ACTUALIZE)
+            .setCreatedAt(Timestamp.newBuilder()
+                .setSeconds(time.toEpochSecond())
+                .setNanos(time.getNano())
+                .build())
+            .setDividend(dividend)
+            .build();
+        allureSteps.stepForPortfolioCommand("Сформировали команду PortfolioCommand \n", command);
+        return command;
     }
 
 }
