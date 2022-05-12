@@ -37,9 +37,9 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
-import ru.qa.tinkoff.swagger.tracking.model.GetOrdersResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetSignalsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Signal;
+import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -52,17 +52,13 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 @Epic("getSignals - Получение списка сделок (сигналов) стратегии")
@@ -125,6 +121,9 @@ public class GetSignalsTest {
     String description;
     UUID investIdMaster;
     UUID investIdSlave;
+    int posSize = 6;
+    List<ArrayList> instrumentList = new ArrayList<>(posSize);
+    List<Entity> getPositionsListFromExchangePositionCache = new ArrayList<>();
 
     @BeforeAll
     void conf() {
@@ -142,6 +141,25 @@ public class GetSignalsTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         steps.deleteDataFromDb(contractIdSlave, investIdSlave);
         steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        //Создаем список из позиций, для тестирования
+        for(int i=0; i < posSize; i++) {
+            instrumentList.add(new ArrayList());
+        }
+
+        instrumentList.get(0).add(instrument.tickerNOK);
+        instrumentList.get(0).add(instrument.tradingClearingAccountNOK);
+        instrumentList.get(1).add(instrument.tickerABBV);
+        instrumentList.get(1).add(instrument.tradingClearingAccountABBV);
+        instrumentList.get(2).add(instrument.tickerAAPL);
+        instrumentList.get(2).add(instrument.tradingClearingAccountAAPL);
+        instrumentList.get(3).add(instrument.tickerXS0191754729);
+        instrumentList.get(3).add(instrument.tradingClearingAccountXS0191754729);
+        instrumentList.get(4).add(instrument.tickerFXDE);
+        instrumentList.get(4).add(instrument.tradingClearingAccountFXDE);
+        instrumentList.get(5).add(instrument.tickerSU29009RMFS6);
+        instrumentList.get(5).add(instrument.tradingClearingAccountSU29009RMFS6);
+
+        getPositionsListFromExchangePositionCache = steps.getInstrumentsFromExchangePositionCache(siebelIdMaster, instrumentList);
     }
 
     @BeforeEach
@@ -384,6 +402,10 @@ public class GetSignalsTest {
             .execute(response -> response.as(GetSignalsResponse.class));
         //получаем ответ и проверяем что ответ пустой
         assertThat("размер Items не равно", getSignals.getItems().size(), is(0));
+        //Проверка с новым методом
+        List<MasterSignal> masterSignals = masterSignalDao.getAllMasterSignal(strategyId);
+        //Проверка новым методом
+        checkGetSignalsResponse(null, false, masterSignals, getSignals,true, null, null, siebelIdMaster);
     }
 
     @SneakyThrows
@@ -457,6 +479,9 @@ public class GetSignalsTest {
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
         checkParam(masterSignal, getSignals);
+        //Проверка новым методом
+        checkGetSignalsResponse("2", false, masterSignal, getSignals,false, null, null, siebelIdMaster);
+
     }
 
     @SneakyThrows
@@ -492,6 +517,8 @@ public class GetSignalsTest {
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
         checkParam(masterSignal, getSignals);
+        //Проверка в новом методе
+        checkGetSignalsResponse("2", false, masterSignal, getSignals,false, null, null, siebelIdSlave);
     }
 
 
@@ -525,9 +552,12 @@ public class GetSignalsTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetSignalsResponse.class));
         //проверяем что вернулся пустой список сигналов
+        List <MasterSignal> masterSignals = masterSignalDao.getAllMasterSignal(strategyId);
         assertThat("items != []", getSignals.getItems().toString(), is("[]"));
         assertThat("hasNext не равно", getSignals.getHasNext(), is(false));
         assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nullValue()));
+        //Проверка новым методом
+        checkGetSignalsResponse(null,false, masterSignals, getSignals,true, null, null, siebelIdSlave);
     }
 
 
@@ -564,6 +594,8 @@ public class GetSignalsTest {
         List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
         //получаем ответ и проверяем
         checkParam(masterSignal, getSignals);
+        //Проверка новым методом
+        checkGetSignalsResponse("2", false, masterSignal, getSignals,false, null, null, siebelIdSlave);
     }
 
 
@@ -615,7 +647,9 @@ public class GetSignalsTest {
             .collect(Collectors.toList());
         checkInstrumentParam(signalBondDB, signalBondReq, instrument.briefNameSU29009RMFS6, instrument.imageSU29009RMFS6, instrument.typeSU29009RMFS6, 3);
         checkInstrumentParam(signalEtfDB, signalEtfReq, instrument.briefNameFXDE, instrument.imageFXDE, instrument.typeFXDE, 2);
-//        checkInstrumentParam(signalMoneyDB, signalMoneyReq, briefNameMoney, imageMoney, typeMoney, 4);
+        //Проверка новым методом
+        checkGetSignalsResponse("2",false, masterSignal, getSignals,false, null, null, siebelIdSlave);
+        //        checkInstrumentParam(signalMoneyDB, signalMoneyReq, briefNameMoney, imageMoney, typeMoney, 4);
     }
 
 
@@ -670,15 +704,17 @@ public class GetSignalsTest {
             is(instrument.typeNOK));
         assertThat("version последнего сигнала не равно", getSignals.getItems().get(0).getVersion(),
             is(10));
+        //Проверка новым методом
+        checkGetSignalsResponse("9",true, masterSignal, getSignals,false, 2, null, siebelIdMaster);
     }
 
 
     private static Stream<Arguments> provideLimitParam() {
         return Stream.of(
-            Arguments.of(2, true),
-            Arguments.of(3, true),
-            Arguments.of(6, true),
-            Arguments.of(9, false)
+            Arguments.of(2, true, "9"),
+            Arguments.of(3, true, "8"),
+            Arguments.of(6, true, "5"),
+            Arguments.of(9, false, "2")
         );
     }
 
@@ -689,7 +725,7 @@ public class GetSignalsTest {
     @DisplayName("C945567.GetSignals.Указан только limit")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
-    void C945567(int limit, Boolean hasNext) {
+    void C945567(int limit, Boolean hasNext, String nextCursore) {
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = createListMasterPosition(steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -711,14 +747,18 @@ public class GetSignalsTest {
         //получаем ответ и проверяем
         assertThat("hasNext не равно", getSignals.getHasNext(), is(hasNext));
         assertThat("размер items не равно", getSignals.getItems().size(), is(limit));
+        //Проверка новым методом
+        List<MasterSignal> masterSignal = masterSignalDao.getAllMasterSignal(strategyId);
+        checkGetSignalsResponse(nextCursore, hasNext, masterSignal, getSignals,false, limit, null, siebelIdMaster);
+
     }
 
 
     private static Stream<Arguments> provideCursorParam() {
         return Stream.of(
-            Arguments.of(3, false),
-            Arguments.of(6, false),
-            Arguments.of(9, false)
+            Arguments.of(3, false, "2"),
+            Arguments.of(6, false, "2"),
+            Arguments.of(9, false, "2")
         );
     }
 
@@ -729,7 +769,7 @@ public class GetSignalsTest {
     @DisplayName("C945566.GetSignals.Указан только cursor")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
-    void C945566(int cursor, Boolean hasNext) {
+    void C945566(int cursor, Boolean hasNext, String nextCursor) {
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = createListMasterPosition(steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -749,19 +789,22 @@ public class GetSignalsTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetSignalsResponse.class));
         //смотрим сигналы в master_signal
+        List<MasterSignal> masterSignals = masterSignalDao.getAllMasterSignal(strategyId);
         List<MasterSignal> masterSignal = masterSignalDao.getMasterSignalWithCursor(strategyId, cursor);
         //получаем ответ и проверяем
         assertThat("hasNext не равно", getSignals.getHasNext(), is(hasNext));
         assertThat("размер items не равно", getSignals.getItems().size(), is(masterSignal.size()));
+        //Проверка новым методом
+        checkGetSignalsResponse(nextCursor, hasNext, masterSignals, getSignals,false, null, cursor, siebelIdMaster);
     }
 
 
     private static Stream<Arguments> provideCursorLimitParam() {
         return Stream.of(
-            Arguments.of(3, 2),
-            Arguments.of(7, 4),
-            Arguments.of(9, 5),
-            Arguments.of(10, 3)
+            Arguments.of(3, 2, "2", false),
+            Arguments.of(7, 4, "3", true),
+            Arguments.of(9, 5, "4", true),
+            Arguments.of(10, 3, "7", true)
         );
     }
 
@@ -772,7 +815,7 @@ public class GetSignalsTest {
     @DisplayName("C945547.GetSignals.С указанием cursor & limit")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
-    void C945547(int cursor, int limit) {
+    void C945547(int cursor, int limit, String nextCursore, Boolean hasNext) {
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = createListMasterPosition(steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -807,7 +850,8 @@ public class GetSignalsTest {
             is(masterSignal.get(0).getTicker()));
         assertThat("version последнего сигнала не равно", getSignals.getItems().get(0).getVersion(),
             is(masterSignal.get(0).getVersion()));
-
+        //Проверка новым методом
+        checkGetSignalsResponse(nextCursore, hasNext, masterSignal, getSignals,false, limit, cursor, siebelIdMaster);
     }
 
     @SneakyThrows
@@ -846,6 +890,8 @@ public class GetSignalsTest {
             assertThat("version сигнала не равно", getSignals.getItems().get(i).getVersion(),
                 is(masterSignal.get(i).getVersion()));
         }
+        //Проверка новым методом
+        checkGetSignalsResponse("2", false, masterSignal, getSignals,false, null, null, siebelIdSlave);
     }
 
 
@@ -913,7 +959,6 @@ public class GetSignalsTest {
             "3.09", "3", 12);
 
     }
-
 
     //методы создает записи по сигналам стратегии
     void createTestDateToMasterSignalOther(UUID strategyId) {
@@ -1020,6 +1065,93 @@ public class GetSignalsTest {
             .lastChangeAction((byte) position.getAction().getActionValue())
             .build());
         return positionList;
+    }
+
+
+    void checkGetSignalsResponse (String nextCursor, Boolean hasNext, List<MasterSignal> masterSignals, GetSignalsResponse getSignals, Boolean expectedListIsEmpty, Integer limit, Integer cursor, String siebelId) {
+        //Ручная проверка
+        assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nextCursor));
+        assertThat("hasNext не равно", getSignals.getHasNext(), is(hasNext));
+
+        if (cursor != null){
+            masterSignals = masterSignals.stream()
+                .filter(version -> version.getVersion() < cursor)
+                .collect(Collectors.toList());
+        }
+        if (limit != null){
+            masterSignals = masterSignals.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+        }
+
+        //Проверка на nextCursor
+        if (masterSignals.size() == 0){
+            assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nullValue()));
+        }
+        else {
+            if (siebelId.equals(siebelIdSlave)){
+                if (subscriptionService.getSubscriptionByContract(contractIdSlave).getBlocked().equals(true)) {
+                    assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nullValue()));
+                }
+                else {
+                    Integer nextCursorNew = masterSignals.stream()
+                        .sorted(Comparator.comparing(MasterSignal::getVersion))
+                        .collect(Collectors.toList()).get(0).getVersion();
+                    assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nextCursorNew.toString()));
+                }
+            }
+            else {
+                Integer nextCursorNew = masterSignals.stream()
+                    .sorted(Comparator.comparing(MasterSignal::getVersion))
+                    .collect(Collectors.toList()).get(0).getVersion();
+                assertThat("nextCursor не равно", getSignals.getNextCursor(), is(nextCursorNew.toString()));
+            }
+        }
+
+        if (expectedListIsEmpty.equals(true)){
+            assertThat("items != []", getSignals.getItems().toString(), is("[]"));
+        }
+        else {
+            for (int i = 0; i < masterSignals.size(); i++) {
+                //получаем items из ответа
+                Signal signal = getSignals.getItems().get(i);
+                //Получаем нужный нам сигнал из БД
+                MasterSignal masterSignal = masterSignals.get(i);
+                assertThat("items.totalAmount последнего сигнала не равно", signal.getTotalAmount(),
+                    is(masterSignal.getPrice().multiply(masterSignal.getQuantity()).setScale(2, RoundingMode.HALF_UP)));
+                assertThat("items.createdAt последнего сигнала не равно", signal.getCreatedAt().toInstant(),
+                    is(masterSignal.getCreatedAt().toInstant()));
+                assertThat("items.quantity последнего сигнала не равно", signal.getQuantity(),
+                    is(masterSignal.getQuantity()));
+                if (masterSignal.getAction().equals((byte) 12)) {
+                    assertThat("items.action последнего сигнала не равно", signal.getAction().getValue(),
+                        is("buy"));
+                }
+                else  {
+                    assertThat("items.action последнего сигнала не равно", signal.getAction().getValue(),
+                        is("sell"));
+                }
+                //Проверяем price
+                assertThat("items.price.value сигнала не равно", signal.getPrice().getValue(),
+                    is(masterSignal.getPrice().setScale(2, RoundingMode.HALF_UP)));
+                //Получаем данные из кэша
+                List<String> exchangePositionCache = steps.filterPositionFromExchangePositionCache(masterSignal.getTicker(), masterSignal.getTradingClearingAccount(), getPositionsListFromExchangePositionCache);
+                assertThat("items.price.currency сигнала не равно", signal.getPrice().getCurrency().getValue(),
+                    is(exchangePositionCache.get(3)));
+                //Проверяем exchangePosition
+                assertThat("items.exchangePosition.ticker  сигнала не равно", signal.getExchangePosition().getTicker(),
+                    is(masterSignal.getTicker()));
+                assertThat("items.exchangePosition.briefName  сигнала не равно", signal.getExchangePosition().getBriefName(),
+                    is(exchangePositionCache.get(6)));
+                assertThat("items.exchangePosition.image  сигнала не равно", signal.getExchangePosition().getImage(),
+                    is(exchangePositionCache.get(7)));
+                assertThat("items.exchangePosition.type последнего сигнала не равно", signal.getExchangePosition().getType().getValue(),
+                    is(exchangePositionCache.get(0)));
+                assertThat("items.version последнего сигнала не равно", signal.getVersion(),
+                    is(masterSignal.getVersion()));
+            }
+            assertThat("размер items не равно", getSignals.getItems().size(), is(masterSignals.size()));
+        }
     }
 
 

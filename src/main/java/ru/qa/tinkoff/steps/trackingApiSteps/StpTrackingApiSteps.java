@@ -11,7 +11,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheApiCreator;
@@ -482,6 +481,101 @@ public class StpTrackingApiSteps {
         dateBond.add(aciValue);
         dateBond.add(nominal);
         return dateBond;
+    }
+
+
+    @Step("Получаем значения: по инструментам из листа")
+    public List<Entity> getInstrumentsFromExchangePositionCache(String siebelId, List<ArrayList> listOfInstrument) {
+        //получаем содержимое кеша exchangePositionCache
+        List<Entity> resCacheExchangePosition = cacheApiCacheApiCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+
+        var mapWithInstrument = new HashMap<>();
+        List<Entity> position  = resCacheExchangePosition.stream()
+                .filter(pr -> {
+                    var keys = (Map<String, String>) pr.getKey();
+                    for (int i = 0; i <listOfInstrument.size() ; i++) {
+                        if(keys.get("ticker").equals(listOfInstrument.get(i).get(0))
+                            && keys.get("tradingClearingAccount").equals(listOfInstrument.get(i).get(1))){
+                            mapWithInstrument.put(pr.getKey().toString(), pr.getValue().toString());
+                            return keys.get("ticker").equals(listOfInstrument.get(i).get(0))
+                                && keys.get("tradingClearingAccount").equals(listOfInstrument.get(i).get(1));
+                        }
+                    }
+                    return false;
+                }
+                )
+                .collect(Collectors.toList());
+
+        return position;
+    }
+
+
+    @Step("Получаем значения: по инструментам из листа")
+    public List<String> filterPositionFromExchangePositionCache(String ticker, String tradingClearingAccount, List<Entity> positions) {
+        List<String> filteredPosition = new ArrayList<>();
+        String type;
+        String lot;
+        String classCode;
+        String currency;
+        String riskProfile;
+        String updatedAt;
+        String briefName;
+        String image;
+        String minPriceIncrement;
+        String nominal;
+        String aciValue;
+        String company;
+        //String customerTesting;
+
+        List<Entity> position  = positions.stream()
+            .filter(pr -> {
+                    var keys = (Map<String, String>) pr.getKey();
+                            return keys.get("ticker").equals(ticker)
+                                && keys.get("tradingClearingAccount").equals(tradingClearingAccount);
+                }
+            )
+            .collect(Collectors.toList());
+
+        @SuppressWarnings("unchecked")
+        var values = (Map<String, Object>) position.get(0).getValue();
+        type = values.get("type").toString();
+        lot = values.get("lot").toString();
+        classCode = values.get("classCode").toString();
+        currency = values.get("currency").toString();
+        riskProfile = values.get("riskProfile").toString();
+        updatedAt = values.get("updatedAt").toString();
+        briefName = values.get("briefName").toString();
+        image = values.get("image").toString();
+        minPriceIncrement = values.get("minPriceIncrement").toString();
+        company = values.get("company").toString();
+
+        filteredPosition.add(type);
+        filteredPosition.add(lot);
+        filteredPosition.add(classCode);
+        filteredPosition.add(currency);
+        filteredPosition.add(riskProfile);
+        filteredPosition.add(updatedAt);
+        filteredPosition.add(briefName);
+        filteredPosition.add(image);
+        filteredPosition.add(minPriceIncrement);
+
+        if (type.equals("bond")) {
+            nominal = values.get("nominal").toString();
+            aciValue = values.get("aciValue").toString();
+            filteredPosition.add(nominal);
+            filteredPosition.add(aciValue);
+        }
+
+        filteredPosition.add(company);
+
+        return filteredPosition;
     }
 
 
