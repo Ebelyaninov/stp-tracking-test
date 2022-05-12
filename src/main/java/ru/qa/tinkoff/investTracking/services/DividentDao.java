@@ -41,12 +41,6 @@ public class DividentDao {
     }
 
     public void insertIntoDividend(String contractId, UUID strategyId, Long id, Dividend.Context context) {
-
-//        String  contextToSting = "{\"version\":" + context.getVersion() + ",\"amount\":" + context.getAmount() +
-//            ",\"exchangePositionId\":{\"ticker\":\"" + context.getExchangePositionId().getTicker() +
-//            "\",\"tradingClearingAccount\":\"" + context.getExchangePositionId().getTradingClearingAccount() +
-//            "\"},\"createdAt\":" + context.getCreatedAt().toInstant().toEpochMilli() + "}";
-
         Insert insertQueryBuilder = QueryBuilder.insertInto("dividend")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
