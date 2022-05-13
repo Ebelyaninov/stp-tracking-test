@@ -9,6 +9,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +42,12 @@ import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
+import ru.qa.tinkoff.utils.UtilsTest;
+import ru.tinkoff.invest.tracking.slave.portfolio.SlavePortfolioOuterClass;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -61,7 +65,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("handleInitializeCommand - Обработка команд по инициализации виртуального портфеля")
@@ -215,7 +219,7 @@ public class HandleInitializeCommandTest {
         String key = contractId;
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
-        //находим запись о портеле мастера в cassandra
+        //находим запись о портфеле мастера в cassandra
         await().atMost(FIVE_SECONDS).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
 //        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId);
@@ -225,5 +229,53 @@ public class HandleInitializeCommandTest {
         assertThat("дата  портеля мастера не равно", masterPortfolio.getBaseMoneyPosition().getChangedAt(), is(date));
     }
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("1866380")
+    @DisplayName("1866380 handleInitializeCommand. Отправка события на расчет минимальной суммы и стоимости портфеля")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
+    void C1866380() {
+        strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null);
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //формируем событие для топика kafka tracking.master.command
+        long unscaled = 3700000;
+        int scale = 1;
+        OffsetDateTime now = OffsetDateTime.now();
+        //создаем команду для топика tracking.master.command
+        Tracking.PortfolioCommand command = steps.createCommandToTrackingMasterCommand(contractId, now, unscaled, scale);
+        log.info("Команда в tracking.master.command:  {}", command);
+        //кодируем событие по protobuf схеме social и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        String keyMaster = contractId;
+        //Вычитываем из топика кафка tracking.event все offset
+        steps.resetOffsetToLate(TRACKING_ANALYTICS_COMMAND);
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_ANALYTICS_COMMAND, Duration.ofSeconds(5));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.AnalyticsCommand analyticsCommand = Tracking.AnalyticsCommand.parseFrom(message.getValue());
+        //проверяем полученное событие
+        UUID strategyIds = UtilsTest.getGuidFromByteArray(analyticsCommand.getStrategyId().toByteArray());
+        assertThat("Стратегия не равна", strategyIds, is(strategyId));
+        assertThat("Calculation не равен", analyticsCommand.getCalculation().toString(), is("MASTER_PORTFOLIO_VALUE"));
+        assertThat("Operation не равен", analyticsCommand.getOperation().toString(), is("CALCULATE"));
+        //находим запись о портеле мастера в cassandra
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
+        assertThat("версия портеля мастера не равно", masterPortfolio.getVersion(), is(1));
+        assertThat("размер positions мастера не равно", masterPortfolio.getPositions().size(), is(0));
+        assertThat("дата  портеля мастера не равно", masterPortfolio.getBaseMoneyPosition().getChangedAt(), is(date));
+    }
+
 }
+
 
