@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.tracking.corpaction;
+
+import "google/protobuf/timestamp.proto";
+
+// Команда для активации обработки КД
+message ActivateCorpActionCommand {
+
+    // Метка времени события, инициировавшего создание команды
+    google.protobuf.Timestamp created_at = 1;
+
+    // Идентификатор стратегии
+    bytes strategy_id = 2;
+
+    // Метка времени среза, на которую необходимо выполнить команду
+    google.protobuf.Timestamp cut = 3;
+
+    // Тип корпоративного действия
+    oneof type {
+        // Тип КД = 'DVCA'
+        Dividend dividend = 4;
+    }
+
+    // Данные для совершения выплаты дивидендов (Тип КД = 'DVCA')
+    message Dividend {}
+}
