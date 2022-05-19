@@ -9,6 +9,7 @@ import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Test;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheSlaveCreator;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
@@ -203,6 +204,7 @@ public class StpTrackingSlaveSteps {
         return price;
     }
 
+
     @SneakyThrows
     @Step("Смотрим price по позиции в  Cache ExchangePositionPrice в приложении Slave если не нашли вызываем MD")
     public String getPriceFromPriceCacheOrMD(String ticker, String tradingClearingAccount, String instrumentId, String type) {
@@ -237,6 +239,38 @@ public class StpTrackingSlaveSteps {
             price = getPriceFromMarketData(instrumentId, type);
         }
         return price;
+    }
+
+
+    @SneakyThrows
+    @Step("Вызов метода содержимое Cache ExchangePositionPrice в приложении Slave")
+    public  List<Entity> getActualizeCommandCache(String contractId) {
+        String price = "";
+        //получаем содержимое кеша actualizeCommandCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> actualizeCache = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "4"))
+            .cacheNamePath("actualizeCommandCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> contract = actualizeCache.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("contractId").equals(contractId);
+                }
+            )
+            .collect(Collectors.toList());
+/*        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<Double, Object>) prices.get(0).getValue();
+        price = values.get("price").toString();
+        return price;*/
+        return contract;
     }
 
     //отправляем команду на синхронизацию

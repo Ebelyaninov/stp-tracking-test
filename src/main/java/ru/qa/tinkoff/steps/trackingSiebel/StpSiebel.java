@@ -50,6 +50,7 @@ public class StpSiebel {
     //StpTrackingSlave// 5-528RJAU5
     public String siebelIdSlaveMaster = "4-LEJHC6T";
     public String siebelIdSlaveSlave = "5-JEF71TBN";
+    public String siebelIdSlaveGRPC = "5-IQGHZUOO";
 
     public String siebelIdAnalyzeMaster ="1-3Z0IR7O";
     public String siebelIdAnalyzeSlave = "1-BXDUEON";

@@ -1,0 +1,90 @@
+{
+    "service": "ClientService",
+    "method": "GetClientPositions",
+    "input": {
+        "equals": {
+            "Id": {
+                "AgreementId": "{{agreementId}}"
+            }
+        }
+    },
+    "output": {
+        "data": {
+            "client_positions": {
+                "money": [
+                    {
+                        "balance": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "blocked": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "kind": "T365",
+                        "currency": "EUR",
+                        "account_id": "MB9885503216"
+                    },
+                    {
+                        "balance": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "blocked": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "kind": "T365",
+                        "currency": "RUB",
+                        "account_id": "MB9885503216"
+                    },
+                    {
+                        "balance": {
+                            "unscaled": "{{usdUnscaledPrice}}",
+                            "scale": "{{usdScaledQty}}"
+                        },
+                        "blocked": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "kind": "T365",
+                        "currency": "USD",
+                        "account_id": "MB9885503216"
+                    }
+                ],
+                "securities": [
+                    {
+                        "balance": {
+                            "unscaled": "{{quantity}}",
+                            "scale": 0
+                        },
+                        "blocked": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "kind": "T365",
+                            "ticker": "{{ticker}}",
+                            "account_id": "{{tradingAccount}}"
+                    },
+                    {
+                        "balance": {
+                            "unscaled": "{{quantityCCL}}",
+                            "scale": 0
+                        },
+                        "blocked": {
+                            "unscaled": "0",
+                            "scale": 0
+                        },
+                        "kind": "T365",
+                            "ticker": "{{tickerCCL}}",
+                            "account_id": "{{tradingAccountCCL}}"
+                    }
+                ],
+                "futures": [],
+                "version": 6,
+                "limits_loading_in_progress": false,
+                "created_at": "2009-05-07T08:17:25Z"
+            }
+        }
+    }
+}

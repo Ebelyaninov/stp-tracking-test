@@ -179,4 +179,16 @@ public class SlaveOrder2Dao {
             "ALLOW FILTERING ";
         return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, strategyId);
     }
+
+    @Step("Проверяем запись о выставленной заявке в slave_order_2")
+    public SlaveOrder2 getSlaveOrderByVersion(String contractId, Integer version) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "and version = ?" +
+            "order by created_at ASC " +
+            "LIMIT 1 " +
+            "ALLOW FILTERING ";
+        return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, version);
+    }
 }
