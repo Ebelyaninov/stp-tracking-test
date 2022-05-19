@@ -7,9 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
-import ru.qa.tinkoff.mocks.model.middle.MiddleGRPCMethodEnhancer;
-import ru.qa.tinkoff.mocks.model.middle.MiddleRestOrderEnhancer;
-import ru.qa.tinkoff.mocks.model.middle.MiddleRestOrderErrorEnhancer;
+import ru.qa.tinkoff.mocks.model.middle.*;
 
 import static io.restassured.RestAssured.given;
 
@@ -56,6 +54,18 @@ public class MockMiddleSteps {
     public String createBodyForGrpc (String agreementId, String eurUnscaledPrice, String rubUnscaledPrice, String usdUnscaledPrice, String usdScaledQty, String quantityAAPL, String ticker, String tradingAccont){
         String body = TextResourceEnhancer.enhance(
             new MiddleGRPCMethodEnhancer(agreementId, eurUnscaledPrice, rubUnscaledPrice, usdUnscaledPrice, usdScaledQty, quantityAAPL, ticker, tradingAccont));
+        return body;
+    }
+
+    public String createBodyForGrpcOne (String agreementId, String usdUnscaledPrice, String usdScaledQty, String quantity, String ticker, String tradingAccount, String quantityCCL, String tickerCCL, String tradingAccountCCL){
+        String body = TextResourceEnhancer.enhance(
+            new MiddleGRPCMethodEnhancerOne(agreementId, usdUnscaledPrice, usdScaledQty, quantity, ticker, tradingAccount, quantityCCL, tickerCCL, tradingAccountCCL));
+        return body;
+    }
+
+    public String createBodyForGrpcTwo (String agreementId, String usdUnscaledPrice, String usdScaledQty, String quantity, String ticker, String tradingAccount){
+        String body = TextResourceEnhancer.enhance(
+            new MiddleGRPCMethodEnhancerTwo(agreementId, usdUnscaledPrice, usdScaledQty, quantity, ticker, tradingAccount));
         return body;
     }
 
