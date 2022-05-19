@@ -81,7 +81,7 @@ app:
       hikari:
         idle-timeout: 10000
   rest-client:
-    tracking-api-base-uri: http://tracking-api-qa2.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    tracking-api-base-uri: http://stp-tracking-api.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-admin-base-uri: http://stp-tracking-admin.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/admin/v1/
     invest-account-public-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/account/public/v1/
     md-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/v1/md/
