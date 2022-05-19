@@ -83,13 +83,13 @@ app:
          hikari:
             idle-timeout: 10000
   rest-client:
-    tracking-api-base-uri: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    tracking-api-base-uri: http://stp-tracking-api.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-admin-base-uri: https://invest-qa.tinkoff.ru/tracking/admin/v1/
     invest-account-public-api-base-url: http://invest-qa.tinkoff.ru/account/public/v1/
     md-api-base-url: http://trading-test.tcsbank.ru/v1/md/
     miof-api-base-url: https://www-qa1.tcsbank.ru/api/miof
-    tracking-cache-slave-base-url: http://tracking-slave.dev2.k8s.tcsbank.ru/tracking/slave/v1
-    tracking-cache-api-base-url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+    tracking-cache-slave-base-url: http://stp-tracking-slave.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/slave/v1
+    tracking-cache-api-base-url: http://stp-tracking-api.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-social-strategy-base-url: http://invest-qa.tinkoff.ru/tracking/strategy/v1/
     tracking-admin-api-base-url: https://invest-qa.tinkoff.ru/tracking/admin/v1/
     trading-fireg-api-base-url: http://trading-test.tinkoff.ru/v1/fireg

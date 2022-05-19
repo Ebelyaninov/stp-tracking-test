@@ -10,7 +10,7 @@ tags:
     description: Кэш
 
 servers:
-  - url: http://tracking-api.dev2.k8s.tcsbank.ru/tracking/api/v1/
+  - url: http://stp-tracking-api.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     description: stp-tracking-api
 
 
