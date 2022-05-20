@@ -15,8 +15,8 @@ import static io.restassured.RestAssured.given;
 @RequiredArgsConstructor
 public class MockMarketDataSteps {
 
-    public static final String url = "http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/mockserver/expectation";
-    public static final String urlForClean = "http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/mockserver/clear?type=all";
+    public static final String url = "http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/mockserver/expectation";
+    public static final String urlForClean = "http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/mockserver/clear?type=all";
 
     //метод для очистки моков
     public void clearMocks (String tickerAndClassCode) {

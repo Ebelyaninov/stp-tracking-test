@@ -10,10 +10,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import org.hamcrest.core.IsNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,6 +51,7 @@ import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
 @DisplayName("SocialEvent")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Tags({@Tag("handleSocialEventTest")})
 @SpringBootTest(classes = {
 //    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,

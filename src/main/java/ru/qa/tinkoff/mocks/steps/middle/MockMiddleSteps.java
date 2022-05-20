@@ -18,8 +18,8 @@ public class MockMiddleSteps {
 
     public static final String urlForGrpc = "http://midle-pos-grpc-mock.invest-autoqa-ns.v2.dev2.k8s.tcsbank.ru/add";
     public static final String urlForClean = "http://midle-pos-grpc-mock.invest-autoqa-ns.v2.dev2.k8s.tcsbank.ru/clear";
-    public static final String urlForRestOrder = "http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/mockserver/expectation";
-    public static final String urlForRestOrderClean = "http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/mockserver/clear?type=all";
+    public static final String urlForRestOrder = "http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/mockserver/expectation";
+    public static final String urlForRestOrderClean = "http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/mockserver/clear?type=all";
 
     //метод для очистки моков GRPC
     public void clearMocksForGrpc () {

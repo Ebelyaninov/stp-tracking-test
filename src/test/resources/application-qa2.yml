@@ -83,10 +83,10 @@ app:
   rest-client:
     tracking-api-base-uri: http://stp-tracking-api.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-admin-base-uri: http://stp-tracking-admin.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/admin/v1/
-    invest-account-public-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/account/public/v1/
-    md-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/v1/md/
-    miof-api-base-url: http://invest-automation-mockserver.dev2.k8s.tcsbank.ru/api/miof/
-    tracking-cache-slave-base-url: http://tracking-slave-qa2.dev2.k8s.tcsbank.ru/tracking/slave/v1/
+    invest-account-public-api-base-url: http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/account/public/v1/
+    md-api-base-url: http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/v1/md/
+    miof-api-base-url: http://invest-automation-mockserver.invest-automation-mockserver.v2.dev2.k8s.tcsbank.ru/api/miof/
+    tracking-cache-slave-base-url: http://stp-tracking-slave.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/slave/v1/
     tracking-api-social-strategy-base-url: http://social-tracking-strategy.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/strategy/v1
 #      investTracking:
 #        url: jdbc:cassandra://m1-qa-common-transit-cas-1.ost.tinkoff:9042/invest_tracking
