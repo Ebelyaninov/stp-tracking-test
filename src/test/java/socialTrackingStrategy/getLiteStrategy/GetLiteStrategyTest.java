@@ -296,7 +296,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11");
+            StrategyStatus.frozen, 2, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -328,9 +328,9 @@ public class GetLiteStrategyTest {
             .execute(response -> response.as(GetLiteStrategyResponse.class));
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
         assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues(), is(portfolioValuesPoints));
-        assertThat("master-portfolio-top-positions.value не равно", getLiteStrategy.getCharacteristics().get(5).getValue(),is("RU0009029540.png,minfin.png"));
+        assertThat("master-portfolio-top-positions.value не равно", getLiteStrategy.getCharacteristics().get(5).getValue(),is("sber.png,minfin.png"));
         assertThat("master-portfolio-top-positions.subtitle не равно", getLiteStrategy.getCharacteristics().get(5).getSubtitle(),is("Топ торгуемых бумаг"));
-
+        assertThat("status стратегии не равен", getLiteStrategy.getStatus().toString(), is("frozen"));
     }
 
 
