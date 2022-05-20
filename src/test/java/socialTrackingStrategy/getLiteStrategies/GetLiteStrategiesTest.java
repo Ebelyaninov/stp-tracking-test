@@ -184,6 +184,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyTitleFromApi = new HashSet<>();
         Set<String> listStrategyBaseCurrencyFromApi = new HashSet<>();
         Set<String> listStrategyRiskProfileFromApi = new HashSet<>();
+        Set<String> listStrategyStatusFromApi = new HashSet<>();
         Set<Integer> listStrategyScoreFromApi = new HashSet<>();
         Set<Boolean> listStrategyIsOverloadedFromApi = new HashSet<>();
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
@@ -191,6 +192,7 @@ public class GetLiteStrategiesTest {
             listStrategyTitleFromApi.add(getLiteStrategies.getItems().get(i).getTitle());
             listStrategyBaseCurrencyFromApi.add(getLiteStrategies.getItems().get(i).getBaseCurrency().toString());
             listStrategyRiskProfileFromApi.add(getLiteStrategies.getItems().get(i).getRiskProfile().toString());
+            listStrategyStatusFromApi.add(getLiteStrategies.getItems().get(i).getStatus().toString());
             listStrategyScoreFromApi.add(getLiteStrategies.getItems().get(i).getScore());
             listStrategyIsOverloadedFromApi.add(getLiteStrategies.getItems().get(i).getIsOverloaded());
         }
@@ -200,6 +202,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyRiskProfileFromDB = new HashSet<>();
         Set<Integer> listStrategyScoreFromDB = new HashSet<>();
         Set<Boolean> listIsOverloaded = new HashSet<>();
+        Set<String> listStrategyStatusFromDB = new HashSet<>();
 
         for (int i = 0; i < strategysFromDB.size(); i++) {
             listStrategyIdsFromDB.add(strategysFromDB.get(i).getId());
@@ -208,6 +211,7 @@ public class GetLiteStrategiesTest {
             listStrategyRiskProfileFromDB.add(strategysFromDB.get(i).getRiskProfile().toString());
             listStrategyScoreFromDB.add(strategysFromDB.get(i).getScore());
             listIsOverloaded.add(strategysFromDB.get(i).getOverloaded());
+            listStrategyStatusFromDB.add(strategysFromDB.get(i).getStatus().toString());
         }
         assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded));
         assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromDB));
@@ -215,6 +219,7 @@ public class GetLiteStrategiesTest {
         assertThat("baseCurrency стратегий не совпадают", listStrategyBaseCurrencyFromApi, is(listStrategyBaseCurrencyFromDB));
         assertThat("riskProfile стратегий не совпадают", listStrategyRiskProfileFromApi, is(listStrategyRiskProfileFromDB));
         assertThat("score стратегий не совпадают", listStrategyScoreFromApi, is(listStrategyScoreFromDB));
+        assertThat("status стратегий не совпадает",listStrategyStatusFromApi, is(listStrategyStatusFromDB));
     }
 
 
@@ -315,6 +320,7 @@ public class GetLiteStrategiesTest {
             is("подписаны"));
 //        assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues(), is(portfolioValuesPoints));
         assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield));
+        assertThat("status стратегии не равен", liteStrategy.get(0).getStatus().toString(), is("active"));
         Allure.step("проверка Characteristics",
             () -> assertAll(
                 () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is(expectedRelativeYieldResult + "% в год")),

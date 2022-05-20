@@ -254,6 +254,7 @@ components:
         - portfolioValues
         - characteristics
         - isOverloaded
+        - status
       properties:
         id:
           description: Идентификатор стратегии
@@ -294,6 +295,8 @@ components:
         isOverloaded:
           description: Признак перегруженности стратегии
           type: boolean
+        status:
+          $ref: '#/components/schemas/StrategyStatus'
 
     Currency:
       description: Валюта
@@ -360,6 +363,12 @@ components:
           type: string
           minLength: 1
           example: в управлении
+
+    StrategyStatus:
+      description: Статус стратегии
+      type: string
+      enum: [ active, frozen ]
+
 
     GetLiteStrategiesResponse:
       type: object
