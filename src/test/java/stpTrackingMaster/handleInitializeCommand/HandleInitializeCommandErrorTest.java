@@ -107,6 +107,7 @@ public class HandleInitializeCommandErrorTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(siebelIdMaster);
     }
 
     @AfterEach

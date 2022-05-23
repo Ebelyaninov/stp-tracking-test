@@ -78,10 +78,18 @@ public class CreateExchangePositionSuccessTest {
     String xApiKey = "x-api-key";
 
 
+    @BeforeAll
+    void clearPosition(){
+        exchangePositionService.deleteExchangePosition(exchangePositionService.getExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD));
+    }
+
     @AfterEach
     void deleteClient() {
         step("Удаляем инструмент автоследования", () -> {
-            exchangePositionService.deleteExchangePosition(exchangePosition);
+            try {
+                exchangePositionService.deleteExchangePosition(exchangePosition);
+            } catch (Exception e) {
+            }
         });
     }
 

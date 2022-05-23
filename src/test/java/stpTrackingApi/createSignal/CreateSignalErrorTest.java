@@ -141,7 +141,7 @@ public class CreateSignalErrorTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(stpSiebel.siebelIdApiMaster);
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         investIdMaster = resAccountMaster.getInvestId();
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(SIEBEL_ID);
     }
 
     @AfterEach

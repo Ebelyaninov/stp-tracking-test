@@ -89,4 +89,7 @@ public class StpSiebel {
 
     // socialTrackingNotification //
     public String siebelIdSocialTrackingNotification = "5-4H607YXZ";
+
+    // socialTrackingStrategy //
+    public String siebelIdMasterSocialTrackingStrategy = "1-27VDZ7I";
 }

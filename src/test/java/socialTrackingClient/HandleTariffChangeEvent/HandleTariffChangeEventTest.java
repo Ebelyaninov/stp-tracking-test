@@ -115,8 +115,8 @@ public class HandleTariffChangeEventTest {
         GetBrokerAccountsResponse resAccountAgressive = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         investIdSlave = resAccountAgressive.getInvestId();
         contractIdSlave = resAccountAgressive.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
+        steps.deleteDataFromDb(SIEBEL_ID_SLAVE);
     }
 
     @AfterEach

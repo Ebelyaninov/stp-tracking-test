@@ -107,8 +107,8 @@ public class BlockContractTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebel.siebelIdSlaveAdmin);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        adminSteps.deleteDataFromDb(contractIdSlave, investIdSlave);
-        adminSteps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        adminSteps.deleteDataFromDb(siebel.siebelIdSlaveAdmin);
+        adminSteps.deleteDataFromDb(siebel.siebelIdMasterAdmin);
     }
 
     @BeforeEach

@@ -134,6 +134,8 @@ public class SaveDividentTest {
         GetBrokerAccountsResponse resAccountSlaveActive =steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlaveActive.getInvestId();
         contractIdSlave = resAccountSlaveActive.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(siebelIdSlave);
+        steps.deleteDataFromDb(siebelIdMaster);
     }
 
     @AfterEach

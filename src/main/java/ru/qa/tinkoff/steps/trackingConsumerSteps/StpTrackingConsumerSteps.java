@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.core.IsNull;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.ManagementFeeDao;
@@ -66,6 +67,7 @@ public class StpTrackingConsumerSteps {
     private final SlavePortfolioDao slavePortfolioDao;
     private final ManagementFeeDao managementFeeDao;
     private final ResultFeeDao resultFeeDao;
+    private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     SubscriptionApi subscriptionApi = ApiClient.api(ApiClient.Config.apiConfig()).subscription();
     PricesApi pricesApi = ru.qa.tinkoff.swagger.MD.invoker.ApiClient.api(ru.qa.tinkoff.swagger.MD.invoker
         .ApiClient.Config.apiConfig()).prices();
@@ -442,8 +444,32 @@ public class StpTrackingConsumerSteps {
 
 
 
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String SiebelId) {
+
+        GetBrokerAccountsResponse getAllMasterAccounts = getALLAccountsFromAccount(SiebelId);
+        UUID investId = getAllMasterAccounts.getInvestId();
+
+        for(int i = 0; i < getAllMasterAccounts.getBrokerAccounts().size(); i++) {
+            try {
+                contractService.deleteContract(contractService.getContract(getAllMasterAccounts.getBrokerAccounts().get(i).getId()));
+            } catch (Exception e) {}
+        }
+        try {
+            clientService.deleteClient(clientService.getClient(investId));
+        } catch (Exception e) {}
+    }
 
 
-
+    @Step("Вызывает сервис счетов для получения данных по клиенту: ")
+    @SneakyThrows
+    public GetBrokerAccountsResponse getALLAccountsFromAccount (String SIEBEL_ID) {
+        GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resAccount;
+    }
 
 }

@@ -436,4 +436,31 @@ public class StpTrackingMasterSteps {
         return command;
     }
 
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String SiebelId) {
+
+        GetBrokerAccountsResponse getAllMasterAccounts = getALLAccountsFromAccount(SiebelId);
+        UUID investId = getAllMasterAccounts.getInvestId();
+
+        for(int i = 0; i < getAllMasterAccounts.getBrokerAccounts().size(); i++) {
+            try {
+                contractService.deleteContract(contractService.getContract(getAllMasterAccounts.getBrokerAccounts().get(i).getId()));
+            } catch (Exception e) {}
+        }
+        try {
+            clientService.deleteClient(clientService.getClient(investId));
+        } catch (Exception e) {}
+    }
+
+    @Step("Вызывает сервис счетов для получения данных по клиенту: ")
+    @SneakyThrows
+    public GetBrokerAccountsResponse getALLAccountsFromAccount (String SIEBEL_ID) {
+        GetBrokerAccountsResponse resAccount = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(SIEBEL_ID)
+            .brokerStatusQuery("opened")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        return resAccount;
+    }
+
 }

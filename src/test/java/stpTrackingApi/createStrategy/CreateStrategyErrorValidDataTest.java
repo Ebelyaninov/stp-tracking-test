@@ -98,7 +98,7 @@ public class CreateStrategyErrorValidDataTest {
         GetBrokerAccountsResponse brokerAccount = getBrokerAccountByAccountPublicApi(SIEBEL_ID);
         investId = brokerAccount.getInvestId();
         contractId = brokerAccount.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractId, investId);
+        steps.deleteDataFromDb(SIEBEL_ID);
     }
 
     @AfterEach

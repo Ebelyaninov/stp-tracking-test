@@ -125,7 +125,7 @@ public class DeleteDraftStrategyErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        stpTrackingAdminSteps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        stpTrackingAdminSteps.deleteDataFromDb(siebel.siebelIdAdmin);
         strategyId = UUID.randomUUID();
     }
 

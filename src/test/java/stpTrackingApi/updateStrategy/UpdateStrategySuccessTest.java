@@ -100,7 +100,7 @@ public class UpdateStrategySuccessTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractId, investId);
+        steps.deleteDataFromDb(SIEBEL_ID);
     }
 
     @AfterEach

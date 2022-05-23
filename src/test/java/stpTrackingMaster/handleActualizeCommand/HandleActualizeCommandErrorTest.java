@@ -143,6 +143,8 @@ public class HandleActualizeCommandErrorTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(siebelIdSlave);
+        steps.deleteDataFromDb(siebelIdMaster);
     }
 
     @AfterEach

@@ -139,8 +139,8 @@ public class GetSignalsTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(siebelIdSlave);
+        steps.deleteDataFromDb(siebelIdMaster);
         //Создаем список из позиций, для тестирования
         for(int i=0; i < posSize; i++) {
             instrumentList.add(new ArrayList());

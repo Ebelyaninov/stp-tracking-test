@@ -18,6 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
+import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -35,6 +37,7 @@ import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingConsumerSteps.StpTrackingConsumerSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -73,7 +76,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingConsumerSteps.class,
     GrpcServicesAutoConfiguration.class,
     KafkaOldConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    ApiCreatorConfiguration.class
 })
 
 public class HandleLimitEventTest {
@@ -122,6 +126,10 @@ public class HandleLimitEventTest {
 
     String description = "description test стратегия autotest consumer";
 
+    @BeforeAll
+    void clearData() {
+        steps.deleteDataFromDb(siebelIdMaster);
+    }
 
     @AfterEach
     void deleteClient() {

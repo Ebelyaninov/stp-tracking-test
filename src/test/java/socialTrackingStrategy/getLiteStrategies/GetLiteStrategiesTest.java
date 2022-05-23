@@ -30,8 +30,10 @@ import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategiesResponse;
@@ -72,7 +74,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 public class GetLiteStrategiesTest {
     @Autowired
@@ -113,6 +116,8 @@ public class GetLiteStrategiesTest {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     Client client;
     Contract contract;
@@ -124,7 +129,7 @@ public class GetLiteStrategiesTest {
     StrategyApi strategyApi = ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.invoker
             .ApiClient.Config.apiConfig()).strategy();
-    String siebelIdMaster = "1-7XOAYPX";
+    String siebelIdMaster;
     String xApiKey = "x-api-key";
     String key = "stp-tracking";
     BigDecimal expectedRelativeYield = new BigDecimal(58.00);
@@ -133,6 +138,12 @@ public class GetLiteStrategiesTest {
     String quantitySU29009RMFS6 = "7";
     String quantityUSD = "2000";
     BigDecimal masterValueAdditionalRate = new BigDecimal("0.05");
+
+    @BeforeAll
+    void createTestData(){
+        siebelIdMaster = stpSiebel.siebelIdMasterSocialTrackingStrategy;
+        steps.deleteDataFromDb(siebelIdMaster);
+    }
 
     @AfterEach
     void deleteClient() {
