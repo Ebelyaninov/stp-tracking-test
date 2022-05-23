@@ -92,7 +92,7 @@ public class ConfirmMasterClientErrorTest {
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        adminSteps.deleteDataFromDb(contractId, investId);
+        adminSteps.deleteDataFromDb(siebel.siebelIdAdmin);
     }
 
     @BeforeEach

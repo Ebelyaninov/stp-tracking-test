@@ -35,8 +35,10 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategyResponse;
@@ -77,7 +79,8 @@ import static org.hamcrest.Matchers.is;
     KafkaAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class GetLiteStrategyTest {
@@ -120,6 +123,8 @@ public class GetLiteStrategyTest {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
 
     Strategy strategy;
     Profile profile;
@@ -132,7 +137,7 @@ public class GetLiteStrategyTest {
             .ApiClient.Config.apiConfig()).strategy();
 
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
-    String siebelIdMaster = "1-7XOAYPX";
+    String siebelIdMaster;
     String xApiKey = "x-api-key";
     String key = "stp-tracking";
     String quantitySBER = "30";
@@ -142,6 +147,12 @@ public class GetLiteStrategyTest {
 
     Boolean overloadedFalse = false;
     Boolean overloadedTrue = true;
+
+    @BeforeAll
+    void createTestData(){
+        siebelIdMaster = stpSiebel.siebelIdMasterSocialTrackingStrategy;
+        steps.deleteDataFromDb(siebelIdMaster);
+    }
 
     @AfterEach
     void deleteClient() {

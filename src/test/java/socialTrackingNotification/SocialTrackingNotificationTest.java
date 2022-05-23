@@ -88,6 +88,7 @@ public class SocialTrackingNotificationTest {
             investIdSlave = resAccountMaster.getInvestId();
             contractIdSlave = resAccountMaster.getBrokerAccounts().get(0).getId();
             sibelId = socialTrackingNotificationSteps.getActualSiebel(investIdSlave);
+            socialTrackingNotificationSteps.deleteDataFromDb(contractIdSlave, investIdSlave);
         }
 
         @AfterEach

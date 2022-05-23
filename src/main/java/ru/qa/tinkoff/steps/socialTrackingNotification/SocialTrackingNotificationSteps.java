@@ -21,6 +21,7 @@ import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.sdet.kafka.prototype.reciever.BoostedReceiverImpl;
 import ru.tinkoff.trading.tracking.Tracking;
@@ -39,6 +40,7 @@ public class SocialTrackingNotificationSteps {
     UtilsTest utilsTest = new UtilsTest();
 
     private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
+    private final StrategyService strategyService;
 
     BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
         .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
@@ -177,5 +179,18 @@ public class SocialTrackingNotificationSteps {
         boostedReceiver.getKafkaConsumer().commitSync(offsets);
         log.info("Offset для всех партиций Kafka топика {} перемещены в конец очереди", topic.getName());
         boostedReceiver.getKafkaConsumer().unsubscribe();
+    }
+
+    @Step("Удаляем записи из strategy + contract + client")
+    public void deleteDataFromDb (String contractId, UUID clientId) {
+        try {
+            strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractId).get());
+        } catch (Exception e) {}
+        try {
+            contractService.deleteContract(contractService.getContract(contractId));
+        } catch (Exception e) {}
+        try {
+            clientService.deleteClient(clientService.getClient(clientId));
+        } catch (Exception e) {}
     }
 }

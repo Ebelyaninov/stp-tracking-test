@@ -170,10 +170,10 @@ public class HandleRiskProfileEventTest {
         fourthContracrId = Long.valueOf(contractIdConservative) + 3;
         LocalDate currentDate = (LocalDate.now());
         periodDefoult = "[" + currentDate + ",)";
-        steps.deleteDataFromDb(contractIdAgressive, investIdAgressive);
-        steps.deleteDataFromDb(contractIdConservative, investIdCOnservative);
-        steps.deleteDataFromDb(contractIdMedium, investIdMedium);
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
+        steps.deleteDataFromDb(SIEBEL_ID_AGRESSIVE);
+        steps.deleteDataFromDb(SIEBEL_ID_MEDIUM);
+        steps.deleteDataFromDb(SIBEL_ID_CONSERVATIVE);
     }
 
     @AfterEach

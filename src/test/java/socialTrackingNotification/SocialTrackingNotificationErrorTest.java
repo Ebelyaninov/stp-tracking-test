@@ -88,6 +88,7 @@ public class SocialTrackingNotificationErrorTest {
         GetBrokerAccountsResponse resAccountMaster = socialTrackingNotificationSteps.getBrokerAccounts(sienelIdSlave);
         investIdSlave = resAccountMaster.getInvestId();
         contractIdSlave = resAccountMaster.getBrokerAccounts().get(0).getId();
+        socialTrackingNotificationSteps.deleteDataFromDb(contractIdSlave, investIdSlave);
     }
 
     @AfterEach

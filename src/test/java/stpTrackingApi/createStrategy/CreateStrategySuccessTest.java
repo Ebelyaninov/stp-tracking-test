@@ -161,7 +161,7 @@ public class CreateStrategySuccessTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investId = resAccountMaster.getInvestId();
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractId, investId);
+        steps.deleteDataFromDb(SIEBEL_ID);
     }
 
     @Test

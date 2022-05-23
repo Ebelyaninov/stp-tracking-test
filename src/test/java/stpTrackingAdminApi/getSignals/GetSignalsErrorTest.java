@@ -100,7 +100,7 @@ public class GetSignalsErrorTest {
         GetBrokerAccountsResponse resAccountMaster = stpTrackingAdminSteps.getBrokerAccounts(siebel.siebelIdMasterAdmin);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        stpTrackingAdminSteps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        stpTrackingAdminSteps.deleteDataFromDb(siebel.siebelIdMasterAdmin);
     }
 
     @BeforeEach

@@ -112,7 +112,8 @@ public class GetMasterPortfolioValuesTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(siebelIdMaster);
+        steps.deleteDataFromDb(siebelIdSlave);
     }
 
     @AfterEach

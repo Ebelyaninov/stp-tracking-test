@@ -137,7 +137,7 @@ public class GetMasterStrategyAnalyticsTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
     }
 
     @BeforeEach

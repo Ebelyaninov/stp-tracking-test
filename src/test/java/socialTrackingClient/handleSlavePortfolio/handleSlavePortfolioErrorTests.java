@@ -144,8 +144,8 @@ public class handleSlavePortfolioErrorTests {
         GetBrokerAccountsResponse resAccountAgressive = stpTrackingApiSteps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         investIdSlave = resAccountAgressive.getInvestId();
         contractIdSlave = resAccountAgressive.getBrokerAccounts().get(0).getId();
-        stpTrackingApiSteps.deleteDataFromDb(contractIdSlave, investIdSlave);
-        stpTrackingApiSteps.deleteDataFromDb(contractIdMaster, investIdMaster);
+        stpTrackingApiSteps.deleteDataFromDb(SIEBEL_ID_MASTER);
+        stpTrackingApiSteps.deleteDataFromDb(SIEBEL_ID_SLAVE);
     }
 
 

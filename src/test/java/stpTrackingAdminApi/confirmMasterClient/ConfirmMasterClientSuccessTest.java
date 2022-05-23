@@ -95,7 +95,9 @@ public class ConfirmMasterClientSuccessTest {
                 .execute(response -> response.as(GetBrokerAccountsResponse.class));
             investId = resAccountMaster.getInvestId();
             contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-            adminSteps.deleteDataFromDb(contractId, investId);
+            adminSteps.deleteDataFromDb(siebel.siebelIdAdmin);
+            adminSteps.deleteDataFromDb(siebel.siebelIdNotBroker);
+            adminSteps.deleteDataFromDb(siebel.siebelIdNotOpen);
         });
     }
 
