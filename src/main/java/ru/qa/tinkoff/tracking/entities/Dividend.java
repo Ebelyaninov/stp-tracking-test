@@ -19,7 +19,7 @@ import java.util.UUID;
 )
 public class Dividend {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     Long id;
 

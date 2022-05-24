@@ -20,8 +20,11 @@ message ActivateCorpActionCommand {
     oneof type {
         // Тип КД = 'DVCA'
         Dividend dividend = 4;
+        Test test = 5;
     }
 
     // Данные для совершения выплаты дивидендов (Тип КД = 'DVCA')
     message Dividend {}
+    // Данные для совершения выплаты дивидендов (Тип КД = 'DVCA')
+    message Test {}
 }

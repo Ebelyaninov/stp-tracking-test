@@ -8,10 +8,14 @@ import ru.qa.tinkoff.tracking.entities.CorpAction;
 
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface CorpActionRepository  extends JpaRepository<CorpAction, UUID> {
 
     @Query(nativeQuery = true, value = "select * from corp_action.corp_action where strategy_id =:strategyId")
     List<CorpAction> findCorpActionByContractId(@Param(value = "strategyId") UUID strategyId);
+
+    @Query(nativeQuery = true, value = "select * from corp_action.corp_action where strategy_id =:strategyId")
+    Optional<CorpAction> findCorpActionByStrategyId(@Param(value = "strategyId") UUID strategyId);
 }

@@ -30,7 +30,7 @@ public class StpSiebel {
     public String siebelIdApiSlave = "4-23D6LZT9";
     public String siebelIdApiNotOpen = "5-3MYZ425J";
     public String siebelIdApiNotBroker = "5-DGXUTIXL";
-    public String siebelIdMasterStpTrackingMaster = "1-DPVDVIC";
+    public String siebelIdMasterStpTrackingMaster = "5-4M254Z0J";
     public String siebelIdSlaveStpTrackingMaster = "4-13TDRO5W";
     public String siebelIdSlaveActiveStpTrackingMaster = "1-54633V2";
     public String siebelIdSlaveBlockedStpTrackingMaster = "4-17XFN163";

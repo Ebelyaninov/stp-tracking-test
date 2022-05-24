@@ -103,4 +103,14 @@ public class MasterPortfolioDao {
             .and(QueryBuilder.eq("strategy_id", strategy));
         cqlTemplate.execute(delete);
     }
+
+    @Step("Поиск портфеля в cassandra по contractId и strategyId")
+    @SneakyThrows
+    public List<MasterPortfolio> getAllMasterPortfolio(String contractId, UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio " +
+            "where contract_id = ? " +
+            "  and strategy_id = ? " ;
+        return cqlTemplate.query(query, masterPortfolioRowMapper, contractId, strategyId);
+    }
 }

@@ -15,6 +15,6 @@ import java.util.UUID;
 public interface DividendRepository extends JpaRepository<Dividend, BigInteger> {
 
 
-    @Query(nativeQuery = true, value = "select * from corp_action.subscription where strategy_id =:strategyId")
+    @Query(nativeQuery = true, value = "select * from corp_action.dividend where strategy_id =:strategyId")
     List<Dividend> findDividendByStrategyId(@Param(value = "strategyId") UUID strategyId);
 }
