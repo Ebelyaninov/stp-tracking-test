@@ -147,6 +147,11 @@ public class CreateSignalSuccessTest {
     void changePositionLimit(){
         adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
             true, 111, orderQuantityList(52, "default"), true);
+        adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
+            true, 21455, orderQuantityList(100, "default"), true);
+        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
+            true, 11300, orderQuantityList(100, "default"), true);
+
     }
 
     @AfterEach
