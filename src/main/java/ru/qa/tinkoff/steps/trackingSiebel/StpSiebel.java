@@ -56,7 +56,7 @@ public class StpSiebel {
     public String siebelIdAnalyzeSlave = "1-BXDUEON";
     public String siebelIdAnalyzeSlaveOnlyBaseMoney = "1-1AJ30Q";
     public String siebelIdAnalyzeSlaveMoneyAndAAPL = "5-8NL1RLT1";
-    public String siebelIdAnalyzeMasterError = "5-2383868GN";
+    public String siebelIdAnalyzeMasterError = "5-4T46UTEF";
     public String siebelIdAnalyzeSlaveError = "4-LQB8FKN";
     public String siebelIdSlaveOrderSlave = "5-23LMDXSIW";
 

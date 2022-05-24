@@ -164,6 +164,24 @@ public class CalculateResultFeeTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        step("Удаляем клиента автоследования", () -> {
+            try {
+                contractService.deleteContractById(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(investIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContractById(contractIdMaster);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(investIdMaster);
+            } catch (Exception e) {
+            }
+        });
     }
 
 
