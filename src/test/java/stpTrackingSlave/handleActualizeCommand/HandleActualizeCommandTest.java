@@ -865,7 +865,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды < version из ответа")
     void C1842225() {
-        String SIEBEL_ID_SLAVE = "4-108T3KDJ";
+        String SIEBEL_ID_SLAVE = "4-15DTTSYU";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1883,9 +1883,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1518740() {
-        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
-        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+        String SIEBEL_ID_SLAVE = "1-8U7X4H2";
+//        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
             instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -1956,9 +1956,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1052370() {
-        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
-        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+        String SIEBEL_ID_SLAVE = "1-8U7X4H2";
+//        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
             instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL, "0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3555,10 +3555,10 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1523191() {
-        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
             "1000", "100", "0", "2");
-        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
-        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
+        String SIEBEL_ID_SLAVE = "1-8U7X4H2";
+//        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3630,9 +3630,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1523957() {
-        //String SIEBEL_ID_SLAVE = "1-FZZU0KU";
-        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+        String SIEBEL_ID_SLAVE = "1-8U7X4H2";
+//        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341",
             instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
             "100", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов

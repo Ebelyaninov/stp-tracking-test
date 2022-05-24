@@ -122,13 +122,41 @@ public class HandleAdjustEventTest {
     String siebelIdSlave;
     String operCode = "MNY_CHANGED_INP";
 
-    String description = "new test стратегия autotest";
+    String description = "new autotest by fee handleAdjustEventTest";
     String operId = "2321010121";
+    UUID investIdMaster;
+    UUID investIdSlave;
 
     @BeforeAll
     void getDataFromAccount() {
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingFee;
         siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingFee;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        step("Удаляем клиента автоследования", () -> {
+            try {
+                contractService.deleteContractById(contractIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(investIdSlave);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContractById(contractIdMaster);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(investIdMaster);
+            } catch (Exception e) {
+            }
+        });
     }
 
     @AfterEach
