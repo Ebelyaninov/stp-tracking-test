@@ -21,7 +21,9 @@ import java.util.UUID;
     typeClass = PostgreSQLEnumType.class
 )
 public class CorpAction {
+
     @Id
+    @Column(name = "strategy_id")
     UUID strategyId;
 
     @Column(name = "cut")

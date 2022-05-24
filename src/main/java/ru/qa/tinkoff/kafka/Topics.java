@@ -43,7 +43,8 @@ public enum Topics {
     CCYEV("CCYEV"),
     ORIGINATION_TESTING_RISK_NOTIFICATION_RAW("origination.testing.risk.notification.raw"),
     TARIFF_CHANGE_RAW("tariff.change.raw"),
-    NC_INPUT("nc.input")
+    NC_INPUT("nc.input"),
+    TRACKING_CORP_ACTION_COMMAND("tracking.corp-action.command"),
     ;
     private final String name;
 }

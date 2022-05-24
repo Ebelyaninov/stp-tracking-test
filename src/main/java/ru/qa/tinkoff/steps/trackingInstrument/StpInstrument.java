@@ -303,5 +303,12 @@ public class StpInstrument {
     public String tradingClearingAccountCCL = "L01+00000SPB";
     public String classCodeCCL = "SPBXM";
 
+    public String tickerSTM = "STM";
+    public String classCodeSTM = "STM";
+    public String tradingClearingAccountSTM = "NDS000000001";
 
+
+    public String tickerLNT = "LNT";
+    public String classCodeLNT = "SPBXM";
+    public String tradingClearingAccountLNT = "L01+00000SPB";
 }
