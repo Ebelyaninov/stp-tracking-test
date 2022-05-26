@@ -13,6 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -51,6 +54,7 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -513,22 +517,35 @@ public class HandleActualizeCommandTest {
     }
 
 
+    private static Stream<Arguments> strategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.draft),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
+
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("strategyStatus")
     @AllureId("663495")
-    @DisplayName("C663495.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1, strategy.status = 'draft'")
+    @DisplayName("C663495.HandleActualizeCommand.SaveSignal.Version из команды - master_portfolio.version найденного портфеля = 1, strategy.status = 'draft' / 'frozen'")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
-    void C663495() {
+    void C663495(StrategyStatus strategyStatus) {
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
+        LocalDateTime nowForFrozzen = null;
         version = 3;
         BigDecimal baseMoney = new BigDecimal("4985.0");
+        if (strategyStatus.equals(StrategyStatus.frozen)){
+            nowForFrozzen = LocalDateTime.now();
+        }
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.draft, 0, null);
+            strategyStatus, 0, nowForFrozzen);
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
@@ -561,7 +578,7 @@ public class HandleActualizeCommandTest {
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
 //        проверяем портфель мастера
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId), notNullValue());
         List<MasterPortfolio.Position> positionXS0587031096 = masterPortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerXS0587031096))
@@ -586,7 +603,7 @@ public class HandleActualizeCommandTest {
         assertThat("LastChangeAction позиции не равен", positionXS0587031096.get(0).getLastChangeAction().toString(), is("12"));
         masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version);
         assertThat("Action сигнала не равен", masterSignal.getAction().toString(), is("12"));
-        assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(date.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("Время создания сигнала не равно", masterSignal.getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("цена за бумагу в сигнале не равна", masterSignal.getPrice().longValue(), is(priceS.getUnscaled()));
         assertThat("количество ед. актива не равно", masterSignal.getQuantity().longValue(), is(quantityS.getUnscaled()));
         assertThat("ticker бумаги в сигнале не равен", masterSignal.getTicker(), is(instrument.tickerXS0587031096));

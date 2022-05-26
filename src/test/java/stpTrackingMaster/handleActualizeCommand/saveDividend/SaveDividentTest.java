@@ -10,6 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -46,6 +49,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -177,13 +181,21 @@ public class SaveDividentTest {
         });
     }
 
+    private static Stream<Arguments> strategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("strategyStatus")
     @AllureId("1858514")
     @DisplayName("C1858514.HandleActualizeCommand.SaveDividend Начисляем первый дивиденд мастеру")
     @Subfeature("Успешные сценарии")
     @Description("saveDividend Начисление дивидендов в виртуальный портфель")
-    void C1858514() {
+    void C1858514(StrategyStatus strategyStatus) {
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
@@ -192,7 +204,7 @@ public class SaveDividentTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            strategyStatus, 0, LocalDateTime.now());
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
