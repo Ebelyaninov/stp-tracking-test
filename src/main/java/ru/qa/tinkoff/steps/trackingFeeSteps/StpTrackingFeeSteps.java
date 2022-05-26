@@ -449,7 +449,7 @@ public class StpTrackingFeeSteps {
 
     //метод создает клиента, договор и стратегию в БД автоследования
     public void createSubcription(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
-                                  UUID strategyId, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+                                  UUID strategyId, Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
                                   java.sql.Timestamp dateEnd, Boolean blocked) throws JsonProcessingException {
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
@@ -457,10 +457,9 @@ public class StpTrackingFeeSteps {
         contractSlave = new Contract()
             .setId(contractId)
             .setClientId(clientSlave.getId())
-//            .setRole(contractRole)
             .setState(contractState)
             .setStrategyId(strategyId)
-            .setBlocked(false);
+            .setBlocked(blockedContract);
         contractSlave = contractService.saveContract(contractSlave);
         String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
         Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
@@ -513,35 +512,35 @@ public class StpTrackingFeeSteps {
     }
 
 
-    //метод создает клиента, договор и стратегию в БД автоследования
-    public void createSubcription1(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
-                                  UUID strategyId,Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
-                                  java.sql.Timestamp dateEnd, Boolean blockedSub) throws JsonProcessingException {
-        //создаем запись о клиенте в tracking.client
-        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
-        // создаем запись о договоре клиента в tracking.contract
-        contractSlave = new Contract()
-            .setId(contractId)
-            .setClientId(clientSlave.getId())
-//            .setRole(contractRole)
-            .setState(contractState)
-            .setStrategyId(strategyId)
-            .setBlocked(blockedContract);
-        contractSlave = contractService.saveContract(contractSlave);
-        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
-        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
-        //создаем запись подписке клиента
-        subscription = new Subscription()
-            .setSlaveContractId(contractId)
-            .setStrategyId(strategyId)
-            .setStartTime(dateStart)
-            .setStatus(subscriptionStatus)
-            .setEndTime(dateEnd)
-            .setBlocked(blockedSub);
-            //.setPeriod(localDateTimeRange);
-        subscription = subscriptionService.saveSubscription(subscription);
-
-    }
+//    //метод создает клиента, договор и стратегию в БД автоследования
+//    public void createSubcription1(UUID investId, ClientRiskProfile riskProfile, String contractId, ContractRole contractRole, ContractState contractState,
+//                                  UUID strategyId,Boolean blockedContract, SubscriptionStatus subscriptionStatus,  java.sql.Timestamp dateStart,
+//                                  java.sql.Timestamp dateEnd, Boolean blockedSub) throws JsonProcessingException {
+//        //создаем запись о клиенте в tracking.client
+//        clientSlave = clientService.createClient(investId, ClientStatusType.none, null, riskProfile);
+//        // создаем запись о договоре клиента в tracking.contract
+//        contractSlave = new Contract()
+//            .setId(contractId)
+//            .setClientId(clientSlave.getId())
+////            .setRole(contractRole)
+//            .setState(contractState)
+//            .setStrategyId(strategyId)
+//            .setBlocked(blockedContract);
+//        contractSlave = contractService.saveContract(contractSlave);
+//        String periodDefault = "[" + dateStart.toLocalDateTime() + ",)";
+//        Range<LocalDateTime> localDateTimeRange = Range.localDateTimeRange(periodDefault);
+//        //создаем запись подписке клиента
+//        subscription = new Subscription()
+//            .setSlaveContractId(contractId)
+//            .setStrategyId(strategyId)
+//            .setStartTime(dateStart)
+//            .setStatus(subscriptionStatus)
+//            .setEndTime(dateEnd)
+//            .setBlocked(blockedSub);
+//            //.setPeriod(localDateTimeRange);
+//        subscription = subscriptionService.saveSubscription(subscription);
+//
+//    }
 
 
     //метод создает клиента, договор и стратегию в БД автоследования
