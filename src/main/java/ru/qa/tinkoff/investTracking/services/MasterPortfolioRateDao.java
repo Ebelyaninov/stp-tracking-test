@@ -64,6 +64,17 @@ public class MasterPortfolioRateDao {
     }
 
 
+    @Step("Поиск записи в master_portfolio_rate по  strategyId")
+    @SneakyThrows
+    public List<MasterPortfolioRate> getMasterPortfolioRateList(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_rate " +
+            "where strategy_id = ? ";
+        List<MasterPortfolioRate> result = cqlTemplate.query(query, masterPortfolioRateRowMapper, strategyId);
+        return result;
+    }
+
+
     @Step("Добавляем запись в master_portfolio_rate")
     @SneakyThrows
     public void insertIntoMasterPortfolioRate(MasterPortfolioRate masterPortfolioRate) {

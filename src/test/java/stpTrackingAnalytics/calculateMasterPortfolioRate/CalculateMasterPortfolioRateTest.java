@@ -153,8 +153,18 @@ public class CalculateMasterPortfolioRateTest {
 
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE)
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.frozen, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.frozen, LocalDateTime.now())
+        );
+    }
+
+
+    private static Stream<Arguments> provideStrategyStatus() {
+        return Stream.of(
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now())
         );
     }
 
@@ -166,13 +176,13 @@ public class CalculateMasterPortfolioRateTest {
     @DisplayName("C966227.CalculateMasterPortfolioRat.Расчет долей виртуального портфеля")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
-    void C966227(Tracking.AnalyticsCommand.Operation operation) {
+    void C966227(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -245,13 +255,13 @@ public class CalculateMasterPortfolioRateTest {
     @DisplayName("C978635.CalculateMasterPortfolioRat.Расчет долей виртуального портфеля, на заданную метку времени среза")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
-    void C978635(Tracking.AnalyticsCommand.Operation operation) {
+    void C978635(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         String baseMoney = "77545.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -966,6 +976,40 @@ public class CalculateMasterPortfolioRateTest {
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         //Проверяем параметры
         checkParam(sectors, types, companys, cut, cutInCommand);
+    }
+
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
+    @AllureId("1886692")
+    @DisplayName("1886692 CalculateMasterPortfolioRate.Расчет долей виртуального портфеля. Strategy.status NOT IN (active, frozen)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
+    void C1886692(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, time);
+        // создаем портфель ведущего с позициями в кассандре
+        createMasterPortfolios();
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_RATE, strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //Получаем список записей
+        await().pollDelay(Duration.ofMillis(500));
+        List<MasterPortfolioRate> masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateList(strategyId);
+        //Проверяем что ни одна запись не найдена
+        assertThat("запись найдена", masterPortfolioRate.size(), is(0));
     }
 
 

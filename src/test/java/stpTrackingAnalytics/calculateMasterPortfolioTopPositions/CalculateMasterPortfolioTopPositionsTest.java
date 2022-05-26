@@ -28,9 +28,18 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.services.database.ClientService;
+import ru.qa.tinkoff.tracking.services.database.ContractService;
+import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -72,10 +81,17 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     ApiCreatorConfiguration.class
 })
 public class CalculateMasterPortfolioTopPositionsTest {
 
+    @Autowired
+    StrategyService strategyService;
+    @Autowired
+    ClientService clientService;
+    @Autowired
+    ContractService contractService;
     @Autowired
     ByteToByteSenderService byteToByteSenderService;
     @Autowired
@@ -86,14 +102,41 @@ public class CalculateMasterPortfolioTopPositionsTest {
     StpTrackingAnalyticsSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel siebel;
 
     UUID strategyId;
     MasterPortfolioTopPositions masterPortfolioTopPositions;
+
+    String contractIdMaster;
+    UUID investIdMaster;
+
+    @BeforeAll
+    void getDataClients() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics1);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+    }
 
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
+            try {
+                strategyService.deleteStrategy(steps.strategy);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(steps.contractMaster);
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(steps.clientMaster);
+            } catch (Exception e) {
+            }
             try {
                 masterSignalDao.deleteMasterSignalByStrategy(strategyId);
             } catch (Exception e) {
@@ -114,6 +157,24 @@ public class CalculateMasterPortfolioTopPositionsTest {
         );
     }
 
+
+    private static Stream<Arguments> provideStrategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(StrategyStatus.frozen, LocalDateTime.now())
+
+        );
+    }
+
+
+    private static Stream<Arguments> provideNotStrategyStatus() {
+        return Stream.of(
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.closed, LocalDateTime.now())
+
+        );
+    }
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("cutTimeCalculate")
@@ -123,6 +184,10 @@ public class CalculateMasterPortfolioTopPositionsTest {
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C953112(OffsetDateTime createTime, OffsetDateTime cutTime, Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
@@ -184,6 +249,10 @@ public class CalculateMasterPortfolioTopPositionsTest {
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C962639(OffsetDateTime createTime, OffsetDateTime cutTime, Tracking.AnalyticsCommand.Operation operation) {
         strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalNotPeriodTopPos(strategyId);
@@ -229,16 +298,21 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
 
     @SneakyThrows
-    @Test
+    @MethodSource("provideStrategyStatus")
+    @ParameterizedTest
     @AllureId("953119")
     @DisplayName("C953119.CalculateMasterPortfolioTopPositions.Найдена запись в таблице master_portfolio_top_positionsпо ключу: strategy_id, cut," +
         " если operation = 'RECALCULATE'")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
-    void C953119() {
+    void C953119(StrategyStatus status, LocalDateTime time) {
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now().minusDays(3);
         strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, time);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
@@ -320,16 +394,21 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
 
     @SneakyThrows
-    @Test
+    @MethodSource("provideStrategyStatus")
+    @ParameterizedTest
     @AllureId("966109")
     @DisplayName("C966109.CalculateMasterPortfolioTopPositions.Найдена запись в таблице master_portfolio_top_positionsпо ключу: strategy_id, cut," +
         " если operation = 'RECALCULATE'")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
-    void C966109() {
+    void C966109(StrategyStatus status, LocalDateTime time) {
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now().minusDays(3);
         strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, time);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
@@ -402,6 +481,43 @@ public class CalculateMasterPortfolioTopPositionsTest {
         assertThat("списки по позициям не равны", true, is(actualNew.equals(expectedList)));
     }
 
+
+    @SneakyThrows
+    @MethodSource("provideNotStrategyStatus")
+    @ParameterizedTest
+    @AllureId("1886683")
+    @DisplayName("1886683 CalculateMasterPortfolioTopPositions. Strategy.status NOT IN (active, frozen)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
+    void C1886683(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now().minusDays(3);
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, time);
+        log.info("strategyId:  {}", strategyId);
+        //создаем записи по сигналу на разные позиции
+        createTestDateToMasterSignalRepeat(strategyId);
+        ByteString strategyIdByte = byteString(strategyId);
+        //создаем команду для пересчета топа-позиций master-портфеля
+        Tracking.AnalyticsCommand command = steps.createCommandAnalytics(createTime, cutTime,
+            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_TOP_POSITIONS,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", command);
+        //кодируем событие по protobuf схеме и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
+        await().pollDelay(Duration.ofMillis(500));
+        List<MasterPortfolioTopPositions> masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositionsList(strategyId);
+        // проверяем что ни одной записи не найдено
+        assertThat("найдена запись", masterPortfolioTopPositions.size(), is(0));
+
+    }
 
     // методы для работы тестов*************************************************************************
 
