@@ -276,7 +276,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4).minusMinutes(5);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -363,7 +363,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -437,7 +437,7 @@ public class CalculateResultFeeTest {
     @SneakyThrows
     @Test
     @AllureId("1080986")
-    @DisplayName("C1080986.CalculateManagementFee.Расчет комиссии за управление. " +
+    @DisplayName("C1080986.CalculateResultFee.Расчет комиссии за управление. " +
         "Определения расчетных периодов.startedAt = > метки времени от settlement_period_started_at," +
         " endedAt <= метка времени от now(), по cron-выражению")
     @Subfeature("Успешные сценарии")
@@ -465,7 +465,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -549,7 +549,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -654,7 +654,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(5);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -734,7 +734,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -779,7 +779,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -861,7 +861,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -931,7 +931,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
 
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1001,7 +1001,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, true, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1053,7 +1053,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1132,7 +1132,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1206,7 +1206,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
         LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1299,7 +1299,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1377,7 +1377,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(2);
         LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1482,7 +1482,7 @@ public class CalculateResultFeeTest {
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(2);
         LocalDateTime dateOfEndFirstPeriod = LocalDateTime.now().with(LocalTime.MIN).minusMonths(0).with(TemporalAdjusters.firstDayOfMonth());
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //получаем идентификатор подписки
@@ -1614,7 +1614,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
 
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1703,7 +1703,7 @@ public class CalculateResultFeeTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
 
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1786,7 +1786,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1882,7 +1882,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -1974,7 +1974,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(4);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2071,7 +2071,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2133,7 +2133,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(40);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2202,7 +2202,7 @@ public class CalculateResultFeeTest {
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
-        steps.createSubcription1(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2256,7 +2256,6 @@ public class CalculateResultFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1834088() {
-        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -2319,7 +2318,6 @@ public class CalculateResultFeeTest {
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolio));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMark));
         assertThat("settlement_period_started не равен окончанию блокировки", resultFee.getSettlementPeriodStartedAt(), is(endedAt));
-
     }
 
 
@@ -3025,7 +3023,7 @@ public class CalculateResultFeeTest {
 //                Thread.sleep(5000);
 //            }
 //        }
-        await().atMost(Duration.ofSeconds(6)).pollDelay(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(12)).until(() ->
             resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version), notNullValue());
     }
 

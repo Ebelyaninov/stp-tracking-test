@@ -240,7 +240,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         LocalDateTime dateTime = LocalDateTime.now();
         String event = CcyevEvent.getKafkaTemplate(action, dateTime,
@@ -284,7 +284,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(37);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
         Date endFirst = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
@@ -337,7 +337,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(37);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
         Date endFirst = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
@@ -381,7 +381,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         LocalDateTime dateTime = LocalDateTime.now();
         String event = CcyevEvent.getKafkaTemplate("DELETE", dateTime,
@@ -427,7 +427,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "13.67");
@@ -479,7 +479,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(37);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         Date startFirst = Date.from(startSubTime.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC));
         Date endFirst = Date.from(LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().toInstant(ZoneOffset.UTC));
@@ -538,7 +538,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", true, "13.67");
@@ -578,7 +578,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "13.67");
@@ -619,7 +619,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", true, "12.17");
@@ -666,7 +666,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "12.17");
@@ -714,7 +714,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(37);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "12.17");
@@ -779,7 +779,7 @@ public class HandleAdjustEventTest {
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
-            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1).truncatedTo(ChronoUnit.SECONDS);
         createsSlaveAdjust(contractIdSlave, strategyId, createDate, Long.parseLong(operId), createDate, "usd", false, "13.67");
@@ -828,7 +828,7 @@ public class HandleAdjustEventTest {
         //создаем черновик подписки на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcriptionDraftOrInActive(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave, null, ContractState.untracked,
-            strategyId, SubscriptionStatus.draft, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            strategyId,  SubscriptionStatus.draft, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         OffsetDateTime createDate = OffsetDateTime.now().minusHours(1);
         LocalDateTime dateTime = LocalDateTime.now();
