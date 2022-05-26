@@ -2256,6 +2256,7 @@ public class CalculateResultFeeTest {
     @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
         "посредством отправки обогащенной данными команды в Тарифный модуль.")
     void C1834088() {
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -2268,7 +2269,7 @@ public class CalculateResultFeeTest {
             instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
-        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(4).minusMinutes(5);
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(1).minusDays(10).minusMinutes(5);
         steps.createSubcriptionWithBlock(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, true, 2);
@@ -2276,7 +2277,7 @@ public class CalculateResultFeeTest {
         Long subscriptionId = subscriptionService.getSubscriptionByContract(contractIdSlave).getId();
         //добавляем запись о блокировке в subscription_block
         LocalDate startBlock = (LocalDate.now().minusMonths(1).minusDays(1));
-        LocalDate endBlock = (LocalDate.now().minusDays(15));
+        LocalDate endBlock = (LocalDate.now().minusDays(29));
         String periodDefault = "[" + startBlock + "," + endBlock + ")";
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefault, 2);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2289,7 +2290,7 @@ public class CalculateResultFeeTest {
         slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, dateStart, positionList);
         //Портфель 2 версии
-        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(15);
+        OffsetDateTime utcStart1 = OffsetDateTime.now().minusDays(29);
         Date dateStart1 = Date.from(utcStart1.toInstant());
         String baseMoneySlave1 = "7657.23";
         List<SlavePortfolio.Position> positionList1 = new ArrayList<>();
@@ -2300,8 +2301,8 @@ public class CalculateResultFeeTest {
         determineSettlementPeriods = getDetermineSettlementPeriods(contractIdSlave, strategyId, subscriptionId);
         // достаем из БД портфель, рассчитываем его стоимость и сохранем версию
         BigDecimal valuePortfolio = BigDecimal.ZERO;
-        Date cutDate = Date.from(determineSettlementPeriods.get(0).atZone(ZoneId.systemDefault()).toInstant());
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioAfter(contractIdSlave, strategyId, cutDate);
+        int version = subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionId,"minimum-value").getVersion();
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, version);
         if (slavePortfolio != null) {
             valuePortfolio = getPortfolioValuePeriod(slavePortfolio, determineSettlementPeriods.get(0));
         }
@@ -2318,6 +2319,7 @@ public class CalculateResultFeeTest {
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolio));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMark));
         assertThat("settlement_period_started не равен окончанию блокировки", resultFee.getSettlementPeriodStartedAt(), is(endedAt));
+
     }
 
 
