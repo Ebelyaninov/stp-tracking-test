@@ -26,6 +26,7 @@ import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.mocks.steps.fireg.GetDividendsSteps;
+import ru.qa.tinkoff.mocks.steps.investmentAccount.MockInvestmentAccountSteps;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
@@ -123,6 +124,8 @@ public class HandleCorpActionCommandTest {
     DividentDao dividentDao;
     @Autowired
     GetDividendsSteps getDividendsSteps;
+    @Autowired
+    MockInvestmentAccountSteps mockInvestmentAccountSteps;
 
 
     MasterPortfolio masterPortfolio;
@@ -156,9 +159,7 @@ public class HandleCorpActionCommandTest {
     @BeforeAll
     void getdataFromInvestmentAccount() {
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
-        siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
-        siebelIdSlaveActive = stpSiebel.siebelIdSlaveActiveStpTrackingMaster;
-        siebelIdSlaveBlocked = stpSiebel.siebelIdSlaveBlockedStpTrackingMaster;
+        createDataForMockRestAccount("3c28450a-766a-458c-b0ad-62a1d56adff8", siebelIdMaster, "2000058046");
         int randomNumber = 0 + (int) (Math.random() * 100);
         title = "Autotest " + String.valueOf(randomNumber);
         description = "autotest handleCorpActionCommand for Master";
@@ -173,8 +174,6 @@ public class HandleCorpActionCommandTest {
         String paymentDatePlusTwoDays = localDateNow.plusDays(2) + "T03:00:00+03:00";
         String paymentDateMinusSevenDays = localDateNow.minusDays(7) + "T03:00:00+03:00";
         lastBuyDate = localDateNow.minusDays(14).format(formatter) + "T03:00:00+03:00";
-//        investIdMaster = UUID.fromString("3c28450a-766a-458c-b0ad-62a1d56adff8");
-//        contractIdMaster = "2000058046";
         getDividendsSteps.clearGetDevidends();
         createMockForAAPL();
         createMockForGetDividendsWithOneItems(instrument.tickerNOK, instrument.classCodeNOK, dividendIdNOK, "1911",
@@ -185,8 +184,13 @@ public class HandleCorpActionCommandTest {
             "0.06", "usd", paymentDatePlusTwoDays, lastBuyDate, "READY");
         createMockForGetDividendsWithOneItems(instrument.tickerFB, instrument.classCodeFB, "524612", "2181",
             "0.22", "usd", paymentDatePlusDay, lastBuyDate, "READY");
+        //Для pay-dividend-processing-days = 7d
+//        createMockForGetDividendsWithOneItems(instrument.tickerLNT, instrument.classCodeLNT, "479179", "2111",
+//            "0.4275", "usd", paymentDateMinusSevenDays, lastBuyDate, "READY");
+        //Для pay-dividend-processing-days = 1d
+        String paymentDateMinusDay = localDateNow.minusDays(1) + "T03:00:00+03:00";
         createMockForGetDividendsWithOneItems(instrument.tickerLNT, instrument.classCodeLNT, "479179", "2111",
-            "0.4275", "usd", paymentDateMinusSevenDays, lastBuyDate, "READY");
+            "0.4275", "usd", paymentDateMinusDay, lastBuyDate, "READY");
         createMockForGetDividendsWithOneItems(instrument.tickerABBV, instrument.classCodeABBV, dividendIdABBV, "2268",
             dividendNetABBV, "usd", paymentDate, lastBuyDate, "READY");
     }
@@ -251,7 +255,7 @@ public class HandleCorpActionCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(UTC).minusDays(11);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition("STM", "NDS000000001", quantityPos, positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerSTM, instrument.tradingClearingAccountSTM, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //формируем команду на  обработку совершенных корпоративных действий
         TrackingCorpAction.ActivateCorpActionCommand.Dividend dividend =
@@ -336,11 +340,11 @@ public class HandleCorpActionCommandTest {
         assertThat("запись по стратегии не равно", corpActionOpt.isPresent(), is(false));
     }
 
-
+    //ToDo тест не работает на qa2 из-за сервиса master, его отключили
     @SneakyThrows
     @Test
     @AllureId("1873898")
-    //@Tag("qa2")
+    @Tag("qa")
     @DisplayName("C1873898.HandleCorpActionCommand. Выгрузка 2 дивидендов с обработкой в master")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -371,17 +375,17 @@ public class HandleCorpActionCommandTest {
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
 
         List<String> listOfTickers = new ArrayList<>();
-        listOfTickers.add("AAPL");
-        listOfTickers.add("NOK");
-        listOfTickers.add("LNT");
-        listOfTickers.add("FB");
-        listOfTickers.add("STM");
+        listOfTickers.add(instrument.tickerAAPL);
+        listOfTickers.add(instrument.tickerNOK);
+        listOfTickers.add(instrument.tickerLNT);
+        listOfTickers.add(instrument.tickerFB);
+        listOfTickers.add(instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = new ArrayList<>();
-        listOfTradingClearAcconts.add("TKCBM_TCAB");
-        listOfTradingClearAcconts.add("L01+00000SPB");
-        listOfTradingClearAcconts.add("L01+00000SPB");
-        listOfTradingClearAcconts.add("TKCBM_TCAB");
-        listOfTradingClearAcconts.add("NDS000000001");
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountAAPL);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountNOK);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountLNT);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountFB);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountSTM);
         List<String> listOfQty = new ArrayList<>();
         listOfQty.add("30");
         listOfQty.add("35");
@@ -407,7 +411,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(Duration.ofSeconds(12)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -432,50 +436,51 @@ public class HandleCorpActionCommandTest {
         //Проверяем событие с stp-tracking-master-command
         checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
         //Получаем факт обработки дивиденда
-        List<ru.qa.tinkoff.investTracking.entities.Dividend> getListOfDividends = dividentDao.findAllDividend(contractIdMaster, strategyId);
-        ru.qa.tinkoff.investTracking.entities.Dividend getDividendNoK = getListOfDividends.stream()
-            .filter(ticker -> ticker.getContext().getExchangePositionId().getTicker().equals("NOK"))
-            .collect(Collectors.toList()).get(0);
-        ru.qa.tinkoff.investTracking.entities.Dividend getDividendAAPL = getListOfDividends.stream()
-            .filter(ticker -> ticker.getContext().getExchangePositionId().getTicker().equals("AAPL"))
-            .collect(Collectors.toList()).get(0);
-        int versionForAAPL = getDividendAAPL.getContext().getVersion();
-        int versionForNOK = getDividendNoK.getContext().getVersion();
-        //Проверяем выгрузку дивиденда
-        BigDecimal dividendAmountAAPL = calculateAmount("30", dividendNetAAPL);
-        BigDecimal dividendAmountNok = calculateAmount("35", dividendNetNOK);
-        checkDividend(portfolioCommand, getDividendNoK, dividendAmountNok);
-        //checkDividend(portfolioCommand, getDividendAAPL, dividendAmountAAPL);
-        //Увеличиваем baseMoney на величену дивиденда
-        BigDecimal newBasemoneyPositionForNOK;
-        BigDecimal newBasemoneyPositionForAAPL;
-        //Проверяем порядок обработки дивиденда
-        if (versionForAAPL > versionForNOK) {
-            newBasemoneyPositionForNOK = new BigDecimal(baseMoneyPortfolio).add(dividendAmountNok);
-            newBasemoneyPositionForAAPL = newBasemoneyPositionForNOK.add(dividendAmountAAPL);
-        }
-        else {
-            newBasemoneyPositionForAAPL = new BigDecimal(baseMoneyPortfolio).add(dividendAmountAAPL);
-            newBasemoneyPositionForNOK = newBasemoneyPositionForAAPL.add(dividendAmountNok);
-        }
-        //Получаем нужную версию портфеля
-        List<MasterPortfolio> masterPortfolios = masterPortfolioDao.getAllMasterPortfolio(contractIdMaster, strategyId);
-        MasterPortfolio masterPortfolioForNok = masterPortfolios.stream()
-            .filter(version -> version.getVersion().equals(versionForNOK))
-            .collect(Collectors.toList()).get(0);
-        MasterPortfolio masterPortfolioForAAPL = masterPortfolios.stream()
-            .filter(version -> version.getVersion().equals(versionForAAPL))
-            .collect(Collectors.toList()).get(0);
-        //Проверяем увеличение базовой валюты
-        checkMasterPortfolio(masterPortfolioForNok,  newBasemoneyPositionForNOK);
-        checkMasterPortfolio(masterPortfolioForAAPL,  newBasemoneyPositionForAAPL);
+        //Обработка в мастере
+//        List<ru.qa.tinkoff.investTracking.entities.Dividend> getListOfDividends = dividentDao.findAllDividend(contractIdMaster, strategyId);
+//        ru.qa.tinkoff.investTracking.entities.Dividend getDividendNoK = getListOfDividends.stream()
+//            .filter(ticker -> ticker.getContext().getExchangePositionId().getTicker().equals("NOK"))
+//            .collect(Collectors.toList()).get(0);
+//        ru.qa.tinkoff.investTracking.entities.Dividend getDividendAAPL = getListOfDividends.stream()
+//            .filter(ticker -> ticker.getContext().getExchangePositionId().getTicker().equals("AAPL"))
+//            .collect(Collectors.toList()).get(0);
+//        int versionForAAPL = getDividendAAPL.getContext().getVersion();
+//        int versionForNOK = getDividendNoK.getContext().getVersion();
+//        //Проверяем выгрузку дивиденда
+//        BigDecimal dividendAmountAAPL = calculateAmount("30", dividendNetAAPL);
+//        BigDecimal dividendAmountNok = calculateAmount("35", dividendNetNOK);
+//        checkDividend(portfolioCommand, getDividendNoK, dividendAmountNok);
+//        //checkDividend(portfolioCommand, getDividendAAPL, dividendAmountAAPL);
+//        //Увеличиваем baseMoney на величену дивиденда
+//        BigDecimal newBasemoneyPositionForNOK;
+//        BigDecimal newBasemoneyPositionForAAPL;
+//        //Проверяем порядок обработки дивиденда
+//        if (versionForAAPL > versionForNOK) {
+//            newBasemoneyPositionForNOK = new BigDecimal(baseMoneyPortfolio).add(dividendAmountNok);
+//            newBasemoneyPositionForAAPL = newBasemoneyPositionForNOK.add(dividendAmountAAPL);
+//        }
+//        else {
+//            newBasemoneyPositionForAAPL = new BigDecimal(baseMoneyPortfolio).add(dividendAmountAAPL);
+//            newBasemoneyPositionForNOK = newBasemoneyPositionForAAPL.add(dividendAmountNok);
+//        }
+//        //Получаем нужную версию портфеля
+//        List<MasterPortfolio> masterPortfolios = masterPortfolioDao.getAllMasterPortfolio(contractIdMaster, strategyId);
+//        MasterPortfolio masterPortfolioForNok = masterPortfolios.stream()
+//            .filter(version -> version.getVersion().equals(versionForNOK))
+//            .collect(Collectors.toList()).get(0);
+//        MasterPortfolio masterPortfolioForAAPL = masterPortfolios.stream()
+//            .filter(version -> version.getVersion().equals(versionForAAPL))
+//            .collect(Collectors.toList()).get(0);
+//        //Проверяем увеличение базовой валюты
+//        checkMasterPortfolio(masterPortfolioForNok,  newBasemoneyPositionForNOK);
+//        checkMasterPortfolio(masterPortfolioForAAPL,  newBasemoneyPositionForAAPL);
     }
 
 
     @SneakyThrows
     @Test
     @AllureId("1866174")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1866174.HandleCorpActionCommand. Исключаем инструмент из массива dividend, если dividend.payment_date НЕ входит в intervalForPayment")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -501,8 +506,8 @@ public class HandleCorpActionCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
 
-        List<String> listOfTickers = createTickerList("AAPL", "NOK", "LNT", "FB", "STM");
-        List<String> listOfTradingClearAcconts = createTradingClearAccountList("TKCBM_TCAB", "L01+00000SPB", "L01+00000SPB", "TKCBM_TCAB", "NDS000000001");
+        List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
@@ -556,7 +561,7 @@ public class HandleCorpActionCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1866182")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1866182.HandleCorpActionCommand. Кол-во инструмента по дивиденду <= 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -582,8 +587,8 @@ public class HandleCorpActionCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
 
-        List<String> listOfTickers = createTickerList("AAPL", "NOK", "LNT", "FB", "STM");
-        List<String> listOfTradingClearAcconts = createTradingClearAccountList("TKCBM_TCAB", "L01+00000SPB", "L01+00000SPB", "TKCBM_TCAB", "NDS000000001");
+        List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
@@ -631,7 +636,7 @@ public class HandleCorpActionCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1866182")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1866175.HandleCorpActionCommand. Нашли уже обработанный дивиденд")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -657,8 +662,8 @@ public class HandleCorpActionCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
 
-        List<String> listOfTickers = createTickerList("AAPL", "NOK", "LNT", "FB", "STM");
-        List<String> listOfTradingClearAcconts = createTradingClearAccountList("TKCBM_TCAB", "L01+00000SPB", "L01+00000SPB", "TKCBM_TCAB", "NDS000000001");
+        List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
@@ -714,7 +719,7 @@ public class HandleCorpActionCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1866180")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1866180.HandleCorpActionCommand. Не нашли позицию в портфеле мастера за период portfolio.changed_at (по МСК, округленный до даты) = дата last_buy_date")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -740,21 +745,21 @@ public class HandleCorpActionCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
 
-        List<String> listOfTickers = createTickerList("AAPL", "NOK", "LNT", "FB", "STM");
-        List<String> listOfTradingClearAcconts = createTradingClearAccountList("TKCBM_TCAB", "L01+00000SPB", "L01+00000SPB", "TKCBM_TCAB", "NDS000000001");
+        List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
 
         List<String> listOfTickersForCount = new ArrayList<>();
-        listOfTickersForCount.add("LNT");
-        listOfTickersForCount.add("FB");
-        listOfTickersForCount.add("STM");
+        listOfTickersForCount.add(instrument.tickerLNT);
+        listOfTickersForCount.add(instrument.tickerFB);
+        listOfTickersForCount.add(instrument.tickerSTM);
         List<String> listOfTradingClearAccontsForCount = new ArrayList<>();
-        listOfTradingClearAccontsForCount.add("L01+00000SPB");
-        listOfTradingClearAccontsForCount.add("TKCBM_TCAB");
-        listOfTradingClearAccontsForCount.add("NDS000000001");
+        listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountLNT);
+        listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountFB);
+        listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountSTM);
         List<String> listOfQtyForCount = new ArrayList<>();
         listOfQtyForCount.add("200");
         listOfQtyForCount.add("300");
@@ -801,7 +806,7 @@ public class HandleCorpActionCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1866164")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1866164.HandleCorpActionCommand.  Расчет суммы начисления дивидендов RUB по одному инструменту")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -879,7 +884,7 @@ public class HandleCorpActionCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1866182")
-    //@Tag("qa2")
+    @Tag("qa2")
     @DisplayName("C1873536.HandleCorpActionCommand. После округления amount = 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
@@ -905,8 +910,8 @@ public class HandleCorpActionCommandTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         //После округления получим ammount = 0, а по nok qty = 0
-        List<String> listOfTickers = createTickerList(instrument.tickerABBV, instrument.tickerAAPL, "LNT", "FB", "STM");
-        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountABBV, instrument.tradingClearingAccountAAPL, "L01+00000SPB", "TKCBM_TCAB", "NDS000000001");
+        List<String> listOfTickers = createTickerList(instrument.tickerABBV, instrument.tickerAAPL, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountABBV, instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
         List<String> listOfQty = createQtyList("1", "0", "100", "200", "300");
 
         createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
@@ -1131,7 +1136,10 @@ public class HandleCorpActionCommandTest {
     void createMockForAAPL (){
         LocalDate date = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String paymentDate = date.minusDays(6).format(formatter) + "T03:00:00+03:00";
+        //Для pay-dividend-processing-days = 7d
+        //String paymentDate = date.minusDays(6).format(formatter) + "T03:00:00+03:00";
+        //Для pay-dividend-processing-days = 1d
+        String paymentDate = date.format(formatter) + "T03:00:00+03:00";
         String lastBuyDate = date.minusDays(14).format(formatter) + "T03:00:00+03:00";
         getDividendsSteps.createGetDividends(getDividendsSteps.createBodyForAAPL(dividendNetAAPL, paymentDate, lastBuyDate));
     }
@@ -1140,5 +1148,12 @@ public class HandleCorpActionCommandTest {
     void createMockForGetDividendsWithOneItems (String ticker, String classCode, String dividendId, String instrumentId, String dividendNet, String dividendCurrency, String paymentDate, String lastBuyDate, String status){
                 getDividendsSteps.createGetDividends(getDividendsSteps.createBodyForGetDividendWithOneElement(ticker, classCode, dividendId, instrumentId,
                     dividendNet, dividendCurrency, paymentDate, lastBuyDate, status));
+    }
+
+    @Step("Создаем мок, для ответа метода account/public/v1/invest/siebel")
+    void createDataForMockRestAccount (String investIdMaster, String siebelIdMaster, String contractIdMaster){
+        //GetBrockerAccountBySiebelId
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdMaster, siebelIdMaster, contractIdMaster));
     }
 }
