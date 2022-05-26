@@ -15,6 +15,7 @@ import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioTopPositionsRowMapp
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -44,6 +45,17 @@ public class MasterPortfolioTopPositionsDao {
             "from invest_tracking.master_portfolio_top_positions " +
             "where strategy_id = ? ";
         return cqlTemplate.queryForObject(query, masterPortfolioTopPositionsRowMapper, strategyId);
+    }
+
+
+    @Step("Получение списка топ-позиций виртуального портфеля по strategy_id")
+    @SneakyThrows
+    public List<MasterPortfolioTopPositions> getMasterPortfolioTopPositionsList(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_top_positions " +
+            "where strategy_id = ? ";
+        List <MasterPortfolioTopPositions> result = cqlTemplate.query(query, masterPortfolioTopPositionsRowMapper, strategyId);
+        return result;
     }
 
 

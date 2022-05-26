@@ -8,12 +8,14 @@ import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
+import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.LongOnlyValueMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioMaxDrawdownRowMapper;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -30,6 +32,17 @@ public class MasterPortfolioMaxDrawdownDao {
             "from invest_tracking.master_portfolio_max_drawdown " +
             "where strategy_id = ? ";
         return cqlTemplate.queryForObject(query, masterPortfolioMaxDrawdownRowMapper, strategyId);
+    }
+
+
+    @Step("Поиск портфелей в cassandra по strategyId")
+    @SneakyThrows
+    public List <MasterPortfolioMaxDrawdown> getMasterPortfolioMaxDrawdownList(UUID strategyId) {
+        String query = "select * " +
+            "from invest_tracking.master_portfolio_max_drawdown " +
+            "where strategy_id = ? ";
+        List<MasterPortfolioMaxDrawdown> result = cqlTemplate.query(query, masterPortfolioMaxDrawdownRowMapper, strategyId);
+        return result;
     }
 
     @Step("Поиск портфеля в cassandra по contractId и strategyId")

@@ -42,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -151,8 +152,18 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
 
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE)
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.frozen, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.frozen, LocalDateTime.now())
+        );
+    }
+
+
+    private static Stream<Arguments> provideStrategyStatus() {
+        return Stream.of(
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now())
         );
     }
 
@@ -163,12 +174,12 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @DisplayName("C983303.CalculateMasterPortfolioMaxDrawdown.Пересчет максимальной просадки master-портфеля")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
-    void C983303(Tracking.AnalyticsCommand.Operation operation) {
+    void C983303(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 29, 4, "304896.31");
@@ -212,7 +223,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -227,12 +238,12 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         " Выбор данных по условию")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
-    void C983084(Tracking.AnalyticsCommand.Operation operation) {
+    void C983084(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
 
         createDateMasterPortfolioValue(strategyId, 370, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 369, 2, "198478.67");
@@ -293,12 +304,12 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         " ни одной записи не найдено")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
-    void C983216(Tracking.AnalyticsCommand.Operation operation) {
+    void C983216(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         createDateMasterPortfolioValue(strategyId, 370, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 369, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 3, 5, "107269.99");
@@ -340,12 +351,12 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         " определяем логику расчета в зависимости от параметра operation")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
-    void C980851(Tracking.AnalyticsCommand.Operation operation) {
+    void C980851(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 15, 4, "178475.64");
@@ -359,7 +370,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         OffsetDateTime cutTime = OffsetDateTime.now().minusDays(4);
         //создаем команду
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
-            operation, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_MAX_DRAWDOWN,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_MAX_DRAWDOWN,
             strategyIdByte);
         log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
         //кодируем событие по protobuff схеме и переводим в byteArray
@@ -414,6 +425,46 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdownNew, cutTime);
+
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
+    @AllureId("1886641")
+    @DisplayName("1886641 Пересчет максимальной просадки master-портфеля. Strategy.status NOT IN (active, frozen)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
+    void C1886641(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, time);
+        createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
+        createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
+        createDateMasterPortfolioValue(strategyId, 15, 4, "178475.64");
+        createDateMasterPortfolioValue(strategyId, 15, 1, "199580.35");
+        createDateMasterPortfolioValue(strategyId, 12, 4, "176315.88");
+        createDateMasterPortfolioValue(strategyId, 10, 1, "177213.69");
+        createDateMasterPortfolioValue(strategyId, 7, 1, "177868.12");
+        createDateMasterPortfolioValue(strategyId, 5, 3, "196845.36");
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now().minusDays(4);
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_MAX_DRAWDOWN,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        List <MasterPortfolioMaxDrawdown> masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownList(strategyId);
+        //проверяем параметры
+        assertThat("найдена запись", masterPortfolioMaxDrawdown.size(), is(0));
 
     }
 

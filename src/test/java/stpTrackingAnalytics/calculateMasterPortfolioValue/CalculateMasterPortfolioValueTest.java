@@ -153,20 +153,41 @@ public class CalculateMasterPortfolioValueTest {
         );
     }
 
+    private static Stream<Arguments> provideStrategyStatus() {
+        return Stream.of(
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.frozen, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.frozen, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.draft, null)
+        );
+    }
+
+
+    private static Stream<Arguments> provideStrategyNotDraft() {
+        return Stream.of(
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.active, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.frozen, LocalDateTime.now()),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.frozen, LocalDateTime.now())
+        );
+    }
+
     @SneakyThrows
     @ParameterizedTest
-    @MethodSource("provideAnalyticsCommand")
+    @MethodSource("provideStrategyStatus")
     @AllureId("836966")
     @DisplayName("C836966.CalculateMasterPortfolioValue.Расчет стоимости виртуального портфеля, " +
         "если operation = 'CALCULATE', отсутствуют позиции в портфеле")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
-    void C836966(Tracking.AnalyticsCommand.Operation operation) {
+    void C836966(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         String baseMoney = "16551.10";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         OffsetDateTime timeChangedAt = OffsetDateTime.now();
@@ -283,19 +304,19 @@ public class CalculateMasterPortfolioValueTest {
 
     @SneakyThrows
     @ParameterizedTest
-    @MethodSource("provideAnalyticsCommand")
+    @MethodSource("provideStrategyNotDraft")
     @AllureId("842615")
     @DisplayName("C842615.CalculateMasterPortfolioValue.Расчет стоимости виртуального портфеля" +
         " с разными инструментами: share, bond, etf, money")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
-    void C842615(Tracking.AnalyticsCommand.Operation operation) {
+    void C842615(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, time);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -854,6 +875,44 @@ public class CalculateMasterPortfolioValueTest {
         LocalDateTime cutInCommand = LocalDateTime.ofInstant(cutTime.toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1886707")
+    @DisplayName("1886707 CalculateMasterPortfolioValue. Strategy.status NOT IN (active, frozen, draft)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
+    void C1886707() {
+        String baseMoney = "16551.10";
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.closed, 0, LocalDateTime.now());
+        List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
+        OffsetDateTime timeChangedAt = OffsetDateTime.now();
+        Date changedAt = Date.from(timeChangedAt.minusDays(5).toInstant());
+        // создаем портфель с пустыми позициями
+        steps.createMasterPortfolioWithChangedAt(contractIdMaster, strategyId, positionListMaster, 4, baseMoney, changedAt);
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_VALUE, strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+        BigDecimal valuePortfolio = (new BigDecimal(baseMoney));
+        log.info("valuePortfolio:  {}", valuePortfolio);
+        //Получаем список записей
+        await().pollDelay(Duration.ofMillis(500));
+        List<MasterPortfolioValue> masterPortfolioValue = masterPortfolioValueDao.getListMasterPortfolioValueByStrategyIdAndSortedByCut(strategyId);
+        assertThat("value стоимости портфеля не равно", masterPortfolioValue.size(), is(0));
     }
 
 
