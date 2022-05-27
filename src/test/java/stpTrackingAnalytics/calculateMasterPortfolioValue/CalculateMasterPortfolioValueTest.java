@@ -37,6 +37,7 @@ import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.*;
@@ -509,6 +510,67 @@ public class CalculateMasterPortfolioValueTest {
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         assertThat("minimum_value портфеля не равно", masterPortfolioValue.getMinimumValue().toString(), is("5000"));
+    }
+
+
+
+    private static Stream<Arguments> provideBaseMoneyParams() {
+        return Stream.of(
+            Arguments.of("14250", "1000", StrategyCurrency.rub),
+            Arguments.of("142500", "5000", StrategyCurrency.rub),
+            Arguments.of("380000", "10000", StrategyCurrency.rub),
+            Arguments.of("950000", "200000", StrategyCurrency.rub),
+            Arguments.of("4750000", "500000", StrategyCurrency.rub),
+            Arguments.of("18050000", "2000000", StrategyCurrency.rub),
+            Arguments.of("20050000", "10000000", StrategyCurrency.rub),
+
+            Arguments.of("65", "10", StrategyCurrency.usd),
+            Arguments.of("900", "50", StrategyCurrency.usd),
+            Arguments.of("9500", "100", StrategyCurrency.usd),
+            Arguments.of("14250", "3000", StrategyCurrency.usd),
+            Arguments.of("66500", "7000", StrategyCurrency.usd),
+            Arguments.of("275500", "40000", StrategyCurrency.usd),
+            Arguments.of("300000", "150000", StrategyCurrency.usd)
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideBaseMoneyParams")
+    @AllureId("1889974")
+    @DisplayName("1889974 CalculateMasterPortfolioValue.Не найдена запись в таблице master_portfolio_value. Проверка сетки (rub, usd)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
+    void C1889974(String baseMoney, String minValue, StrategyCurrency currency ) {
+        UUID strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, currency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем записи по портфелям
+        steps.createMasterPortfolioWithOutPosition(20, 3, baseMoney, contractIdMaster, strategyId);
+        ByteString strategyIdByte = steps.byteString(strategyId);
+        OffsetDateTime createTime = OffsetDateTime.now();
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        //создаем команду CALCULATE
+        Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
+            Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.MASTER_PORTFOLIO_VALUE,
+            strategyIdByte);
+        log.info("Команда в tracking.analytics.command:  {}", calculateCommand);
+        //кодируем событие по protobuff схеме и переводим в byteArray
+        byte[] eventBytes = calculateCommand.toByteArray();
+        byte[] keyBytes = strategyIdByte.toByteArray();
+        //отправляем событие в топик kafka tracking.analytics.command
+        byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
+
+        BigDecimal valuePortfolio = new BigDecimal(baseMoney);
+        log.info("valuePortfolio:  {}", valuePortfolio);
+
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+            masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
+        BigDecimal recommendValue = valuePortfolio.add(valuePortfolio.multiply(new BigDecimal(0.05)));
+        assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
+        assertThat("minimum_value портфеля не равно", masterPortfolioValue.getMinimumValue().toString(), is(minValue));
     }
 
 
