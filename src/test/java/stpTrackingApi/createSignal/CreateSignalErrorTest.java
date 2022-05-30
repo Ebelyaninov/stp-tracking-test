@@ -1967,6 +1967,49 @@ public class CreateSignalErrorTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("1888691")
+    @DisplayName("1888691 Не найден торговый статус позиции в в кэше exchangePositionTradingStatusCache")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1888691() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        int quantityRequest = 3;
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerNOK, instrument.tradingClearingAccountNOK, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем тело ошибки
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        adminSteps.checkErrors(errorResponse, "Error", "Сервис временно недоступен");
+    }
+
 
     //*** Методы для работы тестов ***
     //метод находит подходящий siebelId в сервисе счетов и создаем запись по нему в табл. tracking.client

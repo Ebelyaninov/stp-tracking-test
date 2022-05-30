@@ -468,7 +468,7 @@ public class CreateStrategySuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод создания стратегии на договоре ведущего")
     void C615712() throws Exception {
-        String SIEBEL_ID = "5-20IBIUPTE";
+//        String SIEBEL_ID = "5-20IBIUPTE";
         String title = "Тест стратегия 007";
         String description = "Тew test стратегия Autotest 007 - INITIALIZE";
         String positionRetentionId = "days";

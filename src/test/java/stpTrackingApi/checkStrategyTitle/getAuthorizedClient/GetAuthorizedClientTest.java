@@ -1,4 +1,4 @@
-package stpTrackingApi.getAuthorizedClient;
+package stpTrackingApi.checkStrategyTitle.getAuthorizedClient;
 
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
