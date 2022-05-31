@@ -195,8 +195,8 @@ public class CalculateStrategyTailValueTest {
 
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE)
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.active),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.frozen)
         );
     }
 
@@ -209,11 +209,11 @@ public class CalculateStrategyTailValueTest {
     @DisplayName("C1316557.CalculateStrategyTailValue.Портфель slave попадает на заданную метку времени среза")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1316557(Tracking.AnalyticsCommand.Operation operation) {
+    void C1316557(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -288,11 +288,11 @@ public class CalculateStrategyTailValueTest {
     @DisplayName("C1351693.CalculateStrategyTailValue.Сhanged_at <= cut")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1351693(Tracking.AnalyticsCommand.Operation operation) {
+    void C1351693(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -359,11 +359,11 @@ public class CalculateStrategyTailValueTest {
     @DisplayName("C1352912.CalculateStrategyTailValue.Сhanged_at <= cut.EndSubscribtion")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1352912(Tracking.AnalyticsCommand.Operation operation) {
+    void C1352912(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(3);
@@ -435,11 +435,11 @@ public class CalculateStrategyTailValueTest {
     @DisplayName("C983303.CalculateStrategyTailValue.Пересчет объема хвоста стратегии")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C983303_444(Tracking.AnalyticsCommand.Operation operation) {
+    void C983303_444(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(3);
@@ -475,11 +475,11 @@ public class CalculateStrategyTailValueTest {
     @DisplayName("C1352954.CalculateStrategyTailValue.Ни одной подписки не было найдено, totalValue = 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1352954(Tracking.AnalyticsCommand.Operation operation) {
+    void C1352954(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now());
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -551,7 +551,7 @@ public class CalculateStrategyTailValueTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.frozen, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -652,7 +652,7 @@ public class CalculateStrategyTailValueTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.frozen, 0, LocalDateTime.now());
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -715,8 +715,6 @@ public class CalculateStrategyTailValueTest {
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
         assertThat("value стоимости портфеля не равно", strategyTailValue.getValue(), is(valuePortfolio));
     }
-
-
 
 
     List<String> getIntrumentdate(String ticker, String classCode, String date) {
@@ -786,7 +784,7 @@ public class CalculateStrategyTailValueTest {
         List<SlavePortfolio.Position> positionListTwoThree = steps.createListSlavePositionWithThreePosLight(instrument.tickerSBER, instrument.tradingClearingAccountSBER,
             steps.quantitySBER, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
-            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()))            ;
+            steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 4, 4,
             baseMoneySlaveThree, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), positionListTwoThree);
         String baseMoneySlaveFour = "3993.13";
@@ -794,7 +792,7 @@ public class CalculateStrategyTailValueTest {
             steps.quantitySBERZero, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(15).toInstant()), instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
             steps.quantitySU29009RMFS6, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10).toInstant()), instrument.tickerLKOH, instrument.tradingClearingAccountLKOH,
             steps.quantityLKOH, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerESGR, instrument.tradingClearingAccountESGR,
-            steps.quantityESGRZero, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()))            ;
+            steps.quantityESGRZero, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 5, 4,
             baseMoneySlaveFour, Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()), positionListFour);
 
