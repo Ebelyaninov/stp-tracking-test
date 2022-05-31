@@ -228,8 +228,8 @@ public class CalculateStrategyTailDiffRateTest {
 
     private static Stream<Arguments> provideAnalyticsCommand() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE)
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.frozen),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.active)
         );
     }
 
@@ -241,11 +241,11 @@ public class CalculateStrategyTailDiffRateTest {
     @DisplayName("C1530868.CalculateStrategyTailDiffRate.Пересчитывает кривизну 'хвоста' стратегии на заданную метку времени")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1530868(Tracking.AnalyticsCommand.Operation operation) {
+    void C1530868(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,
@@ -300,11 +300,11 @@ public class CalculateStrategyTailDiffRateTest {
         "Сhanged_at <= cut")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1532791(Tracking.AnalyticsCommand.Operation operation) {
+    void C1532791(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,
@@ -358,11 +358,11 @@ public class CalculateStrategyTailDiffRateTest {
     @DisplayName("C1530698.CalculateStrategyTailValue.Портфель slave попадает на заданную метку времени среза")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1530698(Tracking.AnalyticsCommand.Operation operation) {
+    void C1530698(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -396,11 +396,11 @@ public class CalculateStrategyTailDiffRateTest {
     @DisplayName("C1531377.CalculateStrategyTailDiffRate.Не найдена запись по портфелю в changed_at_slave_portfolio")
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1531377(Tracking.AnalyticsCommand.Operation operation) {
+    void C1531377(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,
@@ -453,11 +453,11 @@ public class CalculateStrategyTailDiffRateTest {
     @DisplayName("C1531774.CalculateStrategyTailDiffRate.Пересчитывает кривизну 'хвоста' стратегии на заданную метку времени.PortfolioValue = 0")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1531774(Tracking.AnalyticsCommand.Operation operation) {
+    void C1531774(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,
@@ -511,11 +511,11 @@ public class CalculateStrategyTailDiffRateTest {
     @DisplayName("C1534083.CalculateStrategyTailDiffRate.Пересчитывает кривизну 'хвоста' стратегии на заданную метку времени.Нет позиций")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает объем хвоста обрабатываемой стратегии (стоимость всех slave-портфелей, подписанных на нее) на заданную метку времени.")
-    void C1534083(Tracking.AnalyticsCommand.Operation operation) {
+    void C1534083(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            status, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,
@@ -627,7 +627,7 @@ public class CalculateStrategyTailDiffRateTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+            StrategyStatus.frozen, 0, LocalDateTime.now().minusDays(30));
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(20);
         steps.createSubcriptionWithBlocked(investIdSlaveOne, contractIdSlaveOne, null, ContractState.tracked,

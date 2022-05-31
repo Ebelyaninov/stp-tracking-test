@@ -18,17 +18,24 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.SignalFrequency;
-import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
-import ru.qa.tinkoff.investTracking.services.SignalFrequencyDao;
-import ru.qa.tinkoff.investTracking.services.SignalsCountDao;
+import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingAnalyticsStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.enums.ContractState;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
+import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
+
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -62,8 +69,10 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_ANALYTICS_COMMAND;
     KafkaAutoConfiguration.class,
     StpTrackingAnalyticsStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
+
 public class СalculateSignalFrequencyTest {
     @Autowired
     ByteToByteSenderService byteToByteSenderService;
@@ -77,9 +86,56 @@ public class СalculateSignalFrequencyTest {
     StpTrackingAnalyticsSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel siebel;
+    @Autowired
+    SubscriptionService subscriptionService;
+    @Autowired
+    ClientService clientService;
+    @Autowired
+    ContractService contractService;
+    @Autowired
+    MasterPortfolioDao masterPortfolioDao;
+    @Autowired
+    SlavePortfolioDao slavePortfolioDao;
+    @Autowired
+    SlaveOrderDao slaveOrderDao;
+    @Autowired
+    StrategyService strategyService;
+    @Autowired
+    ExchangePositionService exchangePositionService;
+    @Autowired
+    TrackingService trackingService;
+    @Autowired
+    MasterPortfolioValueDao masterPortfolioValueDao;
+    @Autowired
+    StrategyTailValueDao strategyTailValueDao;
+
+
     UUID strategyId;
     SignalFrequency signalFrequency;
+    String contractIdMaster;
+    Client clientSlave;
+    String contractIdSlave;
+    UUID investIdSlave;
+    UUID investIdMaster;
 
+
+    @BeforeAll
+    void getDataClients() {
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту master в api сервиса счетов
+
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlaveOne = steps.getBrokerAccounts(siebel.siebelIdAnalyticsSlaveOne);
+        investIdSlave = resAccountSlaveOne.getInvestId();
+        contractIdSlave = resAccountSlaveOne.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(contractIdSlave, investIdSlave);
+        steps.deleteDataFromDb(contractIdMaster, investIdMaster);
+    }
 
 
     @AfterEach
@@ -93,13 +149,57 @@ public class СalculateSignalFrequencyTest {
                 signalFrequencyDao.deleteSignalFrequencyByStrategyId(strategyId);
             } catch (Exception e) {
             }
+            try {
+                subscriptionService.deleteSubscription(steps.subscription);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(steps.contractSlave);
+            } catch (Exception e) {
+            }
+            try {
+                clientSlave = clientService.getClient(steps.clientSlave.getId());
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(steps.clientSlave);
+            } catch (Exception e) {
+            }
+            try {
+                trackingService.deleteStrategy(steps.strategy);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(steps.contractMaster);
+            } catch (Exception e) {
+            }
+            try {
+                clientService.deleteClient(steps.clientMaster);
+            } catch (Exception e) {
+            }
+            try {
+                masterPortfolioDao.deleteMasterPortfolio(contractIdMaster, strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                slavePortfolioDao.deleteSlavePortfolio(contractIdSlave, strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                slaveOrderDao.deleteSlaveOrder(contractIdSlave, strategyId);
+            } catch (Exception e) {
+            }
+            try {
+                strategyTailValueDao.deleteStrategyTailValueByStrategyId(strategyId);
+            } catch (Exception e) {
+            }
         });
     }
 
     private static Stream<Arguments> cutTimeCalculate() {
         return Stream.of(
-            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now()),
-            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now().minusDays(3))
+            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now(), StrategyStatus.active),
+            Arguments.of(OffsetDateTime.now(), OffsetDateTime.now().minusDays(3), StrategyStatus.frozen)
         );
     }
 
@@ -110,12 +210,15 @@ public class СalculateSignalFrequencyTest {
     @DisplayName("C830184.CalculateSignalFrequency.Пересчет частоты создания сигналов, если operation = 'CALCULATE'")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
-    void C830184(OffsetDateTime createTime, OffsetDateTime cutTime) {
-        strategyId = UUID.randomUUID();
+    void C830184(OffsetDateTime createTime, OffsetDateTime cutTime, StrategyStatus status) {
+
         log.info("strategyId:  {}", strategyId);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, LocalDateTime.now());
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
-//        Thread.sleep(5000);
         ByteString strategyIdByte = byteString(strategyId);
         Tracking.AnalyticsCommand calculateCommand = steps.createCommandAnalytics(createTime, cutTime,
             Tracking.AnalyticsCommand.Operation.CALCULATE, Tracking.AnalyticsCommand.Calculation.SIGNAL_FREQUENCY,
@@ -148,9 +251,13 @@ public class СalculateSignalFrequencyTest {
     @DisplayName("C832253.CalculateSignalFrequency.Пересчет частоты создания сигналов, если operation = 'RECALCULATE'")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
-    void C832253(OffsetDateTime createTime, OffsetDateTime cutTime) {
-        strategyId = UUID.randomUUID();
+    void C832253(OffsetDateTime createTime, OffsetDateTime cutTime, StrategyStatus status) {
+
         log.info("strategyId:  {}", strategyId);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            status, 0, LocalDateTime.now());
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
@@ -185,8 +292,11 @@ public class СalculateSignalFrequencyTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C835569() {
-        strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
@@ -237,8 +347,11 @@ public class СalculateSignalFrequencyTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C835781() {
-        strategyId = UUID.randomUUID();
         log.info("strategyId:  {}", strategyId);
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.frozen, 0, LocalDateTime.now());
         //создаем записи по сигналу на разные позиции
         createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
