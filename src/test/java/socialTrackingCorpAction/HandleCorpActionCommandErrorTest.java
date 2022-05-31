@@ -131,7 +131,8 @@ public class HandleCorpActionCommandErrorTest {
     UUID strategyId;
     UUID investIdMaster;
     String dividendNetXS0191754729 = "3.375";
-    String dividendIdXS0191754729 = "34333";
+    String dividendNetAAPL = "0.22";
+    String dividendIdAAPL = "486669";
     String paymentDate;
     String lastBuyDate;
     final String tickerNotFound = "TESTTEST";
@@ -154,8 +155,7 @@ public class HandleCorpActionCommandErrorTest {
         paymentDate = localDateNow + "T03:00:00+03:00";
         lastBuyDate = localDateNow.minusDays(14).format(formatter) + "T03:00:00+03:00";
         getDividendsSteps.clearGetDevidends();
-        createMockForGetDividendsWithOneItems(instrument.tickerXS0191754729, instrument.classCodeXS0191754729, dividendIdXS0191754729, "1911",
-            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
+        createMockForAAPL();
         createMockForGetDividendsWithOneItems(tickerNotFound, instrument.classCodeXS0191754729, "228", "191121",
             dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
     }
@@ -219,12 +219,12 @@ public class HandleCorpActionCommandErrorTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -273,12 +273,12 @@ public class HandleCorpActionCommandErrorTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -294,7 +294,7 @@ public class HandleCorpActionCommandErrorTest {
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в таблице dividend
         List<Dividend> dividendList = dividendService.getDividend(strategyId);
-        checkdDividend(dividendList, dividendIdXS0191754729);
+        checkdDividend(dividendList, dividendIdAAPL);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
             .filter(key -> key.getKey().equals(contractIdMaster))
@@ -410,13 +410,14 @@ public class HandleCorpActionCommandErrorTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
+
         createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
         createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +2, version +2,
-            baseMoneyPortfolio, Date.from(lastBuyDateParsed.toInstant()));
+        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +2, version +2,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
@@ -431,14 +432,14 @@ public class HandleCorpActionCommandErrorTest {
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в таблице dividend
         List<Dividend> dividendList = dividendService.getDividend(strategyId);
-        checkdDividend(dividendList, dividendIdXS0191754729);
-        assertThat("Кол-во двидендов != 1", dividendList.size(), is(1));
+//        checkdDividend(dividendList, dividendIdAAPL);
+        assertThat("Кол-во двидендов != 0", dividendList.size(), is(0));
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
             .filter(key -> key.getKey().equals(contractIdMaster))
             .collect(Collectors.toList());
         //Проверяем отправку событий
-        assertThat("Нашли событие в топике только 1", messages.size(), is(1));
+        assertThat("Нашли событие в топике только 1", messages.size(), is(0));
     }
 
 
@@ -557,5 +558,17 @@ public class HandleCorpActionCommandErrorTest {
         //GetBrockerAccountBySiebelId
         mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
         mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdMaster, siebelIdMaster, contractIdMaster));
+    }
+
+    @Step("Создаем мок, для AAPL с 3 items")
+    void createMockForAAPL (){
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        //Для pay-dividend-processing-days = 7d
+        //String paymentDate = date.minusDays(6).format(formatter) + "T03:00:00+03:00";
+        //Для pay-dividend-processing-days = 1d
+        String paymentDate = date.format(formatter) + "T03:00:00+03:00";
+        String lastBuyDate = date.minusDays(14).format(formatter) + "T03:00:00+03:00";
+        getDividendsSteps.createGetDividends(getDividendsSteps.createBodyForAAPL(dividendNetAAPL, paymentDate, lastBuyDate));
     }
 }

@@ -148,10 +148,12 @@ public class HandleCorpActionCommandTest {
     String dividendNetNOK = "0.0375";
     String dividendNetABBV = "0.00001";
     String dividendNetSBER = "18.7";
+    String dividendNetXS0191754729 = "3.375";
     String dividendIdAAPL = "486669";
     String dividendIdNOK = "3433";
     String dividendIdSBER = "525076";
     String dividendIdABBV = "524362";
+    String dividendIdXS0191754729 = "11113";
     String paymentDate;
     String lastBuyDate;
 
@@ -193,6 +195,8 @@ public class HandleCorpActionCommandTest {
             "0.4275", "usd", paymentDateMinusDay, lastBuyDate, "READY");
         createMockForGetDividendsWithOneItems(instrument.tickerABBV, instrument.classCodeABBV, dividendIdABBV, "2268",
             dividendNetABBV, "usd", paymentDate, lastBuyDate, "READY");
+        createMockForGetDividendsWithOneItems(instrument.tickerXS0191754729, instrument.classCodeXS0191754729, dividendIdXS0191754729, "2017",
+            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
     }
 
     @AfterEach
@@ -229,6 +233,7 @@ public class HandleCorpActionCommandTest {
 
         });
     }
+
 
     @SneakyThrows
     @Test
@@ -340,7 +345,7 @@ public class HandleCorpActionCommandTest {
         assertThat("запись по стратегии не равно", corpActionOpt.isPresent(), is(false));
     }
 
-    //ToDo тест не работает на qa2 из-за сервиса master, его отключили
+    //ToDo часть теста, с проверкой данных в касандре не работает на qa2, из-за сервиса master, его отключили
     @SneakyThrows
     @Test
     @AllureId("1873898")
@@ -474,6 +479,95 @@ public class HandleCorpActionCommandTest {
 //        //Проверяем увеличение базовой валюты
 //        checkMasterPortfolio(masterPortfolioForNok,  newBasemoneyPositionForNOK);
 //        checkMasterPortfolio(masterPortfolioForAAPL,  newBasemoneyPositionForAAPL);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1892424")
+    @Tag("qa2")
+    @DisplayName("1892424 Отфильтровываем инструмент из exchangePositionCache, если type NOT IN (etf, share)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1892424() {
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 2;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем   портфель ведущего  в кассандре c позицией
+        String quantityPos = "4";
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime utc = OffsetDateTime.now(UTC);
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        Date date = Date.from(utc.toInstant());
+        //Создаем запись в мастер портфеле
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
+            baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, "20", positionAction, version +1, version +1,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
+
+        List<String> listOfTickers = new ArrayList<>();
+        listOfTickers.add(instrument.tickerXS0191754729);
+        listOfTickers.add(instrument.tickerNOK);
+
+        List<String> listOfTradingClearAcconts = new ArrayList<>();
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountXS0191754729);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountNOK);
+
+        List<String> listOfQty = new ArrayList<>();
+        listOfQty.add("30");
+        listOfQty.add("35");
+
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +3, version +3,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityPos, positionAction, version +4, version +4,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityPos, positionAction, version +5, version +5,
+            baseMoneyPortfolio, date);
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(12)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        assertThat("Нашли больше 1 записи в dividend", dividendList.size(), is(1));
+        checkdDividend(dividendList, dividendIdNOK);
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        //to list или проверить size
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Проверяем отправку 2 событий
+        assertThat("Нашли не 1 событие в топике", messages.size(), is(1));
+        String key = message.getKey();
+        //Проверяем событие с stp-tracking-master-command
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
     }
 
 
