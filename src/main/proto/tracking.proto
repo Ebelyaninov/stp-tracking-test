@@ -121,6 +121,8 @@ message Strategy {
     DRAFT = 0;
     // Активная
     ACTIVE = 1;
+    //Приостановленная (замороженная)
+    FROZEN = 2;
   }
 
 }

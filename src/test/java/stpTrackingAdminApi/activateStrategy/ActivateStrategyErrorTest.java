@@ -8,7 +8,9 @@ import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,18 +37,22 @@ import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.model.Currency;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
+import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.enums.ContractState;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
-import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
-import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
+import ru.qa.tinkoff.tracking.entities.Strategy;
+import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -285,6 +291,9 @@ public class ActivateStrategyErrorTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = responseActiveStrategy.as(ErrorResponse.class);
+        assertThat("код ошибки не равно", errorResponse.getErrorCode(), is("0344-01-B01"));
+        assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Стратегия не найдена"));
     }
 
 
@@ -439,6 +448,51 @@ public class ActivateStrategyErrorTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Не найдена стоимость master портфеля"));
     }
 
+
+    private static Stream<Arguments> strategyNotFoundStatus () {
+        return Stream.of(
+            Arguments.of(StrategyStatus.frozen),
+            Arguments.of(StrategyStatus.closed)
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("strategyNotFoundStatus")
+    @SneakyThrows
+    @AllureId("1891413")
+    @DisplayName("C1891413.ActivateStrategy. Активация стратегии без выполнения условий наличия стратегии или статусe frozen / closed")
+    @Description("Метод для администратора для активации (публикации) стратегии.")
+    void C1891413(StrategyStatus strategyStatus) {
+        String title = steps.getTitleStrategy();
+        strategyId = UUID.randomUUID();
+        //Создаем клиента контракт и стратегию в БД tracking: client, contract, strategy в статусе draft
+        steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        // создаем портфель для master в cassandra
+        List<MasterPortfolio.Position> masterPos = new ArrayList<>();
+        steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
+        //создаем запись в табл.master_portfolio_value  по стоимости портфеля
+        createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
+        //Вызываем метод activateStrategy
+        Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = responseActiveStrategy.as(ErrorResponse.class);
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertThat("код ошибки не равно", errorResponse.getErrorCode(), is("0344-01-B18"));
+        assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Не найдена стратегия в strategy или не подходит под условия"));
+        Strategy strategy = strategyService.findStrategyByContractId(contractId).get();
+        assertThat("Обновили статус стратегии", strategy.getStatus(), is(strategyStatus));
+    }
 
 
 
