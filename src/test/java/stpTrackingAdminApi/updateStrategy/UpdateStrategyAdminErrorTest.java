@@ -973,19 +973,27 @@ public class UpdateStrategyAdminErrorTest {
     }
 
 
-    @Test
-    @AllureId("1363710")
-    @DisplayName("C1363710.UpdateStrategy. Один из элементов массива tests не входит в список из настройки strategy-test-ids")
+
+    private static Stream<Arguments> updateStrategyInStatuses() {
+        return Stream.of(
+            Arguments.of(null, "tracking_admin"),
+            Arguments.of("trading-invest", null)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("updateStrategyInStatuses")
+    @AllureId("1890119")
+    @DisplayName("C1890119.UpdateStrategy. Апдейт status стратегии в статусе draft / closed")
     @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
-    void C1363710() {
+    void C1890119() {
         int randomNumber = 0 + (int) (Math.random() * 100);
         String title = "Autotest" + String.valueOf(randomNumber);
-        String description = "Стратегия Autotest 114 - Описание";
+        String description = "Стратегия Autotest 112 - Описание";
         Integer score = 1;
-        String titleUpdate = "Стратегия Autotest 114 - Обновленный Заголовок";
-        String descriptionUpdate = "Стратегия Autotest 114 - Обновленное Описание";
-        Integer scoreUpdate = null;
-        //Создаем клиента в tracking: client, contract, strategy
+        String titleUpdate = "Стратегия Autotest 112 - Обновленный Заголовок";
+        String descriptionUpdate = "Стратегия Autotest 112 - Обновленное Описание";
+        //Создаем клиента в БД tracking: client, contract, strategy
         UUID strategyId = UUID.randomUUID();
         GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
             .siebelIdPath(siebel.siebelIdAdmin)
@@ -1001,17 +1009,66 @@ public class UpdateStrategyAdminErrorTest {
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04");
-        List<StrategyTest> tests = new ArrayList<>();
-        tests.add(new StrategyTest().id("derivative"));
-        tests.add(new StrategyTest().id("structured_bonds"));
-        tests.add(new StrategyTest().id("closed_fund2"));
-        tests.add(new StrategyTest().id("bond"));
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
+        owner.setDescription("OwnerTEST100");
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setDescription(descriptionUpdate);
+        updateStrategyRequest.setOwner(owner);
+        updateStrategyRequest.setExpectedRelativeYield(expectedRelativeYield);
+        updateStrategyRequest.setShortDescription("TEST100");
+        //Вызываем метод updateStrategy
+        Response expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath("84144088-7caa-44d2-a988-88cf46d28888")
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем, что в response есть заголовки x-trace-id и x-server-time
+        assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
+        assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
+    }
+
+    private static Stream<Arguments> provideStringsForSubscriptionStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.draft),
+            Arguments.of(StrategyStatus.closed)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStringsForSubscriptionStatus")
+    @AllureId("1363710")
+    @DisplayName("C1363710.UpdateStrategy. Один из элементов массива tests не входит в список из настройки strategy-test-ids")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C1363710(StrategyStatus strategyStatus) {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "Стратегия Autotest 114 - Описание";
+        Integer score = 1;
+        //Создаем клиента в tracking: client, contract, strategy
+        UUID strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .isBlockedQuery(false)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
-        updateStrategyRequest.setTitle(titleUpdate);
-        updateStrategyRequest.setDescription(descriptionUpdate);
-        updateStrategyRequest.setScore(scoreUpdate);
-        updateStrategyRequest.setTests(tests);
+        updateStrategyRequest.setStatus(UpdateStrategyRequest.StatusEnum.ACTIVE);
         //Вызываем метод updateStrategy
         ErrorResponse expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -1023,12 +1080,70 @@ public class UpdateStrategyAdminErrorTest {
             .body(updateStrategyRequest)
             .respSpec(spec -> spec.expectStatusCode(400))
             .execute(response -> response.as(ErrorResponse.class));
-        assertThat("номера стратегии не равно", expectedResponse.getErrorMessage(), is("Указано недопустимое тестирование"));
-        assertThat("номера стратегии не равно", expectedResponse.getErrorCode(), is("0344-03-V05"));
+        assertThat("ErrorMessage не равно", expectedResponse.getErrorMessage(), is("Текущий статус стратегии нельзя обновить на запрашиваемый"));
+        assertThat("ErrorCode не равно", expectedResponse.getErrorCode(), is("0344-03-V14"));
         //Находим в БД автоследования стратегию и Проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamDB(strategyId, contractId, title, description, score, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE);
+        checkParamDB(strategyId, contractId, title, description, score, Currency.RUB, strategyStatus.toString(), StrategyRiskProfile.CONSERVATIVE);
     }
+
+
+    private static Stream<Arguments> updateForInvalideStatus() {
+        return Stream.of(
+            //Для теста нужно расширить enum в контракте public enum StatusEnum (enum: [ active, frozen, draft, closed ])
+            Arguments.of(UpdateStrategyRequest.StatusEnum.DRAFT),
+            Arguments.of(UpdateStrategyRequest.StatusEnum.CLOSED)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("updateForInvalideStatus")
+    @AllureId("1890362")
+    @DisplayName("C1890362.UpdateStrategy. Апдейт стратегии с active на closed / draft")
+    @Description("Метод позволяет администратору обновить параметры стратегии независимо от ее статуса.")
+    void C1890362(UpdateStrategyRequest.StatusEnum statusEnum) {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest" + String.valueOf(randomNumber);
+        String description = "Стратегия Autotest 114 - Описание";
+        Integer score = 1;
+        //Создаем клиента в tracking: client, contract, strategy
+        UUID strategyId = UUID.randomUUID();
+        GetBrokerAccountsResponse resAccountMaster = brokerAccountApiCreator.get().getBrokerAccountsBySiebel()
+            .siebelIdPath(siebel.siebelIdAdmin)
+            .brokerTypeQuery("broker")
+            .brokerStatusQuery("opened")
+            .isBlockedQuery(false)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetBrokerAccountsResponse.class));
+        UUID investId = resAccountMaster.getInvestId();
+        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
+
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        //Формируем body для метода updateStrategy
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setStatus(statusEnum);
+        //Вызываем метод updateStrategy
+        ErrorResponse expectedResponse = strategyApiStrategyApiAdminCreator.get().updateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(400))
+            .execute(response -> response.as(ErrorResponse.class));
+        assertThat("ErrorMessage не равно", expectedResponse.getErrorMessage(), is("Сервис временно недоступен"));
+        assertThat("ErrorCode не равно", expectedResponse.getErrorCode(), is("0344-00-Z99"));
+        //Находим в БД автоследования стратегию и Проверяем ее поля
+        strategy = strategyService.getStrategy(strategyId);
+        checkParamDB(strategyId, contractId, title, description, score, Currency.RUB,  StrategyStatus.active.toString(), StrategyRiskProfile.CONSERVATIVE);
+    }
+
+
 
 
     //*** Методы для работы тестов ***

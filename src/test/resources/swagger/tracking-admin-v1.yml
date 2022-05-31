@@ -6,7 +6,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.15.0
+  version: 1.17.0
 
 servers:
   - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
@@ -1027,6 +1027,10 @@ components:
     UpdateStrategyRequest:
       type: object
       properties:
+        status:
+          description: Статус стратегии
+          type: string
+          enum: [ active, frozen, draft, closed ]
         title:
           description: Название стратегии
           type: string
@@ -1325,7 +1329,7 @@ components:
     StrategyStatus:
       description: Статус стратегии
       type: string
-      enum: [ draft, active ]
+      enum: [ draft, active, frozen ]
 
     StrategyFeeRate:
       description: Ставка комиссии (в долях) за следование за стратегией

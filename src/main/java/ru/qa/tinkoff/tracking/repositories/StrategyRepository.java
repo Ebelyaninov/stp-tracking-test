@@ -52,7 +52,7 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     List<Strategy> selectStrategiesLimit();
 
 
-    @Query(nativeQuery = true, value = "select * from strategy where status in ('active','draft') " +
+    @Query(nativeQuery = true, value = "select * from strategy where status in ('active', 'draft', 'frozen') " +
         "and position < :position order by position desc limit :limit")
     List<Strategy> findListStrategysByPositionAndLimit(
         @Param(value = "position") Integer position,

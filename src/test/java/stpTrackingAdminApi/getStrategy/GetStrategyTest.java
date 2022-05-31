@@ -9,6 +9,9 @@ import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -17,6 +20,8 @@ import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
+import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -30,6 +35,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetStrategyResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -37,12 +43,22 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
+import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -83,6 +99,8 @@ public class GetStrategyTest {
     StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
     @Autowired
     InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
+    @Autowired
+    StrategyTailValueDao strategyTailValueDao;
 
 
     String xApiKey = "x-api-key";
@@ -94,6 +112,11 @@ public class GetStrategyTest {
     SocialProfile socialProfile;
     UUID investId;
     String contractId;
+    //rub.load-limit: 150000000
+    BigDecimal loadLimitRu = new BigDecimal("150000000");
+    //usd load-limit: 1300000
+    BigDecimal loadLimitUSD = new BigDecimal("1300000");
+    StrategyTailValue strategyTailValue;
 
 
     @BeforeAll
@@ -335,4 +358,134 @@ public class GetStrategyTest {
         assertFalse(expectedResponse.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(expectedResponse.getHeaders().getValue("x-server-time").isEmpty());
     }
+
+    private static Stream<Arguments> provideStrategyStatusAndTailValue() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active, new BigDecimal("68151.23"), StrategyCurrency.rub),
+            Arguments.of(StrategyStatus.frozen, new BigDecimal("3048151.23"), StrategyCurrency.rub),
+            Arguments.of(StrategyStatus.active, new BigDecimal("1300000"), StrategyCurrency.usd)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatusAndTailValue")
+    @AllureId("1577196")
+    @DisplayName("C1577196.GetStrategy.Расчет параметра load.percent. Стратегия в статусе active / frozen")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1577196(StrategyStatus strategyStatus, BigDecimal strategyTailValueFromDb, StrategyCurrency strategyCurrency) {
+        UUID strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        Client clientDB = clientService.getClient(investId);
+        String nickname = clientDB.getSocialProfile().getNickname();
+        String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
+        BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
+        Integer score = strategyService.getStrategy(strategyId).getScore();
+        //Создаем запись в тоблице tailOrderValue
+        createDateStrategyTailValue(strategyId, Date.from(OffsetDateTime.now().toInstant()), strategyTailValueFromDb.toString());
+        //Расчитываем начение load.percent
+        BigDecimal calculatedPersent;
+        if (strategyCurrency.equals(StrategyCurrency.rub)) {
+             calculatedPersent = calcualteLoadPercent(strategyTailValueFromDb, loadLimitRu);
+        }
+        else {
+            calculatedPersent = calcualteLoadPercent(strategyTailValueFromDb, loadLimitUSD);
+        }
+        //вызываем метод getStrategy
+        GetStrategyResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        Strategy strategy = strategyService.findStrategyByContractId(contractId).get();
+
+        //проверяем, данные в сообщении
+        assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("ownerDescription не равно", responseExep.getOwner().getDescription(), is(ownerDescription));
+        assertThat("short_description не равно", responseExep.getShortDescription(), is("TEST"));
+        assertThat("expectedRelativeYield не равено", responseExep.getExpectedRelativeYield(), is(expectedRelativeYield));
+        assertThat("status не равен", responseExep.getStatus().toString(), is(strategyStatus.toString()));
+        assertThat("title не равен", responseExep.getTitle(), is(title));
+        assertThat("baseCurrency не равен", responseExep.getBaseCurrency().toString(), is(strategyCurrency.toString()));
+        assertThat("riskProfile не равно", responseExep.getRiskProfile().toString(), is("conservative"));
+        assertThat("description не равно", responseExep.getDescription(), is(description));
+        assertThat("score не равно", responseExep.getScore(), is(score));
+        assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
+        assertThat("load.isOverloaded не равно", responseExep.getLoad().getIsOverloaded(), is(strategy.getOverloaded()));
+        assertThat("load.percent не равно", responseExep.getLoad().getPercent(), is(calculatedPersent));
+    }
+
+    private static Stream<Arguments> provideStrategyStatusForNotCalculate() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.draft)
+            //пока обрабатываем только frozen enum: [ draft, active, frozen ]
+            //Arguments.of(StrategyStatus.closed)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatusForNotCalculate")
+    @AllureId("1577193")
+    @DisplayName("C1577193.GetStrategy.Расчет параметра load.percent. Стратегия в статусе draft / closed")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C1577193(StrategyStatus strategyStatus) {
+        UUID strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        Client clientDB = clientService.getClient(investId);
+        String nickname = clientDB.getSocialProfile().getNickname();
+        String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
+        BigDecimal expectedRelativeYield = strategyService.getStrategy(strategyId).getExpectedRelativeYield();
+        Integer score = strategyService.getStrategy(strategyId).getScore();
+        //Создаем запись в тоблице tailOrderValue
+        createDateStrategyTailValue(strategyId, Date.from(OffsetDateTime.now().toInstant()), "712249521.312");
+        //вызываем метод getStrategy
+        GetStrategyResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        Strategy strategy = strategyService.findStrategyByContractId(contractId).get();
+
+        //проверяем, данные в сообщении
+        assertThat("Nickname profile не равен", responseExep.getOwner().getSocialProfile().getNickname(), is(nickname));
+        assertThat("ownerDescription не равно", responseExep.getOwner().getDescription(), is(ownerDescription));
+        assertThat("short_description не равно", responseExep.getShortDescription(), is("TEST"));
+        assertThat("expectedRelativeYield не равено", responseExep.getExpectedRelativeYield(), is(expectedRelativeYield));
+        assertThat("status не равен", responseExep.getStatus().toString(), is(strategyStatus.toString()));
+        assertThat("title не равен", responseExep.getTitle(), is(title));
+        assertThat("baseCurrency не равен", responseExep.getBaseCurrency().toString(), is("rub"));
+        assertThat("riskProfile не равно", responseExep.getRiskProfile().toString(), is("conservative"));
+        assertThat("description не равно", responseExep.getDescription(), is(description));
+        assertThat("score не равно", responseExep.getScore(), is(score));
+        assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
+        assertThat("load.isOverloaded не равно", responseExep.getLoad().getIsOverloaded(), is(strategy.getOverloaded()));
+        assertThat("load.percent не равно", responseExep.getLoad().getPercent().toString(), is("0"));
+    }
+
+    public BigDecimal calcualteLoadPercent (BigDecimal tailValue, BigDecimal currencyLoadLimit){
+        // load.percent = tailValue из кэша / значение настройки currency.loadLimit * 100 округлить до 2х знаков HALF_UP
+        BigDecimal loadPercent = tailValue.divide(currencyLoadLimit, 20, RoundingMode.HALF_UP)
+            .multiply(new BigDecimal("100"))
+            .divide(new BigDecimal("1"), 2, RoundingMode.HALF_UP);
+        return loadPercent;
+    }
+
+    void createDateStrategyTailValue(UUID strategyId, java.util.Date date, String value) {
+        strategyTailValue = StrategyTailValue.builder()
+            .strategyId(strategyId)
+            .cut(date)
+            .value(new BigDecimal(value))
+            .build();
+        strategyTailValueDao.insertIntoStrategyTailValue(strategyTailValue);
+    }
+
 }

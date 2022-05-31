@@ -20,6 +20,8 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
+import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
+import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
@@ -44,7 +46,10 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -88,6 +93,8 @@ public class GetStrategiesTest {
     StpSiebel siebel;
     @Autowired
     StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
+    @Autowired
+    StrategyTailValueDao strategyTailValueDao;
 
 
     SocialProfile socialProfile;
@@ -97,6 +104,11 @@ public class GetStrategiesTest {
     String xApiKey = "x-api-key";
     String key = "tracking";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
+    StrategyTailValue strategyTailValue;
+    //rub.load-limit: 150000000
+    BigDecimal loadLimitRu = new BigDecimal("150000000");
+    //usd load-limit: 1300000
+    BigDecimal loadLimitUSD = new BigDecimal("1300000");
 
     UUID investId;
     String contractId;
@@ -174,6 +186,7 @@ public class GetStrategiesTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1041616() {
         String percent = "0";
+        UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -214,6 +227,7 @@ public class GetStrategiesTest {
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
     void C1705738() {
         String percent = "0";
+        UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -311,6 +325,108 @@ public class GetStrategiesTest {
             .execute(response -> response.as(GetStrategiesResponse.class));
         assertThat("Крайний strategy.position не равно", responseEx.getNextCursor(), is(strategys.get(size - 2).getPosition().toString()));
         assertThat("hasNext не равно", responseEx.getHasNext(), is(true));
+    }
+
+
+
+    @Test
+    @AllureId("1552083")
+    @DisplayName("C1552083.getStrategies.getStrategies.Получение списка стратегий, параметр isOverloaded tailValue = 0")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
+    void C1552083() {
+        String percent = "0";
+        UUID strategyId = UUID.randomUUID();
+        //Создаем клиента в tracking: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        strategy = strategyService.getStrategy(strategyId);
+        Integer position = strategy.getPosition();
+        List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);
+        String contractIdNew = strategys.get(0).getContract().getId();
+        contract = contractService.getContract(contractIdNew);
+        client = clientService.getClient(contract.getClientId());
+        String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
+        //Создаем запись в тоблице tailOrderValue
+        createDateStrategyTailValue(strategyId, Date.from(OffsetDateTime.now().toInstant()), percent);
+        //вызываем метод getStrategys
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .limitQuery(1)
+            .cursorQuery(position + 1)
+            .xTcsLoginHeader("tracking_admin")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesResponse.class));
+        String nickNameOwner = responseExep.getItems().get(0).getOwner().getSocialProfile() == null ?
+            "" : responseExep.getItems().get(0).getOwner().getSocialProfile().getNickname();
+        //проверяем, данные в сообщении
+        assertThat("номера стратегии не равно", strategys.get(0).getId(), is(responseExep.getItems().get(0).getId()));
+        assertThat("статус стратегии не равно", strategys.get(0).getStatus().toString(), is(responseExep.getItems().get(0).getStatus().toString()));
+        assertThat("название стратегии не равно", (strategys.get(0).getTitle()), is(responseExep.getItems().get(0).getTitle()));
+        assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
+        assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
+        assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
+    }
+
+    private static Stream<Arguments> provideStrategyStatusAndTailValue() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active, new BigDecimal("68151.23"), StrategyCurrency.rub),
+            Arguments.of(StrategyStatus.frozen, new BigDecimal("3052000.23"), StrategyCurrency.rub),
+            Arguments.of(StrategyStatus.frozen, new BigDecimal("1300000"), StrategyCurrency.usd)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatusAndTailValue")
+    @AllureId("1552073")
+    @DisplayName("C1552073.getStrategies.getStrategies.Получение списка стратегий, параметр isOverloaded для RUB / USD")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
+    void C1552073(StrategyStatus strategyStatus, BigDecimal strategyTailValueFromDb, StrategyCurrency strategyCurrency) {
+        UUID strategyId = UUID.randomUUID();
+        //Создаем клиента в tracking: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04");
+        strategy = strategyService.getStrategy(strategyId);
+        Integer position = strategy.getPosition();
+        List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);
+        String contractIdNew = strategys.get(0).getContract().getId();
+        contract = contractService.getContract(contractIdNew);
+        client = clientService.getClient(contract.getClientId());
+        String nickName = client.getSocialProfile() == null ? "" : client.getSocialProfile().getNickname();
+        //Создаем запись в тоблице tailOrderValue
+        createDateStrategyTailValue(strategyId, Date.from(OffsetDateTime.now().toInstant()), strategyTailValueFromDb.toString());
+        //Расчитываем начение load.percent
+        BigDecimal calculatedPersent;
+        if (strategyCurrency.equals(StrategyCurrency.rub)) {
+            calculatedPersent = calcualteLoadPercent(strategyTailValueFromDb, loadLimitRu);
+        }
+        else {
+            calculatedPersent = calcualteLoadPercent(strategyTailValueFromDb, loadLimitUSD);
+        }
+        //вызываем метод getStrategys
+        GetStrategiesResponse responseExep = strategyApiStrategyApiAdminCreator.get().getStrategies()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .limitQuery(1)
+            .cursorQuery(position + 1)
+            .xTcsLoginHeader("tracking_admin")
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesResponse.class));
+        String nickNameOwner = responseExep.getItems().get(0).getOwner().getSocialProfile() == null ?
+            "" : responseExep.getItems().get(0).getOwner().getSocialProfile().getNickname();
+        //проверяем, данные в сообщении
+        assertThat("номера стратегии не равно", strategys.get(0).getId(), is(responseExep.getItems().get(0).getId()));
+        assertThat("статус стратегии не равно", strategys.get(0).getStatus().toString(), is(responseExep.getItems().get(0).getStatus().toString()));
+        assertThat("название стратегии не равно", (strategys.get(0).getTitle()), is(responseExep.getItems().get(0).getTitle()));
+        assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
+        assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
+        assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent(), is(calculatedPersent));
     }
 
 
@@ -416,6 +532,25 @@ public class GetStrategiesTest {
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(401))
             .execute(response -> response.asString());
+    }
+
+
+
+    void createDateStrategyTailValue(UUID strategyId, java.util.Date date, String value) {
+        strategyTailValue = StrategyTailValue.builder()
+            .strategyId(strategyId)
+            .cut(date)
+            .value(new BigDecimal(value))
+            .build();
+        strategyTailValueDao.insertIntoStrategyTailValue(strategyTailValue);
+    }
+
+    public BigDecimal calcualteLoadPercent (BigDecimal tailValue, BigDecimal currencyLoadLimit){
+        // load.percent = tailValue из кэша / значение настройки currency.loadLimit * 100 округлить до 2х знаков HALF_UP
+        BigDecimal loadPercent = tailValue.divide(currencyLoadLimit, 20, RoundingMode.HALF_UP)
+            .multiply(new BigDecimal("100"))
+            .divide(new BigDecimal("1"), 2, RoundingMode.HALF_UP);
+        return loadPercent;
     }
 
 }
