@@ -178,6 +178,15 @@ public class ClientService {
         return client;
     }
 
+    @Step("Поиск списка клиентов по шinvestId {}")
+    @SneakyThrows
+    public List<Client> findClinetsByInvestId (UUID investId) {
+        List<Client> client = clientRepository.findListClientsByInvestId(investId);
+        log.info("Successfully find clients {}", investId);
+        Allure.addAttachment("Найденные клиенты - ведущие", "application/json", objectMapper.writeValueAsString(client));
+        return client;
+    }
+
     @Step("Поиск клиента по статусу и сортировкой по курсору")
     @SneakyThrows
     public List<Client> getFindClientByMasterFirstPosition(Integer limit) {

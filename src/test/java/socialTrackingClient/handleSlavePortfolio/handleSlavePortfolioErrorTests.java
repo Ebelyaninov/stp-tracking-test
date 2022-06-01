@@ -69,7 +69,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 @Subfeature("Альтернативные сценарии")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Owner("ext.ebelyaninov")
-@Tags({@Tag("social-tracking-client"),@Tag("handleAccountRegistrationEvent")})
+@Tags({@Tag("social-tracking-client"),@Tag("handleSlavePortfolio")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
