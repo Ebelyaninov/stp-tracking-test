@@ -60,5 +60,7 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     @Query(nativeQuery = true, value = "delete from client where id =:id")
     Client deleteClientById(@Param(value = "id") UUID clientId);
 
+    @Query(nativeQuery = true, value = "select * from tracking.client where id = :id")
+    List<Client> findListClientsByInvestId (@Param(value = "id") UUID id);
 
 }
