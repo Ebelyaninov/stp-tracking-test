@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @Slf4j
 @Epic("getMasterStrategyAnalytics - Получение аналитики по стратегии")
@@ -187,17 +188,26 @@ public class GetMasterStrategyAnalyticsTest {
         });
     }
 
-    @Test
+    private static Stream<Arguments> provideStringsForStrategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideStringsForStrategyStatus")
     @AllureId("1186570")
-    @DisplayName("C1186570.GetMasterStrategyAnalytics.Получение аналитики по стратегии.Стратегия в статусе active")
+    @DisplayName("C1186570.GetMasterStrategyAnalytics.Получение аналитики по стратегии.Стратегия в статусе active / frozen")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения аналитических данных по торговой стратегии.")
-    void C1186570() throws Exception {
+    void C1186570(StrategyStatus strategyStatus) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            strategyStatus, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         //создаем записи в master_portfolio_value за 10 дней
@@ -832,18 +842,20 @@ public class GetMasterStrategyAnalyticsTest {
     void checkParam(GetMasterStrategyAnalyticsResponse getMasterStrategyAnalyticsResponse, String tailValue,
                     String currency, BigDecimal portfolioValue, String baseMoney, BigDecimal yield, BigDecimal dailyYield,
                     BigDecimal relativeYield, BigDecimal relativeDailyYield) {
-        assertThat("tail.value  не равно", getMasterStrategyAnalyticsResponse.getTail().getValue(), is(new BigDecimal(tailValue)));
-        assertThat("tail.currency  не равно", getMasterStrategyAnalyticsResponse.getTail().getCurrency().getValue(), is(currency));
-        assertThat("portfolio.value  не равно", getMasterStrategyAnalyticsResponse.getPortfolio().getValue(), is(portfolioValue));
-        assertThat("portfolio.baseMoneyPositionQuantity  не равно", getMasterStrategyAnalyticsResponse.getPortfolio()
-            .getBaseMoneyPositionQuantity(), is(new BigDecimal(baseMoney)));
-        assertThat("portfolio.currency  не равно", getMasterStrategyAnalyticsResponse.getPortfolio().getCurrency().getValue(), is(currency));
-        assertThat("yield.value  не равно", getMasterStrategyAnalyticsResponse.getYield().getValue(), is(yield));
-        assertThat("yield.currency  не равно", getMasterStrategyAnalyticsResponse.getYield().getCurrency().getValue(), is(currency));
-        assertThat("dailyYield.value  не равно", getMasterStrategyAnalyticsResponse.getDailyYield().getValue(), is(dailyYield));
-        assertThat("dailyYield.currency  не равно", getMasterStrategyAnalyticsResponse.getDailyYield().getCurrency().getValue(), is(currency));
-        assertThat("relativeYield  не равно", getMasterStrategyAnalyticsResponse.getRelativeYield(), is(relativeYield));
-        assertThat("relativeDailyYield  не равно", getMasterStrategyAnalyticsResponse.getRelativeDailyYield(), is(relativeDailyYield));
+        assertAll(
+            () -> assertThat("tail.value  не равно", getMasterStrategyAnalyticsResponse.getTail().getValue(), is(new BigDecimal(tailValue))),
+            () -> assertThat("tail.currency  не равно", getMasterStrategyAnalyticsResponse.getTail().getCurrency().getValue(), is(currency)),
+            () -> assertThat("portfolio.value  не равно", getMasterStrategyAnalyticsResponse.getPortfolio().getValue(), is(portfolioValue)),
+            () -> assertThat("portfolio.baseMoneyPositionQuantity  не равно", getMasterStrategyAnalyticsResponse.getPortfolio()
+            .getBaseMoneyPositionQuantity(), is(new BigDecimal(baseMoney))),
+            () -> assertThat("portfolio.currency  не равно", getMasterStrategyAnalyticsResponse.getPortfolio().getCurrency().getValue(), is(currency)),
+            () -> assertThat("yield.value  не равно", getMasterStrategyAnalyticsResponse.getYield().getValue(), is(yield)),
+            () -> assertThat("yield.currency  не равно", getMasterStrategyAnalyticsResponse.getYield().getCurrency().getValue(), is(currency)),
+            () -> assertThat("dailyYield.value  не равно", getMasterStrategyAnalyticsResponse.getDailyYield().getValue(), is(dailyYield)),
+            () -> assertThat("dailyYield.currency  не равно", getMasterStrategyAnalyticsResponse.getDailyYield().getCurrency().getValue(), is(currency)),
+            () -> assertThat("relativeYield  не равно", getMasterStrategyAnalyticsResponse.getRelativeYield(), is(relativeYield)),
+            () -> assertThat("relativeDailyYield  не равно", getMasterStrategyAnalyticsResponse.getRelativeDailyYield(), is(relativeDailyYield))
+            );
     }
 
 }
