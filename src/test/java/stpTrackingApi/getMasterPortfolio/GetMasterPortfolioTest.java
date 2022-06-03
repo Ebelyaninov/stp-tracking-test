@@ -178,17 +178,27 @@ public class GetMasterPortfolioTest {
         }
     }
 
-    @Test
+
+    private static Stream<Arguments> provideStrategyStatus(){
+        return Stream.of(
+            Arguments.of(StrategyStatus.active),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1184370")
     @DisplayName("C1184370.GetMasterPortfolio.Получение виртуального портфеля для стратегии в статусе active")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения данных виртуального портфеля ведущего")
-    void C1184370() {
+    void C1184370(StrategyStatus status) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         // вызываем метод getMasterPortfolio
@@ -249,17 +259,18 @@ public class GetMasterPortfolioTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1185517")
     @DisplayName("C1185517.GetMasterPortfolio.Получение виртуального портфеля для стратегии. money маппим на currency\n")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения данных виртуального портфеля ведущего")
-    void C1185517() {
+    void C1185517(StrategyStatus status) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "300000.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
@@ -334,18 +345,19 @@ public class GetMasterPortfolioTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1184401")
     @DisplayName("C1184401.GetMasterPortfolio.Получение виртуального портфеля для стратегии в статусе active.нулевая позиция")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения данных виртуального портфеля ведущего")
-    void C1184401() {
+    void C1184401(StrategyStatus status) {
         String quantity1 = "0";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime

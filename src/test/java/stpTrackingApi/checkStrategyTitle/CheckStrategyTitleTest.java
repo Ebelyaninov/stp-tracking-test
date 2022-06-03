@@ -25,6 +25,7 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.CheckStrategyTitleRequest;
+import ru.qa.tinkoff.swagger.tracking.model.CheckStrategyTitleResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -42,8 +43,7 @@ import java.util.*;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -177,17 +177,34 @@ public class CheckStrategyTitleTest {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setCloseTime(null);
         strategy = trackingService.saveStrategy(strategy);
 
-        Response checkStrategyTitleResponse = checkStrategyTitle(SIEBEL_ID, title, traceId);
-        assertThat("isAvailable != true", checkStrategyTitleResponse.getBody().jsonPath().get("isAvailable"), equalTo(false));
+        Response checkStrategyTitleResponseWithStatusDraft = checkStrategyTitle(SIEBEL_ID, title, traceId);
+        CheckStrategyTitleResponse checkStrategyTitleResponseDraft = checkStrategyTitleResponseWithStatusDraft.as(CheckStrategyTitleResponse.class);
+        assertThat("isAvailable != true", checkStrategyTitleResponseDraft.getIsAvailable(), is(false));
         //Изменили статус стратегии на "active" и повторно вызвать метод
         strategy = trackingService.saveStrategy(strategy
             .setStatus(StrategyStatus.active)
             .setActivationTime(currentDate));
         Response checkStrategyTitleResponseWithStatusActive = checkStrategyTitle(SIEBEL_ID, title, traceId);
-        assertThat("isAvailable != true", checkStrategyTitleResponseWithStatusActive.getBody().jsonPath().get("isAvailable"), equalTo(false));
+        CheckStrategyTitleResponse checkStrategyTitleResponseActive = checkStrategyTitleResponseWithStatusActive.as(CheckStrategyTitleResponse.class);
+        assertThat("isAvailable != true", checkStrategyTitleResponseActive.getIsAvailable(), is(false));
+        //Изменили статус стратегии на "frozen" и повторно вызвать метод
+        strategy = trackingService.saveStrategy(strategy
+            .setStatus(StrategyStatus.frozen)
+            .setActivationTime(currentDate));
+        Response checkStrategyTitleResponseWithStatusFrozen = checkStrategyTitle(SIEBEL_ID, title, traceId);
+        CheckStrategyTitleResponse checkStrategyTitleResponseFrozen = checkStrategyTitleResponseWithStatusFrozen.as(CheckStrategyTitleResponse.class);
+        assertThat("isAvailable != true", checkStrategyTitleResponseFrozen.getIsAvailable(), is(false));
+        //Изменили статус стратегии на "frozen" и повторно вызвать метод
+        strategy = trackingService.saveStrategy(strategy
+            .setStatus(StrategyStatus.closed)
+            .setCloseTime(LocalDateTime.now().plusSeconds(20)));
+        Response checkStrategyTitleResponseWithStatusClosed = checkStrategyTitle(SIEBEL_ID, title, traceId);
+        CheckStrategyTitleResponse checkStrategyTitleResponseClosed = checkStrategyTitleResponseWithStatusClosed.as(CheckStrategyTitleResponse.class);
+        assertThat("isAvailable != false", checkStrategyTitleResponseClosed.getIsAvailable(), is(true));
     }
 
 

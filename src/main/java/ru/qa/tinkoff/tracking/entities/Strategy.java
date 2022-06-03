@@ -100,4 +100,7 @@ public class Strategy {
 
     @Column(name = "sell_enabled")
     Boolean sellEnabled;
+
+    @Column(name = "close_time")
+    LocalDateTime closeTime;
 }

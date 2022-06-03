@@ -697,6 +697,40 @@ public class GetStrategiesCatalogTest {
 
 
     @Test
+    @AllureId("1899757")
+    @DisplayName("1899757 GetStrategiesCatalog.Получение каталога торговых стратегий. Strategy.status = closed")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения каталога торговых стратегий.")
+    void C1899757() throws InterruptedException {
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        UUID strategyId = UUID.fromString("040efe3d-8371-4821-acfd-f54713d63440");
+        steps.createClientWithContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.frozen, 0, LocalDateTime.now(), 5, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
+        GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .limitQuery(100)
+            .xTcsSiebelIdHeader(siebelIdMaster2)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategiesCatalogResponse.class));
+        List<Strategy> strategies = strategyService.getStrategyByStatus(StrategyStatus.frozen);
+        //записываем stratedyId в множества и сравниваем их
+        Set<UUID> listStrategyIdsFromApi = new HashSet<>();
+        for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
+            listStrategyIdsFromApi.add(getStrategiesCatalog.getItems().get(i).getId());
+        }
+        Set<UUID> listStrategyIdsFromDB = new HashSet<>();
+        for (int i = 0; i < strategies.size(); i++) {
+            listStrategyIdsFromDB.add(strategies.get(i).getId());
+        }
+        assertThat("стратегии со статусом frozen есть в ответе метода", listStrategyIdsFromApi.containsAll(listStrategyIdsFromDB),is(false));
+    }
+
+
+    @Test
     @AllureId("1559100")
     @DisplayName("C1559100. Конвертировать все рекомендуемый суммы в рубли")
     @Subfeature("Успешные сценарии")
