@@ -10,6 +10,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StpInstrument {
 
+    public String tickerAEE1 = "AAPL";
+    public String tradingClearingAccountAEE1 = "L01+00000BLP";
+    public String classCodeAEE1 = "SPBXM";
+    public String instrumentAEE1 = tickerAEE1 + "_" + classCodeAEE1;
+
     public String tickerAAPL = "AAPL";
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";
 //    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
