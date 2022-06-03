@@ -143,17 +143,26 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    @Test
+    private static Stream<Arguments> provideStrategyStatus(){
+        return Stream.of(
+            Arguments.of(StrategyStatus.active),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1113203")
     @DisplayName("C1113203.GetMasterPortfolioValues.Определение относительной доходности")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C1113203() throws JsonProcessingException {
+    void C1113203(StrategyStatus status) throws JsonProcessingException {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -181,17 +190,18 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1113428")
     @DisplayName("C1113428.GetMasterPortfolioValues. Определение относительной доходности с указанием from и limit")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C1113428() throws JsonProcessingException {
+    void C1113428(StrategyStatus status) throws JsonProcessingException {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -217,17 +227,18 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1113429")
     @DisplayName("C1113429.GetMasterPortfolioValues.Определение относительной доходности, найдено менее 2х точек")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C1113429() throws JsonProcessingException {
+    void C1113429(StrategyStatus status) throws JsonProcessingException {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -245,17 +256,18 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1113918")
     @DisplayName("C1113918.GetMasterPortfolioValues.Определение относительной доходности, 2 точки")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C1113918() throws JsonProcessingException {
+    void C1113918(StrategyStatus status) throws JsonProcessingException {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
@@ -281,17 +293,18 @@ public class GetMasterPortfolioValuesTest {
     }
 
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("981546")
     @DisplayName("C981546.GetMasterPortfolioValues.Получение стоимостей виртуального портфеля c указанием limit=1")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C981546() throws JsonProcessingException {
+    void C981546(StrategyStatus status) throws JsonProcessingException {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(31).minusHours(2);
