@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.13.0
+  version: 1.15.0
 
 servers:
   - url: http://trading-test.tcsbank.ru
@@ -30,46 +30,6 @@ tags:
     description: Клиент
 
 paths:
-
-  /contract:
-
-    parameters:
-      - $ref: '#/components/parameters/ApplicationName'
-      - $ref: '#/components/parameters/ApplicationVersion'
-      - $ref: '#/components/parameters/Platform'
-      - $ref: '#/components/parameters/DeviceId'
-      - $ref: '#/components/parameters/SiebelId'
-      - $ref: '#/components/parameters/B3TraceId'
-      - $ref: '#/components/parameters/B3SpanId'
-      - $ref: '#/components/parameters/B3ParentSpanId'
-      - $ref: '#/components/parameters/B3Sampled'
-
-    get:
-      tags:
-        - contract
-      summary: getUntrackedContracts
-      description: Возвращает договора авторизованного клиента, доступные для подключения к автоследованию
-      operationId: getUntrackedContracts
-      responses:
-        200:
-          description: OK
-          headers:
-            x-trace-id:
-              $ref: '#/components/headers/XTraceId'
-            x-server-time:
-              $ref: '#/components/headers/XServerTime'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetUntrackedContractsResponse'
-        400:
-          $ref: '#/components/responses/Error'
-        401:
-          $ref: '#/components/responses/Error'
-        422:
-          $ref: '#/components/responses/Error'
-        500:
-          $ref: '#/components/responses/Error'
 
   /strategy:
 
@@ -967,25 +927,6 @@ components:
 
   schemas:
 
-    GetUntrackedContractsResponse:
-      type: object
-      required:
-        - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/UntrackedContract'
-
-    UntrackedContract:
-      description: Договор, доступный для подключения к автоследованию
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: '#/components/schemas/ContractId'
-
     ContractId:
       description: Номер договора
       type: string
@@ -1588,7 +1529,7 @@ components:
         status:
           description: Статус стратегии
           type: string
-          enum: [draft, active]
+          enum: [draft, active, frozen]
 
     CheckStrategyTitleRequest:
       type: object

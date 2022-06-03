@@ -30,6 +30,7 @@ import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetMasterStrategiesResponse;
 import ru.qa.tinkoff.swagger.tracking.model.MasterStrategy;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @Slf4j
 @Epic("getMasterStrategies Получение списка всех стратегий ведущего")
@@ -92,13 +94,17 @@ public class GetMasterStrategiesTest {
 
     String contractIdMaster1;
     String contractIdMaster2;
+    String contractIdMaster3;
     String SIEBEL_ID_MASTER;
     UUID strategyId1;
     UUID strategyId2;
+    UUID strategyId3;
     Strategy strategy1;
     Strategy strategy2;
+    Strategy strategy3;
     Contract contract1;
     Contract contract2;
+    Contract contract3;
     Client clientMaster;
 
 
@@ -119,11 +125,19 @@ public class GetMasterStrategiesTest {
             } catch (Exception e) {
             }
             try {
+                trackingService.deleteStrategy(strategy3);
+            } catch (Exception e) {
+            }
+            try {
                 contractService.deleteContract(contract1);
             } catch (Exception e) {
             }
             try {
                 contractService.deleteContract(contract2);
+            } catch (Exception e) {
+            }
+            try {
+                contractService.deleteContract(contract3);
             } catch (Exception e) {
             }
             try {
@@ -148,13 +162,18 @@ public class GetMasterStrategiesTest {
         int y = ran.nextInt(6) + 5;
         String title2 = "autotest2 " + String.valueOf(y);
         String description2 = "new test стратегия autotest1";
+        int z = ran.nextInt(6) + 5;
+        String title3 = "autotest3 " + String.valueOf(z);
+        String description3 = "new test стратегия autotest1";
         strategyId1 = UUID.randomUUID();
         strategyId2 = UUID.randomUUID();
+        strategyId3 = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster1 = resAccountMaster.getBrokerAccounts().get(0).getId();
         contractIdMaster2 = resAccountMaster.getBrokerAccounts().get(1).getId();
+        contractIdMaster3 = resAccountMaster.getBrokerAccounts().get(2).getId();
         clientMaster = steps.createClientWithProfile(SIEBEL_ID_MASTER, investIdMaster);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createContractAndStrategy(clientMaster, contractIdMaster1, null, ContractState.untracked,
@@ -165,8 +184,13 @@ public class GetMasterStrategiesTest {
             strategyId2, title2, description2, StrategyCurrency.usd,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null);
+        steps.createContractAndStrategy(clientMaster, contractIdMaster3, null, ContractState.untracked,
+            strategyId3, title3, description3, StrategyCurrency.usd,
+            ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.frozen, 0, LocalDateTime.now(), 3);
         contract1 = contractService.getContract(contractIdMaster1);
         contract2 = contractService.getContract(contractIdMaster2);
+        contract3 = contractService.getContract(contractIdMaster3);
         // вызываем метод getMasterStrategies
         GetMasterStrategiesResponse getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
@@ -182,12 +206,17 @@ public class GetMasterStrategiesTest {
         List<MasterStrategy> masterStrategy2 = getMasterStrategiesResponse.getItems().stream()
             .filter(ms -> ms.getTitle().equals(title2))
             .collect(Collectors.toList());
+        List<MasterStrategy> masterStrategy3 = getMasterStrategiesResponse.getItems().stream()
+            .filter(ms -> ms.getTitle().equals(title3))
+            .collect(Collectors.toList());
         //находим стратегии в базе
         strategy1 = strategyService.getStrategy(strategyId1);
         strategy2 = strategyService.getStrategy(strategyId2);
+        strategy3 = strategyService.getStrategy(strategyId3);
         //проверяем данные по стратегиям
         checkParamStrategy(masterStrategy1, strategy1);
         checkParamStrategy(masterStrategy2, strategy2);
+        checkParamStrategy(masterStrategy3, strategy3);
     }
 
 
@@ -238,12 +267,8 @@ public class GetMasterStrategiesTest {
         if (platform != null) {
             getMasterStrategiesResponse = getMasterStrategiesResponse.xPlatformHeader(platform);
         }
-        getMasterStrategiesResponse.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(getMasterStrategiesResponse.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+        ErrorResponse errorResponse = getMasterStrategiesResponse.execute(ErrorResponse -> ErrorResponse.as(ErrorResponse.class));
+        checkErrorMessage(errorResponse, "Error", "Сервис временно недоступен");
     }
 
     @SneakyThrows
@@ -254,17 +279,13 @@ public class GetMasterStrategiesTest {
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1185914() {
         // вызываем метод getMasterStrategies
-        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
+        ErrorResponse getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
-            .respSpec(spec -> spec.expectStatusCode(401));
-        getMasterStrategiesResponse.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(getMasterStrategiesResponse.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
+            .respSpec(spec -> spec.expectStatusCode(401))
+            .execute(ErrorResponse -> ErrorResponse.as(ErrorResponse.class));;
+        checkErrorMessage(getMasterStrategiesResponse, "InsufficientPrivileges", "Недостаточно прав");
     }
 
     @SneakyThrows
@@ -275,24 +296,28 @@ public class GetMasterStrategiesTest {
     @Description("Метод для получения списка всех стратегий ведущего")
     void C1185919() {
         // вызываем метод getMasterStrategies
-        StrategyApi.GetMasterStrategiesOper getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
+        ErrorResponse getMasterStrategiesResponse = strategyApiCreator.get().getMasterStrategies()
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .xTcsSiebelIdHeader("7-227G1PKDH")
-            .respSpec(spec -> spec.expectStatusCode(422));
-        getMasterStrategiesResponse.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(getMasterStrategiesResponse.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("Error"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(ErrorResponse -> ErrorResponse.as(ErrorResponse.class));
+        checkErrorMessage(getMasterStrategiesResponse, "Error", "Сервис временно недоступен");
     }
 
     void checkParamStrategy(List<MasterStrategy> masterStrategy, Strategy strategy) {
-        assertThat("strategy.id не равно", masterStrategy.get(0).getId(), is(strategy.getId()));
-        assertThat("strategy.title не равно", masterStrategy.get(0).getTitle(), is(strategy.getTitle()));
-        assertThat("strategy.status не равно", masterStrategy.get(0).getStatus().getValue(), is(strategy.getStatus().toString()));
+        assertAll("Выполняем проверки",
+            () -> assertThat("strategy.id не равно", masterStrategy.get(0).getId(), is(strategy.getId())),
+            () -> assertThat("strategy.title не равно", masterStrategy.get(0).getTitle(), is(strategy.getTitle())),
+            () -> assertThat("strategy.status не равно", masterStrategy.get(0).getStatus().getValue(), is(strategy.getStatus().toString()))
+        );
+    }
 
+    void checkErrorMessage (ErrorResponse errorResponse, String errorCode, String errorMessage){
+        assertAll("Выполняем проверки",
+            () -> assertThat("код ошибки не равно", errorResponse.getErrorCode(), is(errorCode)),
+            () -> assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is(errorMessage))
+        );
     }
 }
