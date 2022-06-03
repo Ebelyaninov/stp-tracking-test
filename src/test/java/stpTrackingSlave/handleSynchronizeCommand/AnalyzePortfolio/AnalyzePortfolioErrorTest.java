@@ -12,6 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -56,6 +60,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
@@ -346,14 +351,22 @@ public class AnalyzePortfolioErrorTest {
     }
 
 
+    private Stream<Arguments> provideInstrument() {
+        return Stream.of(
+            Arguments.of(instrument.tickerYNDX,instrument.tradingClearingAccountYNDX),
+            Arguments.of(instrument.tickerAEE1,instrument.tradingClearingAccountAEE1)
+        );
+    }
+
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideInstrument")
     @AllureId("682320")
     @DisplayName("C682320.AnalyzePortfolio.Анализ портфеля.Отфильтровываем недоступные позиции для master." +
         " Позиции значение currency != strategy.base_currency")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
-    void C682320() {
+    void C682320(String ticker,String tradingClearingAccount ) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -363,7 +376,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2.0", instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
+            instrument.tradingClearingAccountAAPL,"2.0",ticker, tradingClearingAccount,
             "2.0", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2259.17", masterPos);
         //создаем подписку для slave
@@ -389,13 +402,14 @@ public class AnalyzePortfolioErrorTest {
 
 
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideInstrument")
     @AllureId("872438")
     @DisplayName("C872438.AnalyzePortfolio.Анализ портфеля.Отфильтровываем недоступные позиции для slave." +
         "Позиции значение currency != strategy.base_currency")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
-    void C872438() {
+    void C872438(String ticker,String tradingClearingAccount) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -417,8 +431,8 @@ public class AnalyzePortfolioErrorTest {
         subscriptionId = subscription.getId();
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerYNDX,
-            instrument.tradingClearingAccountYNDX,"2.0", date, 1, new BigDecimal("4626.6"),
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(ticker,
+            tradingClearingAccount,"2.0", date, 1, new BigDecimal("4626.6"),
             new BigDecimal("0"), new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
