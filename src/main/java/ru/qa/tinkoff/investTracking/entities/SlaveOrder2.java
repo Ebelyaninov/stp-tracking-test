@@ -2,12 +2,14 @@ package ru.qa.tinkoff.investTracking.entities;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
 @Getter
 @Builder
+@ToString
 public class SlaveOrder2 {
     private final String contractId;
     private final Date createAt;

@@ -1,18 +1,17 @@
 package ru.qa.tinkoff.investTracking.services;
 
-import com.datastax.driver.core.querybuilder.Delete;
-import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.*;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.SlaveOrder2RowMapper;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -22,9 +21,11 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SlaveOrder2Dao {
     private final CqlTemplate cqlTemplate;
     private final SlaveOrder2RowMapper slaveOrder2RowMapper;
+
 
     @Step("Проверяем запись о выставленной заявке в slave_order_2")
     public SlaveOrder2 getSlaveOrder2(String contractId) {
@@ -35,6 +36,7 @@ public class SlaveOrder2Dao {
             "limit 1";
         return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId);
     }
+
     @Step("Проверяем запись о выставленной заявке в slave_order_2")
     public SlaveOrder2 getSlaveOrder2CreateAt(String contractId, Date createAt) {
         String query = "select * " +
@@ -43,7 +45,10 @@ public class SlaveOrder2Dao {
             " and created_at >= ? " +
             "order by created_at ASC " +
             "limit 1";
-        return cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, createAt);
+        log.info("{}, {}", contractId, createAt);
+        SlaveOrder2 slaveOrder2 = cqlTemplate.queryForObject(query, slaveOrder2RowMapper, contractId, createAt);
+        log.info("{}", slaveOrder2);
+        return slaveOrder2;
     }
 
 
@@ -70,7 +75,7 @@ public class SlaveOrder2Dao {
     public void insertIntoSlaveOrder2(String contractId, OffsetDateTime createAt, UUID strategyId, int version, int attemptsCount,
                                                        int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
                                                        BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
             .value("created_at", Date.from(createAt.toInstant()))
             .value("strategy_id", strategyId)
@@ -86,7 +91,8 @@ public class SlaveOrder2Dao {
             .value("quantity", quantity)
             .value("state", state)
             .value("ticker", ticker)
-            .value("trading_clearing_account",tradingClearingAccount);
+            .value("trading_clearing_account",tradingClearingAccount)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
