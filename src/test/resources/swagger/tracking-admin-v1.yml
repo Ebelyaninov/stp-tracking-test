@@ -6,13 +6,13 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.17.0
+  version: 1.18.0
 
-servers:
-  - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
-    description: тестовый стенд
-  - url: http://trading.tinkoff.local
-    description: боевой стенд
+  servers:
+    - url: http://invest-qa.tinkoff.ru/tracking/admin/v1/
+      description: тестовый стенд
+    - url: http://trading.tinkoff.local
+      description: боевой стенд
 
 tags:
   - name: client
@@ -243,6 +243,46 @@ paths:
       responses:
         200:
           description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+  /strategy/{strategyId}/subscription:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    delete:
+      tags:
+        - strategy
+      summary: deleteSubscriptions
+      description: Запускает удаление всех подписок торговой стратегии {strategyId}
+      operationId: deleteSubscriptions
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/StrategyId'
+      responses:
+        202:
+          description: Accepted
           headers:
             x-trace-id:
               $ref: '#/components/headers/XTraceId'
@@ -1238,6 +1278,7 @@ components:
         - load
         - buyEnabled
         - sellEnabled
+        - slavesCount
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1285,6 +1326,11 @@ components:
           $ref: '#/components/schemas/StrategyBuyEnabled'
         sellEnabled:
           $ref: '#/components/schemas/StrategySellEnabled'
+        slavesCount:
+          description: Количество ведомых на стратегии
+          type: integer
+          format: int32
+          minimum: 0
 
     StrategyPreview:
       description: Торговая стратегия

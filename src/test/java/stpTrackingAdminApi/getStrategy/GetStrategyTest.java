@@ -191,6 +191,7 @@ public class GetStrategyTest {
         assertThat("description не равно", responseExep.getDescription(), is(description));
         assertThat("score не равно", responseExep.getScore(), is(score));
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
+        assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
     }
 
 
@@ -229,6 +230,7 @@ public class GetStrategyTest {
         assertThat("description не равно", responseExep.getDescription(), is(description));
         assertThat("score не равно", responseExep.getScore(), is(score));
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
+        assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
     }
 
 
@@ -269,6 +271,7 @@ public class GetStrategyTest {
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
         assertThat("buyEnabled не равно true", responseExep.getBuyEnabled(), is(true));
         assertThat("sellEnabled не false", responseExep.getSellEnabled(), is(false));
+        assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
     }
 
 
@@ -417,6 +420,7 @@ public class GetStrategyTest {
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
         assertThat("load.isOverloaded не равно", responseExep.getLoad().getIsOverloaded(), is(strategy.getOverloaded()));
         assertThat("load.percent не равно", responseExep.getLoad().getPercent(), is(calculatedPersent));
+        assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
     }
 
     private static Stream<Arguments> provideStrategyStatusForNotCalculate() {
@@ -469,6 +473,7 @@ public class GetStrategyTest {
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
         assertThat("load.isOverloaded не равно", responseExep.getLoad().getIsOverloaded(), is(strategy.getOverloaded()));
         assertThat("load.percent не равно", responseExep.getLoad().getPercent().toString(), is("0"));
+        assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
     }
 
     public BigDecimal calcualteLoadPercent (BigDecimal tailValue, BigDecimal currencyLoadLimit){
