@@ -1,6 +1,8 @@
 package ru.qa.tinkoff.investTracking.services;
 
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -9,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Component;
-import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.rowmapper.ChangedAtSlavePortfolioRowMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.SlavePortfolioRowMapper;
@@ -167,14 +168,15 @@ public class SlavePortfolioDao {
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,
                                          List<SlavePortfolio.Position> positionList, Date time) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("compared_to_master_version", comparedToMasterVersion)
             .value("base_money_position", baseMoneyPosition)
             .value("changed_at", time)
-            .value("positions",positionList);
+            .value("positions",positionList)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 

@@ -252,7 +252,7 @@ public class handleSynchronizeCommandErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
-        await().pollDelay(Duration.ofNanos(300));
+        await().pollDelay(Duration.ofNanos(1000));
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
             .filter(key -> key.getValue().equals(contractIdSlave))
             .collect(Collectors.toList());
