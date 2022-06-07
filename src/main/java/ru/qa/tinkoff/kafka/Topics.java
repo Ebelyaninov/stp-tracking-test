@@ -45,6 +45,7 @@ public enum Topics {
     TARIFF_CHANGE_RAW("tariff.change.raw"),
     NC_INPUT("nc.input"),
     TRACKING_CORP_ACTION_COMMAND("tracking.corp-action.command"),
+    TRACKING_CLIENT_COMMAND("tracking.client.command"),
     ;
     private final String name;
 }

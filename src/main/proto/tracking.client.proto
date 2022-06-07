@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ru.tinkoff.invest.tracking.client;
+
+import "google/protobuf/timestamp.proto";
+
+//Команда для выполнения над клиентом
+message ClientCommand {
+    // Номер договора владельца портфеля
+    string contract_id = 1;
+
+    // Идентификатор стратегии
+    bytes strategy_id = 2;
+
+    // Метка времени создания команды
+    google.protobuf.Timestamp created_at = 3;
+
+    // Операция для выполнения над клиентом
+    Operation operation = 4;
+
+    // Операция для выполнения над клиентом
+    enum Operation {
+
+        // Деактивировать подписку
+        UNSUBSCRIBE = 0;
+    }
+}
