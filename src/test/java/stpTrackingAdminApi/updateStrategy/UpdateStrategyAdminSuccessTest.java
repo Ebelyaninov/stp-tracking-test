@@ -943,6 +943,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("description стратегии не равно", responseUpdateStrategy.getDescription(), is(description));
         assertThat("score стратегии не равно", responseUpdateStrategy.getScore(), is(score));
         assertThat("owner стратегии не равно", responseUpdateStrategy.getOwner().getSocialProfile().getNickname(), is(profile.getNickname()));
+        assertThat("slavesCount не равен", responseUpdateStrategy.getSlavesCount(), is(0));
     }
 
     void checkParamDB(UUID strategyId, String contractId, String title, String description, Integer score,
@@ -958,6 +959,7 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("expected_relative_yield не равно", strategy.getExpectedRelativeYield(), is(expectedRelativeYield));
         assertThat("short_description не равно", strategy.getShortDescription(), is(shortDescriptionUpdate));
         assertThat("ownerDescription не равно", strategy.getOwnerDescription(), is(ownerDescription));
+        assertThat("slavesCount не равен", strategy.getSlavesCount(), is(0));
     }
 
     void checkParamEvent(Tracking.Event event, String action, UUID strategyId, String title, Strategy strategy) {
