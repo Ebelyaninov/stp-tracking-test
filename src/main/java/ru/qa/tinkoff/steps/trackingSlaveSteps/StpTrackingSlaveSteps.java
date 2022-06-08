@@ -180,7 +180,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-            .reqSpec(r -> r.addHeader("magic-number", "4"))
+            .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -1028,6 +1028,36 @@ public class StpTrackingSlaveSteps {
         int randomNumber = 0 + (int) (Math.random() * 1000);
         String title = "Autotest" + randomNumber;
         return title;
+    }
+
+    @SneakyThrows
+    @Step("Вызов метода содержимое Cache exchangePositionTradingStatusCache в приложении Slave")
+    public String getStatusFromExchangePositionTradingStatusCache(String ticker, String tradingClearingAccount) {
+        String status = "";
+        //получаем содержимое кеша exchangePositionTradingStatusCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
+            .cacheNamePath("exchangePositionTradingStatusCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity>statuses = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (List<Map<String, String>>) statuses.get(0).getValue();
+
+        status = values.get(0).get("status");
+        return status;
     }
 
 }

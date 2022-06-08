@@ -1,11 +1,18 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.ResultFee;
 import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
@@ -48,8 +55,7 @@ public class SlaveAdjustDao {
             " VALUES(?, ?, ?, ?, ?, ?, ?, ?) ";
         LocalDateTime ldt = LocalDateTime.ofInstant(slaveAdjust.getCreatedAt().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query,
-            slaveAdjust.getContractId(),
+        executeCql(query, ResultSet::wasApplied,slaveAdjust.getContractId(),
             slaveAdjust.getStrategyId(),
             timestamp,
             slaveAdjust.getOperationId(),
@@ -57,14 +63,32 @@ public class SlaveAdjustDao {
             slaveAdjust.getCurrency(),
             slaveAdjust.getDeleted(),
             timestamp);
+//        cqlTemplate.execute(query,
+//            slaveAdjust.getContractId(),
+//            slaveAdjust.getStrategyId(),
+//            timestamp,
+//            slaveAdjust.getOperationId(),
+//            slaveAdjust.getQuantity(),
+//            slaveAdjust.getCurrency(),
+//            slaveAdjust.getDeleted(),
+//            timestamp);
     }
 
 
     public void deleteSlaveAdjustByStrategyAndContract(String contractId, UUID strategyId ) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("slave_adjust")
             .where(QueryBuilder.eq("strategy_id", strategyId))
-            .and(QueryBuilder.eq("contract_id", contractId));
+            .and(QueryBuilder.eq("contract_id", contractId))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
+    }
+
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
     }
 }

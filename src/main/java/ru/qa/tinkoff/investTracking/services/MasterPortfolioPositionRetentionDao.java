@@ -1,11 +1,18 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
@@ -49,9 +56,10 @@ public class MasterPortfolioPositionRetentionDao {
     }
 
     public void deleteMasterPortfolioPositionRetention(UUID strategy) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("master_portfolio_position_retention")
-            .where(QueryBuilder.eq("strategy_id", strategy));
+            .where(QueryBuilder.eq("strategy_id", strategy))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
@@ -62,7 +70,9 @@ public class MasterPortfolioPositionRetentionDao {
             "values (?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioPositionRetention.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query, masterPortfolioPositionRetention.getStrategyId(), timestamp,
+//        cqlTemplate.execute(query, masterPortfolioPositionRetention.getStrategyId(), timestamp,
+//            masterPortfolioPositionRetention.getValue());
+        executeCql(query, ResultSet::wasApplied, masterPortfolioPositionRetention.getStrategyId(), timestamp,
             masterPortfolioPositionRetention.getValue());
     }
 
@@ -75,4 +85,12 @@ public class MasterPortfolioPositionRetentionDao {
          List<MasterPortfolioPositionRetention> result = cqlTemplate.query(query, masterPortfolioPositionRetentionRowMapper, strategyId);
         return result;
     }
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
+    }
+
 }

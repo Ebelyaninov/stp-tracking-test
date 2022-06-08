@@ -1,5 +1,7 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -33,19 +35,21 @@ public class DividentDao {
 
 
     public void deleteAllDividendByContractAndStrategyId(String contract, UUID strategy) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("dividend")
             .where(QueryBuilder.eq("contract_id", contract))
-            .and(QueryBuilder.eq("strategy_id", strategy));
+            .and(QueryBuilder.eq("strategy_id", strategy))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
     public void insertIntoDividend(String contractId, UUID strategyId, Long id, Dividend.Context context) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("dividend")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("dividend")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("id", id)
-            .value("context", getContextAsJsonString(context));
+            .value("context", getContextAsJsonString(context))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 

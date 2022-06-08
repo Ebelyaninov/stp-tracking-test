@@ -1,14 +1,16 @@
 package ru.qa.tinkoff.investTracking.services;
-import com.datastax.driver.core.querybuilder.Delete;
+
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.*;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
-import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.rowmapper.LongOnlyValueMapper;
 import ru.qa.tinkoff.investTracking.rowmapper.MasterPortfolioMaxDrawdownRowMapper;
 
@@ -31,7 +33,7 @@ public class MasterPortfolioMaxDrawdownDao {
         String query = "select * " +
             "from invest_tracking.master_portfolio_max_drawdown " +
             "where strategy_id = ? ";
-        return cqlTemplate.queryForObject(query, masterPortfolioMaxDrawdownRowMapper, strategyId);
+         return cqlTemplate.queryForObject(query, masterPortfolioMaxDrawdownRowMapper, strategyId);
     }
 
 
@@ -41,17 +43,21 @@ public class MasterPortfolioMaxDrawdownDao {
         String query = "select * " +
             "from invest_tracking.master_portfolio_max_drawdown " +
             "where strategy_id = ? ";
-        List<MasterPortfolioMaxDrawdown> result = cqlTemplate.query(query, masterPortfolioMaxDrawdownRowMapper, strategyId);
+        List<MasterPortfolioMaxDrawdown> result = executeCql(query,
+            new RowMapperResultSetExtractor<>(masterPortfolioMaxDrawdownRowMapper),
+            strategyId);
         return result;
     }
 
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public void deleteMasterPortfolioMaxDrawdownByStrategyId(UUID strategyId) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("master_portfolio_max_drawdown")
-            .where(QueryBuilder.eq("strategy_id", strategyId));
+            .where(QueryBuilder.eq("strategy_id", strategyId))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
+
     }
 
     @Step("Добавляем запись в master_portfolio_max_drawdown")
@@ -61,7 +67,16 @@ public class MasterPortfolioMaxDrawdownDao {
             "values (?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioMaxDrawdown.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query, masterPortfolioMaxDrawdown.getStrategyId(), timestamp,
+        executeCql(query, ResultSet::wasApplied, masterPortfolioMaxDrawdown.getStrategyId(), timestamp,
             masterPortfolioMaxDrawdown.getValue());
     }
+
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
+    }
+
 }

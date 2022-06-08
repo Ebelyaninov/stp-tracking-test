@@ -515,6 +515,16 @@ public class MocksBasicSteps {
         mockMiddleSteps.createRestOrder(mockMiddleSteps.createBodyForRestOrder(ticker, "Buy", contractIdSlave, classCode, "FillAndKill", "Fill", "1", "1", stpMockSlaveDate.clientCodeSynchronizePositionResolver));
     }
 
+    public void createShedulesToMockAnalizeExchangeFX(String exchange)
+        throws InterruptedException {
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeFX(exchange));
+    }
+
+    public void createShedulesToMockAnalizeExchange(String exchange)
+        throws InterruptedException {
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange(exchange));
+    }
+
 
 
 }

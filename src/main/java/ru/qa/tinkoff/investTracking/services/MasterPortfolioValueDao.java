@@ -1,5 +1,8 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -7,7 +10,11 @@ import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
@@ -132,9 +139,10 @@ public class MasterPortfolioValueDao {
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public void deleteMasterPortfolioValueByStrategyId(UUID strategyId) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("master_portfolio_value")
-            .where(QueryBuilder.eq("strategy_id", strategyId));
+            .where(QueryBuilder.eq("strategy_id", strategyId))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
@@ -145,9 +153,10 @@ public class MasterPortfolioValueDao {
             log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
         }
         for (int i = 0; i < ids.size(); i++) {
-            Delete.Where delete = QueryBuilder.delete()
+            Statement delete = QueryBuilder.delete()
                 .from("master_portfolio_value")
-                .where(QueryBuilder.eq("strategy_id", ids.get(i)));
+                .where(QueryBuilder.eq("strategy_id", ids.get(i)))
+                .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
             cqlTemplate.execute(delete);
         }
 
@@ -160,11 +169,14 @@ public class MasterPortfolioValueDao {
             "values (?, ?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query,
-            masterPortfolioValue.getStrategyId(),
-            timestamp,
+        executeCql(query, ResultSet::wasApplied, masterPortfolioValue.getStrategyId(), timestamp,
             masterPortfolioValue.getMinimumValue(),
             masterPortfolioValue.getValue());
+//        cqlTemplate.execute(query,
+//            masterPortfolioValue.getStrategyId(),
+//            timestamp,
+//            masterPortfolioValue.getMinimumValue(),
+//            masterPortfolioValue.getValue());
     }
 
 
@@ -175,9 +187,16 @@ public class MasterPortfolioValueDao {
             "from invest_tracking.master_portfolio_value " +
             "where strategy_id = ? " +
             "and cut > ?";
-
         return cqlTemplate.queryForObject(query, masterPortfolioValueRowMapper, strategyId, start);
 
+    }
+
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
     }
 
 
