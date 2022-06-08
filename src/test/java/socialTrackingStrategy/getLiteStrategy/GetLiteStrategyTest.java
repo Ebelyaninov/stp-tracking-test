@@ -338,7 +338,7 @@ public class GetLiteStrategyTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategyResponse.class));
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
-        assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues(), is(portfolioValuesPoints));
+        assertThat("portfolioValues стратегии не равно", getLiteStrategy.getPortfolioValues().toString(), is("[]"));
         assertThat("master-portfolio-top-positions.value не равно", getLiteStrategy.getCharacteristics().get(5).getValue(),is("sber.png,minfin.png"));
         assertThat("master-portfolio-top-positions.subtitle не равно", getLiteStrategy.getCharacteristics().get(5).getSubtitle(),is("Топ торгуемых бумаг"));
         assertThat("status стратегии не равен", getLiteStrategy.getStatus().toString(), is("frozen"));
@@ -587,6 +587,48 @@ public class GetLiteStrategyTest {
         assertThat("код ошибки не равно", errorCode, is("0000-00-Z99"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
+
+
+    @Test
+    @AllureId("1905201")
+    @DisplayName("C1905201.GetLiteStrategy .Не нашли записи в таблице master_portfolio_value")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения облегченных данных по торговой стратегии.")
+    void C1905201() throws JsonProcessingException {
+        int randomNumber = 0 + (int) (Math.random() * 100);
+        String title = "Autotest " +String.valueOf(randomNumber);
+        String description = "new test стратегия autotest";
+        strategyId = UUID.randomUUID();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        UUID investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", overloadedFalse, null,"TEST","TEST11");
+        //изменяем время активации стратегии
+        strategy = strategyService.getStrategy(strategyId);
+        final int daysAgo = 366;
+        LocalDateTime from = LocalDateTime.now().minusDays(daysAgo);
+        strategy.setActivationTime(from);
+        strategyService.saveStrategy(strategy);
+        //вызываем метод getLiteStrategy
+        GetLiteStrategyResponse getLiteStrategy = strategyApi.getLiteStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("stp-tracking-api")
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetLiteStrategyResponse.class));
+        List<StrategyCharacteristic> getCharacteristic = getLiteStrategy.getCharacteristics().stream()
+            .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals("recommended-base-money-position-quantity"))
+            .collect(Collectors.toList());
+        //Проверяем, что не вернули характеристику
+        assertThat("Вернули характеристику recommended-base-money-position-quantity", getCharacteristic.size(), is(0));
+    }
+
 
 
     public void createMasterPortfolio(String contractIdMaster, UUID strategyId, int version,

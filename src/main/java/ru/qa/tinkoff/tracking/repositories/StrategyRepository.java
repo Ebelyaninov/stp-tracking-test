@@ -35,6 +35,14 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     List<Strategy> findStrategyByStatusNative(@Param("status") String status);
 
     @Query(value =
+        "select s.* from strategy s " +
+            "  join contract cntr on s.contract_id = cntr.id " +
+            "  join client cl on cntr.client_id = cl.id" +
+            " where s.description is not null and s.status IN (cast(:firstStatus as strategy_status), cast(:secondStatus as strategy_status))" +
+            " and cl.social_profile is not null", nativeQuery = true)
+    List<Strategy> findStrategyByTwoStatusesNative(@Param("firstStatus") String firstStatus, @Param("secondStatus") String secondStatus);
+
+    @Query(value =
         "select s.id from contract" +
             "  join strategy s on contract.id = s.contract_id " +
             "  join client c on c.id = contract.client_id" +
