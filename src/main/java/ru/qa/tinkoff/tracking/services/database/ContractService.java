@@ -135,6 +135,14 @@ public class ContractService {
        return strategyByStatusNative;
     }
 
+    @Step("Поиск стратегий по статусам и не пустому значению Profile")
+    @SneakyThrows
+    public List<Strategy> getStrategyByTwoStatusWithProfile(StrategyStatus firstStatus, StrategyStatus secondStatus) {
+        List<Strategy> strategyByStatusNative = strategyRepository.findStrategyByTwoStatusesNative(firstStatus.name(), secondStatus.name());
+        log.info("Successfully find strategy by status IN ({}, {})", firstStatus, secondStatus);
+        return strategyByStatusNative;
+    }
+
     @Step("Поиск всех заблокированных и подписанных контрактов")
     @SneakyThrows
     public List<Contract> findAllBlockedContract(Boolean blocked) {

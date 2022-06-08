@@ -27,6 +27,7 @@ import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
@@ -52,6 +53,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.text.DecimalFormatSymbols;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -189,7 +191,7 @@ public class GetLiteStrategiesTest {
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
-        List<Strategy> strategysFromDB = contractService.getStrategyByStatusWithProfile(StrategyStatus.active);
+        List<Strategy> strategysFromDB = contractService.getStrategyByTwoStatusWithProfile(StrategyStatus.active, StrategyStatus.frozen);
         //записываем stratedyId в множества и сравниваем их
         Set<UUID> listStrategyIdsFromApi = new HashSet<>();
         Set<String> listStrategyTitleFromApi = new HashSet<>();
@@ -198,6 +200,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyStatusFromApi = new HashSet<>();
         Set<Integer> listStrategyScoreFromApi = new HashSet<>();
         Set<Boolean> listStrategyIsOverloadedFromApi = new HashSet<>();
+        Set<String> listStrategyPortfolioValues = new HashSet<>();
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
             listStrategyIdsFromApi.add(getLiteStrategies.getItems().get(i).getId());
             listStrategyTitleFromApi.add(getLiteStrategies.getItems().get(i).getTitle());
@@ -206,6 +209,7 @@ public class GetLiteStrategiesTest {
             listStrategyStatusFromApi.add(getLiteStrategies.getItems().get(i).getStatus().toString());
             listStrategyScoreFromApi.add(getLiteStrategies.getItems().get(i).getScore());
             listStrategyIsOverloadedFromApi.add(getLiteStrategies.getItems().get(i).getIsOverloaded());
+            listStrategyPortfolioValues.add(getLiteStrategies.getItems().get(i).getPortfolioValues().toString());
         }
         Set<String> listStrategyTitleFromDB = new HashSet<>();
         Set<UUID> listStrategyIdsFromDB = new HashSet<>();
@@ -224,13 +228,17 @@ public class GetLiteStrategiesTest {
             listIsOverloaded.add(strategysFromDB.get(i).getOverloaded());
             listStrategyStatusFromDB.add(strategysFromDB.get(i).getStatus().toString());
         }
-        assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded));
-        assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromDB));
-        assertThat("title стратегий не совпадают", listStrategyTitleFromApi, is(listStrategyTitleFromDB));
-        assertThat("baseCurrency стратегий не совпадают", listStrategyBaseCurrencyFromApi, is(listStrategyBaseCurrencyFromDB));
-        assertThat("riskProfile стратегий не совпадают", listStrategyRiskProfileFromApi, is(listStrategyRiskProfileFromDB));
-        assertThat("score стратегий не совпадают", listStrategyScoreFromApi, is(listStrategyScoreFromDB));
-        assertThat("status стратегий не совпадает",listStrategyStatusFromApi, is(listStrategyStatusFromDB));
+        assertAll(
+            () -> assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded)),
+            () -> assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromDB)),
+            () -> assertThat("title стратегий не совпадают", listStrategyTitleFromApi, is(listStrategyTitleFromDB)),
+            () -> assertThat("baseCurrency стратегий не совпадают", listStrategyBaseCurrencyFromApi, is(listStrategyBaseCurrencyFromDB)),
+            () -> assertThat("riskProfile стратегий не совпадают", listStrategyRiskProfileFromApi, is(listStrategyRiskProfileFromDB)),
+            () -> assertThat("score стратегий не совпадают", listStrategyScoreFromApi, is(listStrategyScoreFromDB)),
+            () -> assertThat("status стратегий не совпадает", listStrategyStatusFromApi, is(listStrategyStatusFromDB)),
+            () -> assertThat("PortfolioValues != []", listStrategyPortfolioValues.toString(), is("[[]]"))
+        );
+        log.info("listOfCount from method == " + listStrategyIdsFromApi + "\n listOfCountFromDB == " + listStrategyIdsFromDB);
     }
 
 
@@ -273,6 +281,7 @@ public class GetLiteStrategiesTest {
     void C1140313() throws JsonProcessingException, InterruptedException {
         UUID strategyId = UUID.fromString("185f3deb-40d2-4d5e-9763-53b278ea4085");
         strategy = strategyService.getStrategy(strategyId);
+        String title = strategy.getTitle();
         String expectedRelativeYieldResult = strategy.getExpectedRelativeYield().toString();
         String count = strategy.getSlavesCount().toString();
         String shortDescription = strategy.getShortDescription();
@@ -291,11 +300,13 @@ public class GetLiteStrategiesTest {
         String rubbleSymbol = "$";
         String recommendedBaseMoney = str.replace(",", " ") + " " + rubbleSymbol;
         //рассчитываем относительную доходность но основе выбранных точек Values
+        BigDecimal masterPortfolioValueFirst = masterPortfolioValueDao.getMasterPortfolioValueFirstByStrategyId(strategyId).getValue();
         BigDecimal relativeYield = (masterPortfolioValueDao.getMasterPortfolioValueLastByStrategyId(strategyId).getValue()
             .divide(masterPortfolioValueDao.getMasterPortfolioValueFirstByStrategyId(strategyId).getValue(), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
-            .setScale(2, BigDecimal.ROUND_HALF_EVEN);
+            .setScale(2, BigDecimal.ROUND_HALF_UP);
+        String relativeYieldValue =  "+" +  relativeYield.toString().replace(".", ",") + "%";
         //вызываем метод getLiteStrategies
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -310,35 +321,58 @@ public class GetLiteStrategiesTest {
             }
         }
         // выбираем характеристику по recommended-base-money-position-quantity
-        List<StrategyCharacteristic> strategyCharacteristicsBaseMoney =
-            liteStrategy.get(0).getCharacteristics().stream()
-                .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals("recommended-base-money-position-quantity"))
-                .collect(Collectors.toList());
+        StrategyCharacteristic strategyCharacteristicsBaseMoney = getCharacteristic(liteStrategy, "recommended-base-money-position-quantity");
         // выбираем характеристику по slaves-count
-        List<StrategyCharacteristic> strategyCharacteristicsSlavesCount =
-            liteStrategy.get(0).getCharacteristics().stream()
-                .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals("slaves-count"))
-                .collect(Collectors.toList());
+        StrategyCharacteristic strategyCharacteristicsSlavesCount = getCharacteristic(liteStrategy, "slaves-count");
+        // выбираем характеристику по expected-relative-yield
+        StrategyCharacteristic strategyCharacteristicsExpectrdRelativeYield = getCharacteristic(liteStrategy, "expected-relative-yield");
+        StrategyCharacteristic strategyCharacteristicsRelativeYield = getCharacteristic(liteStrategy, "relative-yield");
+        // выбираем характеристику по short-description
+        StrategyCharacteristic strategyCharacteristicsShortDescription = getCharacteristic(liteStrategy, "short-description");
+        // выбираем характеристику по master-portfolio-top-positions
+        StrategyCharacteristic strategyCharacteristicsMasterPortfolioTopPosition = getCharacteristic(liteStrategy, "master-portfolio-top-positions");
+        // выбираем характеристику по owner-description
+        StrategyCharacteristic strategyCharacteristicsOwnerDescription = getCharacteristic(liteStrategy, "owner-description");
+        //Получаем данные по овнеру из client
+        SocialProfile socialProfile = clientService.getClient(strategy.getContract().getClientId()).getSocialProfile();
         //проверяем полученные данные
-        assertThat("идентификатор стратегии не равно", liteStrategy.get(0).getId(), is(strategyId));
-        assertThat("value recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getValue(),
-            is(recommendedBaseMoney));
-        assertThat("subtitle recommended-base-money-position-quantity не равно", strategyCharacteristicsBaseMoney.get(0).getSubtitle(),
-            is("советуем вложить"));
-        assertThat("value slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getValue(),
-            is(count.charAt(0) + "\u00A0" + count.substring(1)));
-        assertThat("subtitle slaves-count не равно", strategyCharacteristicsSlavesCount.get(0).getSubtitle(),
-            is("подписаны"));
-//        assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues(), is(portfolioValuesPoints));
-        assertThat("relativeYield стратегии не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield));
-        assertThat("status стратегии не равен", liteStrategy.get(0).getStatus().toString(), is("active"));
-        Allure.step("проверка Characteristics",
+        assertAll(
+            () -> assertThat("идентификатор стратегии не равно", liteStrategy.get(0).getId(), is(strategyId)),
+            () -> assertThat("title не равно", liteStrategy.get(0).getTitle(), is(title)),
+            () -> assertThat("baseCurrency не равно", liteStrategy.get(0).getBaseCurrency().toString(), is(strategy.getBaseCurrency().toString())),
+            () -> assertThat("riskProfile не равно", liteStrategy.get(0).getRiskProfile().toString(), is(strategy.getRiskProfile().toString())),
+            () -> assertThat("score не равно", liteStrategy.get(0).getScore(), is(strategy.getScore())),
+            () -> assertThat("owner.socialProfile.id не равно", liteStrategy.get(0).getOwner().getSocialProfile().getId().toString(), is(socialProfile.getId())),
+            () -> assertThat("owner.socialProfile.nickname не равно", liteStrategy.get(0).getOwner().getSocialProfile().getNickname(), is(socialProfile.getNickname())),
+            () -> assertThat("owner.socialProfile.image не равно", liteStrategy.get(0).getOwner().getSocialProfile().getImage().toString(), is(socialProfile.getImage())),
+            () -> assertThat("relativeYield не равно", liteStrategy.get(0).getRelativeYield(), is(relativeYield)),
+            () -> assertThat("portfolioValues стратегии не равно", liteStrategy.get(0).getPortfolioValues().toString(), is("[]")),
+            () -> assertThat("isOverloaded не равен", liteStrategy.get(0).getIsOverloaded(), is(strategy.getOverloaded())),
+            () -> assertThat("status стратегии не равен", liteStrategy.get(0).getStatus().toString(), is(strategy.getStatus().toString()))
+        );
+        Allure.step("проверка Characteristics value",
             () -> assertAll(
-                () -> assertThat("expected-relative-yield не равен", liteStrategy.get(0).getCharacteristics().get(2).getValue(), is(expectedRelativeYieldResult + "% в год")),
-                () -> assertThat("short-description не равно", liteStrategy.get(0).getCharacteristics().get(4).getValue(), is(shortDescription)),
-                () -> assertThat("owner-description не равно", liteStrategy.get(0).getCharacteristics().get(5).getValue(), is(ownerDescription))
-//                () -> assertThat("master-portfolio-top-positions.value не равно", liteStrategy.get(0).getCharacteristics().get(6).getValue(), is("US0378331005.png")),
-//                () -> assertThat("master-portfolio-top-positions.subtitle не равно", liteStrategy.get(0).getCharacteristics().get(6).getSubtitle(), is("Топ торгуемых бумаг"))
+                //recommended-base-money-position-quantity
+                () -> assertThat("recommended-base-money-position-quantity.value не равно", strategyCharacteristicsBaseMoney.getValue(), is(recommendedBaseMoney)),
+                () -> assertThat("recommended-base-money-position-quantity.subtitle не равно", strategyCharacteristicsBaseMoney.getSubtitle(), is("советуем вложить")),
+                //slaves-count
+                () -> assertThat("slaves-count.value не равно", strategyCharacteristicsSlavesCount.getValue(), is(count.charAt(0) + "\u00A0" + count.substring(1))),
+                () -> assertThat("slaves-count.subtitle не равно", strategyCharacteristicsSlavesCount.getSubtitle(), is("подписаны")),
+                //expected-relative-yield
+                () -> assertThat("expected-relative-yield.value не равен", strategyCharacteristicsExpectrdRelativeYield.getValue(), is(expectedRelativeYieldResult + "% в год")),
+                () -> assertThat("expected-relative-yield.subtitle не равен", strategyCharacteristicsExpectrdRelativeYield.getSubtitle(), is("Прогноз автора")),
+                //relative-yield
+                () -> assertThat("relativeYield.value стратегии не равно", strategyCharacteristicsRelativeYield.getValue(), is(relativeYieldValue)),
+                () -> assertThat("relativeYield.subtitle стратегии не равно", strategyCharacteristicsRelativeYield.getSubtitle(), is("за все время")),
+                //short-description
+                () -> assertThat("short-description.value не равно", strategyCharacteristicsShortDescription.getValue(), is(shortDescription)),
+                () -> assertThat("short-description.subtitle не равно", strategyCharacteristicsShortDescription.getSubtitle(), is("Короткое описание")),
+                //master-portfolio-top-positions
+                () -> assertThat("master-portfolio-top-positions.value не равно", strategyCharacteristicsMasterPortfolioTopPosition.getValue(), is("US0378331005.png")),
+                () -> assertThat("master-portfolio-top-positions.subtitle не равно", strategyCharacteristicsMasterPortfolioTopPosition.getSubtitle(), is("Топ торгуемых бумаг")),
+                //owner-description
+                () -> assertThat("owner-description.value не равно", strategyCharacteristicsOwnerDescription.getValue(), is(ownerDescription)),
+                () -> assertThat("owner-description.subtitle не равно", strategyCharacteristicsOwnerDescription.getSubtitle(), is("Описание владельца"))
             ));
     }
 
@@ -602,6 +636,16 @@ public class GetLiteStrategiesTest {
             .positions(topPositions)
             .build();
         masterPortfolioTopPositionsDao.insertIntoMasterPortfolioTopPositions(masterPortfolioTopPositions);
+    }
+
+
+    StrategyCharacteristic getCharacteristic ( List<LiteStrategy> liteStrategies, String characteristicName){
+        // выбираем характеристику по owner-description
+         StrategyCharacteristic characteristic =
+             liteStrategies.get(0).getCharacteristics().stream()
+                .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals(characteristicName))
+                .collect(Collectors.toList()).get(0);
+        return characteristic;
     }
 
 }
