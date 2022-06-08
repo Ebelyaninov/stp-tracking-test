@@ -1,11 +1,18 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioMaxDrawdown;
 import ru.qa.tinkoff.investTracking.entities.SignalFrequency;
@@ -47,9 +54,10 @@ public class SignalFrequencyDao {
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public void deleteSignalFrequencyByStrategyId(UUID strategyId) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("signal_frequency")
-            .where(QueryBuilder.eq("strategy_id", strategyId));
+            .where(QueryBuilder.eq("strategy_id", strategyId))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
@@ -60,7 +68,17 @@ public class SignalFrequencyDao {
             "values (?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query, signalFrequency.getStrategyId(), timestamp,
+        executeCql(query, ResultSet::wasApplied, signalFrequency.getStrategyId(), timestamp,
             signalFrequency.getCount());
+//        cqlTemplate.execute(query, signalFrequency.getStrategyId(), timestamp,
+//            signalFrequency.getCount());
+    }
+
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
     }
 }

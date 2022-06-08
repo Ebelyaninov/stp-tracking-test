@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.List;
+
 //здесь храним список используемых инструментов в авто-тестах
 @Slf4j
 @Service
@@ -156,7 +159,7 @@ public class StpInstrument {
     public String instrumentEURRUBTOM = tickerEURRUBTOM + "_" + classCodeEURRUBTOM;
 
     public String tickerEURRUB = "EURRUB";
-    public String tradingClearingAccountEURRUB = "MB0253214128";
+    public String tradingClearingAccountEURRUB = "MB9885503216";
     public String classCodeEURRUB = "EES_CETS";
 
 
@@ -312,8 +315,31 @@ public class StpInstrument {
     public String classCodeSTM = "STM";
     public String tradingClearingAccountSTM = "NDS000000001";
 
-
     public String tickerLNT = "LNT";
     public String classCodeLNT = "SPBXM";
     public String tradingClearingAccountLNT = "L01+00000SPB";
+
+    public String tickerVTBM = "VTBM";
+    public String tradingClearingAccountVTBM = "L01+00000F00";
+    public String classCodeVTBM = "TQTF";
+    public String instrumentVTBM = tickerVTBM + "_" + classCodeVTBM;
+
+
+    public List<String> tradingStatusesFalse = Arrays.asList(
+        "not_available_for_trading",
+        "trading_closed",
+        "break_in_trading",
+        "session_close");
+
+    public List<String> tradingStatusesTrue = Arrays.asList(
+        "opening_period",
+        "opening_auction",
+        "closing_period",
+        "normal_trading",
+        "closing_auction",
+        "dark_pool_auction",
+        "discrete_auction",
+        "trading_at_closing_auction_price",
+        "session_open",
+        "session_assigned");
 }

@@ -141,26 +141,28 @@ public class SlavePortfolioDao {
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,
                                          List<SlavePortfolio.Position> positionList) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("compared_to_master_version", comparedToMasterVersion)
             .value("base_money_position", baseMoneyPosition)
-            .value("positions",positionList);
+            .value("positions", positionList)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoSlavePortfolioWithoutPosition(String contractId, UUID strategyId, int version,
                                          int comparedToMasterVersion,
                                          SlavePortfolio.BaseMoneyPosition baseMoneyPosition,Date time) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("slave_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("compared_to_master_version", comparedToMasterVersion)
             .value("changed_at", time)
-            .value("base_money_position", baseMoneyPosition);
+            .value("base_money_position", baseMoneyPosition)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
@@ -181,10 +183,11 @@ public class SlavePortfolioDao {
     }
 
     public void deleteSlavePortfolio(String contract, UUID strategy) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("slave_portfolio")
             .where(QueryBuilder.eq("contract_id", contract))
-            .and(QueryBuilder.eq("strategy_id", strategy));
+            .and(QueryBuilder.eq("strategy_id", strategy))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 }

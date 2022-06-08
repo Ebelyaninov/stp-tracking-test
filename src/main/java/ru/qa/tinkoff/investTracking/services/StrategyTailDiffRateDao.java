@@ -1,11 +1,18 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import io.qameta.allure.Step;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
+import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.stereotype.Component;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailDiffRate;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
@@ -37,9 +44,10 @@ public class StrategyTailDiffRateDao {
     @Step("Удаление в cassandra записи по объему хвоста стратегии по strategyId")
     @SneakyThrows
     public void deleteStrategyTailDiffRateByStrategyId(UUID strategyId) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("strategy_tail_diff_rate")
-            .where(QueryBuilder.eq("strategy_id", strategyId));
+            .where(QueryBuilder.eq("strategy_id", strategyId))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
@@ -50,7 +58,16 @@ public class StrategyTailDiffRateDao {
             "values (?, ?, ?)";
         LocalDateTime ldt = LocalDateTime.ofInstant(strategyTailDiffRate.getCut().toInstant(), ZoneId.systemDefault());
         Timestamp timestamp = Timestamp.valueOf(ldt);
-        cqlTemplate.execute(query, strategyTailDiffRate.getStrategyId(), timestamp,
+        executeCql(query, ResultSet::wasApplied,strategyTailDiffRate.getStrategyId(), timestamp,
             strategyTailDiffRate.getValues());
+//        cqlTemplate.execute(query, strategyTailDiffRate.getStrategyId(), timestamp,
+//            strategyTailDiffRate.getValues());
+    }
+    @Nullable
+    private <T> T executeCql(String cql, ResultSetExtractor<T> resultSetExtractor, Object... args) {
+        return cqlTemplate.query(
+            new ConsistencyLevelCreator(new SimplePreparedStatementCreator(cql), ConsistencyLevel.EACH_QUORUM),
+            new ArgumentPreparedStatementBinder(args),
+            resultSetExtractor);
     }
 }

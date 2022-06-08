@@ -99,7 +99,7 @@ public class SlaveOrder2Dao {
     public void insertIntoSlaveOrder2WithFilledQuantity(String contractId, UUID strategyId, int version, int attemptsCount,
                                                         int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
                                                         BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
             .value("created_at", Date.from(OffsetDateTime.now(ZoneOffset.UTC).toInstant()))
             .value("strategy_id", strategyId)
@@ -114,8 +114,8 @@ public class SlaveOrder2Dao {
             .value("quantity", quantity)
             .value("state", state)
             .value("ticker", ticker)
-            .value("trading_clearing_account",tradingClearingAccount);
-
+            .value("trading_clearing_account",tradingClearingAccount)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
@@ -123,9 +123,10 @@ public class SlaveOrder2Dao {
 
     @Step("Удаляем запись о выставленной заявке в slave_order_2")
     public void deleteSlaveOrder2(String contract) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("slave_order_2")
-            .where(QueryBuilder.eq("contract_id", contract));
+            .where(QueryBuilder.eq("contract_id", contract))
+        .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 

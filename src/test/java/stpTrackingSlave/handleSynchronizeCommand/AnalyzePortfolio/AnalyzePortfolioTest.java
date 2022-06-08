@@ -33,6 +33,7 @@ import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
+import ru.qa.tinkoff.mocks.steps.fireg.TradingShedulesExchangeSteps;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
@@ -136,6 +137,8 @@ public class AnalyzePortfolioTest {
     @Autowired
     MocksBasicSteps mocksBasicSteps;
     @Autowired
+    TradingShedulesExchangeSteps tradingShedulesExchangeSteps;
+    @Autowired
     StpSiebel stpSiebel;
     @Autowired
     StpMockSlaveDate stpMockSlaveDate;
@@ -234,7 +237,7 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
@@ -334,7 +337,7 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
@@ -432,14 +435,15 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C684579() {
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
-        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
-            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerFB, instrument.classCodeFB,
+            "500", "500.4", "500");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Buy", "1", "1");
@@ -461,8 +465,8 @@ public class AnalyzePortfolioTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build()).build();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(2);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3.0", date, 3, positionAction);
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "3.0", date, 3, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "4873.36", masterPos);
 //        //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -484,8 +488,8 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -494,16 +498,16 @@ public class AnalyzePortfolioTest {
         //выполняем расчеты
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(priceMaster);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
-        BigDecimal masterPositionRateABBV = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         BigDecimal masterPositionRateAAPL = new BigDecimal("0");
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -525,16 +529,16 @@ public class AnalyzePortfolioTest {
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
-        checkPosition(positionABBV, priceMaster, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "0", nullValue());
+        checkPosition(positionFB, priceMaster, slavePortfolioValue, slavePositionsValue, masterPositionRateFB, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "0", nullValue());
         checkPosition(positionAAPL, price, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "2.0", notNullValue());
         assertThat("ChangedAt позиции в портфеле slave не равен", positionAAPL.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -576,8 +580,8 @@ public class AnalyzePortfolioTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build()).build();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(2);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3.0", date, 3, positionAction);
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "3.0", date, 3, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "4873.36", masterPos);
 //        //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -602,22 +606,22 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
-        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        BigDecimal priceMaster = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceMaster)).add(positionAAPL.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(sellRes));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
@@ -632,10 +636,12 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C688348() {
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("SPB");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerALFAperp, instrument.classCodeALFAperp,
             "105", "100", "105");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
@@ -753,10 +759,12 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1323457() {
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createShedulesToMockAnalizeExchangeFX("FX");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
             "105.4975", "104.51", "106.475");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
@@ -876,6 +884,7 @@ public class AnalyzePortfolioTest {
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
         mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("MOEX_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
             "140.9075", "138.195", "140.9075");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
@@ -1057,8 +1066,8 @@ public class AnalyzePortfolioTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель для master в cassandra
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -1083,13 +1092,13 @@ public class AnalyzePortfolioTest {
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -1373,10 +1382,12 @@ public class AnalyzePortfolioTest {
         "Master_portfolio.version = slave_portfolio.compared_to_master_version.  lots после округления = 0 " +
         "И buy_enabled = true")
     void C1385945() {
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();;
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
+        mocksBasicSteps.createShedulesToMockAnalizeExchangeFX("FX");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
             "140.9075", "138.195", "140.9075");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
@@ -2462,13 +2473,13 @@ public class AnalyzePortfolioTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPosOld);
         List<MasterPortfolio.Position> masterPosNew = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3", date, 3,
+            instrument.tradingClearingAccountAAPL, "5", instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "3", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "5675.1", masterPosNew);
         List<MasterPortfolio.Position> masterPosLast = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "7", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3", date, 3,
+            instrument.tradingClearingAccountFB, "3", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "5459.1", masterPosLast);
         //создаем портфель для slave в cassandra c пустой позицией по бумаге
@@ -2494,8 +2505,8 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
         checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -2504,18 +2515,18 @@ public class AnalyzePortfolioTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //выполняем расчеты
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
-        BigDecimal masterPosQuantityABBV = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceABBV);
-        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPosQuantityABBV).add(masterPortfolio.getBaseMoneyPosition().getQuantity());
+        BigDecimal masterPosQuantityFB = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceFB);
+        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPosQuantityFB.add(masterPortfolio.getBaseMoneyPosition().getQuantity()));
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantityFB.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         //сохраняем в список значения по позиции в портфеле
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(position.get(0).getQuantity().multiply(price));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceFB)).add(position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -2538,12 +2549,12 @@ public class AnalyzePortfolioTest {
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "5", notNullValue());
         //проверяем параметры позиции с расчетами
-        checkPosition(positionABBV, priceABBV, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "0", nullValue());
+        checkPosition(positionFB, priceFB, slavePortfolioValue, slavePositionsValue, masterPositionRateFB, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "0", nullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(sellRes));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
     }
 
 
@@ -2596,8 +2607,8 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountABBV, "3", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "5675.1", masterPosNew);
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "3", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_SELL_TRADE));
+            instrument.tradingClearingAccountAAPL, "3", instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "3", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_SELL_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "5892.1", masterPos);
         //создаем портфель для slave в cassandra
         String baseMoneySlave = "7000";
@@ -2620,8 +2631,8 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "last", SIEBEL_ID_SLAVE));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
         checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -2630,18 +2641,18 @@ public class AnalyzePortfolioTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //выполняем расчеты
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
-        BigDecimal masterPosQuantityABBV = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceABBV);
-        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPosQuantityABBV).add(masterPortfolio.getBaseMoneyPosition().getQuantity());
+        BigDecimal masterPosQuantityFB = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceFB);
+        BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPosQuantityFB).add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantityFB.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         //сохраняем в список значения по позиции в портфеле
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(position.get(0).getQuantity().multiply(price));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceFB)).add(position.get(0).getQuantity().multiply(price));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -2664,12 +2675,12 @@ public class AnalyzePortfolioTest {
         checkPosition(position, price, slavePortfolioValue, slavePositionsValue, masterPositionRate, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "8", notNullValue());
         //проверяем параметры позиции с расчетами
-        checkPosition(positionABBV, priceABBV, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "0", nullValue());
+        checkPosition(positionFB, priceFB, slavePortfolioValue, slavePositionsValue, masterPositionRateFB, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "0", nullValue());
         assertThat("Проверяем флаг buy_enabled", position.get(0).getBuyEnabled(), is(buyRes));
         assertThat("Проверяем флаг sell_enabled", position.get(0).getSellEnabled(), is(sellRes));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
     }
 
 
@@ -2684,11 +2695,11 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
-        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
-            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerFB, instrument.classCodeFB,
+            "500", "500.4", "500");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "6", "6");
@@ -2715,8 +2726,8 @@ public class AnalyzePortfolioTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "7", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "4", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            instrument.tradingClearingAccountAAPL, "7", instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "4", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1154.4", masterPos);
         //получаем идентификатор подписки
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -2734,8 +2745,8 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         Thread.sleep(5000);
@@ -2746,19 +2757,19 @@ public class AnalyzePortfolioTest {
 
         //выполняем расчеты
         BigDecimal masterPosQuantityAAPL = masterPortfolio.getPositions().get(0).getQuantity().multiply(priceAAPL);
-        BigDecimal masterPosQuantityABBV = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceABBV);
-        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityABBV)
+        BigDecimal masterPosQuantityFB = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceFB);
+        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityFB)
             .add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRateAAPL = masterPosQuantityAAPL.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantityFB.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         //сохраняем в список значения по позиции в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceFB)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -2785,22 +2796,22 @@ public class AnalyzePortfolioTest {
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "6", notNullValue());
-        BigDecimal slavePositionRate = (positionABBV.get(0).getQuantity().multiply(priceABBV)).divide(slavePositionsValue, 4, RoundingMode.HALF_UP);
+        BigDecimal slavePositionRate = (positionFB.get(0).getQuantity().multiply(priceFB)).divide(slavePositionsValue, 4, RoundingMode.HALF_UP);
         BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
         BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePositionsValue)
-            .divide(priceABBV, 4, BigDecimal.ROUND_HALF_UP);
-        assertThat("ticker бумаги позиции в портфеле slave не равна", positionABBV.get(0).getTicker(), is(instrument.tickerABBV));
+            .divide(priceFB, 4, BigDecimal.ROUND_HALF_UP);
+        assertThat("ticker бумаги позиции в портфеле slave не равна", positionFB.get(0).getTicker(), is(instrument.tickerFB));
         assertThat("tradingClearingAccount  бумаги позиции в портфеле slave не равна",
-            positionABBV.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountABBV));
-        assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
-        assertThat("Price позиции в портфеле slave не равен", positionABBV.get(0).getPrice(), is(priceABBV));
-        assertThat("Rate позиции в портфеле slave не равен", positionABBV.get(0).getRate().doubleValue(), is(slavePositionRate.doubleValue()));
-        assertThat("RateDiff позиции в портфеле slave не равен", positionABBV.get(0).getRateDiff(), is(slavePositionRateDiff));
-        assertThat("QuantityDiff позиции в портфеле slave не равен", positionABBV.get(0).getQuantityDiff(), is(slavePositionQuantityDiff));
+            positionFB.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
+        assertThat("Quantity позиции в портфеле slave не равна", positionFB.get(0).getQuantity().toString(), is("0"));
+        assertThat("Price позиции в портфеле slave не равен", positionFB.get(0).getPrice(), is(priceFB));
+        assertThat("Rate позиции в портфеле slave не равен", positionFB.get(0).getRate().doubleValue(), is(slavePositionRate.doubleValue()));
+        assertThat("RateDiff позиции в портфеле slave не равен", positionFB.get(0).getRateDiff(), is(slavePositionRateDiff));
+        assertThat("QuantityDiff позиции в портфеле slave не равен", positionFB.get(0).getQuantityDiff(), is(slavePositionQuantityDiff));
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -2817,11 +2828,11 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
-        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
-            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerFB, instrument.classCodeFB,
+            "500", "500.4", "500");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "4", "4");
@@ -2848,8 +2859,8 @@ public class AnalyzePortfolioTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "7", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "4", date, 3,
+            instrument.tradingClearingAccountAAPL, "7", instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "4", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1154.4", masterPos);
         //получаем идентификатор подписки
@@ -2858,8 +2869,8 @@ public class AnalyzePortfolioTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "-1893.25";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "4", true, true, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", true, true, date);
+            instrument.tradingClearingAccountAAPL, "4", true, true, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "2", true, true, date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
@@ -2867,8 +2878,8 @@ public class AnalyzePortfolioTest {
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -2876,19 +2887,19 @@ public class AnalyzePortfolioTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //выполняем расчеты
         BigDecimal masterPosQuantityAAPL = masterPortfolio.getPositions().get(0).getQuantity().multiply(priceAAPL);
-        BigDecimal masterPosQuantityABBV = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceABBV);
-        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityABBV)
+        BigDecimal masterPosQuantityFB = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceFB);
+        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityFB)
             .add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRateAAPL = masterPosQuantityAAPL.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantityFB.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         //сохраняем в список значения по позиции в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceFB)).add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
         //определяем резерв под списание комиссии:
@@ -2916,12 +2927,12 @@ public class AnalyzePortfolioTest {
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
-        checkPosition(positionABBV, priceABBV, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", notNullValue());
+        checkPosition(positionFB, priceFB, slavePortfolioValue, slavePositionsValue, masterPositionRateFB, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "2", notNullValue());
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -2938,13 +2949,13 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
-        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerABBV, instrument.classCodeABBV,
-            "292", "289.4", "292");
+        mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerFB, instrument.classCodeFB,
+            "500", "500.4", "500");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
-            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerABBV, instrument.classCodeABBV,
+            stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerFB, instrument.classCodeFB,
             "Sell", "2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -2977,8 +2988,8 @@ public class AnalyzePortfolioTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "-1893.25";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "4", true, true, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", true, true, date);
+            instrument.tradingClearingAccountAAPL, "4", true, true, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "2", true, true, date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySlave, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
@@ -2986,8 +2997,8 @@ public class AnalyzePortfolioTest {
         createCommandSynTrackingSlaveCommand(contractIdSlave, time);
         BigDecimal priceAAPL = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
-        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
@@ -2995,19 +3006,19 @@ public class AnalyzePortfolioTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //выполняем расчеты
         BigDecimal masterPosQuantityAAPL = masterPortfolio.getPositions().get(0).getQuantity().multiply(priceAAPL);
-        BigDecimal masterPosQuantityABBV = BigDecimal.ZERO;
-        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityABBV)
+        BigDecimal masterPosQuantityFB = BigDecimal.ZERO;
+        BigDecimal masterPortfolioValue = masterPosQuantityAAPL.add(masterPosQuantityFB)
             .add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRateAAPL = masterPosQuantityAAPL.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal masterPositionRateFB = masterPosQuantityFB.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
         //сохраняем в список значения по позиции в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
-        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV))
+        BigDecimal slavePositionsValue = (positionFB.get(0).getQuantity().multiply(priceFB))
             .add(positionAAPL.get(0).getQuantity().multiply(priceAAPL));
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
@@ -3036,12 +3047,12 @@ public class AnalyzePortfolioTest {
         //проверяем параметры позиции с расчетами
         checkPosition(positionAAPL, priceAAPL, slavePortfolioValue, slavePositionsValue, masterPositionRateAAPL, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "4", notNullValue());
-        checkPosition(positionABBV, priceABBV, slavePortfolioValue, slavePositionsValue, masterPositionRateABBV, instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "2", notNullValue());
+        checkPosition(positionFB, priceFB, slavePortfolioValue, slavePositionsValue, masterPositionRateFB, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "2", notNullValue());
         assertThat("Проверяем флаг buy_enabled", positionAAPL.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionAAPL.get(0).getSellEnabled(), is(true));
-        assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true));
-        assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true));
+        assertThat("Проверяем флаг buy_enabled", positionFB.get(0).getBuyEnabled(), is(true));
+        assertThat("Проверяем флаг sell_enabled", positionFB.get(0).getSellEnabled(), is(true));
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
@@ -3058,7 +3069,7 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
         //получаем данные по клиенту master в api сервиса счетов
@@ -3162,7 +3173,7 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
@@ -3270,7 +3281,7 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING_WEEKEND");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
@@ -3450,10 +3461,12 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1827893() {
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         mocksBasicSteps.createDataForMockAnalizeBrokerAccount(SIEBEL_ID_MASTER, SIEBEL_ID_SLAVE,
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("SPB");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerALFAperp, instrument.classCodeALFAperp,
             "105", "100", "105");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,

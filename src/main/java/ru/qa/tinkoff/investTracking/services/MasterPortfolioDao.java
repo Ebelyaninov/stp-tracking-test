@@ -1,5 +1,7 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -27,6 +29,7 @@ public class MasterPortfolioDao {
     @Step("Поиск портфеля в cassandra по contractId и strategyId")
     @SneakyThrows
     public MasterPortfolio getLatestMasterPortfolio(String contractId, UUID strategyId) {
+
         String query = "select * " +
             "from invest_tracking.master_portfolio " +
             "where contract_id = ? " +
@@ -61,46 +64,50 @@ public class MasterPortfolioDao {
     public void insertIntoMasterPortfolio(String contractId, UUID strategyId, int version,
                                           MasterPortfolio.BaseMoneyPosition baseMoneyPosition,
                                           List<MasterPortfolio.Position> positionList) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
-            .value("positions",positionList);
+            .value("positions",positionList)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoMasterPortfolioWithChangedAt(String contractId, UUID strategyId, int version,
                                           MasterPortfolio.BaseMoneyPosition baseMoneyPosition,
                                           List<MasterPortfolio.Position> positionList, Date time) {
-        Insert insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
+        Statement insertQueryBuilder = QueryBuilder.insertInto("master_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
             .value("changed_at", time)
-            .value("positions",positionList);
+            .value("positions",positionList)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);;
         cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoMasterPortfolioWithChangedAt(String contractId, UUID strategyId, int version,
                                           MasterPortfolio.BaseMoneyPosition baseMoneyPosition, Date changedAt,
                                           List<MasterPortfolio.Position> positionList) {
-        Insert insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
+        Statement insertQueryBuider = QueryBuilder.insertInto("master_portfolio")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("version", version)
             .value("base_money_position", baseMoneyPosition)
             .value("changed_at",changedAt)
-            .value("positions",positionList);
+            .value("positions",positionList)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);;
         cqlTemplate.execute(insertQueryBuider);
     }
 
     public void deleteMasterPortfolio(String contract, UUID strategy) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("master_portfolio")
             .where(QueryBuilder.eq("contract_id", contract))
-            .and(QueryBuilder.eq("strategy_id", strategy));
+            .and(QueryBuilder.eq("strategy_id", strategy))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);;
         cqlTemplate.execute(delete);
     }
 

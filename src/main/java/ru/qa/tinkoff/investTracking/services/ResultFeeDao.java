@@ -1,5 +1,7 @@
 package ru.qa.tinkoff.investTracking.services;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -91,10 +93,11 @@ public class ResultFeeDao {
 
 
     public void deleteResultFee(String contract, UUID strategy) {
-        Delete.Where delete = QueryBuilder.delete()
+        Statement delete = QueryBuilder.delete()
             .from("result_fee")
             .where(QueryBuilder.eq("contract_id", contract))
-            .and(QueryBuilder.eq("strategy_id", strategy));
+            .and(QueryBuilder.eq("strategy_id", strategy))
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(delete);
     }
 
@@ -104,7 +107,7 @@ public class ResultFeeDao {
                                     Date settlementPeriodStartedAt, Date settlementPeriodEndedAt, Context context,
                                     BigDecimal highWaterMark, Date createdAt ) {
         String contextAsText = contextMapper.writeValueAsString(context);
-        Insert insertQueryBuider = QueryBuilder.insertInto("result_fee")
+        Statement insertQueryBuider = QueryBuilder.insertInto("result_fee")
             .value("contract_id", contractId)
             .value("strategy_id", strategyId)
             .value("subscription_id", subscriptionId)
@@ -113,7 +116,8 @@ public class ResultFeeDao {
             .value("settlement_period_ended_at", settlementPeriodEndedAt)
             .value("context", contextAsText)
             .value("high_water_mark", highWaterMark)
-            .value("created_at", createdAt);
+            .value("created_at", createdAt)
+            .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuider);
     }
 
