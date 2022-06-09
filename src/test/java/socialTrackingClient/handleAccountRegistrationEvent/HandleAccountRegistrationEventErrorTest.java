@@ -56,7 +56,7 @@ import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static ru.qa.tinkoff.kafka.Topics.ACCOUNT_REGISTRATION_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.ORIGINATION_ACCOUNT_REGISTRATION_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
 import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.statusOpened;
@@ -215,7 +215,7 @@ public class HandleAccountRegistrationEventErrorTest {
         byte[] keyBytes = event.getId().toByteArray();
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
         List<Client> clients = clientService.findClinetsByInvestId(investIdAgressive);
@@ -238,7 +238,7 @@ public class HandleAccountRegistrationEventErrorTest {
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId);
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
@@ -249,7 +249,7 @@ public class HandleAccountRegistrationEventErrorTest {
         strategy = strategyService.findStrategyByContractId(contractIdMaster).get();
         strategyService.deleteStrategy(strategy);
 
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
@@ -270,7 +270,7 @@ public class HandleAccountRegistrationEventErrorTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getId().toByteArray();
 
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> contractService.findContract(contractIdAgressive).isPresent());
@@ -306,7 +306,7 @@ public class HandleAccountRegistrationEventErrorTest {
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId);
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         Subscription subscription = subscriptionService.findSubcription(contractIdAgressive).get();
@@ -328,7 +328,7 @@ public class HandleAccountRegistrationEventErrorTest {
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE.concat("228"), strategyId);
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
             .until(() -> contractService.findContract(contractIdAgressive).isPresent());

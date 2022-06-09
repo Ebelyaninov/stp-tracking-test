@@ -16,7 +16,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
@@ -36,8 +35,6 @@ import ru.qa.tinkoff.swagger.Tariff.api.TariffApi;
 import ru.qa.tinkoff.swagger.Tariff.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.Tariff.model.TariffResponseType;
 import ru.qa.tinkoff.tariff.configuration.TariffDataBaseAutoConfiguration;
-import ru.qa.tinkoff.tariff.entities.ContractTariff;
-import ru.qa.tinkoff.tariff.entities.Tariff;
 import ru.qa.tinkoff.tariff.services.ContractTariffService;
 import ru.qa.tinkoff.tariff.services.TariffService;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -270,7 +267,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEventWithOutStrategy(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEventWithOutStrategy(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(10))
             .until(() -> clientService
                 .findClient(investIdAgressive).isPresent());
@@ -297,7 +294,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).getId().toByteArray();
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubcription(contractIdConservative).isPresent());
         await().atMost(Duration.ofSeconds(5))
@@ -349,7 +346,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdMedium, typeIIS, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).getId().toByteArray();
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(10))
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
         //Проверить добавления записи в client
@@ -390,7 +387,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(10))
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
         //Проверить добавления записи в client
@@ -452,7 +449,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         //Проверяем тариф клиента
         await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(400))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
@@ -508,7 +505,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         await().atMost(Duration.ofSeconds(5))
@@ -541,7 +538,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         await().atMost(Duration.ofSeconds(5))
@@ -570,7 +567,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(10))
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
 
@@ -602,7 +599,7 @@ public class HandleAccountRegistrationEventTest {
         //Форимируем и отправляем событие в топик account.registration.event
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
         await().atMost(Duration.ofSeconds(5))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
@@ -637,7 +634,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).getId().toByteArray();
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        oldKafkaService.send(ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
+        oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(10))
             .until(() -> subscriptionService.findSubcription(contractIdConservative).isPresent());
         //Добавил задержку 3с, для обработки данных приложением(Возможно не сразу получим ответ от тарифного модуля)
