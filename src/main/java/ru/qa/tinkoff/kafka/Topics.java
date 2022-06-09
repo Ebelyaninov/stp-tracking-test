@@ -38,7 +38,7 @@ public enum Topics {
     ORIGINATION_SIGNATURE_NOTIFICATION("origination.signature.notification.raw"),
     TRACKING_SUBSCRIPTION_EVENT("tracking.subscription.event"),
     TRACKING_STRATEGY_EVENT("tracking.strategy.event"),
-    ACCOUNT_REGISTRATION_EVENT("account.registration.event"),
+    ORIGINATION_ACCOUNT_REGISTRATION_EVENT("origination.account.registration.event"),
     TRACKING_CONSUMER_COMMAND("tracking.consumer.command"),
     CCYEV("CCYEV"),
     ORIGINATION_TESTING_RISK_NOTIFICATION_RAW("origination.testing.risk.notification.raw"),

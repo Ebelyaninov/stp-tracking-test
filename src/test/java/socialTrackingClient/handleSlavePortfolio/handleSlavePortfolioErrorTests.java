@@ -63,7 +63,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
-@Epic("handleAccountRegistrationEvent Обработка событий из сервиса счетов")
+@Epic("handleSlavePortfolio - Обработка изменений портфелей ведомых")
 @Feature("TAP-11008")
 @DisplayName("social-tracking-client")
 @Subfeature("Альтернативные сценарии")
