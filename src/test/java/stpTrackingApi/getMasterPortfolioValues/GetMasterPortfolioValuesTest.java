@@ -45,6 +45,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.UUID;
@@ -139,6 +140,7 @@ public class GetMasterPortfolioValuesTest {
                 steps.createEventInTrackingContractEvent(contractIdMaster);
             } catch (Exception e) {
             }
+
         });
     }
 
@@ -366,28 +368,45 @@ public class GetMasterPortfolioValuesTest {
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
     }
 
+    private Stream<Arguments> provideXTcsSiebelId() {
+        return Stream.of(
+            Arguments.of(siebelIdSlave,StrategyStatus.active ),
+            Arguments.of("1-OOOOOOO",StrategyStatus.frozen),
+            Arguments.of(null,StrategyStatus.active)
+        );
+    }
+
 
     @SneakyThrows
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideXTcsSiebelId")
     @AllureId("996561")
-    @DisplayName("C996561.GetMasterPortfolioValues.Валидация запроса: не передан заголовок x-tcs-siebel-id")
+    @DisplayName("C996561.GetMasterPortfolioValues.Валидация запроса: разные параметры заголовка x-tcs-siebel-id")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
-    void C996561() {
+    void C996561(String xTcsSiebelId, StrategyStatus status) {
         strategyId = UUID.randomUUID();
-        // вызываем метод CreateSignal
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+
+        //создаем в БД tracking данные: client, contract, strategy в статусе draft
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            status, 0, LocalDateTime.now(), 1, "0.2", "0.04", true, new BigDecimal(58.00), "TEST", "TEST11");
+
+        // вызываем метод getMasterPortfolioValues
         AnalyticsApi.GetMasterPortfolioValuesOper getMasterPortfolioValues = analyticsApiCreator.get().getMasterPortfolioValues()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(401));
+            .respSpec(spec -> spec.expectStatusCode(200));
+        if (xTcsSiebelId != null) {
+            getMasterPortfolioValues = getMasterPortfolioValues.xTcsSiebelIdHeader(xTcsSiebelId);
+        }
         getMasterPortfolioValues.execute(ResponseBodyData::asString);
-        JSONObject jsonObject = new JSONObject(getMasterPortfolioValues.execute(ResponseBodyData::asString));
-        String errorCode = jsonObject.getString("errorCode");
-        String errorMessage = jsonObject.getString("errorMessage");
-        assertThat("код ошибки не равно", errorCode, is("InsufficientPrivileges"));
-        assertThat("Сообщение об ошибке не равно", errorMessage, is("Недостаточно прав"));
+
+
+
     }
 
 

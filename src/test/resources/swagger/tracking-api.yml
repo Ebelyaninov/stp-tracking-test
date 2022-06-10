@@ -9,12 +9,6 @@ info:
     email: v.klapatnyuk@tinkoff.ru
   version: 1.15.0
 
-servers:
-  - url: http://trading-test.tcsbank.ru
-    description: тестовый стенд
-  - url: http://trading.tinkoff.local
-    description: боевой стенд
-
 tags:
   - name: contract
     description: Договор клиента
@@ -210,7 +204,6 @@ paths:
       - $ref: '#/components/parameters/ApplicationVersion'
       - $ref: '#/components/parameters/Platform'
       - $ref: '#/components/parameters/DeviceId'
-      - $ref: '#/components/parameters/SiebelId'
       - $ref: '#/components/parameters/B3TraceId'
       - $ref: '#/components/parameters/B3SpanId'
       - $ref: '#/components/parameters/B3ParentSpanId'
@@ -224,6 +217,7 @@ paths:
       operationId: updateStrategy
       parameters:
         - $ref: '#/components/parameters/StrategyId'
+        - $ref: '#/components/parameters/SiebelId'
       requestBody:
         required: true
         content:
@@ -255,6 +249,7 @@ paths:
       operationId: getStrategy
       parameters:
         - $ref: '#/components/parameters/StrategyId'
+        - $ref: '#/components/parameters/OptionalSiebelId'
       responses:
         200:
           description: OK
@@ -455,7 +450,7 @@ paths:
       - $ref: '#/components/parameters/ApplicationVersion'
       - $ref: '#/components/parameters/Platform'
       - $ref: '#/components/parameters/DeviceId'
-      - $ref: '#/components/parameters/SiebelId'
+      - $ref: '#/components/parameters/OptionalSiebelId'
       - $ref: '#/components/parameters/B3TraceId'
       - $ref: '#/components/parameters/B3SpanId'
       - $ref: '#/components/parameters/B3ParentSpanId'
@@ -826,6 +821,16 @@ components:
       name: x-tcs-siebel-id
       in: header
       required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 12
+
+    OptionalSiebelId:
+      description: Опциональный Siebel id авторизованного пользователя
+      name: x-tcs-siebel-id
+      in: header
+      required: false
       schema:
         type: string
         minLength: 1
