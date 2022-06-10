@@ -101,7 +101,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
 
 })
 public class AnalyzePortfolioTest {
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
@@ -143,8 +142,6 @@ public class AnalyzePortfolioTest {
     @Autowired
     StpMockSlaveDate stpMockSlaveDate;
 
-    UtilsTest utilsTest = new UtilsTest();
-
     MasterPortfolio masterPortfolio;
     SlavePortfolio slavePortfolio;
     Subscription subscription;
@@ -154,15 +151,22 @@ public class AnalyzePortfolioTest {
     SlaveOrder2 slaveOrder2;
     UUID strategyId;
     UUID id;
-
     String SIEBEL_ID_MASTER;
     String SIEBEL_ID_SLAVE;
-
+    UUID investIdMaster;
+    UUID investIdSlave;
 
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID_MASTER = stpSiebel.siebelIdAnalyzeMaster;
         SIEBEL_ID_SLAVE = stpSiebel.siebelIdAnalyzeSlave;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
 
 
@@ -243,13 +247,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Buy", "1", "1");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -282,7 +279,6 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -308,11 +304,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 2, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -343,13 +335,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Buy", "1", "1");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -410,11 +395,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -447,13 +428,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Buy", "1", "1");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -520,11 +494,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -562,13 +532,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1439728(Boolean buy, Boolean sell, Boolean buyRes, Boolean sellRes) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -653,13 +616,6 @@ public class AnalyzePortfolioTest {
         String aci = list.get(0);
         String nominal = list.get(1);
         String minPrIncrement = list.get(2);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -715,7 +671,6 @@ public class AnalyzePortfolioTest {
         BigDecimal masterPosQuantity = masterPortfolio.getPositions().get(0).getQuantity().multiply(price);
         BigDecimal masterPortfolioValue = masterPosQuantity.add(masterPortfolio.getBaseMoneyPosition().getQuantity());
         BigDecimal masterPositionRate = masterPosQuantity.divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
-
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerALFAperp))
@@ -733,11 +688,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 2, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         assertThat("value портфеля не равен", slavePortfolio.getValue().setScale(0, RoundingMode.UP), is(slavePortfolioTotal.setScale(0, RoundingMode.UP)));
@@ -772,13 +723,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
             "Sell", "39", "39");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -822,7 +766,6 @@ public class AnalyzePortfolioTest {
         BigDecimal priceSBER = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, instrument.instrumentSBER, "last"));
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -852,11 +795,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 2, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
         assertThat("value портфеля не равен", slavePortfolio.getValue().doubleValue(), is(slavePortfolioTotal.doubleValue()));
@@ -892,13 +831,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
             "Sell", "39", "39");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -942,7 +874,6 @@ public class AnalyzePortfolioTest {
         BigDecimal priceSBER = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, instrument.instrumentSBER, "last"));
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -972,11 +903,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 2, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity().setScale(6), is(targetFeeReserveQuantity.setScale(6)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity().setScale(6), is(actualFeeReserveQuantity.setScale(6)));
         assertThat("value портфеля не равен", slavePortfolio.getValue().setScale(0, RoundingMode.UP), is(slavePortfolioTotal.setScale(0, RoundingMode.UP)));
@@ -1084,8 +1011,6 @@ public class AnalyzePortfolioTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        checkComparedToMasterVersion(3);
-        //получаем портфель slave
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //сохраняем в списки значения по позициям в портфеле
@@ -1113,14 +1038,6 @@ public class AnalyzePortfolioTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля = 1, action != 'MORNING_UPDATE'")
     void C1382266() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1181,14 +1098,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Получили событие с baseMoneyPosition = 0")
     void C1387788() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1249,14 +1158,6 @@ public class AnalyzePortfolioTest {
         "Master_portfolio.version = slave_portfolio.compared_to_master_version. lots после округления < 0 " +
         "И buy_enabled = true")
     void C1387789() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1312,14 +1213,6 @@ public class AnalyzePortfolioTest {
         "Master_portfolio.version = slave_portfolio.compared_to_master_version. Позиция > 0, lots после округления < 0 " +
         "И buy_enabled = true")
     void C1385944() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1362,7 +1255,6 @@ public class AnalyzePortfolioTest {
                 instrument.tradingClearingAccountUSDRUB, 5,
                 Tracking.Portfolio.Action.MONEY_SELL_TRADE), time, Tracking.Portfolio.Action.MONEY_SELL_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-//        checkSlavePortfolioVersion(3);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(4)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
@@ -1392,14 +1284,6 @@ public class AnalyzePortfolioTest {
             "140.9075", "138.195", "140.9075");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
             "2668.25", "2460.67", "2445.48");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1463,14 +1347,6 @@ public class AnalyzePortfolioTest {
         "Запись в slave_order_2.compared_to_master_version.Знак изменений < 0. " +
         " sell_enabled = true")
     void C1676480() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1535,14 +1411,6 @@ public class AnalyzePortfolioTest {
         "Запись в slave_order_2.compared_to_master_version.Знак изменений > 0. " +
         " buy_enabled = true")
     void C1676546() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1602,14 +1470,6 @@ public class AnalyzePortfolioTest {
         "Запись в slave_order_2 не найдена. compared_to_master_version = slave_portfolio.compared_to_master_version.Знак изменений < 0" +
         " sell_enabled = true")
     void C1676592() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1665,14 +1525,6 @@ public class AnalyzePortfolioTest {
         "Запись в slave_order_2.compared_to_master_version = null.Знак изменений > 0. " +
         " buy_enabled = true")
     void C1676685() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1734,14 +1586,6 @@ public class AnalyzePortfolioTest {
         "Запись в slave_order_2.compared_to_master_version = null.Знак изменений > 0. " +
         " buy_enabled = true")
     void C1676700() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1801,14 +1645,6 @@ public class AnalyzePortfolioTest {
         "Master_portfolio.version > slave_portfolio.compared_to_master_version. Позиция < 0  lots после округления < 0 " +
         "И buy_enabled = true")
     void C1385949() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1835,7 +1671,6 @@ public class AnalyzePortfolioTest {
         steps.createSubcriptionWithBlocked(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
-
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerUSDRUB,
             instrument.tradingClearingAccountUSDRUB, "5", null, false, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "20", false, false, date);
@@ -1870,14 +1705,6 @@ public class AnalyzePortfolioTest {
     @Description(" Operation = 'ACTUALIZE'. ACTION = 'MONEY_SELL_TRADE'. " +
         "Master_portfolio.version > slave_portfolio.compared_to_master_version. Позиция = 0  lots после округления = 0 ")
     void C1387785() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1939,14 +1766,6 @@ public class AnalyzePortfolioTest {
     @Description("'ACTUALIZE'.SECURITY_BUY_TRADE. Портфель изменился с предыдущего анализа." +
         "Запись в slave_order_2.compared_to_master_version.")
     void C1677052() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        //получаем данные по клиенту slave в БД сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -2011,13 +1830,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1403631(Boolean buy, Boolean sell) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2064,7 +1876,6 @@ public class AnalyzePortfolioTest {
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
         //получаем портфель мастера
@@ -2121,13 +1932,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1404387(Boolean buy, Boolean sell) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2166,7 +1970,6 @@ public class AnalyzePortfolioTest {
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -2195,9 +1998,7 @@ public class AnalyzePortfolioTest {
         assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
         assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(2));
         assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is("7421.64"));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
+             assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity.setScale(4)));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity.setScale(4)));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
         //проверяем параметры позиции с расчетами
@@ -2226,13 +2027,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1404566(Boolean buy, Boolean sell, Boolean buyRes, Boolean sellRes) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         id = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -2282,7 +2076,6 @@ public class AnalyzePortfolioTest {
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
         //получаем портфель мастера
@@ -2339,13 +2132,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1406380(Boolean buy, Boolean sell, Boolean buyRes, Boolean sellRes) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2386,7 +2172,6 @@ public class AnalyzePortfolioTest {
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -2445,13 +2230,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1387797(Boolean buy, Boolean sell, Boolean buyRes, Boolean sellRes) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2478,7 +2256,7 @@ public class AnalyzePortfolioTest {
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "5675.1", masterPosNew);
         List<MasterPortfolio.Position> masterPosLast = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "7", instrument.tickerABBV,
+            instrument.tradingClearingAccountAAPL, "7", instrument.tickerFB,
             instrument.tradingClearingAccountFB, "3", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "5459.1", masterPosLast);
@@ -2503,12 +2281,11 @@ public class AnalyzePortfolioTest {
             time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceFB = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "last", SIEBEL_ID_SLAVE));
+        BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL,"last"));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.instrumentFB,"last"));
         //получаем портфель slave
-        checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -2576,13 +2353,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для анализа slave-портфеля на основе текущего портфеля master'а и фиксации полученных результатов.")
     void C1408252(Boolean buy, Boolean sell, Boolean buyRes, Boolean sellRes) {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2603,8 +2373,8 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountAAPL, "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.10", masterPosOld);
         List<MasterPortfolio.Position> masterPosNew = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", instrument.tickerABBV,
-            instrument.tradingClearingAccountABBV, "3", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            instrument.tradingClearingAccountAAPL, "5", instrument.tickerFB,
+            instrument.tradingClearingAccountFB, "3", date, 3, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "5675.1", masterPosNew);
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "3", instrument.tickerFB,
@@ -2615,7 +2385,6 @@ public class AnalyzePortfolioTest {
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionOnePosWithEnable(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "10", date, null, new BigDecimal("107.78"),
             new BigDecimal("0.1342"), new BigDecimal("-0.0577"), new BigDecimal("-4.2986"), buy, sell);
-
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlaveOnePos);
         slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
@@ -2629,12 +2398,11 @@ public class AnalyzePortfolioTest {
             time, Tracking.Portfolio.Action.SECURITY_SELL_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем значение price из кеша exchangePositionPriceCache
-        BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
-        BigDecimal priceFB = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "last", SIEBEL_ID_SLAVE));
+        BigDecimal price = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.instrumentAAPL, "last"));
+        BigDecimal priceFB = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerFB,
+            instrument.tradingClearingAccountFB,  instrument.instrumentFB,"last"));
         //получаем портфель slave
-        checkSlavePortfolioVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -2703,13 +2471,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "6", "6");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -2749,12 +2510,9 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountFB, instrument.instrumentFB, "last"));
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        Thread.sleep(5000);
         //получаем портфель slave
-//        checkComparedToMasterVersion(3);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-
         //выполняем расчеты
         BigDecimal masterPosQuantityAAPL = masterPortfolio.getPositions().get(0).getQuantity().multiply(priceAAPL);
         BigDecimal masterPosQuantityFB = masterPortfolio.getPositions().get(1).getQuantity().multiply(priceFB);
@@ -2785,11 +2543,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -2836,13 +2590,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "4", "4");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -2916,11 +2663,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(2, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -2957,13 +2700,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerFB, instrument.classCodeFB,
             "Sell", "2", "2");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -3036,11 +2772,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(2, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -3072,13 +2804,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeShedulesExchange("SPB_MORNING");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerAAPL, instrument.classCodeAAPL,
             "108.22", "109.22", "107.22");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -3140,11 +2865,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(2, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
@@ -3179,13 +2900,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "1", "1");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -3247,11 +2961,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(2));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(2, 3, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(new BigDecimal("0")));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));BigDecimal slavePositionRateDiff = BigDecimal.ZERO;
@@ -3287,13 +2997,6 @@ public class AnalyzePortfolioTest {
         mocksBasicSteps.createDataForMockAnalizeMdPrices(stpMockSlaveDate.contractIdSlaveAnalyze,
             stpMockSlaveDate.clientCodeSlaveAnalyze, instrument.tickerAAPL, instrument.classCodeAAPL,
             "Sell", "1", "1");
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -3329,7 +3032,6 @@ public class AnalyzePortfolioTest {
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
         //получаем портфель slave
-        checkComparedToMasterVersion(2);
         await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем портфель мастера
@@ -3356,10 +3058,7 @@ public class AnalyzePortfolioTest {
         //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
         BigDecimal slavePortfolioValue = slavePositionsValue.add(baseMoneyPositionQuantity).subtract(actualFeeReserveQuantity);
         //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 2, baseMoneySlave, utc);
         assertThat("целевое значение резерва не равна", slavePortfolio.getTargetFeeReserveQuantity(), is(targetFeeReserveQuantity));
         assertThat("фактическое значение резерва не равна", slavePortfolio.getActualFeeReserveQuantity(), is(actualFeeReserveQuantity));
         assertThat("value портфеля не равен", slavePortfolio.getValue(), is(slavePortfolioTotal));
@@ -3380,13 +3079,6 @@ public class AnalyzePortfolioTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
     void C1807300() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -3441,11 +3133,7 @@ public class AnalyzePortfolioTest {
         BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
         BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
                 //проверяем расчеты и содержимое позиции slave
-        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(1));
-        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(3));
-        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
-        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
-            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        checkParamSlavePortfolio(1, 3, baseMoneySlave, utc);
         assertThat("ChangedAt позиции в портфеле slave не равен", positionGLDRUB.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
@@ -3478,13 +3166,6 @@ public class AnalyzePortfolioTest {
         String aci = list.get(0);
         String nominal = list.get(1);
         String minPrIncrement = list.get(2);
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
@@ -3626,27 +3307,7 @@ public class AnalyzePortfolioTest {
         assertThat("Value не равен", (eventValue.doubleValue()), is(value.doubleValue()));
     }
 
-    // ожидаем версию портфеля slave
-    void checkComparedToMasterVersion(int version) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
-            if (slavePortfolio.getComparedToMasterVersion() != version) {
-                Thread.sleep(5000);
-            }
-        }
-    }
 
-    // ожидаем версию портфеля slave
-    void checkSlavePortfolioVersion(int version) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, version);
-            if (slavePortfolio.getVersion() == version) {
-                i = 5;
-            }
-        }
-    }
 
     Tracking.PortfolioCommand createCommandActualizeOnlyBaseMoney(int scale, int unscaled, String contractIdSlave,
                                                                   int version, OffsetDateTime time,
@@ -3705,6 +3366,14 @@ public class AnalyzePortfolioTest {
                 .build())
             .build();
         return command;
+    }
+
+    void checkParamSlavePortfolio(int versionSlave, int versionMaster, String baseMoneySlave, OffsetDateTime utc) {
+        assertThat("Версия портфеля slave не равна", slavePortfolio.getVersion(), is(versionSlave));
+        assertThat("ComparedToMasterVersion портфеля slave не равна", slavePortfolio.getComparedToMasterVersion(), is(versionMaster));
+        assertThat("Quantity базовой валюты портфеля slave не равна", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoneySlave));
+        assertThat("Время changed_at для slave_position не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
+            is(utc.toInstant().truncatedTo(ChronoUnit.SECONDS)));
     }
 
 }
