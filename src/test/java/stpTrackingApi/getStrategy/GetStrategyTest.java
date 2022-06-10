@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
+import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.*;
 import ru.qa.tinkoff.investTracking.services.*;
@@ -28,6 +29,7 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -35,6 +37,7 @@ import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategyResponseCharacteristics;
@@ -80,7 +83,7 @@ import static org.hamcrest.Matchers.is;
     StpTrackingApiStepsConfiguration.class,
     ApiCreatorConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    StpTrackingSiebelConfiguration.class
+    StpTrackingSiebelConfiguration.class,
 })
 public class GetStrategyTest {
     @Autowired
@@ -127,6 +130,7 @@ public class GetStrategyTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
+
 
 
     Client clientMaster;
@@ -701,21 +705,22 @@ public class GetStrategyTest {
     }
 
 
-    private static Stream<Arguments> provideScore() {
+    private Stream<Arguments> provideScore() {
         return Stream.of(
-            Arguments.of((Object) null),
-            Arguments.of(1)
+            Arguments.of(null, siebelIdSlave),
+            Arguments.of(1, "1-OOOOOOO"),
+            Arguments.of(1, null)
         );
     }
 
 
     @ParameterizedTest
     @MethodSource("provideScore")
-    @AllureId("1223538")
-    @DisplayName("C1223538.GetStrategy.Получение данных торговой стратегии,  необязательный параметр score")
+    @AllureId("1909602")
+    @DisplayName("C1909602.GetStrategy.Получение данных торговой стратегии,  необязательный параметр score и x-tcs-siebel-id\n")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
-    void C1223538(Integer score) {
+    void C1909602(Integer score, String xTcsSiebelId) throws JSONException {
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -723,17 +728,27 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, "0.2", "0.04", true, new BigDecimal(58.00), "TEST", "TEST11");
-        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+
+        StrategyApi.GetStrategyOper getStrategy = strategyApiCreator.get().getStrategy()
             .xAppNameHeader("invest")
             .xAppVersionHeader("4.5.6")
             .xPlatformHeader("ios")
-            .xTcsSiebelIdHeader(siebelIdSlave)
             .strategyIdPath(strategyId)
-            .respSpec(spec -> spec.expectStatusCode(200))
-            .execute(response -> response.as(GetStrategyResponse.class));
-        //Находим в БД автоследования подписчиков стратегии
-        assertThat("Оценка стратегии", getStrategy.getScore(), is(score));
+            .respSpec(spec -> spec.expectStatusCode(200));
+        if (xTcsSiebelId != null) {
+            getStrategy = getStrategy.xTcsSiebelIdHeader(xTcsSiebelId);
+        }
+        String execute = getStrategy.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(execute);
 
+        boolean exist = jsonObject.has("score");
+
+        if (exist == false) {
+        }
+        if (exist == true) {
+            String scoreFromResponse = jsonObject.getString("score");
+            assertThat("Оценка стратегии", scoreFromResponse, is(score.toString()));
+        }
     }
 
 
