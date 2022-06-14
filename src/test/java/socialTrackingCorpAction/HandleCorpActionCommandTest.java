@@ -149,13 +149,16 @@ public class HandleCorpActionCommandTest {
     String dividendNetABBV = "0.00001";
     String dividendNetSBER = "18.7";
     String dividendNetXS0191754729 = "3.375";
+    String dividendNetNMR = "10.229";
     String dividendIdAAPL = "486669";
     String dividendIdNOK = "3433";
     String dividendIdSBER = "525076";
     String dividendIdABBV = "524362";
     String dividendIdXS0191754729 = "11113";
+    String dividendIdNMR = "228";
     String paymentDate;
     String lastBuyDate;
+    String lastBuyDateMinus65Days;
 
 
     @BeforeAll
@@ -176,6 +179,7 @@ public class HandleCorpActionCommandTest {
         String paymentDatePlusTwoDays = localDateNow.plusDays(2) + "T03:00:00+03:00";
         String paymentDateMinusSevenDays = localDateNow.minusDays(7) + "T03:00:00+03:00";
         lastBuyDate = localDateNow.minusDays(14).format(formatter) + "T03:00:00+03:00";
+        lastBuyDateMinus65Days = localDateNow.minusDays(65).format(formatter) + "T03:00:00+03:00";
         getDividendsSteps.clearGetDevidends();
         createMockForAAPL();
         createMockForGetDividendsWithOneItems(instrument.tickerNOK, instrument.classCodeNOK, dividendIdNOK, "1911",
@@ -197,6 +201,8 @@ public class HandleCorpActionCommandTest {
             dividendNetABBV, "usd", paymentDate, lastBuyDate, "READY");
         createMockForGetDividendsWithOneItems(instrument.tickerXS0191754729, instrument.classCodeXS0191754729, dividendIdXS0191754729, "2017",
             dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
+        createMockForGetDividendsWithOneItems(instrument.tickerNMR, instrument.classCodeNMR, dividendIdNMR, "822",
+            dividendNetNMR, "usd", paymentDate, lastBuyDateMinus65Days, "READY");
     }
 
     @AfterEach
@@ -895,6 +901,322 @@ public class HandleCorpActionCommandTest {
         //Проверяем отправку  событий
         assertThat("Нашли события в топике", messages.size(), is(0));
     }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1911883")
+    @Tag("qa2")
+    @DisplayName("C1911883 HandleCorpActionCommand. Не нашли виртуальный портфель (master_portfolio) с самый большим version, у которого portfolio.changed_at (по МСК, округленный до даты) <= дата last_buy_date.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1911883() {
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 1;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        //Создаем запись в мастер портфеле
+        List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(3).toInstant()));
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        checkdDividend(dividendList, dividendIdAAPL);
+        checkdDividend(dividendList, dividendIdNOK);
+        assertThat("Нашли записи в dividend c size != 2", dividendList.size(), is(2));
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем отправку  событий
+        assertThat("Нашли события в топике", messages.size(), is(0));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1913452")
+    @Tag("qa2")
+    @DisplayName("1913452 HandleCorpActionCommand. Не нашли виртуальный портфель (master_portfolio) с самый большим version, у которого portfolio.changed_at (по МСК, округленный до даты) <= дата last_buy_date. Найден портфель с version = 1, changed_at < last_buy_date")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1913452() {
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 1;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        //Создаем запись в мастер портфеле
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+
+        List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(18).toInstant()));
+        //Добавляем записи которые не попадают в lastBuyDate
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +1, version +1,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        checkdDividend(dividendList, dividendIdAAPL);
+        checkdDividend(dividendList, dividendIdNOK);
+        assertThat("Нашли записи в dividend c size != 2", dividendList.size(), is(2));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем что нашли одно событие
+        assertThat("Нашли события в топике", messages.size(), is(1));
+        //Проверяем тело события
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
+        String key = messages.get(0).getKey();
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1914706")
+    @Tag("qa2")
+    @DisplayName("1914706 HandleCorpActionCommand.Берем первый портфель после master_portfolio.changed_at (по МСК) < cut - check-portfolio-processing-days")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1914706() {
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 1;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDateMinus65Days);
+        //Добавляем записи которые не попадают в check-portfolio-processing-days
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+
+        List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNMR, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNMR, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
+        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, "100", positionAction, version, version,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(10).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +1, version +1, baseMoneyPortfolio,
+            Date.from(lastBuyDateParsed.minusDays(5).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +2, version +2, baseMoneyPortfolio,
+            Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
+        //Добавляем записи которые не попадают в lastBuyDate
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(10).toInstant()));
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        assertThat("Нашли записи в dividend, size != 1", dividendList.size(), is(1));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем тело события
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
+        String key = messages.get(0).getKey();
+        //нашли AAPL из-за lastBuyDay -14d, должны получить ошибку по инструменту NMR
+        checkPortfolioCommand(portfolioCommand, key, "100", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1915322")
+    @Tag("qa2")
+    @DisplayName("1915322 HandleCorpActionCommand. Берем первый портфель после master_portfolio.changed_at (по МСК) < cut - check-portfolio-processing-days. Нету портфелей за период (cut - check-portfolio-processing-days)")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1915322() {
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 1;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        //Добавляем записи которые не попадают в check-portfolio-processing-days
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+
+        List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
+        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, "100", positionAction, version, version,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(65).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(62).toInstant()));
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        assertThat("Нашли записи в dividend, size != 1", dividendList.size(), is(1));
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем тело события
+        assertThat("Нашли события в топике", messages.size(), is(1));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
+        String key = messages.get(0).getKey();
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1915391")
+    @Tag("qa2")
+    @DisplayName("1915391 HandleCorpActionCommand. Найден портфель между master_portfolio.changed_at (по МСК) < cut - check-portfolio-processing-days и last_buy_date.")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C1915391() {
+/*        LocalDate localDateNow = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String lastBuyDate = localDateNow.minusDays(65).format(formatter) + "T03:00:00+03:00";*/
+        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 1;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        //Добавляем записи которые не попадают в check-portfolio-processing-days
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+
+        List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNMR, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
+        List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNMR, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version, version,
+            baseMoneyPortfolio, Date.from(cut.minusDays(67).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, "100", positionAction, version +1, version +1,
+            baseMoneyPortfolio, Date.from(cut.minusDays(65).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        assertThat("Нашли записи в dividend, size != 1", dividendList.size(), is(1));
+        checkdDividend(dividendList, dividendIdNMR);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем тело события
+        assertThat("Нашли события в топике", messages.size(), is(1));
+}
 
 
     @SneakyThrows
