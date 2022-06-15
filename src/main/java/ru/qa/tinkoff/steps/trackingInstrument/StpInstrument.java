@@ -39,7 +39,7 @@ public class StpInstrument {
     public String tradingClearingAccountSBER1 = "L01+00000F00";
     public String sectorSBER = "financial";
     public String typeSBER = "share";
-    public String companySBER = "Сбербанк";
+    public String companySBER = "Сбер Банк";
     public String classCodeSBER = "TQBR";
     public String instrumentSBER = tickerSBER + "_" + classCodeSBER;
     public String briefNameSBER ="Сбер Банк";
@@ -145,7 +145,7 @@ public class StpInstrument {
     public String classCodeUSD = "CETS";
     public String sectorUSD = "money";
     public String typeUSD = "money";
-    public String companyUSD = "Денежные средства";
+    public String companyUSD = "Другое";
     public String instrumentUSD = tickerUSD + "_" + classCodeUSD;
     public String briefNameUSD = "Доллар США";
     public String imageUSD = "USD.png";

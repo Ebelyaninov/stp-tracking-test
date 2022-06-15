@@ -87,7 +87,7 @@ public class StpTrackingAnalyticsSteps {
     public void createClientWithContractAndStrategy(UUID investId, ClientRiskProfile riskProfile,String contractId, ContractRole contractRole, ContractState contractState,
                                              UUID strategyId, String title, String description, StrategyCurrency strategyCurrency,
                                              ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
-                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date) {
+                                             StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, LocalDateTime closeTime) {
         //создаем запись о клиенте в tracking.client
         clientMaster = clientService.createClient(investId, ClientStatusType.registered, null, riskProfile);
         // создаем запись о договоре клиента в tracking.contract
@@ -120,7 +120,8 @@ public class StpTrackingAnalyticsSteps {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setCloseTime(closeTime);
         strategy = trackingService.saveStrategy(strategy);
     }
 

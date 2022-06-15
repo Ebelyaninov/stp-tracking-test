@@ -162,8 +162,8 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
 
     private static Stream<Arguments> provideStrategyStatus() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now())
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now().minusDays(1), LocalDateTime.now())
         );
     }
 
@@ -179,7 +179,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 29, 4, "304896.31");
@@ -243,7 +243,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
 
         createDateMasterPortfolioValue(strategyId, 370, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 369, 2, "198478.67");
@@ -309,7 +309,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         createDateMasterPortfolioValue(strategyId, 370, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 369, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 3, 5, "107269.99");
@@ -356,7 +356,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 15, 4, "178475.64");
@@ -435,12 +435,12 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @DisplayName("1886641 Пересчет максимальной просадки master-портфеля. Strategy.status NOT IN (active, frozen)")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает максимальную просадку master-портфеля владельца стратегии на заданную метку времени.")
-    void C1886641(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+    void C1886641(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime activatineTime, LocalDateTime closeTime) {
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, activatineTime, closeTime);
         createDateMasterPortfolioValue(strategyId, 31, 3, "174478.05");
         createDateMasterPortfolioValue(strategyId, 25, 2, "198478.67");
         createDateMasterPortfolioValue(strategyId, 15, 4, "178475.64");

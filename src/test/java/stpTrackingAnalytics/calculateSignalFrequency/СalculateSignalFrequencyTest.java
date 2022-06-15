@@ -216,7 +216,7 @@ public class СalculateSignalFrequencyTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now(), null);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
@@ -257,7 +257,7 @@ public class СalculateSignalFrequencyTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, LocalDateTime.now());
+            status, 0, LocalDateTime.now(), null);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
@@ -296,7 +296,7 @@ public class СalculateSignalFrequencyTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
         ByteString strategyIdByte = byteString(strategyId);
@@ -351,7 +351,7 @@ public class СalculateSignalFrequencyTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, "AutoTest", "AutoTest", StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.frozen, 0, LocalDateTime.now());
+            StrategyStatus.frozen, 0, LocalDateTime.now(), null);
         //создаем записи по сигналу на разные позиции
         createMasterSignal(31, 1, 2, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "4.07", "4", 12);
