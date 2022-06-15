@@ -164,6 +164,16 @@ public class SlaveOrder2Dao {
     }
 
     @Step("Проверяем запись о выставленной заявке в slave_order_2")
+    public List<SlaveOrder2> getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(String contractId) {
+        String query = "select * " +
+            "from invest_tracking.slave_order_2 " +
+            "where contract_id = ? " +
+            "order by created_at ASC ";
+        List<SlaveOrder2> result = cqlTemplate.query(query, slaveOrder2RowMapper, contractId);
+        return result;
+    }
+
+    @Step("Проверяем запись о выставленной заявке в slave_order_2")
     public List<SlaveOrder2> getSlaveOrders2WithStrategy(String contractId, UUID strategyId) {
         String query = "select * " +
             "from invest_tracking.slave_order_2 " +
