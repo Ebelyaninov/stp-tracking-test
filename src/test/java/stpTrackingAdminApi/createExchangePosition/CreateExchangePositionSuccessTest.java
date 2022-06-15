@@ -79,8 +79,12 @@ public class CreateExchangePositionSuccessTest {
 
 
     @BeforeAll
-    void clearPosition(){
-        exchangePositionService.deleteExchangePosition(exchangePositionService.getExchangePositionByTicker(instrument.tickerFXGD, instrument.tradingClearingAccountFXGD));
+    void clearPosition() {
+        try {
+        exchangePositionService.deleteExchangePosition(exchangePositionService.getExchangePositionByTicker(instrument.tickerFXGD,
+            instrument.tradingClearingAccountFXGD));
+        } catch (Exception e) {
+        }
     }
 
     @AfterEach

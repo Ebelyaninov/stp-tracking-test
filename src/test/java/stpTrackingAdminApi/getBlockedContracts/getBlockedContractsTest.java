@@ -64,7 +64,6 @@ import static org.hamcrest.Matchers.is;
     InvestTrackingAutoConfiguration.class,
     ContractApiAdminCreator.class,
     ApiCreatorConfiguration.class
-
 })
 
 public class getBlockedContractsTest {
@@ -155,7 +154,7 @@ public class getBlockedContractsTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //создаем подписку клиента slave на strategy клиента master
         //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,ContractState.tracked, strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
@@ -182,12 +181,11 @@ public class getBlockedContractsTest {
             listOfBlockedIdFromGet.add(getblockedContracts.getItems().get(i).getId());
         }
         //получаем ответ и проверяем
-        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(false));
+        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
         assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(listOfBlockedId.last()));
         assertThat("items не равен", getblockedContracts.getItems().size(), is(listOfBlockedId.size()));
         assertThat("множества неравны", listOfBlockedId , is(listOfBlockedIdFromGet));
         assertThat("договора нет в списке заблокированных", listOfBlockedIdFromGet.contains(contractIdSlave), is(true));
-
     }
 
     @SneakyThrows
@@ -246,7 +244,7 @@ public class getBlockedContractsTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBlockedContractsResponse.class));
         //получаем ответ и проверяем
-        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(false));
+        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
         assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(listOfBlockedId.last()));
         assertThat("items не равен", getblockedContracts.getItems().size(), is(listOfBlockedId.size()));
         assertThat("договор не равен", getblockedContracts.getItems().get(0).getId(), is(nextItem));

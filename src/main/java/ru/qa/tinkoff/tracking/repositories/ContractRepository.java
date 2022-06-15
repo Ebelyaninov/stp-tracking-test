@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.qa.tinkoff.tracking.entities.Contract;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractRole;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 
@@ -33,6 +34,7 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
     List<Contract> findAllByBlocked (Boolean blocked);
 
  //   List <Contract> findAllByState (String state);
+
 
 
 

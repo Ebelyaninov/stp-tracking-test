@@ -172,7 +172,7 @@ public class DeleteDraftStrategySuccesTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         stpTrackingAdminSteps.createMasterPortfolio(contractIdMaster, strategyId,1,"3000", masterPos);
@@ -194,7 +194,7 @@ public class DeleteDraftStrategySuccesTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         stpTrackingAdminSteps.createMasterPortfolio(contractIdMaster, strategyId,1,"3000", masterPos);
@@ -216,7 +216,7 @@ public class DeleteDraftStrategySuccesTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         strategyService.deleteStrategy(strategyService.getStrategy(strategyId));
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();

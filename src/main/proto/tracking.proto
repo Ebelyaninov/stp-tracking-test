@@ -116,14 +116,17 @@ message Strategy {
   // Статус
   Status status = 3;
 
-  enum Status {
-    // Черновик
-    DRAFT = 0;
-    // Активная
-    ACTIVE = 1;
-    //Приостановленная (замороженная)
-    FROZEN = 2;
-  }
+    enum Status {
+        // Черновик
+        DRAFT = 0;
+        // Активная
+        ACTIVE = 1;
+        //Приостановленная (замороженная)
+        FROZEN = 2;
+        //Закрытая
+        CLOSED = 3;
+    }
+
 
 }
 

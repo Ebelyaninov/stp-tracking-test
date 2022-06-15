@@ -179,22 +179,32 @@ public class GetStrategiesTest {
     }
 
 
-    @Test
+    private static Stream<Arguments> provideStrategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.draft, null),
+            Arguments.of(StrategyStatus.active, null),
+            Arguments.of(StrategyStatus.frozen, null),
+            Arguments.of(StrategyStatus.closed, LocalDateTime.now())
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStrategyStatus")
     @AllureId("1041616")
     @DisplayName("C1041616.getStrategies.Получение списка стратегий, успешный ответ проверка маппинга")
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка всех торговый стратегий в автоследовании.")
-    void C1041616() {
+    void C1041616(StrategyStatus strategyStatus, LocalDateTime closeDate) {
         String percent = "0";
         UUID strategyId = UUID.randomUUID();
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            strategyStatus, 0, LocalDateTime.now().minusHours(1), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04",closeDate);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
-        List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
+        List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position+1, 1);
         String contractIdNew = strategys.get(0).getContract().getId();
         contract = contractService.getContract(contractIdNew);
         client = clientService.getClient(contract.getClientId());
@@ -204,7 +214,7 @@ public class GetStrategiesTest {
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .limitQuery(1)
-            .cursorQuery(position)
+            .cursorQuery(position+1)
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesResponse.class));
@@ -232,8 +242,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
-
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -272,7 +281,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
 
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
@@ -300,7 +309,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys
@@ -341,7 +350,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);
@@ -391,7 +400,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);

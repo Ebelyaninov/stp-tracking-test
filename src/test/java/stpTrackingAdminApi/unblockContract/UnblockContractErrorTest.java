@@ -202,14 +202,13 @@ public class UnblockContractErrorTest {
             contract = contractService.saveContract(contract);
         }
             //Вызываем метод на разблокировку контракта
-            ErrorResponse unblockContract = contractApi.unblockContract()
+            ErrorResponse unblockContract = contractApiAdminCreator.get().unblockContract()
                 .contractIdPath(contractIdSlave)
                 .xAppNameHeader("tracking")
                 .xTcsLoginHeader("login")
                 .reqSpec(r -> r.addHeader(xApiKey, key))
                 .respSpec(spec -> spec.expectStatusCode(500))
                 .execute(response -> response.as(ErrorResponse.class));
-
         checkErrorFromResponce(unblockContract, "0344-15-B14", "Не найден заблокированный договор");
     }
 
@@ -218,7 +217,7 @@ public class UnblockContractErrorTest {
     @DisplayName("C1705765.unblockContract - Заголовок X-API-KEY с доступом read")
     @Description(" Разблокировка договора")
     void C1705765() {
-         contractApi.unblockContract()
+        contractApiAdminCreator.get().unblockContract()
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")
@@ -231,7 +230,7 @@ public class UnblockContractErrorTest {
     @DisplayName("C1491051.unblockContract - Заголовок X-API-KEY не передан")
     @Description(" Разблокировка договора")
     void C1491051() {
-        contractApi.unblockContract()
+        contractApiAdminCreator.get().unblockContract()
             .contractIdPath(contractIdSlave)
             .xAppNameHeader("tracking")
             .xTcsLoginHeader("login")
@@ -253,8 +252,7 @@ public class UnblockContractErrorTest {
     @DisplayName("C1491050.unblockContract - Не нашли запись в contract")
     @Description("Разблокировка договора")
     void C1491050(String xAppName, String xTcsLogin, String xB3Sampled) {
-
-        ContractApi.UnblockContractOper unblockContract = contractApi.unblockContract()
+        ContractApi.UnblockContractOper unblockContract = contractApiAdminCreator.get().unblockContract()
             .contractIdPath(contractIdSlave)
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .respSpec(spec -> spec.expectStatusCode(400));
