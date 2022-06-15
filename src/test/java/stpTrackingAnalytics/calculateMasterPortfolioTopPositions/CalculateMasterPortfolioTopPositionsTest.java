@@ -169,8 +169,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
 
     private static Stream<Arguments> provideNotStrategyStatus() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.closed, LocalDateTime.now())
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.closed, LocalDateTime.now().minusDays(1), LocalDateTime.now())
 
         );
     }
@@ -187,7 +187,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignal(strategyId);
@@ -252,7 +252,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalNotPeriodTopPos(strategyId);
@@ -312,7 +312,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
@@ -408,7 +408,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);
@@ -489,14 +489,14 @@ public class CalculateMasterPortfolioTopPositionsTest {
     @DisplayName("1886683 CalculateMasterPortfolioTopPositions. Strategy.status NOT IN (active, frozen)")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
-    void C1886683(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+    void C1886683(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime activationTime, LocalDateTime closedTime) {
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now().minusDays(3);
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), "Top", StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, activationTime, closedTime);
         log.info("strategyId:  {}", strategyId);
         //создаем записи по сигналу на разные позиции
         createTestDateToMasterSignalRepeat(strategyId);

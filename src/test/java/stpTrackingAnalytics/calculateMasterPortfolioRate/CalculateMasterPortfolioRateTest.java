@@ -2,6 +2,7 @@ package stpTrackingAnalytics.calculateMasterPortfolioRate;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
+import groovyjarjarantlr4.runtime.tree.Tree;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
@@ -50,10 +51,11 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 
 @Slf4j
@@ -163,8 +165,8 @@ public class CalculateMasterPortfolioRateTest {
 
     private static Stream<Arguments> provideStrategyStatus() {
         return Stream.of(
-            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null),
-            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now())
+            Arguments.of(Tracking.AnalyticsCommand.Operation.CALCULATE, StrategyStatus.draft, null, null),
+            Arguments.of(Tracking.AnalyticsCommand.Operation.RECALCULATE, StrategyStatus.closed, LocalDateTime.now().minusDays(1), LocalDateTime.now())
         );
     }
 
@@ -177,12 +179,13 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C966227(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -256,12 +259,13 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978635(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "77545.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, time, null);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -351,12 +355,13 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на" +
         " заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978760() {
+        strategyId = UUID.randomUUID();
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         // создаем портфель ведущего с позициями в кассандре
         steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
         steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
@@ -449,12 +454,13 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля" +
         " на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978790() {
+        strategyId = UUID.randomUUID();
         String baseMoney = "119335.55";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         // создаем портфель ведущего с позициями в кассандре
         steps.createMasterPortfolioWithOutPosition(31, 1, "136551.10", contractIdMaster, strategyId);
         steps.createMasterPortfolioOnePosition(25, 2, "122551.1", contractIdMaster, strategyId);
@@ -629,10 +635,11 @@ public class CalculateMasterPortfolioRateTest {
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля " +
         "на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C978840() {
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
         OffsetDateTime cutTime = OffsetDateTime.now();
@@ -658,6 +665,7 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978841() {
+        strategyId = UUID.randomUUID();
         String ticker8 = "TEST";
         String tradingClearingAccount8 = "L01+00000F00";
         String quantity8 = "3";
@@ -665,7 +673,7 @@ public class CalculateMasterPortfolioRateTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         createMasterPortfolio(instrument.tickerSBER, instrument.tradingClearingAccountSBER, steps.quantitySBER, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -734,6 +742,7 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C978843() {
+        strategyId = UUID.randomUUID();
         String ticker8 = "FXITTEST";
         String tradingClearingAccount8 = "L01+00002F00";
         String quantity8 = "3";
@@ -741,7 +750,7 @@ public class CalculateMasterPortfolioRateTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         createMasterPortfolio(instrument.tickerSBER, instrument.tradingClearingAccountSBER, steps.quantitySBER, ticker8, tradingClearingAccount8, quantity8);
         ByteString strategyIdByte = steps.byteString(strategyId);
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -810,7 +819,7 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C966227___111() {
-
+        strategyId = UUID.randomUUID();
         String tickerShare = "SBER";
         String tradingClearingAccountShare = "NDS000000001";
         String quantityShare = "30";
@@ -834,7 +843,7 @@ public class CalculateMasterPortfolioRateTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         // создаем портфель ведущего с позициями в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -910,12 +919,13 @@ public class CalculateMasterPortfolioRateTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
     void C1781965(Tracking.AnalyticsCommand.Operation operation) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            StrategyStatus.active, 0, LocalDateTime.now(), null);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfoliosWithZero();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -967,8 +977,8 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
-        checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        //checkMasterPortfolioRate(strategyId);
+        await().atMost(Duration.ofSeconds(5)).pollDelay(FIVE_HUNDRED_MILLISECONDS).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -986,11 +996,12 @@ public class CalculateMasterPortfolioRateTest {
     @DisplayName("1886692 CalculateMasterPortfolioRate.Расчет долей виртуального портфеля. Strategy.status NOT IN (active, frozen)")
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает структуру виртуального портфеля на заданную метку времени - его доли в разрезе типов актива, секторов и компаний.")
-    void C1886692(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+    void C1886692(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime activateTime, LocalDateTime closedTime) {
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            status, 0, time);
+            status, 0, activateTime, closedTime);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolios();
         ByteString strategyIdByte = steps.byteString(strategyId);
@@ -1223,10 +1234,26 @@ public class CalculateMasterPortfolioRateTest {
     @Step("Проверяем расчитанные и олученные данные по долям sectors, types, companys: ")
     void checkParam(Map<String, BigDecimal> sectors, Map<String, BigDecimal> types, Map<String,
         BigDecimal> companys, LocalDateTime cut, LocalDateTime cutInCommand) {
-        assertThat("доли по секторам не равны", true, is(sectors.equals(masterPortfolioRate.getSectorToRateMap())));
-        assertThat("доли типам  не равны", true, is(types.equals(masterPortfolioRate.getTypeToRateMap())));
-        assertThat("доли по компаниям не равны", true, is(companys.equals(masterPortfolioRate.getCompanyToRateMap())));
-        assertThat("время cut не равно", true, is(cut.equals(cutInCommand)));
+        TreeMap treeMapForTypes =  new TreeMap<>(types);
+        treeMapForTypes.entrySet().stream().sorted();
+        TreeMap treeMapForCompanies =  new TreeMap<>(companys);
+        treeMapForCompanies.entrySet().stream().sorted();
+        TreeMap treeMapForSectors =  new TreeMap<>(sectors);
+        treeMapForSectors.entrySet().stream().sorted();
+
+        assertAll("Выполняем проверки",
+            () -> assertThat("доли по секторам не равны", new TreeMap<>(masterPortfolioRate.getSectorToRateMap()), is(treeMapForSectors)),
+            () -> assertThat("доли типам  не равны", new TreeMap<>(masterPortfolioRate.getTypeToRateMap()), is(treeMapForTypes)),
+            () -> assertThat("доли по компаниям не равны", new TreeMap<>(masterPortfolioRate.getCompanyToRateMap()), is(treeMapForCompanies)),
+            () -> assertThat("время cut не равно", cut, is(cutInCommand))
+        );
+
+//        assertAll("Выполняем проверки",
+//            () -> assertThat("доли по секторам не равны", true, is(sectors.equals(masterPortfolioRate.getSectorToRateMap()))),
+//            () -> assertThat("доли типам  не равны", true, is(types.equals(masterPortfolioRate.getTypeToRateMap()))),
+//            () -> assertThat("доли по компаниям не равны", true, is(companys.equals(masterPortfolioRate.getCompanyToRateMap()))),
+//            () -> assertThat("время cut не равно", true, is(cut.equals(cutInCommand)))
+//        );
     }
 
     @Step("Рассчитываем стоимость позиции bond: ")
@@ -1324,9 +1351,12 @@ public class CalculateMasterPortfolioRateTest {
     void checkMasterPortfolioRate(UUID strategyId) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
             Thread.sleep(5000);
-            masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId);
+            try {
+                masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId);
+            } catch (Exception e){};
+
             if (masterPortfolioRate.getStrategyId() == null) {
-                Thread.sleep(3000);
+                Thread.sleep(1000);
             }
         }
     }
