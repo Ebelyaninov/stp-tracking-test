@@ -120,7 +120,7 @@ public class GetMasterClientsTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(1), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
     }
 
     @AfterEach

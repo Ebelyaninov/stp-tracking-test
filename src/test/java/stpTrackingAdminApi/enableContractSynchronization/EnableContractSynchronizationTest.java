@@ -179,7 +179,7 @@ public class EnableContractSynchronizationTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

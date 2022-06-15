@@ -178,7 +178,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -239,7 +239,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -297,7 +297,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -352,7 +352,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -405,7 +405,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -463,7 +463,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -521,7 +521,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -577,7 +577,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner owner = new UpdateStrategyRequestOwner();
         owner.setDescription("OwnerTEST100");
@@ -632,7 +632,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         List<StrategyTest> tests = new ArrayList<>();
         tests.add(new StrategyTest().id("derivative"));
         tests.add(new StrategyTest().id("structured_bonds"));
@@ -695,7 +695,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         List<StrategyTest> tests = new ArrayList<>();
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
@@ -762,7 +762,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", buyEnabledForDb, sellEnabledForDb, false, "0.2", "0.04");
+            "OwnerTEST", buyEnabledForDb, sellEnabledForDb, false, "0.2", "0.04", null);
 
 
         //Формируем body для метода updateStrategy
@@ -826,7 +826,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         Strategy strategyBeforeUpdate = strategyService.getStrategy(strategyId);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequestOwner updateStrategyRequestOwner = new UpdateStrategyRequestOwner();
@@ -872,7 +872,7 @@ public class UpdateStrategyAdminSuccessTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04");
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //Формируем body для метода updateStrategy
         UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
         updateStrategyRequest.setStatus(UpdateStrategyRequest.StatusEnum.FROZEN);
