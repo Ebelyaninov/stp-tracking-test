@@ -31,13 +31,11 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.*;
-import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -59,9 +57,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
+import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
@@ -138,6 +136,7 @@ public class HandleActualizeCommandTest {
     String SIEBEL_ID_MASTER;
     String SIEBEL_ID_SLAVE;
     String SIEBEL_ID_SLAVE_GRPC;
+    Duration THREE_SECONDS = Duration.of(3, SECONDS);
 
     public String value;
     long subscriptionId;
@@ -198,6 +197,20 @@ public class HandleActualizeCommandTest {
                 slavePortfolioDao.deleteSlavePortfolio(contractIdSlave, strategyIdNew);
             } catch (Exception e) {
             }
+
+            try {
+                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
+            } catch (Exception e) {
+            }
+
+            for(int i = 0; i < 1; i++){
+                Thread.sleep(2000);
+            }
+
+            try {
+                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
+            } catch (Exception e) {
+            }
             try {
                 steps.createEventInTrackingEvent(contractIdSlave);
             } catch (Exception e) {
@@ -206,14 +219,7 @@ public class HandleActualizeCommandTest {
                 steps.createEventInTrackingEvent(contractIdMaster);
             } catch (Exception e) {
             }
-            try {
-                slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
-            } catch (Exception e) {
-            }
-            try {
-                steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
-            } catch (Exception e) {
-            }
+
         });
     }
 
@@ -276,8 +282,9 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
 //        checkComparedToMasterVersion(3);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         // рассчитываем значение lots
         BigDecimal lots = slavePortfolio.getPositions().get(0).getQuantityDiff().abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal priceAsk = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "ask", SIEBEL_ID_SLAVE));
@@ -285,8 +292,9 @@ public class HandleActualizeCommandTest {
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder2
-        await().atMost(TEN_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(TWO_SECONDS).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         checkOrderParameters(versionMiddle - 2, 3,"0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
         steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
     }
@@ -360,8 +368,9 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
     }
 
@@ -422,8 +431,9 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -541,8 +551,9 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //получаем значение price из кеша exchangePositionPriceCache
         BigDecimal price = new BigDecimal(steps.getPriceFromExchangePositionPriceCacheWithSiebel(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_SLAVE));
@@ -556,6 +567,8 @@ public class HandleActualizeCommandTest {
         BigDecimal rateDiff = masterPositionRate.subtract(slavePositionRate);
         BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 4, BigDecimal.ROUND_HALF_UP);
         //проверяем значение портфеля slave
+        await().atMost(Duration.ofSeconds(3)).pollInterval(Duration.ofMillis(200)).until(() ->
+            slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave).size(), is(1));
         checkSlavePortfolioParameters(versionMiddle, 2, baseMoney.toString());
         checkPositionParameters(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, positionQuantity.toString(), price,
             slavePositionRate, rateDiff, quantityDiff, "39");
@@ -621,8 +634,9 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -764,8 +778,9 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 5,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(versionMiddle, 3, "5884.86");
         assertThat("lastChangeAction BaseMoney не равно", slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) 12));
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
@@ -844,8 +859,9 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 588486, contractIdSlave,
             versionMiddle, time, Tracking.Portfolio.Action.MONEY_BUY_TRADE, true);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition()
             .getQuantity().setScale(0, RoundingMode.UP), is(baseMoney.setScale(0, RoundingMode.UP)));
@@ -922,8 +938,9 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 588486, contractIdSlave,
             versionMiddle, time, Tracking.Portfolio.Action.MONEY_BUY_TRADE, true);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //Проверяем парсинг валюты KZT -> ticker KZTRUB_TOM
         List<SlavePortfolio.Position> positionKZT = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerKZT))
@@ -1015,8 +1032,9 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 500000, contractIdSlave,
             versionMiddle, time, Tracking.Portfolio.Action.ADJUST, true);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition()
             .getQuantity().setScale(0, RoundingMode.UP), is(baseMoney.setScale(0, RoundingMode.UP)));
@@ -1088,8 +1106,9 @@ public class HandleActualizeCommandTest {
             steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2, Tracking.Portfolio.Action.MORNING_UPDATE),
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition()
             .getQuantity().setScale(0, RoundingMode.UP), is(baseMoney.setScale(0, RoundingMode.UP)));
@@ -1149,8 +1168,9 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(4));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1259,8 +1279,9 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.TRACKING_STATE_UPDATE),time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1370,8 +1391,9 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1484,8 +1506,9 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1509,8 +1532,9 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
@@ -1580,8 +1604,9 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1607,8 +1632,9 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
@@ -1680,8 +1706,9 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1766,8 +1793,9 @@ public class HandleActualizeCommandTest {
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(4));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1795,8 +1823,10 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        //Пока добавил проверку первай версии, пока не пофиксят ретрай
+        slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0);
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(4));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is("0"));
@@ -1855,8 +1885,9 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(4));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(4));
@@ -1927,8 +1958,9 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(3));
@@ -2005,8 +2037,9 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(3));
@@ -2150,7 +2183,8 @@ public class HandleActualizeCommandTest {
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+           slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition()
             .getQuantity().setScale(0, RoundingMode.UP), is(baseMoney.setScale(0, RoundingMode.UP)));
@@ -2219,7 +2253,8 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE),time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition()
             .getQuantity().setScale(0, RoundingMode.UP), is(baseMoney.setScale(0, RoundingMode.UP)));
@@ -2282,7 +2317,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         checkSlavePortfolioParameters(4, 4, "5855.6");
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
@@ -2363,7 +2399,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -2456,7 +2493,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -2546,16 +2584,20 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2).getVersion().equals(2));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //расчитываем значение filledQuantity
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //проверяем значения после update в slaveOrder
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(500)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
+//        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(500)).pollInterval(Duration.ofMillis(400)).until(() ->
+//            slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0).equals(updatedFilledQuanitity));
+        slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).stream()
+            .filter(ticker -> ticker.getTicker().equals(instrument.tickerUSDRUB))
+            .collect(Collectors.toList()).get(0);
         assertThat("State не равно", slaveOrder2.getState().toString(), is("1"));
         assertThat("filledQuantity не равно", slaveOrder2.getFilledQuantity(), is(updatedFilledQuanitity));
         assertThat("version не равно", slaveOrder2.getVersion(), is(version));
@@ -2624,7 +2666,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //расчитываем значение filledQuantity
@@ -2702,14 +2745,17 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //расчитываем значение filledQuantity
         BigDecimal filledQuantity = (positionQuantityCommand.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //проверяем значения после update в slaveOrder
-        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
+        slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).stream()
+            .filter(ticker -> ticker.getTicker().equals(instrument.tickerUSDRUB))
+            .collect(Collectors.toList()).get(0);
         assertThat("State не равно", slaveOrder2.getState(), is(nullValue()));
         assertThat("filledQuantity не равно", slaveOrder2.getFilledQuantity(), is(updatedFilledQuanitity));
     }
@@ -2773,7 +2819,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -2861,14 +2908,16 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(3));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         checkSlavePortfolioParameters(3, 3, "6855.6");
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //подтверждаем исполненный объем заявки - обновляем запись, найденную в таблице slave_order_2
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(400)).pollInterval(Duration.ofMillis(400)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))).getFilledQuantity().equals(updatedFilledQuanitity));
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertAll(
             () -> assertThat("State не равно", slaveOrder2.getState().toString(), is("1")),
             () -> assertThat("filledQuantity не равно", slaveOrder2.getFilledQuantity(), is(updatedFilledQuanitity))
@@ -2942,13 +2991,16 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).pollInterval(Duration.ofNanos(200)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         checkSlavePortfolioParameters(3, 3, "6855.6");
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //проверяем значения после update в slaveOrder
         await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(500)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
+            slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0).getFilledQuantity()
+                .equals(filledQuantity));
+        slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0);
         assertThat("State не равно", slaveOrder2.getState().toString(), is("1"));
         assertThat("filledQuantity не равно", slaveOrder2.getFilledQuantity(), is(updatedFilledQuanitity));
         //смотрим, что новая заявка не выставлялась
@@ -3012,7 +3064,8 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //получаем данные по позиции
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
@@ -3088,7 +3141,8 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
@@ -3166,7 +3220,8 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //получаем данные по позиции
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
@@ -3239,7 +3294,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(400)).until(() ->
-            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(4));
+            slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 4).getVersion().equals(4));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         BigDecimal QuantityDiffticker1 = BigDecimal.ZERO;
         BigDecimal QuantityDiffticker2 = BigDecimal.ZERO;
@@ -3322,7 +3377,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -3397,7 +3453,8 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         checkSlavePortfolioParameters(2, 3, "5855.6");
     }
 
@@ -3459,7 +3516,8 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.TEST), time, Tracking.Portfolio.Action.TEST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(versionMiddle, 3, "5884.86");
         assertThat("lastChangeAction BaseMoney не равно", slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) Tracking.Portfolio.Action.TEST.getNumber()));
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
@@ -3526,8 +3584,9 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(3));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -3603,7 +3662,8 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(3));
@@ -3677,7 +3737,8 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(3));
@@ -3739,7 +3800,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         Subscription getDataFromSubscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //Проверяем обновление startTime подписки (-1c от даты старта подписки и +3ч)
         java.sql.Timestamp getNewStartedAt = new java.sql.Timestamp(time.toInstant().toEpochMilli());
@@ -3803,7 +3865,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем, что создался портфель для slave с данными актуальными из мидл по запросу grpc
         checkSlavePortfolioParameters(versionMiddle, 3, baseMoneyPositionSlave);
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerSBER));
@@ -3882,7 +3945,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+           slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         Subscription getDataFromSubscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //Проверяем, что не обновили метку времени старта подписки
         assertThat("Не обновили время подписки", getDataFromSubscription.getStartTime(), is(subscriptionStartTime));
@@ -3961,7 +4025,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1578407() {
-        String SIEBEL_ID_SLAVE = "1-1U3NR90";
+        String SIEBEL_ID_SLAVE = "4-K33N1Z3";
 //        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
 //            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
 //            "0", "7000", "0", "2");
@@ -4021,7 +4085,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -4125,7 +4190,8 @@ public class HandleActualizeCommandTest {
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             is(time.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         //получаем значение price из кеша exchangePositionPriceCache
@@ -4335,7 +4401,8 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
         assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
@@ -4401,8 +4468,9 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
         //assertThat("lastChangeAction BaseMoney не равно", slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) 12));
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
@@ -4427,7 +4495,7 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1470518() {
-        String SIEBEL_ID_SLAVE = "5-9RMNKBA4";
+        String SIEBEL_ID_SLAVE = "4-1W96A5ZF";
 //        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2092804182",
 //            "300", "0", "2", "L01+00000SPB", "CCL");
         //получаем данные по клиенту master в api сервиса счетов
@@ -4473,8 +4541,9 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(6));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
         assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
@@ -4539,7 +4608,8 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+            slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
         List<SlavePortfolio.Position> positions = slavePortfolio.getPositions();
         for(int i = 0; i < positions.size(); i++) {
@@ -4595,8 +4665,9 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "100");
     }
 
@@ -4660,8 +4731,8 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
-            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
         checkSlavePortfolioParameters(6, 2, "1000");
         //получаем обновленную заявку
         slaveOrder2 = slaveOrder2Dao.getSlaveOrderByVersion(contractIdSlave, 1);
