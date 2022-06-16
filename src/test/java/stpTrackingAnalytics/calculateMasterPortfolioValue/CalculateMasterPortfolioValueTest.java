@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
@@ -209,7 +210,7 @@ public class CalculateMasterPortfolioValueTest {
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         BigDecimal valuePortfolio = (new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -292,7 +293,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3).add(valuePos4)
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -356,7 +357,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = steps.getValuePortfolio(pricesPos, nominal,
             minPriceIncrement, aciValue, baseMoney);
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -388,7 +389,8 @@ public class CalculateMasterPortfolioValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+            masterPortfolioValueDao.findMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         Optional<MasterPortfolioValue> portfolioValue = masterPortfolioValueDao.findMasterPortfolioValueByStrategyId(strategyId);
         assertThat("запись по расчету стоимости портфеля не равно", portfolioValue.isPresent(), is(false));
     }
@@ -419,7 +421,8 @@ public class CalculateMasterPortfolioValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        Thread.sleep(5000);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).pollInterval(FIVE_HUNDRED_MILLISECONDS).until(() ->
+            masterPortfolioValueDao.findMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         Optional<MasterPortfolioValue> portfolioValue = masterPortfolioValueDao.findMasterPortfolioValueByStrategyId(strategyId);
         assertThat("запись по расчету стоимости портфеля не равно", portfolioValue.isPresent(), is(false));
     }
@@ -493,7 +496,7 @@ public class CalculateMasterPortfolioValueTest {
 
 
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         assertThat("minimum_value портфеля не равно", masterPortfolioValue.getMinimumValue().toString(), is("5000"));
@@ -506,7 +509,7 @@ public class CalculateMasterPortfolioValueTest {
 
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         assertThat("minimum_value портфеля не равно", masterPortfolioValue.getMinimumValue().toString(), is("5000"));
@@ -566,7 +569,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = new BigDecimal(baseMoney);
         log.info("valuePortfolio:  {}", valuePortfolio);
 
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         BigDecimal recommendValue = valuePortfolio.add(valuePortfolio.multiply(new BigDecimal(0.05)));
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
@@ -638,7 +641,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = valuePos1.add(valuePos2)
             .add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -656,7 +659,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolioNew = valuePos1.add(valuePos2).add(valuePos3).add(new BigDecimal(baseMoneyNew));
         ;
         log.info("valuePortfolioNew:{}", valuePortfolioNew);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolioNew));
     }
@@ -700,7 +703,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePos2 = new BigDecimal(steps.quantityYNDX).multiply(pricePos2);
         BigDecimal valuePortfolio = valuePos2.add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
 
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
@@ -751,7 +754,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePos2 = new BigDecimal(steps.quantityYNDX).multiply(pricePos2);
         BigDecimal valuePortfolio = valuePos2.add(new BigDecimal(baseMoney));
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
@@ -830,7 +833,7 @@ public class CalculateMasterPortfolioValueTest {
         Date start = Date.from(cutTime.minusDays(1).toInstant());
         // получаем запись в masterPortfolioValue
 //        masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreException(EmptyResultDataAccessException.class).pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyIdAndCut(strategyId, start), notNullValue());
         // проверяем данные записи
         assertThat("minimum_value", masterPortfolioValue.getMinimumValue().intValue(), is(1000));
@@ -929,7 +932,7 @@ public class CalculateMasterPortfolioValueTest {
         BigDecimal valuePortfolio = steps.getValuePortfolioWithZero(pricesPos, nominal,
             minPriceIncrement, aciValue, baseMoney);
         log.info("valuePortfolio:  {}", valuePortfolio);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioValue = masterPortfolioValueDao.getMasterPortfolioValueByStrategyId(strategyId), notNullValue());
         assertThat("value стоимости портфеля не равно", masterPortfolioValue.getValue(), is(valuePortfolio));
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioValue.getCut().toInstant(),
