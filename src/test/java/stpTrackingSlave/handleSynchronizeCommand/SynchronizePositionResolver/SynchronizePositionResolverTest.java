@@ -203,8 +203,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C690419() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -264,8 +264,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695626() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -326,8 +326,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323820() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -386,8 +386,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323880() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -453,8 +453,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1349227() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -520,8 +520,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695911() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -610,8 +610,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695957() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -711,8 +711,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695978() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -728,11 +728,12 @@ public class SynchronizePositionResolverTest {
             "6", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "16259.17", masterPos);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "15259.17", masterPos);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
-        String baseMoneySlave = "16259.17";
+        String baseMoneySlave = "29259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerVTBM,
             instrument.tradingClearingAccountVTBM, "1", true, true,
@@ -770,8 +771,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695986() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -881,8 +882,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697301() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -995,8 +996,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697225() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1017,7 +1018,7 @@ public class SynchronizePositionResolverTest {
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> createListSlavePos = new ArrayList<>();
-        String baseMoneySlave = "250";
+        String baseMoneySlave = "350";
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
         //отправляем команду на синхронизацию
@@ -1083,8 +1084,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1518574() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1197,8 +1198,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1695490() {
-//        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
