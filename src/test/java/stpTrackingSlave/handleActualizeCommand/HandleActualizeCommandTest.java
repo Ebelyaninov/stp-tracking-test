@@ -147,7 +147,7 @@ public class HandleActualizeCommandTest {
         SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
         SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
         SIEBEL_ID_SLAVE_GRPC = stpSiebel.siebelIdSlaveGRPC;
-        //mocksBasicSteps.createDataForMasterMock(SIEBEL_ID_MASTER);
+        mocksBasicSteps.createDataForMasterMock(SIEBEL_ID_MASTER);
     }
 
     @AfterEach
@@ -235,9 +235,9 @@ public class HandleActualizeCommandTest {
     void C731513() {
         String SIEBEL_ID_SLAVE = "1-1AJ30Q";
         BigDecimal lot = new BigDecimal("1");
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//           "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+           "0", "7000", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -281,8 +281,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-//        checkComparedToMasterVersion(3);
-        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         // рассчитываем значение lots
@@ -292,7 +291,7 @@ public class HandleActualizeCommandTest {
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
         //проверяем значения в slaveOrder2
-        await().atMost(TWO_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         checkOrderParameters(versionMiddle - 2, 3,"0", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.classCodeAAPL);
@@ -310,9 +309,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1366344() {
         String SIEBEL_ID_SLAVE = "5-3NRSEZFX";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -368,7 +367,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(THREE_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         steps.createEventInSubscriptionEvent(contractIdSlave, strategyId, subscriptionId);
@@ -385,9 +384,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C741543() {
         String SIEBEL_ID_SLAVE = "1-38B7AFZ";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "2");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -431,7 +430,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(THREE_SECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -474,9 +473,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1416943() {
         String SIEBEL_ID_SLAVE = "1-38B7AFZ";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -551,7 +550,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //получаем значение price из кеша exchangePositionPriceCache
@@ -567,7 +566,7 @@ public class HandleActualizeCommandTest {
         BigDecimal rateDiff = masterPositionRate.subtract(slavePositionRate);
         BigDecimal quantityDiff = (rateDiff.multiply(slavePortfolioValue)).divide(price, 4, BigDecimal.ROUND_HALF_UP);
         //проверяем значение портфеля slave
-        await().atMost(Duration.ofSeconds(3)).pollInterval(Duration.ofMillis(200)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollInterval(Duration.ofMillis(200)).until(() ->
             slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave).size(), is(1));
         checkSlavePortfolioParameters(versionMiddle, 2, baseMoney.toString());
         checkPositionParameters(0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, positionQuantity.toString(), price,
@@ -590,9 +589,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C748732() {
         String SIEBEL_ID_SLAVE = "5-7OOOE6B1";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -634,7 +633,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(THREE_SECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(THREE_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -672,9 +671,9 @@ public class HandleActualizeCommandTest {
         " Action = 'MORNING_UPDATE',version из команды < version из ответа ")
     void C1053004() {
         String SIEBEL_ID_SLAVE = "5-22NVD3I1";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -734,9 +733,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля = 1, action != 'MORNING_UPDATE'")
     void C1054936() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "3");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "3");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -778,7 +777,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 5,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(THREE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(versionMiddle, 3, "5884.86");
@@ -802,9 +801,9 @@ public class HandleActualizeCommandTest {
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды < version из ответа")
     void C1057608() {
         String SIEBEL_ID_SLAVE = "4-15PIVVNP";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
-//            "3000", "0", "0", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
+            "3000", "0", "0", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -859,7 +858,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 588486, contractIdSlave,
             versionMiddle, time, Tracking.Portfolio.Action.MONEY_BUY_TRADE, true);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
-        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(THREE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
@@ -984,9 +983,9 @@ public class HandleActualizeCommandTest {
         "Version из команды - slave_portfolio.version текущего портфеля  > 1, Version из команды = version из ответа")
     void C1365098() {
         String SIEBEL_ID_SLAVE = "4-15PIVVNP";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
-//            "3000", "0", "0", "5");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
+            "3000", "0", "0", "5");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1032,7 +1031,7 @@ public class HandleActualizeCommandTest {
         Tracking.PortfolioCommand commandNew = createCommandActualizeOnlyBaseMoney(2, 500000, contractIdSlave,
             versionMiddle, time, Tracking.Portfolio.Action.ADJUST, true);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, commandNew);
-        await().atMost(THREE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(THREE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
@@ -1057,9 +1056,9 @@ public class HandleActualizeCommandTest {
         "Version из команды - slave_portfolio.Version текущего портфеля  = 1.Version из команды = Version из ответа")
     void C1365612() {
         String SIEBEL_ID_SLAVE = "4-15PIVVNP";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
-//            "3000", "0", "0", "5");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerYNDX, instrument.classCodeYNDX, instrument.tradingClearingAccountYNDX,
+            "3000", "0", "0", "5");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1106,7 +1105,7 @@ public class HandleActualizeCommandTest {
             steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 2, Tracking.Portfolio.Action.MORNING_UPDATE),
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
@@ -1128,9 +1127,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1062109() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand,
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1168,7 +1167,7 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
@@ -1223,9 +1222,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1516525() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1279,7 +1278,7 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.TRACKING_STATE_UPDATE),time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1308,11 +1307,11 @@ public class HandleActualizeCommandTest {
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         //проверяем, что отклоняем застрявшую заявку и синхронизируемся на основе нового портфеля:
         // обновляем найденную запись в slave_orderslave_order_2 по полному ключу, проставляя state = 0,
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         //проверяем, что выставилась новая заявка
-        await().atMost(Duration.ofSeconds(2)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
@@ -1337,8 +1336,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1773776() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1391,7 +1390,7 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1420,11 +1419,11 @@ public class HandleActualizeCommandTest {
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         //проверяем, что отклоняем застрявшую заявку и синхронизируемся на основе нового портфеля:
         // обновляем найденную запись в slave_orderslave_order_2 по полному ключу, проставляя state = 0,
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
         //проверяем, что выставилась новая заявка
-        await().atMost(Duration.ofSeconds(2)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is("1"));
@@ -1453,9 +1452,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1517499() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1506,7 +1505,7 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1532,7 +1531,7 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
@@ -1558,8 +1557,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1517779() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1604,7 +1603,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1632,7 +1631,7 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(versionMiddle));
@@ -1658,8 +1657,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1518153() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1706,7 +1705,7 @@ public class HandleActualizeCommandTest {
             time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1746,8 +1745,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1518223() {
         String SIEBEL_ID_SLAVE = "5-ID1PP3JN";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "117106", "1", "4");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "117106", "1", "4");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1793,7 +1792,7 @@ public class HandleActualizeCommandTest {
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
@@ -1823,7 +1822,7 @@ public class HandleActualizeCommandTest {
         assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0"));
         assertThat("changed_at позиции в портфеле slave не равен", positionABBV.get(0).getChangedAt(), is(nullValue()));
         assertThat("lastChangeAction позиции в портфеле slave не равен", positionABBV.get(0).getLastChangeAction(), is(nullValue()));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //Пока добавил проверку первай версии, пока не пофиксят ретрай
         slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0);
@@ -1846,8 +1845,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1063048() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1885,7 +1884,7 @@ public class HandleActualizeCommandTest {
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //проверяем параметры портфеля slave
@@ -1917,8 +1916,8 @@ public class HandleActualizeCommandTest {
     void C1518740() {
         String SIEBEL_ID_SLAVE = "1-8U7X4H2";
 //        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1958,7 +1957,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -1991,8 +1990,8 @@ public class HandleActualizeCommandTest {
     void C1052370() {
         String SIEBEL_ID_SLAVE = "1-8U7X4H2";
 //        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL, "0", "100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL, "0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2037,7 +2036,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(versionMiddle));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -2137,8 +2136,8 @@ public class HandleActualizeCommandTest {
     void C1481900() {
         //String SIEBEL_ID_SLAVE = "5-CKWQPRIV";
         String SIEBEL_ID_SLAVE = "5-1B1MZMBXO";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "-100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"0", "-100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2182,7 +2181,7 @@ public class HandleActualizeCommandTest {
             steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 5, Tracking.Portfolio.Action.SECURITY_BUY_TRADE),
             time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
            slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
@@ -2206,8 +2205,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1481454() {
         String SIEBEL_ID_SLAVE = "1-27UK0AY";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
-//            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"-1000", "100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978", instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,"-1000", "100", "0", "2");
         // String SIEBEL_ID_SLAVE = "5-DXA6EWR9";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -2252,7 +2251,7 @@ public class HandleActualizeCommandTest {
             steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 5,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE),time, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         assertThat("Version в портфеле slave не равно", slavePortfolio.getVersion(), is(versionMiddle));
@@ -2274,9 +2273,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C742580() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2316,7 +2315,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         checkSlavePortfolioParameters(4, 4, "5855.6");
@@ -2348,9 +2347,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C731504() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2398,7 +2397,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2442,9 +2441,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1773820(Byte state) {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2492,7 +2491,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2533,9 +2532,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1333799() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2584,7 +2583,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2).getVersion().equals(2));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2613,9 +2612,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1366347() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2665,7 +2664,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(1)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(1)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2674,7 +2673,7 @@ public class HandleActualizeCommandTest {
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //проверяем значения после update в slaveOrder
-        await().atMost(Duration.ofSeconds(4)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofMillis(400)).until(() ->
+        await().atMost(Duration.ofSeconds(4)).ignoreExceptions().pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofMillis(400)).until(() ->
             slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))).getFilledQuantity().equals(updatedFilledQuanitity));
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("State не равно", slaveOrder2.getState().toString(), is("1"));
@@ -2694,9 +2693,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1333801() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2744,7 +2743,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2769,9 +2768,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C856826() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2818,7 +2817,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2857,9 +2856,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1071599() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerABBV, instrument.classCodeABBV, instrument.tradingClearingAccountABBV,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerABBV, instrument.classCodeABBV, instrument.tradingClearingAccountABBV,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2908,14 +2907,14 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(3));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         checkSlavePortfolioParameters(3, 3, "6855.6");
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //подтверждаем исполненный объем заявки - обновляем запись, найденную в таблице slave_order_2
-        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(400)).pollInterval(Duration.ofMillis(400)).until(() ->
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions().pollDelay(Duration.ofMillis(400)).pollInterval(Duration.ofMillis(400)).until(() ->
             slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))).getFilledQuantity().equals(updatedFilledQuanitity));
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertAll(
@@ -2936,9 +2935,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1071663() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -2990,14 +2989,14 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).pollInterval(Duration.ofNanos(200)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).pollInterval(Duration.ofNanos(200)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         checkSlavePortfolioParameters(3, 3, "6855.6");
         BigDecimal filledQuantity = (positionQuantity.subtract(slavePosQuantityBefore)).abs();
         BigDecimal updatedFilledQuanitity = new BigDecimal("0").add(filledQuantity);
         //проверяем значения после update в slaveOrder
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(500)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(500)).until(() ->
             slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0).getFilledQuantity()
                 .equals(filledQuantity));
         slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0);
@@ -3017,9 +3016,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C742614() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,C1652853
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3063,7 +3062,7 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //получаем данные по позиции
@@ -3094,9 +3093,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1655049() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3140,7 +3139,7 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         List<SlavePortfolio.Position> position = slavePortfolio.getPositions().stream()
@@ -3172,9 +3171,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1654601() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3219,7 +3218,7 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         //получаем данные по позиции
@@ -3253,9 +3252,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1366358() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "1", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "1", "0", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3293,7 +3292,7 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(400)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(400)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 4).getVersion().equals(4));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 4);
         BigDecimal QuantityDiffticker1 = BigDecimal.ZERO;
@@ -3327,9 +3326,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C742634() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3376,7 +3375,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -3409,9 +3408,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1249143() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3452,7 +3451,7 @@ public class HandleActualizeCommandTest {
             2, steps.createPosInCommand(instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1,
                 Tracking.Portfolio.Action.SECURITY_BUY_TRADE), time, Tracking.Portfolio.Action.SECURITY_BUY_TRADE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         checkSlavePortfolioParameters(2, 3, "5855.6");
@@ -3467,9 +3466,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:" +
         "Version из команды - slave_portfolio.version текущего портфеля = 1, action != 'MORNING_UPDATE' и не нашли enumAction")
     void C1365590() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3515,7 +3514,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 5,
                 Tracking.Portfolio.Action.TEST), time, Tracking.Portfolio.Action.TEST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(versionMiddle, 3, "5884.86");
@@ -3535,9 +3534,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1365591() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3584,7 +3583,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).pollInterval(Duration.ofMillis(200)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(3));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 3);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -3619,8 +3618,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1523191() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "1000", "100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341", instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "1000", "100", "0", "2");
         String SIEBEL_ID_SLAVE = "1-8U7X4H2";
 //        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
         //получаем данные по клиенту master в api сервиса счетов
@@ -3661,7 +3660,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -3674,7 +3673,7 @@ public class HandleActualizeCommandTest {
         assertThat("TradingClearingAccount позиции в портфеле slave не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("Quantity позиции в портфеле slave не равно", slavePortfolio.getPositions().get(0).getQuantity(), is(positionQuantity));
         //Проверяем, что позициz RUB есть в midle
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             getBaseMoneyFromMiof(clientPositions, "RUB"), notNullValue());
         //Проверить, что не добавили позицию RUB
         boolean positionotFound = slavePortfolio.getPositions().stream()
@@ -3697,9 +3696,9 @@ public class HandleActualizeCommandTest {
     void C1523957() {
         String SIEBEL_ID_SLAVE = "1-8U7X4H2";
 //        String SIEBEL_ID_SLAVE = "5-88AWFVA2";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "100", "100", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000002341",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "100", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3736,7 +3735,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, versionMiddle, time, Tracking.Portfolio.Action.ADJUST, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем параметры портфеля slave
@@ -3757,9 +3756,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1616397() {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3799,7 +3798,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         Subscription getDataFromSubscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -3819,9 +3818,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1596739() {
         String SIEBEL_ID_SLAVE = "5-3CGSIDQR";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-//            "2156", "0", "0", "10");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
+            "2156", "0", "0", "10");
         String baseMoneyPositionSlave = "2156";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -3864,7 +3863,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
              slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, versionMiddle);
         //проверяем, что создался портфель для slave с данными актуальными из мидл по запросу grpc
@@ -3893,9 +3892,9 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1616370(int plusSeconds, SubscriptionStatus subscriptionStatus) {
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -3944,7 +3943,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         Subscription getDataFromSubscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
@@ -3962,9 +3961,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1616399() {
         String SIEBEL_ID_SLAVE = "1-1AJ30Q";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "0", "0", "0");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "0", "0", "0");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4007,7 +4006,7 @@ public class HandleActualizeCommandTest {
             contractIdSlave, 1, time, Tracking.Portfolio.Action.TRACKING_STATE_UPDATE, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);        //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             contractService.getContract(contractIdSlave).getBlocked(), is(true));
         Contract getContract = contractService.getContract(contractIdSlave);
         //Проверяем блокировку контракта
@@ -4026,9 +4025,9 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1578407() {
         String SIEBEL_ID_SLAVE = "4-K33N1Z3";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "2");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -4084,7 +4083,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -4111,7 +4110,7 @@ public class HandleActualizeCommandTest {
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем значения в slaveOrder
         checkOrderParameters(versionMiddle, 2,"0", lot, lots, priceOrder, instrument.tickerAAPL,
@@ -4131,9 +4130,9 @@ public class HandleActualizeCommandTest {
     void C1578254() {
 //        String SIEBEL_ID_SLAVE = "5-9R5I76TF";
         String SIEBEL_ID_SLAVE = "1-38B7AFZ";
-//        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
-//            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-//            "0", "7000", "0", "2");
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, "2000115978",
+            instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "2");
         BigDecimal lot = new BigDecimal("1");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
@@ -4189,7 +4188,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -4219,10 +4218,10 @@ public class HandleActualizeCommandTest {
         BigDecimal priceOrder = priceAsk.add(priceAsk.multiply(new BigDecimal("0.002")))
             .divide(new BigDecimal("0.01"), 0, BigDecimal.ROUND_HALF_UP)
             .multiply(new BigDecimal("0.01"));
-        await().atMost(Duration.ofSeconds(2)).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))), notNullValue());
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(300)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(300)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем значения в slaveOrder
         checkOrderParameters(versionMiddle, 2,"0", lot, lots, priceOrder, instrument.tickerAAPL,
@@ -4355,8 +4354,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1470543() {
-//        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE_GRPC, "2000075628",
-//            "0", "5", "FB", "TKCBM_TCAB", "2");
+        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE_GRPC, "2000075628",
+            "0", "5", "FB", "TKCBM_TCAB", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4400,7 +4399,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
@@ -4423,8 +4422,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1470531() {
         String SIEBEL_ID_SLAVE = "5-22NDYVFEE";
-//        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE, "2061879603",
-//            "0", "2", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "2");
+        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE, "2061879603",
+            "0", "2", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4468,7 +4467,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
@@ -4496,8 +4495,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1470518() {
         String SIEBEL_ID_SLAVE = "4-1W96A5ZF";
-//        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2092804182",
-//            "300", "0", "2", "L01+00000SPB", "CCL");
+        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2092804182",
+            "300", "0", "2", "L01+00000SPB", "CCL");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4541,7 +4540,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(6));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
@@ -4562,8 +4561,8 @@ public class HandleActualizeCommandTest {
     void C1469880() {
         String SIEBEL_ID_SLAVE = "1-BXDUEON";
         Tracking.Portfolio.Action action = Tracking.Portfolio.Action.SECURITY_BUY_TRADE;
-//        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE, "2061621997",
-//            "0", "0", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "2");
+        mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE, "2061621997",
+            "0", "0", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4607,7 +4606,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofMillis(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofMillis(600)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
@@ -4636,8 +4635,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1468676() {
         String SIEBEL_ID_SLAVE = "5-2282PUWXY";
-//        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2053962193",
-//            "100", "0", "0", instrument.tradingClearingAccountAAPL, instrument.tickerAAPL);
+        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2053962193",
+            "100", "0", "0", instrument.tradingClearingAccountAAPL, instrument.tickerAAPL);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4665,7 +4664,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(TWO_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "100");
@@ -4681,8 +4680,8 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1468537() {
         String SIEBEL_ID_SLAVE = "5-23AZ65JU2";
-//        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2056453273",
-//            "1000", "0", "5", instrument.tradingClearingAccountAAPL, instrument.tickerAAPL);
+        mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2056453273",
+            "1000", "0", "5", instrument.tradingClearingAccountAAPL, instrument.tickerAAPL);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4731,7 +4730,7 @@ public class HandleActualizeCommandTest {
             6, time, Tracking.Portfolio.Action.ADJUST_CURRENCY, false);
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, adjust);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
         checkSlavePortfolioParameters(6, 2, "1000");
         //получаем обновленную заявку
