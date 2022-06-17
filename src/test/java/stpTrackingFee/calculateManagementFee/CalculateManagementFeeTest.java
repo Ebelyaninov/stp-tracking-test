@@ -1689,7 +1689,7 @@ public class CalculateManagementFeeTest {
         BigDecimal basemoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         log.info("valuePortfolio:  {}", basemoney);
         checkComparedToMasterFeeVersion(1, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(basemoney));
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
@@ -1703,7 +1703,7 @@ public class CalculateManagementFeeTest {
     @Step("Проверяем запись в management_fee: ")
     void checkManagementFeeOneBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
         checkComparedToMasterFeeVersion(1, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
             is(LocalDate.now().minusDays(3).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
@@ -1716,7 +1716,7 @@ public class CalculateManagementFeeTest {
     @Step("Проверяем запись в management_fee: ")
     void checkManagementFeeTwoBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
         checkComparedToMasterFeeVersion(2, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
@@ -1730,7 +1730,7 @@ public class CalculateManagementFeeTest {
     @Step("Проверяем запись в management_fee: ")
     void checkManagementFeeLastBlocked(long subscriptionId, String reasonBlocked) throws InterruptedException {
         checkComparedToMasterFeeVersion(3, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         //Проверяем данные в management_fee
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
@@ -1770,7 +1770,7 @@ public class CalculateManagementFeeTest {
         }
         log.info("valuePortfolio:  {}", valuePortfolio);
         checkComparedToMasterFeeVersion(2, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 2), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
@@ -1836,7 +1836,7 @@ public class CalculateManagementFeeTest {
         }
         log.info("valuePortfolio:  {}", valuePortfolio);
         checkComparedToMasterFeeVersion(3, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee
@@ -1869,7 +1869,7 @@ public class CalculateManagementFeeTest {
         BigDecimal price1 = steps.getPrice(pricesPos, instrument.instrumentSBER);
         BigDecimal price3 = steps.getPrice(pricesPos, instrument.instrumentYNDX);
         checkComparedToMasterFeeVersion(3, subscriptionId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
         //Проверяем данные в management_fee

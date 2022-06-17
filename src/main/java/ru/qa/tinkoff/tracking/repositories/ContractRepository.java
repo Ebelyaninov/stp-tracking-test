@@ -35,8 +35,11 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
 
  //   List <Contract> findAllByState (String state);
 
-
-
+    // находим 1 запись по стратегии
+    @Query(nativeQuery = true, value = "SELECT * FROM tracking.contract WHERE blocked = :blocked and id > :cursor ORDER BY id ASC")
+    List<Contract> selectContractBlockedLimit(
+    @Param(value = "blocked") Boolean blocked,
+    @Param(value = "cursor") String cursor);
 
 
 
