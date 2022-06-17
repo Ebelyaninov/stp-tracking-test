@@ -152,6 +152,15 @@ public class ContractService {
         return getBlockedContract;
     }
 
+    @Step("Поиск всех заблокированных и подписанных контрактов")
+    @SneakyThrows
+    public List<Contract> findLimitBlockedContract(Boolean blocked, String cursor) {
+        List<Contract> getBlockedContract = contractRepository.selectContractBlockedLimit(blocked, cursor);
+        log.info("Successfully find contract {}", blocked, cursor);
+        Allure.addAttachment("Найденный контракт", "application/json", objectMapper.writeValueAsString(getBlockedContract));
+        return getBlockedContract;
+    }
+
 /*    @Step("Поиск всех заблокированных и подписанных контрактов")
     @SneakyThrows
     public List<Contract> findAllContractByState (String state) {

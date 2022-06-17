@@ -61,6 +61,7 @@ import static com.google.common.collect.Comparators.max;
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static ru.qa.tinkoff.kafka.Topics.*;
@@ -510,6 +511,7 @@ public class CalculateResultFeeTest {
         createCommandResult(subscriptionId);
         checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
         for (int i = 0; i < versionsList.size(); i++) {
+
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
             assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(valueHighWaterMarkList.get(i + 1)));
@@ -616,6 +618,8 @@ public class CalculateResultFeeTest {
         checkComparedToFeeVersion(versionsList.get(0), subscriptionId);
         //проверяем рассчитанные значения  полученные из result_fee
         for (int i = 0; i < versionsList.size(); i++) {
+            await().atMost(Duration.ofSeconds(5)).ignoreExceptions().until(() ->
+                resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(0)), notNullValue());
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, versionsList.get(i));
             assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfoliosList.get(i)));
             assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(valueHighWaterMarkList.get(i + 1)));
@@ -1322,7 +1326,7 @@ public class CalculateResultFeeTest {
         steps.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
 
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -1658,7 +1662,7 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1))
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3))
             .until(
                 () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7),
                 notNullValue());
@@ -1928,7 +1932,7 @@ public class CalculateResultFeeTest {
         highWaterMarkThirdPeriod = highWaterMarkSecondPeriod.add(firstAdjustForThirdPeriod).add(secondAdjustForThirdPeriod);
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500))
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3))
             .until(
                 () -> resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9),
                 notNullValue());
@@ -2081,7 +2085,7 @@ public class CalculateResultFeeTest {
         //формируем и отправляем команду на расчет комисии
         createCommandResult(subscriptionId);
         //ожидаем записи в result_fee
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(2)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0), notNullValue());
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 0);
         //Смотрим, сообщение, которое поймали в топике kafka
@@ -2245,7 +2249,6 @@ public class CalculateResultFeeTest {
         assertThat("Version не равен", resultFee.getVersion(), is(1));
         assertThat("created_at не равен", resultFee.getCreatedAt().toInstant().getEpochSecond(), is(feeCommand.getCreatedAt().getSeconds()));
     }
-
 
 
     @SneakyThrows
@@ -3025,7 +3028,7 @@ public class CalculateResultFeeTest {
 //                Thread.sleep(5000);
 //            }
 //        }
-        await().atMost(Duration.ofSeconds(12)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, version), notNullValue());
     }
 

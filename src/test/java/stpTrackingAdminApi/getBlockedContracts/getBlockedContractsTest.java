@@ -149,6 +149,7 @@ public class getBlockedContractsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491521() {
+        int limit = 60;
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
@@ -156,35 +157,45 @@ public class getBlockedContractsTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
-        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,ContractState.tracked, strategyId,false, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
-        //блокируем контракт Slave
-        steps.BlockContract(contractIdSlave);
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,
+            ContractState.tracked, strategyId,true, SubscriptionStatus.active,
+            new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
         //получаем список заблокированных контрактов из БД, которые подписаны на стратегию
         List <Contract> getAllBlockedContracts = contractService.findAllBlockedContract(true).stream()
             .filter(c -> c.getState().equals(ContractState.tracked))
             .collect(Collectors.toList());
+        String nextCursor = "";
         SortedSet<String>  listOfBlockedId = new TreeSet<>();
         for (int i = 0; i < getAllBlockedContracts.size(); i++) {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
+            if ( getAllBlockedContracts.size() > limit) {
+                nextCursor = getAllBlockedContracts.get(limit-1).getId();
+            }
+            else {
+                nextCursor = listOfBlockedId.last();
+            }
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
-            .limitQuery(60)
+            .limitQuery(limit)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBlockedContractsResponse.class));
         SortedSet<String>  listOfBlockedIdFromGet = new TreeSet<>();
         for (int i = 0; i < getblockedContracts.getItems().size(); i++) {
             listOfBlockedIdFromGet.add(getblockedContracts.getItems().get(i).getId());
         }
+        Boolean next = true;
+        int contractBlockSize = limit;
+        if (listOfBlockedId.size() <= limit) {
+            contractBlockSize = listOfBlockedId.size();
+        }
         //получаем ответ и проверяем
-        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
-        assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(listOfBlockedId.last()));
-        assertThat("items не равен", getblockedContracts.getItems().size(), is(listOfBlockedId.size()));
-        assertThat("множества неравны", listOfBlockedId , is(listOfBlockedIdFromGet));
+        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(next));
+        assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(nextCursor));
+        assertThat("items не равен", getblockedContracts.getItems().size(), is(contractBlockSize));
         assertThat("договора нет в списке заблокированных", listOfBlockedIdFromGet.contains(contractIdSlave), is(true));
     }
 
@@ -200,6 +211,7 @@ public class getBlockedContractsTest {
             .filter(c -> c.getState().equals(ContractState.tracked))
             .collect(Collectors.toList());
         SortedSet<String>  listOfBlockedId = new TreeSet<>();
+        String nextCursor = "";
         for (int i = 0; i < 1; i++) {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
         }
@@ -225,31 +237,51 @@ public class getBlockedContractsTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод необходим для получения списка договоров, на которые наложена техническая блокировка.")
     void C1491752() {
+        int limit = 30;
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+        //создаем подписку клиента slave на strategy клиента master
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,
+            ContractState.tracked, strategyId,true, SubscriptionStatus.active,
+            new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),null,false);
         //получаем список заблокированных контрактов из БД, которые подписаны на стратегию
-        List <Contract> getAllBlockedContracts = contractService.findAllBlockedContract(true).stream()
+        List <Contract> getAllBlockedContracts = contractService.findLimitBlockedContract(true, contractIdSlave).stream()
             .filter(c -> c.getState().equals(ContractState.tracked))
             .collect(Collectors.toList());
-        String cursorContract = getAllBlockedContracts.get(20).getId();
-        String nextItem = getAllBlockedContracts.get(21).getId();
+        String nextCursor = "";
         SortedSet<String>  listOfBlockedId = new TreeSet<>();
-        for (int i = 21; i < getAllBlockedContracts.size(); i++) {
+        for (int i = 0; i < getAllBlockedContracts.size(); i++) {
             listOfBlockedId.add(getAllBlockedContracts.get(i).getId());
+            if ( getAllBlockedContracts.size() > limit) {
+                nextCursor = getAllBlockedContracts.get(limit-1).getId();
+            }
+            else {
+                nextCursor = listOfBlockedId.last();
+            }
         }
         //вызываем метод getBlockedContracts
         GetBlockedContractsResponse getblockedContracts = contractApiAdminCreator.get().getBlockedContracts()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking")
-            .cursorQuery(cursorContract)
+            .cursorQuery(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBlockedContractsResponse.class));
+        Boolean next = true;
+        int contractBlockSize = limit;
+        if (listOfBlockedId.size() <= limit) {
+            contractBlockSize = listOfBlockedId.size();
+        }
         //получаем ответ и проверяем
-        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(true));
-        assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(listOfBlockedId.last()));
-        assertThat("items не равен", getblockedContracts.getItems().size(), is(listOfBlockedId.size()));
-        assertThat("договор не равен", getblockedContracts.getItems().get(0).getId(), is(nextItem));
-
+        assertThat("hasNext не равен", getblockedContracts.getHasNext(), is(next));
+        assertThat("cursor не равен", getblockedContracts.getNextCursor(), is(nextCursor));
+        assertThat("items не равен", getblockedContracts.getItems().size(), is(contractBlockSize));
     }
+
 
     @SneakyThrows
     @Test

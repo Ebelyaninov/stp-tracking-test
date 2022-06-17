@@ -247,7 +247,7 @@ public class HandleAdjustEventTest {
             "+12.79", "RUB", dateTime, operCode, operId, contractIdSlave, dateTime.minusMinutes(30));
         String key = contractIdSlave;
         oldKafkaService.send(CCYEV, key, event);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).ignoreExceptions().until(() ->
             slaveAdjustList = slaveAdjustDao.getSlaveAdjustByStrategyIdAndContract(contractIdSlave, strategyId), notNullValue());
         assertThat("время создания операции не равно", slaveAdjustList.get(0).getCreatedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
             equalTo(dateTime.toInstant(ZoneOffset.ofHours(3)).truncatedTo(ChronoUnit.SECONDS)));
