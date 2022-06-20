@@ -1162,9 +1162,6 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915391() {
-/*        LocalDate localDateNow = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String lastBuyDate = localDateNow.minusDays(65).format(formatter) + "T03:00:00+03:00";*/
         strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
@@ -1176,7 +1173,7 @@ public class HandleCorpActionCommandTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего  в кассандре c позицией
         String baseMoneyPortfolio = "4990.0";
-        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDateMinus65Days);
         //Добавляем записи которые не попадают в check-portfolio-processing-days
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -1208,14 +1205,13 @@ public class HandleCorpActionCommandTest {
         checkdCorpAction(corpActionOpt, cut);
         //Проверяем запись в таблице dividend
         List<Dividend> dividendList = dividendService.getDividend(strategyId);
-        assertThat("Нашли записи в dividend, size != 1", dividendList.size(), is(1));
-        checkdDividend(dividendList, dividendIdNMR);
+        assertThat("Нашли записи в dividend, size != 1", dividendList.size(), is(0));
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
             .filter(key -> key.getKey().equals(contractIdMaster))
             .collect(Collectors.toList());
         //Проверяем тело события
-        assertThat("Нашли события в топике", messages.size(), is(1));
+        assertThat("Нашли события в топике", messages.size(), is(0));
 }
 
 
