@@ -57,9 +57,9 @@ import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
@@ -123,6 +123,7 @@ public class HandleLimitEventTest {
     String siebelIdMaster = "1-51Q76AT";
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
+    List<Pair<String, byte[]>> messages;
 
     String description = "description test стратегия autotest consumer";
 
@@ -186,7 +187,7 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1084018() {
-        String siebelIdSlave = "1-8VVOWFO";
+        String siebelIdSlave = "4-1O7I15NA";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -197,7 +198,7 @@ public class HandleLimitEventTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
-        String clientCodeSlave = "MMV128813156";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -221,14 +222,13 @@ public class HandleLimitEventTest {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         steps.createSlavePortfolio(contractIdSlave, strategyId, versionMiddle, 1, baseMoney,
             positionList, Date.from(OffsetDateTime.now().minusDays(3).toInstant()));
-        steps.createEventInTrackingEvent(contractIdSlave);
-        Thread.sleep(5000);
+        evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //изменяем позицию по валюте в miof
         steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "RUB", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //считаем значение BaseMoneyPosition в комманде
         double quantityMoneyCommand = portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
@@ -273,7 +273,7 @@ public class HandleLimitEventTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = "UMA676513176";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -310,14 +310,13 @@ public class HandleLimitEventTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
             baseMoney, date, createListSlavePos);
-        steps.createEventInTrackingEvent(contractIdSlave);
-        Thread.sleep(5000);
+        evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //изменяем позицию по бумаге в miof
         steps.getClientAdjustSecurityMiof(clientCodeSlave, contractIdSlave, instrument.tickerSU29009RMFS6, 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         double quantitySecurityCommand = portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getPosition(0).getQuantity().getScale());
         CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
@@ -349,7 +348,7 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1084158() {
-        String siebelIdSlave = "1-36F29PH";
+        String siebelIdSlave = "5-9QFVT85D";
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
@@ -360,7 +359,7 @@ public class HandleLimitEventTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
-        String clientCodeSlave = "LMA779872317";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -396,14 +395,17 @@ public class HandleLimitEventTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
             baseMoney, date, createListSlavePos);
-        steps.createEventInTrackingEvent(contractIdSlave);
-        Thread.sleep(5000);
+        evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //изменяем позицию по бумаге в miof
         steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "USD", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        await().atMost(TWO_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).until(
+            () -> waitMessage(TRACKING_SLAVE_COMMAND, contractIdSlave), is(notNullValue()));
+//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20)).stream()
+//            .filter(key -> key.getKey().equals(contractIdSlave))
+//            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -456,7 +458,7 @@ public class HandleLimitEventTest {
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
-        String clientCodeSlave = "GEM540810121";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -492,8 +494,7 @@ public class HandleLimitEventTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
             baseMoney, date, createListSlavePos);
-        steps.createEventInTrackingEvent(contractIdSlave);
-        Thread.sleep(5000);
+        evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //изменяем позицию по бумаге в miof
@@ -549,7 +550,7 @@ public class HandleLimitEventTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = "GMN591934879";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
         strategyId = UUID.randomUUID();
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
@@ -587,7 +588,7 @@ public class HandleLimitEventTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C912915() {
-        String SIEBEL_ID_SLAVE = "1-8VVOWFO";
+        String SIEBEL_ID_SLAVE = "4-1O7I15NA";
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -607,21 +608,37 @@ public class HandleLimitEventTest {
         steps.createSlavePortfolio(contractIdSlave, strategyId, versionMiddle, 1, baseMoney,
             positionList, Date.from(OffsetDateTime.now().minusDays(3).toInstant()));
         // вычитываем из топика кафка tracking.contract.event все offset
-        steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
-        //изменяем позицию по валюте в miof
-        steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "RUB", 1);
+        steps.resetOffsetToEnd(TRACKING_CONTRACT_EVENT);
+        //evictContractCache
+        steps.createEventInTrackingEvent(contractIdSlave);
+        //изменяем позицию по валюте в miof (Убрал, триггерит блокировку evictContract)
+        //steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "RUB", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
-        log.info("Событие  в tracking.contract.event:  {}", event);
+//        List<Pair<String, byte[]>> messages;
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+            waitMessage(TRACKING_CONTRACT_EVENT, contractIdSlave).stream()
+                .filter(key -> key.getKey().equals(contractIdSlave))
+                .collect(Collectors.toList()).size(), greaterThanOrEqualTo(1));
+        //messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
+        Tracking.Event eventBlock = null;
+        for (int i = 0; i < messages.size(); i++) {
+            Tracking.Event event = Tracking.Event.parseFrom(messages.get(i).getValue());
+            if (event.getContract().getBlocked() == true) {
+                eventBlock = event;
+            }
+        }
+//        Pair<String, byte[]> message = messages.stream()
+//            .sorted(Comparator.reverseOrder())
+//            .filter(key -> key.getKey().equals(contractIdSlave))
+//            .findFirst()
+//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+//        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        log.info("Событие  в tracking.contract.event:  {}", eventBlock);
         //проверяем, данные в сообщении
-        assertThat("action события не равен", event.getAction().toString(), is("UPDATED"));
-        assertThat("contractId не равен", (event.getContract().getId()), is(contractIdSlave));
-        assertThat("статус договора не равен", (event.getContract().getState()), is(Tracking.Contract.State.TRACKED));
-        assertThat("blocked договора не равен", (event.getContract().getBlocked()), is(true));
+        assertThat("action события не равен", eventBlock.getAction().toString(), is("UPDATED"));
+        assertThat("contractId не равен", (eventBlock.getContract().getId()), is(contractIdSlave));
+        assertThat("статус договора не равен", (eventBlock.getContract().getState()), is(Tracking.Contract.State.TRACKED));
+        assertThat("blocked договора не равен", (eventBlock.getContract().getBlocked()), is(true));
     }
 
     @SneakyThrows
@@ -632,7 +649,7 @@ public class HandleLimitEventTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1481355() {
 //        String SIEBEL_ID_SLAVE = "1-FRT3HXX";
-        String SIEBEL_ID_SLAVE = "1-8CFFSE9";
+        String SIEBEL_ID_SLAVE = "1-56Q5JQH";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -641,7 +658,7 @@ public class HandleLimitEventTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = "MAV021377764";
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
@@ -659,11 +676,12 @@ public class HandleLimitEventTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
+        evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "USD", -1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //считаем значение BaseMoneyPosition в комманде
         double quantityMoneyCommand = portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
@@ -722,14 +740,18 @@ public class HandleLimitEventTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
-        // вычитываем из топика кафка tracking.contract.event все offset
+        //Сместил вычитку событие до сброса кэша, после изменений в middle может тест не работать
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
+        evictContractCacheAndWait(contractIdSlave);
+        // вычитываем из топика кафка tracking.contract.event все offse
         steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "USD", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        log.info("start to wait");
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(
+            () -> waitMessage(TRACKING_CONTRACT_EVENT, contractIdSlave), notNullValue());
+//        Pair<String, byte[]> message = messages.stream()
+//            .findFirst()
+//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event eventBlock = null;
         for (int i = 0; i < messages.size(); i++) {
             Tracking.Event event = Tracking.Event.parseFrom(messages.get(i).getValue());
@@ -783,7 +805,14 @@ public class HandleLimitEventTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         steps.createEventInTrackingEvent(contractIdSlave);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20)).stream()
+            .sorted(Comparator.naturalOrder())
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
         CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
         int versionMiddleAfter = clientPositions.getResponse().getClientPositions().getVersion().getValue();
@@ -845,7 +874,7 @@ public class HandleLimitEventTest {
         byte[] eventBytes = eventLimit.toByteArray();
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -888,6 +917,7 @@ public class HandleLimitEventTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
+        //evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         OffsetDateTime now = OffsetDateTime.now();
@@ -934,7 +964,7 @@ public class HandleLimitEventTest {
         byte[] eventBytes = eventLimit.toByteArray();
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -1009,7 +1039,7 @@ public class HandleLimitEventTest {
         byte[] eventBytes = eventLimit.toByteArray();
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -1060,7 +1090,7 @@ public class HandleLimitEventTest {
         byte[] eventBytes = createLimitFromMiddle(clientCodeSlave, versionMiddle).toByteArray();
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND);
+        Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
         //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
@@ -1144,7 +1174,9 @@ public class HandleLimitEventTest {
         byte[] eventBytes = eventLimit.toByteArray();
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
+        waitMessage(TRACKING_CONTRACT_EVENT, contractIdSlave), notNullValue());
+        //List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5));
         Pair<String, byte[]> messageEvent = messages.stream()
             .sorted(Collections.reverseOrder())
             .findFirst()
@@ -1224,8 +1256,11 @@ public class HandleLimitEventTest {
     }
 
     //Смотрим, сообщение, которое поймали в топике kafka
-    Tracking.PortfolioCommand getMessageFromKafka(Topics topic) throws InvalidProtocolBufferException {
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(20));
+    Tracking.PortfolioCommand getMessageFromKafka(Topics topic, String contractId) throws InvalidProtocolBufferException {
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(topic, Duration.ofSeconds(20)).stream()
+//            .sorted(Comparator.reverseOrder())
+            .filter(key -> key.getKey().equals(contractId))
+            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -1297,4 +1332,20 @@ public class HandleLimitEventTest {
 
     }
 
+    @SneakyThrows
+    void evictContractCacheAndWait(String contractId){
+        steps.createEventInTrackingEvent(contractId);
+        for (int i = 0; i <1; i++) {
+            Thread.sleep(2000);
+        }
+    }
+
+
+    List<Pair<String, byte[]>> waitMessage (Topics topicName, String  contractId){
+        messages = kafkaReceiver.receiveBatch(topicName, Duration.ofSeconds(20)).stream()
+            .filter(key -> key.getKey().equals(contractId))
+            .collect(Collectors.toList());
+        log.info("waiting for message");
+        return messages;
+    }
 }
