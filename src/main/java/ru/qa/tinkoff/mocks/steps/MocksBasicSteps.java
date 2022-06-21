@@ -528,5 +528,35 @@ public class MocksBasicSteps {
     }
 
 
+    public void createDataForMasterMockApi (String siebelIdMaster) {
+        //Создание моков
+        String investIdMaster = stpMockSlaveDate.investIdMasterApi;
+        String contractIdMaster = stpMockSlaveDate.contractIdMasterApi;
+        //getInvestID
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdMaster, investIdMaster));
+        //GetBrockerAccountBySiebelId
+        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
+        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdMaster, siebelIdMaster, contractIdMaster));
+    }
+
+
+    public void createDataForMasterSignal (String ticker, String classCode, String exchange, String price) {
+        String tickerAndClassCode = ticker + "_" + classCode;
+        //очищаем расписание
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        //создаём расписание
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeDefaultTime(exchange));
+
+        //Создаем цены в MD
+        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+        ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), price));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), price));
+        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), price));;
+
+    }
+
+
 
 }

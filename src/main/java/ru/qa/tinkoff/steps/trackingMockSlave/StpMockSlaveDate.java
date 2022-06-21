@@ -32,5 +32,8 @@ public class StpMockSlaveDate {
     public String contractIdSlaveSynchronizePositionResolver = "2000010575";
     public String clientCodeSynchronizePositionResolver = "NEI927787185";
 
+    public String investIdMasterApi = "f2b188c0-ae03-45cd-a6f9-7390c3eb79b8";
+    public String contractIdMasterApi = "2000014189";
+
 
 }
