@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
+import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.creator.adminCreator.TimeLineApiAdminCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -73,6 +74,7 @@ public class StpTrackingAdminSteps {
     private final ContractApiAdminCreator contractApiAdminCreator;
     private final ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
     private final TimeLineApiAdminCreator timeLineApiAdminCreator;
+    private final StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
     private final SlavePortfolioDao slavePortfolioDao;
     private final InvestAccountCreator<ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi> brokerAccountApiCreator;
     private final StrategyService strategyService;
@@ -258,6 +260,37 @@ public class StpTrackingAdminSteps {
             .execute(response -> response);
         contract = contractService.getContract(contractIdSlave);
 
+    }
+
+    //вызываем метод closeStrategy
+    @Step("Вызываем метод closeStrategy")
+    public void closeStrategy(UUID strategyId) {
+        strategyApiStrategyApiAdminCreator.get().closeStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, key))
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        strategy = strategyService.getStrategy(strategyId);
+    }
+
+    //вызываем метод closeStrategy
+    @Step("Вызываем метод updateStrategy")
+    public void updateStrategyStatus(UUID strategyId) {
+        UpdateStrategyRequest updateStrategyRequest = new UpdateStrategyRequest();
+        updateStrategyRequest.setStatus(UpdateStrategyRequest.StatusEnum.FROZEN);
+        strategyApiStrategyApiAdminCreator.get().updateStrategy()
+            .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .strategyIdPath(strategyId.toString())
+            .body(updateStrategyRequest)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        strategy = strategyService.getStrategy(strategyId);
     }
 
     public void checkHeaders(Response response, String traceId, String serverTime){

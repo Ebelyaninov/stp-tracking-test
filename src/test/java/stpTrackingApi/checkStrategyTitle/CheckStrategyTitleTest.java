@@ -204,7 +204,7 @@ public class CheckStrategyTitleTest {
             .setCloseTime(LocalDateTime.now().plusSeconds(20)));
         Response checkStrategyTitleResponseWithStatusClosed = checkStrategyTitle(SIEBEL_ID, title, traceId);
         CheckStrategyTitleResponse checkStrategyTitleResponseClosed = checkStrategyTitleResponseWithStatusClosed.as(CheckStrategyTitleResponse.class);
-        assertThat("isAvailable != false", checkStrategyTitleResponseClosed.getIsAvailable(), is(true));
+        assertThat("isAvailable != true", checkStrategyTitleResponseClosed.getIsAvailable(), is(false));
     }
 
 

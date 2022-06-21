@@ -29,17 +29,22 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
+import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking.model.GetSignalsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.Signal;
 import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
+import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequest;
+import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequestOwner;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -71,6 +76,7 @@ import static org.hamcrest.Matchers.*;
     InvestTrackingAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+    StpTrackingAdminStepsConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
@@ -94,6 +100,8 @@ public class GetSignalsTest {
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
+    @Autowired
+    StpTrackingAdminSteps adminSteps;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
@@ -892,6 +900,45 @@ public class GetSignalsTest {
         }
         //Проверка новым методом
         checkGetSignalsResponse("2", false, masterSignal, getSignals,false, null, null, siebelIdSlave);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1929932")
+    @DisplayName("1929932 GetSignals. Strategy.status = closed")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для получения списка сделок (сигналов) по торговой стратегии от новых к старым.")
+    void C1929932() {
+        //создаем список позиций в портфеле мастера
+        List<MasterPortfolio.Position> masterPos = createListMasterPosition(steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        //создаем запись в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterPos, 10, "6259.17", date);
+        //создаем записи по сигналу на разные позиции
+        createTestDateToMasterSignal(strategyId);
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,  ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false, false);
+        //переводим стратегию в статус frozen
+        adminSteps.updateStrategyStatus(strategyId);
+        //переводим стратегию в статус closed
+        adminSteps.closeStrategy(strategyId);
+        //вызываем метод для получения списка сделок (сигналов) стратегии
+        ErrorResponse getSignals = strategyApiCreator.get().getSignals()
+            .strategyIdPath(strategyId)
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader("5-B4QTU240")
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response.as(ErrorResponse.class));
+        //получаем ответ и проверяем errorCode и Error ошибки
+        assertThat("код ошибки не равно", getSignals.getErrorCode(), is("Error"));
+        assertThat("Сообщение об ошибке не равно", getSignals.getErrorMessage(), is("Сервис временно недоступен"));
     }
 
 
