@@ -315,6 +315,7 @@ public class MocksBasicSteps {
         tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         //создаём расписание
         tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING_WEEKEND"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING"));
 
         //Создаем цены в MD
         mockMarketDataSteps.clearMocks(tickerAndClassCode);
@@ -360,6 +361,7 @@ public class MocksBasicSteps {
         tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         //создаём расписание
         tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING_WEEKEND"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING"));
 
         //Создаем цены в MD
         mockMarketDataSteps.clearMocks(tickerAndClassCode);

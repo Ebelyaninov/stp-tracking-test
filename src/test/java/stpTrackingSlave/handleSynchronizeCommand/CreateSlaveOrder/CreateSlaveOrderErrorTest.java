@@ -211,7 +211,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.TradingShedulesExchangeDefaultTime(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder,instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3", "SPB_MORNING_WEEKEND");
+            mockSlaveDate.clientCodeSlaveOrder,instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3", "SPB_MORNING");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -608,6 +608,7 @@ public class CreateSlaveOrderErrorTest {
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
