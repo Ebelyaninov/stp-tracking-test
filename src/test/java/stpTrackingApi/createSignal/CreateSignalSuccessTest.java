@@ -29,15 +29,15 @@ import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.*;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
@@ -86,7 +86,9 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     ApiCreatorConfiguration.class,
-    AdminApiCreatorConfiguration.class
+    AdminApiCreatorConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class
 
 })
 public class CreateSignalSuccessTest {
@@ -124,6 +126,10 @@ public class CreateSignalSuccessTest {
     ApiCreator<SignalApi> signalApiCreator;
     @Autowired
     ApiAdminCreator<ExchangePositionApi> exchangePositionApiAdminCreator;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
 
     UUID strategyId;
     String contractIdMaster;
@@ -136,14 +142,15 @@ public class CreateSignalSuccessTest {
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
+        mocksBasicSteps.createDataForMasterMockApi(SIEBEL_ID);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(SIEBEL_ID);
+        //steps.deleteDataFromDb(SIEBEL_ID);
     }
 
-    @AfterEach
+/*    @BeforeAll
     void changePositionLimit(){
         adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
             true, 111, orderQuantityList(52, "default"), true);
@@ -152,7 +159,7 @@ public class CreateSignalSuccessTest {
         adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
             true, 11300, orderQuantityList(100, "default"), true);
 
-    }
+    }*/
 
     @AfterEach
     void deleteClient() {
@@ -209,6 +216,7 @@ public class CreateSignalSuccessTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("653779")
     @DisplayName("C653779.CreateSignal.Создания торгового сигнала ведущим, action = buy, позиция не найдена в master_portfolio_position")
     @Subfeature("Успешные сценарии")
@@ -218,6 +226,7 @@ public class CreateSignalSuccessTest {
         BigDecimal price = new BigDecimal("107.0");
         int quantityRequest = 3;
         int version = 1;
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -275,6 +284,7 @@ public class CreateSignalSuccessTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("659115")
     @DisplayName("C659115.CreateSignal.Создания торгового сигнала ведущим, action = buy, позиция найдена в master_portfolio_position")
     @Subfeature("Успешные сценарии")
@@ -285,6 +295,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 4;
         int version = 2;
         double quantityPosMasterPortfolio = 12.0;
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -336,6 +347,7 @@ public class CreateSignalSuccessTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("659236")
     @DisplayName("C659236.CreateSignal.Создания торгового сигнала ведущим, action =sell, позиция найдена в master_portfolio_position")
     @Subfeature("Успешные сценарии")
@@ -346,6 +358,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 4;
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
         //создаем в БД tracking статегию на ведущего
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -398,6 +411,7 @@ public class CreateSignalSuccessTest {
 
     @SneakyThrows
     @Test
+    //@Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1312630")
     @DisplayName("C1312630.CreateSignal.Создание торгового сигнала для bond")
     @Subfeature("Успешные сценарии")
@@ -406,6 +420,7 @@ public class CreateSignalSuccessTest {
         double money = 1500.0;
         int quantityRequest = 3;
         int version = 1;
+        //mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp, "SPB", "105");
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -1358,6 +1373,7 @@ public class CreateSignalSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430348() {
+       // mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp);
         BigDecimal price = new BigDecimal("105");
         int quantityRequest = 3;
         int version = 2;
