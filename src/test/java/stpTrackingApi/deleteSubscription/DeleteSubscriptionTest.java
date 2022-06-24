@@ -43,6 +43,7 @@ import java.sql.Timestamp;
 import java.time.*;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -273,7 +274,9 @@ public class DeleteSubscriptionTest {
             .strategyIdPath(strategyId)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(ResponseBodyData::asString);
-        List<Pair<String, byte[]>> commands = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(30));
+        List<Pair<String, byte[]>> commands = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(30)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());
         Tracking.ActivateFeeCommand commandeMan = null;
         Tracking.ActivateFeeCommand commandeRes = null;
         String keyMan = "";
@@ -350,6 +353,7 @@ public class DeleteSubscriptionTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
@@ -396,7 +400,9 @@ public class DeleteSubscriptionTest {
         kafkaReceiver.resetOffsetToEnd(TRACKING_SUBSCRIPTION_EVENT);
         kafkaReceiver.resetOffsetToEnd(TRACKING_CONTRACT_EVENT);
 //        Смотрим, сообщение,  в топике kafka tracking.fee.command
-        List<Pair<String, byte[]>> messagesFee = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messagesFee = kafkaReceiver.receiveBatch(TRACKING_FEE_COMMAND, Duration.ofSeconds(5)).stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .collect(Collectors.toList());;
 //        прроверяем, что по договору не было сообщений т.к. он был заблокирован
         assertTrue("События по договору в  kafka tracking.fee.command не равно", messagesFee.isEmpty());
         //находим в БД автоследования стратегию и проверяем, что увеличилось на 1 значение количества подписчиков на стратегию
