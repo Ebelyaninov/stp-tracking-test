@@ -79,6 +79,7 @@ public class StpInstrument {
     public String tradingClearingAccountXS0191754729 = "L01+00000F00";
     public String typeXS0191754729 = "bond";
     public String classCodeXS0191754729 = "TQOD";
+    public String instrumentXS0191754729 =tickerXS0191754729 + "_" + classCodeXS0191754729;
     public String briefNameXS0191754729 = "Gazprom";
     public String imageXS0191754729 = "RU0007661625.png";
     public String currencyXS0191754729 = "usd";

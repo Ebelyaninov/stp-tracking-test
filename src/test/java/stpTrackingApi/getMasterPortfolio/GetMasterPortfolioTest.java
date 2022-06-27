@@ -291,7 +291,8 @@ public class GetMasterPortfolioTest {
             .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerUSD))
             .collect(Collectors.toList());
         //получаем значение prices из кеш ExchangePositionPrice
-        String price4 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerUSD, instrument.tradingClearingAccountUSD, "last", SIEBEL_ID_MASTER);
+        String price4 = steps.getPriceFromPriceCacheOrMD(instrument.tickerUSD, instrument.tradingClearingAccountUSD,
+            "last", SIEBEL_ID_MASTER, instrument.instrumentUSD);
         //Рассчитываем positionValue position
         BigDecimal positionValue4 = new BigDecimal(price4).multiply(new BigDecimal(quantityUSD));
         //Рассчитываем portfolioValue
@@ -652,9 +653,10 @@ public class GetMasterPortfolioTest {
             .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
         //получаем значение prices из кеш ExchangePositionPrice
-        String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER);
-        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER);
+        String price2 = steps.getPriceFromPriceCacheOrMD(instrument.tickerXS0191754729,
+            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
+        String price3 = steps.getPriceFromPriceCacheOrMD(instrument.tickerFB, instrument.tradingClearingAccountFB,
+            "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position
@@ -693,7 +695,7 @@ public class GetMasterPortfolioTest {
     @Description("Метод для получения данных виртуального портфеля ведущего")
     void C1184396() {
         String ticker1 = "SPNV";
-        String tradingClearingAccount1 = "SPNV";
+        String tradingClearingAccount1 = "NDS000000001";
         String quantity1 = "5";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active

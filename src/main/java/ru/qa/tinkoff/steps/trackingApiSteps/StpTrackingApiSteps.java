@@ -460,6 +460,41 @@ public class StpTrackingApiSteps {
         return price;
     }
 
+
+    @Step("Получаем значение price по инструменту из кеш exchangePositionPriceCache")
+    public String getPriceFromPriceCacheOrMD(String ticker, String tradingClearingAccount, String type, String siebelId, String instrumentId) {
+        String price = "";
+        //получаем содержимое кеша exchangePositionPriceCache
+        List<Entity> resCachePrice = cacheApiCacheApiCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .cacheNamePath("exchangePositionPriceCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> prices = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount)
+                        && keys.get("priceType").equals(type);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+//        @SuppressWarnings("unchecked")
+        if (prices.size() > 0) {
+            var values = (Map<Double, Object>) prices.get(0).getValue();
+            price = values.get("price").toString();
+        } else {
+            price = getPriceFromMarketData(instrumentId, type);
+        }
+        return price;
+    }
+
     @Step("Получаем значения: aciValue и nominal по инструменту из кеш exchangePositionCache")
     public List<String> getPriceFromExchangePositionCache(String ticker, String tradingClearingAccount, String siebelId) {
         String aciValue = "";
