@@ -5,19 +5,17 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.math.BigDecimal;
 import java.util.Date;
-import java.util.UUID;
 
 @Builder
 @ToString
 @Getter
 public class Orderbook {
     private final String instrumentId;
-    private Date endedAtDate;
-    private Date endedAt;
-    private Date startedAt;
-    private Double bidMinimumLots;
-    private Double askMinimumLots;
+    private final LocalDate endedAtDate;
+    private final Date endedAt;
+    private final Date startedAt;
+    private final Double bidMinimumLots;
+    private final Double askMinimumLots;
 
 }

@@ -58,7 +58,7 @@ public class KafkaOldConfiguration {
     }
 
     @Bean("oldKafkaByteArrayReceiver")
-    public BoostedReceiver<String, byte[]> oldKafkaByteArrayReceiver(@Qualifier("oldKafkaProperties") Properties kafkaProperties) {
+    public BoostedReceiverImpl<String, byte[]> oldKafkaByteArrayReceiver(@Qualifier("oldKafkaProperties") Properties kafkaProperties) {
         return new BoostedReceiverImpl<>(kafkaProperties) {
         };
     }

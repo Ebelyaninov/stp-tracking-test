@@ -47,6 +47,10 @@ public enum Topics {
     NC_INPUT("nc.input"),
     TRACKING_CORP_ACTION_COMMAND("tracking.corp-action.command"),
     TRACKING_CLIENT_COMMAND("tracking.client.command"),
+    MD_MOEX_PROTO_OB_FULL_STREAM("md.moex.proto.ob.full.stream"),
+    MD_RTS_PROTO_OB_FULL_STREAM("md.rts.proto.ob.full.stream"),
+    TRACKING_ORDERBOOK("tracking.orderbook"),
+    TEST_TOPIC_TO_DELETE("test.topic.to.delete"),
     ;
     private final String name;
 }

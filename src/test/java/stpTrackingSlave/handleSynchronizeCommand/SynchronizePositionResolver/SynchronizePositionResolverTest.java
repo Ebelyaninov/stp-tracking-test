@@ -249,8 +249,9 @@ public class SynchronizePositionResolverTest {
         quantityDiff = position.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(TEN_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM);
     }
@@ -312,6 +313,8 @@ public class SynchronizePositionResolverTest {
         quantityDiff = position.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM);
@@ -372,6 +375,8 @@ public class SynchronizePositionResolverTest {
         quantityDiff = positionUSDRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
@@ -439,6 +444,8 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = positionUSDRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
@@ -506,6 +513,8 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = positionGBPRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerGBP, instrument.tradingClearingAccountGBP);
@@ -596,6 +605,8 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, tickerPos, tradingClearingAccountPos);
@@ -695,8 +706,9 @@ public class SynchronizePositionResolverTest {
         BigDecimal lotsСalc = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = quantity.divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = min(lots, lotsСalc);
-        await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lotsMax, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -755,8 +767,9 @@ public class SynchronizePositionResolverTest {
         BigDecimal lotsСalc = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = positionSU29009RMFS6.get(0).getQuantity().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = min(lots, lotsСalc);
-        await().atMost(TEN_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lotsMax, lot, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6);
     }
@@ -867,8 +880,9 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyALFAperp, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -980,8 +994,9 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyQCOM, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -1068,8 +1083,9 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyAAPL, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
     }
@@ -1183,6 +1199,8 @@ public class SynchronizePositionResolverTest {
         }
         lots = min(lots, lotsMax);
         //проверяем, что выставили заявку по выбранной позиции и правильным числом лотов
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
@@ -1287,6 +1305,8 @@ public class SynchronizePositionResolverTest {
         }
         lots = min(lots, lotsMax);
         //проверяем, что выставили заявку по выбранной позиции и правильным числом лотов
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
@@ -1320,7 +1340,7 @@ public class SynchronizePositionResolverTest {
 
     @Step("Ожидаем записи в slave_portfolio: ")
     void checkComparedToMasterVersion() throws InterruptedException {
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
     }
 }

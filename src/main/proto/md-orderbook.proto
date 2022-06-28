@@ -1,0 +1,18 @@
+syntax = "proto3";
+package orderbook;
+option go_package = "internal/domain/orderbook/orderbook;orderbook";
+import "google/protobuf/timestamp.proto";
+
+message Level {
+    double qty = 1;
+    double price = 2;
+    double yield = 3;
+}
+
+message OrderBook {
+    int64 depth = 1;
+    google.protobuf.Timestamp ts = 2;
+    bool is_consistent = 3;
+    repeated Level asks = 4;
+    repeated Level bids = 5;
+}

@@ -9,7 +9,6 @@ import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheSlaveCreator;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
@@ -272,6 +271,102 @@ public class StpTrackingSlaveSteps {
         return price;*/
         return contract;
     }
+
+
+    @SneakyThrows
+    @Step("Вызов метода содержимое Cache ExchangeInstrumentIdCache в приложении Slave")
+    public  HashMap<String, String> getExchangeInstrumentIdCache(String instrumentId) {
+        //получаем содержимое кеша actualizeCommandCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "4"))
+            .cacheNamePath("exchangeInstrumentIdCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        List<Entity> exchangePositionId = cache.stream()
+            .filter(ps -> ps.getKey().toString().equals(instrumentId))
+            .collect(Collectors.toList());
+
+        LinkedHashMap exchangePosition = ((LinkedHashMap) ((LinkedHashMap)
+            exchangePositionId.get(0).getValue()).get("exchangePositionId"));
+
+        return exchangePosition;
+    }
+
+    @SneakyThrows
+    @Step("Вызов метода содержимое Cache ExchangeInstrumentIdCache в приложении Slave")
+    public  HashMap<String, String> getDateFromInstrumentCache(List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache, String instrumentId) {
+        //получаем содержимое кеша actualizeCommandCache
+
+        List<Entity> exchangePositionId = cache.stream()
+            .filter(ps -> ps.getKey().toString().equals(instrumentId))
+            .collect(Collectors.toList());
+
+        LinkedHashMap exchangePosition = ((LinkedHashMap) ((LinkedHashMap)
+            exchangePositionId.get(0).getValue()).get("exchangePositionId"));
+
+        return exchangePosition;
+    }
+
+
+    @SneakyThrows
+    @Step("Вызов метода содержимое Cache ExchangeInstrumentIdCache в приложении Slave")
+    public  List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> exchangeInstrumentIdCache() {
+        log.info("Вычитка exchangeInstrumentCache: begin");
+        //получаем содержимое кеша ExchangeInstrumentIdCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+//            .reqSpec(r -> r.addHeader("magic-number", "4"))
+            .cacheNamePath("exchangeInstrumentIdCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        log.info("Вычитка exchangeInstrumentCache: finish");
+        return cache;
+    }
+
+
+
+    @SneakyThrows
+    @Step("Смотрим trackingAllowed по позиции в  Cache trackingExchangePositionCache в приложении Slave")
+    public boolean getTrackingExchangePositionCache(String ticker, String tradingClearingAccount) {
+        boolean trackingAllowed = true;
+        //получаем содержимое кеша trackingExchangePositionCache
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCacheValue = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            .cacheNamePath("trackingExchangePositionCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> value = resCacheValue.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (Map<String, String>) pr.getKey();
+                    return keys.get("ticker").equals(ticker)
+                        && keys.get("tradingClearingAccount").equals(tradingClearingAccount);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение trackingAllowed
+//        @SuppressWarnings("unchecked")
+        if (value.size() > 0) {
+            var values = (Map<Double, Object>) value.get(0).getValue();
+            trackingAllowed = (boolean) values.get("trackingAllowed");
+        } else {
+            trackingAllowed = false;
+        }
+        return trackingAllowed;
+    }
+
 
     //отправляем команду на синхронизацию
     @Step("Формируем команду на синхронизацию портфелей SYNCHRONIZE: ")

@@ -404,7 +404,7 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
     )
 }
 
-
+//
 //tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTradingApi") {
 //    val openApiPackage = "ru.qa.tinkoff.swagger"
 //    val path = "$buildDir/generated/sources/swagger"
