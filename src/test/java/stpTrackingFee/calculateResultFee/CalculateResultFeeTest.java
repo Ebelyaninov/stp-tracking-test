@@ -1939,13 +1939,15 @@ public class CalculateResultFeeTest {
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 4);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioOnePeriod));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkFirstPeriod));
+        assertThat("highWaterMarkCalculation не равен high_water_mark", resultFee.getContext().getHighWaterMarkForCalculation().equals(resultFee.getHighWaterMark().toString()));
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 7);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioSecondPeriod));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkSecondPeriod));
+        assertThat("highWaterMarkCalculation не равен high_water_mark", resultFee.getContext().getHighWaterMarkForCalculation().equals(resultFee.getHighWaterMark().toString()));
         resultFee = resultFeeDao.getResultFee(contractIdSlave, strategyId, subscriptionId, 9);
         assertThat("value стоимости портфеля не равно", resultFee.getContext().getPortfolioValue(), is(valuePortfolioThirdPeriod));
         assertThat("high_water_mark не равно", resultFee.getHighWaterMark(), is(highWaterMarkThirdPeriod));
-    }
+        assertThat("highWaterMarkCalculation не равен high_water_mark", resultFee.getContext().getHighWaterMarkForCalculation().equals(resultFee.getHighWaterMark().toString()));    }
 
 
     @SneakyThrows
