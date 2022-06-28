@@ -61,7 +61,7 @@
                      "trading_flag": true,
                      "trading_all_time_flag": false,
                      "weekend_trade_flag": false
-                   },
+                   }
             ]
         }
     }

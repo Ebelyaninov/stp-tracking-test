@@ -101,7 +101,7 @@ public class TradingShedulesExchangeSteps {
         String currentDatePlusOne = date.plusDays(1).format(formatter);
         String currentDatePlusTwo = date.plusDays(2).format(formatter);
 
-        LocalDateTime start = LocalDateTime.now().minusMinutes(20);
+        LocalDateTime start = LocalDateTime.now().minusHours(5);
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("HH:mm:ss");
         String startTimeNow = start.format(formatterTime);
 
