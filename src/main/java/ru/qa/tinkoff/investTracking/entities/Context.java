@@ -17,6 +17,7 @@ public class Context {
     private BigDecimal portfolioValue;
     private List<Positions> positions;
     private List<String> notChargedReasons;
+    private String highWaterMarkForCalculation;
 
     @Data
     @Builder
