@@ -63,6 +63,9 @@ public class StpSiebel {
     public String siebelIdSlaveOrder = "5-JEF71TBN";
     public String siebelIdMasterOrder = "4-1UBHYQ63";
 
+    public String siebelIdMasterSynch = "5-4LCY1YEB";
+    public String siebelIdSlaveSynch = "5-TJLPVJAJ";
+
 
 
     //socialTrackingClient//

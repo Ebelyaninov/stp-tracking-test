@@ -35,5 +35,11 @@ public class StpMockSlaveDate {
     public String investIdMasterApi = "f2b188c0-ae03-45cd-a6f9-7390c3eb79b8";
     public String contractIdMasterApi = "2000014189";
 
+    public String investIdMasterSynch = "d44b6f9b-7f90-4c0b-8be2-a7252a4f212e";
+    public String investIdSlaveSynch = "721e2dc6-9d2b-46ba-91a1-90074ff9838c";
+    public String contractIdMasterSynch = "2002103402";
+    public String contractIdSlaveSynch = "2056486745";
+    public String clientCodeSlaveSynch = "770016232387";
+
 
 }

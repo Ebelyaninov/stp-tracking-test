@@ -27,8 +27,14 @@ import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -65,6 +71,9 @@ import static org.hamcrest.Matchers.*;
     KafkaAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     StpInstrument.class
 })
 public class handleSynchronizeCommandTest {
@@ -94,6 +103,12 @@ public class handleSynchronizeCommandTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    StpSiebel stpSiebel;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
 
 
     MasterPortfolio masterPortfolio;
@@ -108,6 +123,8 @@ public class handleSynchronizeCommandTest {
     String SIEBEL_ID_MASTER = "5-4LCY1YEB";
     String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
     public String value;
+    String slaveOrder;
+    String masterOrder;
 
 
     String description = "description test стратегия autotest update adjust base currency";
@@ -165,6 +182,13 @@ public class handleSynchronizeCommandTest {
             } catch (Exception e) {
             }
         });
+    }
+
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        slaveOrder = stpSiebel.siebelIdSlaveSynch;
+        masterOrder = stpSiebel.siebelIdMasterSynch;
     }
 
     //ToDO операцию отключили
@@ -680,21 +704,27 @@ public class handleSynchronizeCommandTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1575130")
     @DisplayName("С1575130. Запись не найдена - портфель не синхронизируется")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1575130() {
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+             mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveOrder);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -714,7 +744,7 @@ public class handleSynchronizeCommandTest {
         //создаем портфель для slave
         String baseMoneySl = "7000.0";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "3", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
+            "2", date, 1, new BigDecimal("108.11"), new BigDecimal("0.0443"),
             new BigDecimal("0.0319"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 3,
             baseMoneySl, date, createListSlaveOnePos);
@@ -738,6 +768,7 @@ public class handleSynchronizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1575132")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1575132. Запись найдена в slave_order И slave_order.state = 1")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
@@ -748,6 +779,10 @@ public class handleSynchronizeCommandTest {
         BigDecimal orderQty = new BigDecimal("33");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -755,7 +790,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -805,6 +841,7 @@ public class handleSynchronizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1575133")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1575133. Запись найдена в slave_order И slave_order.state = 0(отклонена)")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
@@ -815,6 +852,10 @@ public class handleSynchronizeCommandTest {
         BigDecimal orderQty = new BigDecimal("33");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -822,7 +863,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -881,6 +923,7 @@ public class handleSynchronizeCommandTest {
     @ParameterizedTest
     @MethodSource("provideOperationAndActionAndState")
     @AllureId("1575128")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1575128. Портфель синхронизируется. Нашли запись в slave_order.state IS null - выставляем ту же заявку (SYNCHRONIZATION)")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
@@ -892,6 +935,10 @@ public class handleSynchronizeCommandTest {
         BigDecimal orderQty = new BigDecimal("100");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -899,7 +946,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -953,6 +1001,7 @@ public class handleSynchronizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1773720")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1773720. Нашли запись в таблице slave_order_2 и slave_order_2.state = 2 -> выставляем ту же заявку.")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
@@ -964,6 +1013,10 @@ public class handleSynchronizeCommandTest {
         BigDecimal orderQty = new BigDecimal("100");
         BigDecimal priceOrder = new BigDecimal("11.11");
         UUID orderKey = UUID.fromString("4798ae0e-debb-4e7d-8991-2a4e735740c6");
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -971,7 +1024,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -1015,12 +1069,17 @@ public class handleSynchronizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1499847")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("C1499847. Ограничиваем выставление заявки настройкой order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1499847() {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1028,7 +1087,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
@@ -1092,6 +1152,7 @@ public class handleSynchronizeCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1652853")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("С1652853. Новое рассчитанное значение attempts_count > значения настройки order-execute.max-attempts-count")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
@@ -1101,6 +1162,10 @@ public class handleSynchronizeCommandTest {
         BigDecimal lot = new BigDecimal("1");
         BigDecimal orderQty = new BigDecimal("33");
         BigDecimal priceOrder = new BigDecimal("11.11");
+        mocksBasicSteps.createDataForMockSynchronizationCommand(slaveOrder,
+            mockSlaveDate.investIdSlaveSynch, mockSlaveDate.contractIdSlaveSynch, instrument.tradingClearingAccountAAPL,
+            "0", "7000", "0", "0",
+            mockSlaveDate.clientCodeSlaveSynch,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","2", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1108,7 +1173,8 @@ public class handleSynchronizeCommandTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        //strategyId = UUID.fromString("6149677a-b1fd-401b-9611-80913dfe2621");
+        strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
