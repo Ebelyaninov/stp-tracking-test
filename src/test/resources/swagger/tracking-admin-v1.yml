@@ -2010,6 +2010,7 @@ components:
       required:
         - portfolioValue
         - positions
+        - highWaterMarkForCalculation
       properties:
         portfolioValue:
           description: Стоимость slave-портфеля на конец расчетного периода
@@ -2021,6 +2022,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FeeContextPosition'
+        highWaterMarkForCalculation:
+          description: Максимальная стоимость портфеля (или стоимость первого портфеля) в сумме с заводами клиента
+          type: number
+          format: decimal
+          minimum: 0
+
 
     FeeContextPosition:
       description: Позиция портфеля для контекста начисления комиссии

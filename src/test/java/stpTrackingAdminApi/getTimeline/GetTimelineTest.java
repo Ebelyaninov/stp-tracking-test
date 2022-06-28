@@ -62,6 +62,8 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static ru.qa.tinkoff.kafka.Topics.CCYEV;
@@ -209,6 +211,7 @@ public class GetTimelineTest {
                 slaveOrder2Dao.deleteSlaveOrder2(contractIdSlave);
             } catch (Exception e) {
             }
+
             try {
                 slaveAdjustDao.deleteSlaveAdjustByStrategyAndContract(contractIdSlave, strategyId);
             } catch (Exception e) {
@@ -224,15 +227,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1672898() throws JsonProcessingException {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -265,15 +263,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674082() throws JsonProcessingException {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -311,15 +304,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674102() throws JsonProcessingException {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-//
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -351,15 +339,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1674164() throws JsonProcessingException {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusMonths(3).minusDays(6);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
@@ -397,15 +380,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584715() throws JsonProcessingException {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -476,16 +454,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584771() {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
-
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -570,7 +542,9 @@ public class GetTimelineTest {
         SlavePortfolioItem getSlavePortfolioItems = ((SlavePortfolioItem) responseExep.getItems().stream()
             .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-portfolio"))
             .collect(Collectors.toList()).get(0).getContent());
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+//        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         SlavePortfolio.BaseMoneyPosition slavePortfolioBaseMoneyPosition = slavePortfolio.getBaseMoneyPosition();
         List<SlavePortfolio.Position> slavePortfolioPosition = slavePortfolio.getPositions().stream()
                 .filter(position1 -> position1.getTicker().equals(instrument.tickerYNDX))
@@ -616,9 +590,10 @@ public class GetTimelineTest {
             List<SlavePortfolio.Position> positionList = new ArrayList<>();
             steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, i, i,
                 "3657.23", date, positionList);
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         }
         //C getTime получим  МИЛЛИсекунды, значит нужно умножить на 1000 и получим микросекунду
+
         SlavePortfolio getLastMasterPorfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         String cursor = String.valueOf(getLastMasterPorfolio.getChangedAt().getTime() * 1000);
         //создаем body post запроса
@@ -635,7 +610,7 @@ public class GetTimelineTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetTimelineResponse.class));
         //Исключаем 3-ю версию из slavePortfolio выборки (Больше чем курсор).
-        assertThat("Получили больше чем 6 записей", responseExep.getItems().size(), is(5));
+        assertThat("Получили больше чем 4 записи", responseExep.getItems().size(), is(4));
         SlavePortfolioItem getSlavePortfolioItems = ((SlavePortfolioItem) responseExep.getItems().stream()
             .filter(masterPortfolioItem -> masterPortfolioItem.getContent().getDomain().getValue().equals("slave-portfolio"))
             .collect(Collectors.toList()).get(0).getContent());
@@ -660,15 +635,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1584889(Integer limit, Integer expectedLimit) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -759,7 +729,9 @@ public class GetTimelineTest {
         GetTimelineResponse responseExep = steps.getimeline(request);
         int index = responseExep.getItems().size() - 1;
         //получаем портфель slave
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+//        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //проверяем данные в ответе
         assertThat("domain не равен", responseExep.getItems().get(index).getContent().getDomain().toString(), is("slave-portfolio"));
         assertThat("version не равен", ((SlavePortfolioItem) responseExep.getItems().get(index).getContent()).getVersion(), is(slavePortfolio.getVersion()));
@@ -778,7 +750,6 @@ public class GetTimelineTest {
         assertThat("quantityDiff не равен", ((SlavePortfolioItem) responseExep.getItems().get(index).getContent()).getPositions().get(0).getQuantityDiff().toString(), is(slavePortfolio.getPositions().get(0).getQuantityDiff().toString()));
         assertThat("buyEnabled не равен", ((SlavePortfolioItem) responseExep.getItems().get(index).getContent()).getPositions().get(0).getBuyEnabled(), is(slavePortfolio.getPositions().get(0).getBuyEnabled()));
         assertThat("sellEnabled не равен", ((SlavePortfolioItem) responseExep.getItems().get(index).getContent()).getPositions().get(0).getSellEnabled(), is(slavePortfolio.getPositions().get(0).getSellEnabled()));
-
     }
 
 
@@ -790,7 +761,6 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1586965() {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
@@ -802,7 +772,10 @@ public class GetTimelineTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder2(1, 2, 1, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
-        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+
+//        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //создаем body post запроса
         GetTimelineRequest request = new GetTimelineRequest();
         request.setStrategyId(strategyId);
@@ -851,15 +824,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1664155(String action) {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         slaveSteps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
@@ -899,15 +867,10 @@ public class GetTimelineTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C1586884() {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(investIdMaster, socialProfile, contractIdMaster, null, ContractState.untracked,
-//            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-//            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
         //создаем портфель master с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -925,7 +888,9 @@ public class GetTimelineTest {
         //вызываем метод getTimeline
         GetTimelineResponse responseExep = steps.getimeline(request);
         //получаем портфель мастера
-        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster,strategyId);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster,strategyId), notNullValue());
+//        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster,strategyId);
         //проверяем ответ метода
         assertThat("domain не равен", responseExep.getItems().get(0).getContent().getDomain().toString(), is("master-portfolio"));
         assertThat("version не равен", ((MasterPortfolioItem) responseExep.getItems().get(0).getContent()).getVersion().toString(), is(masterPortfolio.getVersion().toString()));
@@ -1018,6 +983,8 @@ public class GetTimelineTest {
         assertThat("PriceTs Context  в resultFee  не равен", ((ResultFeeItem) responseExep.getItems().get(0).getContent())
             .getContext().getPositions().get(0).getPriceTimestamp().toInstant(), is(resultFees.get(0).getContext().getPositions()
             .get(0).getPriceTs().toInstant()));
+        assertThat("HighWaterMarkForCalculation Context в resultFee  не равен", ((ResultFeeItem) responseExep.getItems().get(0).getContent())
+            .getContext().getHighWaterMarkForCalculation().toString(), is(resultFees.get(0).getContext().getHighWaterMarkForCalculation()));
     }
 
     @Step("Создаем записи по комиссии за результат в management_fee")
@@ -1137,6 +1104,7 @@ public class GetTimelineTest {
         Context context = Context.builder()
             .portfolioValue(new BigDecimal("65162.50000"))
             .positions(positionListEmpty)
+            .highWaterMarkForCalculation("63165.789")
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 1,
             startFirst, endFirst, context, new BigDecimal("65162.5"), endFirst);
@@ -1168,6 +1136,7 @@ public class GetTimelineTest {
         Context contextSec = Context.builder()
             .portfolioValue(new BigDecimal("79880.40000"))
             .positions(positionListEmptySecond)
+            .highWaterMarkForCalculation("79880.40000")
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 2,
             startSecond, endSecond, contextSec, new BigDecimal("79880.4"), endSecond);
@@ -1199,6 +1168,7 @@ public class GetTimelineTest {
         Context contextSec2 = Context.builder()
             .portfolioValue(new BigDecimal("69117.25000"))
             .positions(positionListEmptySecond2)
+            .highWaterMarkForCalculation("66173.25300")
             .build();
         resultFeeDao.insertIntoResultFee(contractIdSlave, strategyId, subscriptionId, 3,
             startSecond2, endSecond2, contextSec2, new BigDecimal("79880.4"), endSecond2);
