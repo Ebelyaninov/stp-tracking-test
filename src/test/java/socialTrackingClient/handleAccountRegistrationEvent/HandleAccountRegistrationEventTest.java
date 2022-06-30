@@ -169,10 +169,10 @@ public class HandleAccountRegistrationEventTest {
         contractTariffService.updateTariffIdByContract(tariffID, contractIdAgressive, time);
         contractTariffService.updateTariffIdByContract(tariffID, contractIdConservative, time);
         contractTariffService.updateTariffIdByContract(tariffID, contractIdMedium, time);
-        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
         steps.deleteDataFromDb(SIEBEL_ID_AGRESSIVE);
         steps.deleteDataFromDb(SIEBEL_ID_MEDIUM);
         steps.deleteDataFromDb(SIBEL_ID_CONSERVATIVE);
+        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
     }
 
     @AfterEach

@@ -973,6 +973,12 @@ public class StpTrackingApiSteps {
 
         for(int i = 0; i < getAllMasterAccounts.getBrokerAccounts().size(); i++) {
             try {
+                subscriptionService.deleteSubscription(subscriptionService.findSubcription(getAllMasterAccounts.getBrokerAccounts().get(i).getId()).get());
+            } catch (Exception e) {}
+            try {
+                strategyService.deleteStrategy(strategyService.findStrategyByContractId(getAllMasterAccounts.getBrokerAccounts().get(i).getId()).get());
+            } catch (Exception e) {}
+            try {
                 contractService.deleteContract(contractService.getContract(getAllMasterAccounts.getBrokerAccounts().get(i).getId()));
             } catch (Exception e) {}
         }
