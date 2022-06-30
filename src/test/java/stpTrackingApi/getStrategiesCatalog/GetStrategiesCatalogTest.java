@@ -475,7 +475,7 @@ public class GetStrategiesCatalogTest {
                 .respSpec(spec -> spec.expectStatusCode(200))
                 .execute(response -> response.as(GetLiteStrategiesResponse.class));
 
-            String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2);
+            String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2, "USDRUB_EES_CETS");
             double courseUSD = Double.parseDouble(price);
 
             //выбираем из списка только те стратерии у есть рекомендованая начальная сумма
@@ -751,7 +751,7 @@ public class GetStrategiesCatalogTest {
             .xAppNameHeader("stp-tracking-api")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetLiteStrategiesResponse.class));
-        String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2);
+        String price = steps.getPriceFromExchangePositionPriceCache("USDRUB", "MB9885503216", "last", siebelIdMaster2, "USDRUB_EES_CETS");
         double courseUSD = Double.parseDouble(price);
         //выбираем из списка только те стратерии у есть рекомендованая начальная сумма
         List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()

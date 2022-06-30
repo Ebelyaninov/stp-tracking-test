@@ -2,6 +2,7 @@ package ru.qa.tinkoff.steps.trackingApiSteps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Int32Value;
 import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
@@ -431,7 +432,7 @@ public class StpTrackingApiSteps {
     }
 
     @Step("Получаем значение price по инструменту из кеш exchangePositionPriceCache")
-    public String getPriceFromExchangePositionPriceCache(String ticker, String tradingClearingAccount, String type, String siebelId) {
+    public String getPriceFromExchangePositionPriceCache(String ticker, String tradingClearingAccount, String type, String siebelId, String instrumentId) {
         String price = "";
         //получаем содержимое кеша exchangePositionPriceCache
         List<Entity> resCachePrice = cacheApiCacheApiCreator.get().getAllEntities()
@@ -454,9 +455,16 @@ public class StpTrackingApiSteps {
             )
             .collect(Collectors.toList());
         //достаем значение price
-        @SuppressWarnings("unchecked")
-        var values = (Map<Double, Object>) prices.get(0).getValue();
-        price = values.get("price").toString();
+//        @SuppressWarnings("unchecked")
+//        var values = (Map<Double, Object>) prices.get(0).getValue();
+//        price = values.get("price").toString();
+
+        if (prices.size() > 0) {
+            var values = (Map<Double, Object>) prices.get(0).getValue();
+            price = values.get("price").toString();
+        } else {
+            price = getPriceFromMarketData(instrumentId, type);
+        }
         return price;
     }
 
@@ -973,5 +981,52 @@ public class StpTrackingApiSteps {
         } catch (Exception e) {}
     }
 
+
+    @Step("Создаем событие на апдейт лимитов позиции")
+    public  Tracking.ExchangePosition updatePositionLimitsCommand(String ticker, String tradindClearingAccount, int dailyLimit, int additionalLiquidity,
+                                                                  int defaultLimit, int mainTrading, int primary) {
+        //отправляем событие на изменение лимитов
+        Tracking.ExchangePosition command = Tracking.ExchangePosition.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradindClearingAccount)
+            .setTrackingAllowed(true)
+            .setDailyQuantityLimit(Int32Value.of(dailyLimit))
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
+                .setPeriodId("additional_liquidity")
+                .setLimit(additionalLiquidity)
+                .build())
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
+                .setPeriodId("default")
+                .setLimit(defaultLimit)
+                .build())
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
+                .setPeriodId("main_trading")
+                .setLimit(mainTrading)
+                .build())
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
+                .setPeriodId("primary")
+                .setLimit(primary)
+                .build())
+            .setDynamicLimits(false)
+            .build();
+        return command;
+    }
+
+    @Step("Создаем событие на апдейт лимитов позиции")
+    public  Tracking.ExchangePosition updatePositionDefaultLimitCommand(String ticker, String tradindClearingAccount, int dailyLimit, int defaultLimit) {
+        //отправляем событие на изменение лимитов
+        Tracking.ExchangePosition command = Tracking.ExchangePosition.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradindClearingAccount)
+            .setTrackingAllowed(true)
+            .setDailyQuantityLimit(Int32Value.of(dailyLimit))
+            .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
+                .setPeriodId("default")
+                .setLimit(defaultLimit)
+                .build())
+            .setDynamicLimits(false)
+            .build();
+        return command;
+    }
 
 }
