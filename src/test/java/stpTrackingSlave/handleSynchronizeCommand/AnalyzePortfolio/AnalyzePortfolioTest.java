@@ -171,6 +171,8 @@ public class AnalyzePortfolioTest {
     }
 
 
+
+
     long subscriptionId;
 
     BigDecimal targetFeeReserveRate = new BigDecimal("0.03");
@@ -716,7 +718,7 @@ public class AnalyzePortfolioTest {
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
         mocksBasicSteps.createShedulesToMockAnalizeExchangeFX("FX");
-        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_MORNING");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_PLUS_WEEKEND");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerUSDRUB, instrument.classCodeUSDRUB,
             "105.4975", "104.51", "106.475");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
@@ -807,7 +809,7 @@ public class AnalyzePortfolioTest {
             instrument.tradingClearingAccountUSDRUB, "39", notNullValue());
         assertThat("Проверяем флаг buy_enabled", positionUSD.get(0).getBuyEnabled(), is(true));
         assertThat("Проверяем флаг sell_enabled", positionUSD.get(0).getSellEnabled(), is(true));
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
     }
 
@@ -824,7 +826,7 @@ public class AnalyzePortfolioTest {
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
         mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("FX");
-        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("MOEX_MORNING");
+        mocksBasicSteps.createDataForMockAnalizeShedulesExchangeFX("MOEX_PLUS_WEEKEND");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
             "140.9075", "138.195", "140.9075");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
@@ -1280,7 +1282,7 @@ public class AnalyzePortfolioTest {
             stpMockSlaveDate.investIdMasterAnalyze,  stpMockSlaveDate.investIdSlaveAnalyze,
             stpMockSlaveDate.contractIdMasterAnalyze,  stpMockSlaveDate.contractIdSlaveAnalyze);
         mocksBasicSteps.createShedulesToMockAnalizeExchangeFX("FX");
-        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_MORNING");
+        mocksBasicSteps.createShedulesToMockAnalizeExchange("MOEX_PLUS_WEEKEND");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerGBP, instrument.classCodeGBP,
             "140.9075", "138.195", "140.9075");
         mocksBasicSteps.createDataForMockAnalizeMdPrices(instrument.tickerSBER, instrument.classCodeSBER,
