@@ -58,6 +58,7 @@ import java.util.*;
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -1378,7 +1379,9 @@ public class CalculateManagementFeeTest {
         assertThat("contractIdSlave не равен", feeCommand.getSubscription().getContractId(), is(contractIdSlave));
         assertThat("portfolioValue не равен", feeCommand.getManagement().getPortfolioValue().getScale(), is(1));
         //проверяем запись в таблице management_fee
-        managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
+//        managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3);
         assertThat("contractID не равен", managementFee.getContractId(), is(contractIdSlave));
         assertThat("strategyID не равен", managementFee.getStrategyId(), is(strategyId));
         assertThat("Version не равен", managementFee.getVersion(), is(3));
@@ -1937,7 +1940,7 @@ public class CalculateManagementFeeTest {
     }
 
     void checkComparedToMasterFeeVersion(int version, long subscriptionId) throws InterruptedException {
-        await().atMost(Duration.ofSeconds(12)).pollDelay(Duration.ofSeconds(5)).until(() ->
+        await().atMost(Duration.ofSeconds(12)).ignoreExceptions().pollDelay(Duration.ofSeconds(5)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, version), notNullValue());
     }
 }

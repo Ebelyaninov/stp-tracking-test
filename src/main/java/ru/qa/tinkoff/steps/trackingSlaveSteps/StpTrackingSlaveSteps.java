@@ -212,7 +212,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-            .reqSpec(r -> r.addHeader("magic-number", "3"))
+//            .reqSpec(r -> r.addHeader("magic-number", "3"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
