@@ -1823,7 +1823,7 @@ public class CreateSignalErrorTest {
         BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID, instrument.instrumentSBER);
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
@@ -1893,7 +1893,7 @@ public class CreateSignalErrorTest {
         BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID, instrument.instrumentSBER);
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,

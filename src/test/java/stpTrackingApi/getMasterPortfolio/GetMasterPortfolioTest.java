@@ -221,9 +221,9 @@ public class GetMasterPortfolioTest {
             .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerFB))
             .collect(Collectors.toList());
         //получаем значение prices из кеш ExchangePositionPrice
-        String price1 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_MASTER);
-        String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER);
-        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER);
+        String price1 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_MASTER, instrument.instrumentAAPL);
+        String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
+        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position
@@ -397,8 +397,8 @@ public class GetMasterPortfolioTest {
             .collect(Collectors.toList());
         //получаем значение prices из кеш ExchangePositionPrice
         String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER);
-        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER);
+            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
+        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position
@@ -740,9 +740,9 @@ public class GetMasterPortfolioTest {
             .collect(Collectors.toList());
         //получаем значение prices из кеш ExchangePositionPrice
         String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER);
+            instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
         String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB,
-            "last", SIEBEL_ID_MASTER);
+            "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position

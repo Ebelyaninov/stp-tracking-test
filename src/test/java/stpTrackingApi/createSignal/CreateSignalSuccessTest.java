@@ -26,9 +26,11 @@ import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
+import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
@@ -130,6 +132,8 @@ public class CreateSignalSuccessTest {
     MocksBasicSteps mocksBasicSteps;
     @Autowired
     StpMockSlaveDate mockSlaveDate;
+    @Autowired
+    StringToByteSenderService stringToByteSenderService;
 
     UUID strategyId;
     String contractIdMaster;
@@ -142,34 +146,60 @@ public class CreateSignalSuccessTest {
     @BeforeAll
     void getdataFromInvestmentAccount() {
         SIEBEL_ID = stpSiebel.siebelIdApiMaster;
-        mocksBasicSteps.createDataForMasterMockApi(SIEBEL_ID);
+        //mocksBasicSteps.createDataForMasterMockApi(SIEBEL_ID);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //steps.deleteDataFromDb(SIEBEL_ID);
+
+        try {
+            strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractIdMaster).get());
+        } catch (Exception e) {
+        }
+        try {
+            contractService.deleteContractById(contractIdMaster);
+        } catch (Exception e) {
+        }
+        try {
+            clientService.deleteClient(steps.clientMaster);
+        } catch (Exception e) {
+        }
     }
 
-/*    @BeforeAll
-    void changePositionLimit(){
-        adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
-            true, 111, orderQuantityList(52, "default"), true);
-        adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
-            true, 21455, orderQuantityList(100, "default"), true);
-        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
-            true, 11300, orderQuantityList(100, "default"), true);
+    @AfterAll
+    void changePositionLimit (){
+        updateExchangePositionCacheLimit(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1000, 10,10,10,10);
+    }
 
-    }*/
+    @BeforeEach
+    void changePositionLimitBeforeEach (){
+        //Обновляем данные по лимитам
+        updateExchangePositionCacheLimit(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1000, 100,100,100,100);
+        updateExchangePositionDefaultLimit(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, 22845, 100);
+
+    }
+
+//    @BeforeAll
+//    void changePositionLimit(){
+//        adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
+//            true, 111, orderQuantityList(52, "default"), true);
+//        adminSteps.updateExchangePosition(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, Exchange.MOEX,
+//            true, 21455, orderQuantityList(100, "default"), true);
+//        adminSteps.updateExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, Exchange.SPB,
+//            true, 11300, orderQuantityList(100, "default"), true);
+//        updateexchangePositionCacheLimit(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1000, 10,10,10,10);
+//    }
 
     @AfterEach
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                trackingService.deleteStrategy(steps.strategyMaster);
+                trackingService.deleteStrategy(strategyService.findStrategyByContractId(contractIdMaster).get());
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(steps.contractMaster);
+                contractService.deleteContractById(contractIdMaster);
             } catch (Exception e) {
             }
             try {
@@ -226,7 +256,7 @@ public class CreateSignalSuccessTest {
         BigDecimal price = new BigDecimal("107.0");
         int quantityRequest = 3;
         int version = 1;
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
+        //mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -295,7 +325,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 4;
         int version = 2;
         double quantityPosMasterPortfolio = 12.0;
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
+//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -539,7 +569,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "ask", SIEBEL_ID, instrument.instrumentAAPL);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
@@ -599,7 +629,7 @@ public class CreateSignalSuccessTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(ResponseBodyData::asString);
         //получаем стоимость позиции, которая есть у мастера из  кэша exchangePositionPriceCache
-        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID);
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID, instrument.instrumentAAPL);
         //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
         //сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
         BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
@@ -612,7 +642,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции,  из  кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'sell' price_type = 'bid';
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID, instrument.instrumentAAPL);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceBid), 0, RoundingMode.HALF_UP);
         //ждем появляения записи в табл. masterSignal запись о выставленном сигнале и проверяем значение TailOrderQuantity
@@ -669,7 +699,7 @@ public class CreateSignalSuccessTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(ResponseBodyData::asString);
         //рассчитываем текущую общую стоимость портфеля portfolioValue без учета выставляемого сигнала:
-        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID);
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID, instrument.instrumentAAPL);
         List<String> dateBond = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, SIEBEL_ID);
         String aciValue = dateBond.get(0);
         String nominal = dateBond.get(1);
@@ -685,7 +715,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue = new BigDecimal(tailValue).multiply(signalRate);
         //получаем стоимость позиции, из кэша exchangePositionPriceCache если action обрабатываемого сигнала = 'buy', то price_type = 'ask'
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "bid", SIEBEL_ID, instrument.instrumentAAPL);
         //рассчитываем цену по bond в абсолютном значении
         BigDecimal priceBidBond = steps.valuePosBonds(priceBid, nominal, minPriceIncrement, aciValue);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
@@ -1024,7 +1054,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "ask", SIEBEL_ID, instrument.instrumentAAPL);
         //Рассчитываем объем выставляемого сигнала
         BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
         //Рассчитываем долю сигнала относительно всего портфеля
@@ -1093,7 +1123,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Получаем цену покупки
-        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "bid", SIEBEL_ID);
+        String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "bid", SIEBEL_ID, instrument.instrumentALFAperp);
         //Рассчитываем объем выставляемого сигнала
         BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
         //Рассчитываем долю сигнала относительно всего портфеля
@@ -1212,7 +1242,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID, instrument.instrumentSBER);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //Находим выставленный сигнал в БД
@@ -1282,7 +1312,7 @@ public class CreateSignalSuccessTest {
         //Определяем объем заявок на ведомых в случае выставления сигнала
         BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID, instrument.instrumentSBER);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //Находим выставленный сигнал в БД
@@ -1353,7 +1383,7 @@ public class CreateSignalSuccessTest {
         BigDecimal tailOrderValue =  new BigDecimal(tailValue).multiply(signalRate);
         //Рассчитываем количество единиц актива, которое будет выставлено для хвоста
         //Получаем цену покупки
-        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID);
+        String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "ask", SIEBEL_ID, instrument.instrumentSBER);
         BigDecimal tailOrderQuantity = tailOrderValue.divide(new BigDecimal(priceAsk), 0, RoundingMode.HALF_UP);
         //Находим выставленный сигнал в БД
         await().atMost(FIVE_SECONDS).until(() ->
@@ -1415,7 +1445,7 @@ public class CreateSignalSuccessTest {
             .execute(response -> response);
         //рассчёты
         //Считаем новую цену инструмента bond
-        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "last", SIEBEL_ID);
+        String priceLast = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "last", SIEBEL_ID, instrument.instrumentALFAperp);
         List<String> dateBond = steps.getPriceFromExchangePositionCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, SIEBEL_ID);
         String aciValue = dateBond.get(0);
         String nominal = dateBond.get(1);
@@ -1865,6 +1895,24 @@ public class CreateSignalSuccessTest {
         steps.createMasterSignalWithDateCreate(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusMinutes(1).toInstant()), 5, strategyId, instrument.tickerFB, instrument.tradingClearingAccountFB,
             "500", "1", "4", 12);
+    }
+
+
+    void updateExchangePositionCacheLimit (String ticker, String tradingClearingAccount, int dailyLimit, int additionalLiquidity,
+                                       int defaultLimit, int mainTrading, int primary){
+        //Обновляем данные по лимитам
+        Tracking.ExchangePosition exchangePositionCommand = steps.updatePositionLimitsCommand(ticker, tradingClearingAccount, dailyLimit, additionalLiquidity, defaultLimit, mainTrading, primary);
+        String keyCommand = "\n" +
+            "\u0004" + ticker + "\u0012\n" + tradingClearingAccount;
+        stringToByteSenderService.send(Topics.EXCHANGE_POSITION, keyCommand, exchangePositionCommand.toByteArray());
+    }
+
+    void updateExchangePositionDefaultLimit (String ticker, String tradingClearingAccount, int dailyLimit, int defaultLimit){
+        //Обновляем данные по лимитам
+        Tracking.ExchangePosition exchangePositionCommand = steps.updatePositionDefaultLimitCommand(ticker, tradingClearingAccount, dailyLimit, defaultLimit);
+        String keyCommand = "\n" +
+            "\u0004" + ticker + "\u0012\n" + tradingClearingAccount;
+        stringToByteSenderService.send(Topics.EXCHANGE_POSITION, keyCommand, exchangePositionCommand.toByteArray());
     }
 
 }
