@@ -146,6 +146,8 @@ public class HandleAccountRegistrationEventErrorTest {
         GetBrokerAccountsResponse resAccountAgressive = steps.getBrokerAccounts(SIEBEL_ID_AGRESSIVE);
         investIdAgressive = resAccountAgressive.getInvestId();
         contractIdAgressive = resAccountAgressive.getBrokerAccounts().get(0).getId();
+        steps.deleteDataFromDb(SIEBEL_ID_AGRESSIVE);
+        steps.deleteDataFromDb(SIEBEL_ID_MASTER);
     }
 
     @AfterEach
