@@ -40,8 +40,8 @@ import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.time.Duration;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -127,7 +127,7 @@ public class SocialTrackingOrderbookTest {
             //получаем ключ события
             instrumentId = messagesFromMD.get(i).getKey();
             //проверяем есть ли инструмент по ключу в кешах exchangeInstrumentIdCache
-            HashMap<String, String> exchangePositionId = steps.getDateFromInstrumentCache(cache, instrumentId);
+            Map<String, String> exchangePositionId = steps.getDateFromInstrumentCache(cache, instrumentId);
             //достаем значения ticker и tradingClearingAccount
             ticker = exchangePositionId.get("ticker");
             tradingClearingAccount = exchangePositionId.get("tradingClearingAccount");
@@ -174,7 +174,7 @@ public class SocialTrackingOrderbookTest {
             //получаем ключ события
             instrumentId = messagesFromMD.get(i).getKey();
             //проверяем есть ли инструмент по ключу в кешах
-            HashMap<String, String> exchangePositionId = steps.getDateFromInstrumentCache(cache, instrumentId);
+            Map<String, String> exchangePositionId = steps.getDateFromInstrumentCache(cache, instrumentId);
             ticker = exchangePositionId.get("ticker");
             tradingClearingAccount = exchangePositionId.get("tradingClearingAccount");
             boolean trackingAllowedValue = steps.getTrackingExchangePositionCache(ticker, tradingClearingAccount);
