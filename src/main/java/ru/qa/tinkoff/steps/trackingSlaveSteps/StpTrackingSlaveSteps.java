@@ -298,17 +298,16 @@ public class StpTrackingSlaveSteps {
 
     @SneakyThrows
     @Step("Вызов метода содержимое Cache ExchangeInstrumentIdCache в приложении Slave")
-    public  HashMap<String, String> getDateFromInstrumentCache(List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache, String instrumentId) {
+    public Map<String, String> getDateFromInstrumentCache(List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache, String instrumentId) {
         //получаем содержимое кеша actualizeCommandCache
 
-        List<Entity> exchangePositionId = cache.stream()
+        Entity exchangePositionId = cache.stream()
             .filter(ps -> ps.getKey().toString().equals(instrumentId))
-            .collect(Collectors.toList());
+            .findFirst()
+            .orElseThrow(RuntimeException::new);
 
-        LinkedHashMap exchangePosition = ((LinkedHashMap) ((LinkedHashMap)
-            exchangePositionId.get(0).getValue()).get("exchangePositionId"));
-
-        return exchangePosition;
+        Map<String, Map<String, String>> value = (Map<String, Map<String, String>>) exchangePositionId.getValue();
+        return value.get("exchangePositionId");
     }
 
 

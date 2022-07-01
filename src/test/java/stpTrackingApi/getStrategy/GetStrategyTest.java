@@ -152,7 +152,6 @@ public class GetStrategyTest {
     String siebelIdMaster;
     String siebelIdSlave;
     MasterPortfolioValue masterPortfolioValue;
-
     String quantitySBER = "30";
     String quantityFXDE = "5";
     String quantitySU29009RMFS6 = "7";
@@ -1584,6 +1583,98 @@ public class GetStrategyTest {
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(0).getTitle(), is("Прогноз автора"));
         assertThat("title не равно", strategyCharacteristics.get(0).getItems().get(0).getValue(), is(expectedRelativeYield.toString() + "% в год"));
 
+    }
+
+
+    private static Stream<Arguments> provideOwnerDescription() {
+        return Stream.of(
+            Arguments.of("Этот тестовый автор для проверки Инвестирует в Тинькофф уже очень много лет с 2014г", "до дня"),
+            Arguments.of("Инвестирует с 2015 г., предприниматель")
+        );
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideOwnerDescription")
+    @AllureId("1976321")
+    @DisplayName("C1976321.GetStrategy.Определяем характеристики стратегии: owner-description")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
+    void C1976321(String ownerDescription) throws JsonProcessingException, InterruptedException {
+        strategyId = UUID.randomUUID();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null, "TEST", ownerDescription);
+        //создаем запись  протфеле в кассандре
+        List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
+        // вызываем метод getStrategy
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        List<GetStrategyResponseCharacteristics> strategyCharacteristics =
+            getStrategy.getCharacteristics().stream()
+                .filter(strategyCharacteristic -> strategyCharacteristic.getType().getValue().equals("main"))
+                .collect(Collectors.toList());
+        List<StrategyCharacteristic> ownerDescriptionCharacteristics = new ArrayList<>();
+        for (int i = 0; i < strategyCharacteristics.get(0).getItems().size(); i++) {
+            if (strategyCharacteristics.get(0).getItems().get(i).getId().equals("owner-description")) {
+                    ownerDescriptionCharacteristics.add(strategyCharacteristics.get(0).getItems().get(i));
+                //Проверяем, что нашли owner-description
+                assertThat("value не равно", ownerDescriptionCharacteristics.get(0).getTitle(), is("Описание владельца"));
+                assertThat("title не равно", ownerDescriptionCharacteristics.get(0).getValue(), is(ownerDescription));
+            }
+        }
+    }
+
+    @SneakyThrows
+    @Test
+    @AllureId("1976339")
+    @DisplayName("C1976339.GetStrategy.Определяем характеристики стратегии: owner-description == null")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод возвращает информацию по торговой стратегии: основные показатели, доли виртуального портфеля, торговые показатели.")
+    void C1976339() throws JsonProcessingException, InterruptedException {
+        strategyId = UUID.randomUUID();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        //создаем в БД tracking данные: client, contract, strategy в статусе active
+        // указываем описание автора стратегии == null
+        steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null, "TEST", null);
+        //создаем запись  протфеле в кассандре
+        List<MasterPortfolio.Position> positionList = createListMasterPosition(date, 5,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        createMasterPortfolio(contractIdMaster, strategyId, 6, "6259.17", positionList);
+        // вызываем метод getStrategy
+        GetStrategyResponse getStrategy = strategyApiCreator.get().getStrategy()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(siebelIdMaster)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetStrategyResponse.class));
+        List<GetStrategyResponseCharacteristics> strategyCharacteristics =
+            getStrategy.getCharacteristics().stream()
+                .filter(strategyCharacteristic -> strategyCharacteristic.getType().getValue().equals("main"))
+                .collect(Collectors.toList());
+        boolean ownerDescription = false;
+        for (int i = 0; i < strategyCharacteristics.get(0).getItems().size(); i++) {
+            if (strategyCharacteristics.get(0).getItems().get(i).getId().equals("owner-description")) {
+                ownerDescription = true;
+            }
+        }
+        assertThat("owner-description найден", ownerDescription, is(false));
     }
 
 
