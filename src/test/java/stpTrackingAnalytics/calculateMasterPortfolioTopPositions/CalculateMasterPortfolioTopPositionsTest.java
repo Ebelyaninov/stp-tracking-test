@@ -203,8 +203,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofSeconds(1));
-        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+//        checkMasterPortfolioTopPositions(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -267,8 +267,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
-        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+//        checkMasterPortfolioTopPositions(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -329,8 +329,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofMillis(500));
-        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+//        checkMasterPortfolioTopPositions(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -424,8 +424,8 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
-        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterPortfolioTopPositions(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -651,16 +651,16 @@ public class CalculateMasterPortfolioTopPositionsTest {
     }
 
 
-    // ожидаем версию портфеля slave
-    void checkMasterPortfolioTopPositions(UUID strategyId) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositions(strategyId);
-            if (masterPortfolioTopPositions.getStrategyId() == null) {
-                Thread.sleep(5000);
-            }
-        }
-    }
+//    // ожидаем версию портфеля slave
+//    void checkMasterPortfolioTopPositions(UUID strategyId) throws InterruptedException {
+//        for (int i = 0; i < 5; i++) {
+//            Thread.sleep(3000);
+//            masterPortfolioTopPositions = masterPortfolioTopPositionsDao.getMasterPortfolioTopPositions(strategyId);
+//            if (masterPortfolioTopPositions.getStrategyId() == null) {
+//                Thread.sleep(5000);
+//            }
+//        }
+//    }
 
 
 }

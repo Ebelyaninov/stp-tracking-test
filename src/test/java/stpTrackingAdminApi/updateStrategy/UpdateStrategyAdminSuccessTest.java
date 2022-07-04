@@ -808,7 +808,7 @@ public class UpdateStrategyAdminSuccessTest {
             Arguments.of(null, "shortDescriptionUpdate", "ownerDescription", 1),
             Arguments.of(new BigDecimal(10.00), null, "ownerDescription", 2),
             Arguments.of(new BigDecimal(15.00), "shortDescriptionUpdate", null, 3),
-            Arguments.of(new BigDecimal(20.00), "shortDescriptionUpdate", "ownerDescription", null)
+            Arguments.of(new BigDecimal(20.00), "shortDescriptionUpdate", "Этот тестовый автор для проверки метода  getStrategy Инвестирует в Тинькофф уже очень много лет с 2014 года и у него всегда лучшие результаты по доход", null)
         );
     }
 

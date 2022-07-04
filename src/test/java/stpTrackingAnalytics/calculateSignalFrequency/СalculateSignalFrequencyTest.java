@@ -26,6 +26,7 @@ import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAnalyticsSteps.StpTrackingAnalyticsSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -34,11 +35,10 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
-import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -125,7 +125,6 @@ public class СalculateSignalFrequencyTest {
     void getDataClients() {
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
-
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
@@ -211,7 +210,6 @@ public class СalculateSignalFrequencyTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает общее количество сигналов, созданных в рамках торговой стратегии, на заданную метку времени.")
     void C830184(OffsetDateTime createTime, OffsetDateTime cutTime, StrategyStatus status) {
-
         log.info("strategyId:  {}", strategyId);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -232,8 +230,8 @@ public class СalculateSignalFrequencyTest {
         Date start = Date.from(cutTime.minusDays(30).toInstant());
         Date end = Date.from(cutTime.toInstant());
         int count = countUniqueMasterSignalDays(strategyId, start, end);
-        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterSignalFrequency(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -270,8 +268,8 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterSignalFrequency(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -311,8 +309,8 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterSignalFrequency(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -379,8 +377,8 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterSignalFrequency(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -409,8 +407,8 @@ public class СalculateSignalFrequencyTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
-        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+//        checkMasterSignalFrequency(strategyId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -500,18 +498,6 @@ public class СalculateSignalFrequencyTest {
     @Step("Считаем количество уникальных дней: ")
     public Integer countUniqueMasterSignalDays(UUID strategyId, Date start, Date end) {
         return new HashSet<>(masterSignalDao.getUniqMasterSignalDaysByPeriod(strategyId, start, end)).size();
-    }
-
-
-    // ожидаем версию портфеля slave
-    void checkMasterSignalFrequency(UUID strategyId) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId);
-            if (signalFrequency.getStrategyId() == null) {
-                Thread.sleep(5000);
-            }
-        }
     }
 
 }

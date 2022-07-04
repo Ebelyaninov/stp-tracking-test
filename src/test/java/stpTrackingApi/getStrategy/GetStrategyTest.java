@@ -1586,9 +1586,10 @@ public class GetStrategyTest {
     }
 
 
+
     private static Stream<Arguments> provideOwnerDescription() {
         return Stream.of(
-            Arguments.of("Этот тестовый автор для проверки Инвестирует в Тинькофф уже очень много лет с 2014г", "до дня"),
+            Arguments.of("Этот тестовый автор для проверки метода  getStrategy Инвестирует в Тинькофф уже очень много лет с 2014 года и у него всегда лучшие результаты по доход"),
             Arguments.of("Инвестирует с 2015 г., предприниматель")
         );
     }
