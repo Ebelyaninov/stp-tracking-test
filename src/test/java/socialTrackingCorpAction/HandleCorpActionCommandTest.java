@@ -87,27 +87,15 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
 })
 public class HandleCorpActionCommandTest {
     @Autowired
-    ProfileService profileService;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
-    SubscriptionService subscriptionService;
-    @Autowired
     StpTrackingMasterSteps steps;
-    @Autowired
-    StringToByteSenderService kafkaSender;
     @Autowired
     ByteToByteSenderService byteToByteSenderService;
     @Autowired
@@ -128,16 +116,10 @@ public class HandleCorpActionCommandTest {
     MockInvestmentAccountSteps mockInvestmentAccountSteps;
 
 
-    MasterPortfolio masterPortfolio;
-
     CorpAction corpAction;
-    Client clientSlave;
     String contractIdMaster;
     int version;
     String siebelIdMaster;
-    String siebelIdSlave;
-    String siebelIdSlaveActive;
-    String siebelIdSlaveBlocked;
     String title;
     String description;
     UUID strategyId;
@@ -360,7 +342,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1873898() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -492,11 +474,11 @@ public class HandleCorpActionCommandTest {
     @Test
     @AllureId("1892424")
     @Tag("qa2")
-    @DisplayName("1892424 Отфильтровываем инструмент из exchangePositionCache, если type NOT IN (etf, share)")
+    @DisplayName("C1892424. Отфильтровываем инструмент из exchangePositionCache, если type NOT IN (etf, share)")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1892424() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -585,7 +567,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866174() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -666,7 +648,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866182() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -741,7 +723,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866175() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -824,7 +806,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866180() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -911,7 +893,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1911883() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -966,7 +948,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1913452() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1032,7 +1014,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1914706() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1100,7 +1082,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915322() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1162,7 +1144,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915391() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1223,7 +1205,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866164() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1301,7 +1283,7 @@ public class HandleCorpActionCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1873536() {
-        strategyId = UUID.fromString("d47e8766-4c4b-4e5b-8ad0-d5f9fd4ed4a1");
+        strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1509,11 +1491,11 @@ public class HandleCorpActionCommandTest {
         BigDecimal amountFromMessage = BigDecimal.valueOf(portfolioCommand.getDividend().getAmount().getUnscaled(), portfolioCommand.getDividend().getAmount().getScale());
         BigDecimal amountAfterCalculated = calculateAmount(qtyFromPosition, dividendNet);
         LocalDateTime getDateFromMessage = LocalDateTime.ofEpochSecond(portfolioCommand.getCreatedAt().getSeconds(), portfolioCommand.getCreatedAt().getNanos(), ZoneOffset.of("+03:00"));
-        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime now = Instant.now().atZone(ZoneId.of("UTC+03:00"));
         assertThat("Key  != contract_id", key, is(contractIdMaster));
         assertThat("contract_id != strategy.contract_id", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation != 'ACTUALIZE'", portfolioCommand.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
-        assertThat("created_at != now()", getDateFromMessage.toString().substring(0, 15), is(now.toString().substring(0, 15)));
+        assertThat("created_at != now()", ZonedDateTime.of(getDateFromMessage, ZoneId.of("UTC+03:00")).toString().substring(0, 15), is(now.toString().substring(0, 15)));
         assertThat("dividend.id != dividend.id", portfolioCommand.getDividend().getId(), is(Long.valueOf(dividendId)));
         assertThat("dividend.exchange_position_id.ticker != exchangePosition.ticker", portfolioCommand.getDividend().getExchangePositionId().getTicker(), is(ticker));
         assertThat("dividend.exchange_position_id.trading_clearing_account != exchangePosition.trading_clearing_account", portfolioCommand.getDividend().getExchangePositionId().getTradingClearingAccount(), is(tradingClearingAcoount));
