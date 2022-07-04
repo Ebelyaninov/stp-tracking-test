@@ -235,8 +235,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -273,8 +272,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -326,9 +324,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        Thread.sleep(5000);
-        checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -393,7 +389,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -420,11 +416,9 @@ public class CalculateSignalsCountTest {
         //кодируем событие по protobuf схеме и переводим в byteArray
         byte[] eventBytesNew = reCalculateCommand.toByteArray();
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
-//        Thread.sleep(5000);
         long countRecord = signalsCountDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
-        checkMasterSignalsCount(strategyId);
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -493,18 +487,5 @@ public class CalculateSignalsCountTest {
             .build();
         masterSignalDao.insertIntoMasterSignal(masterSignal);
     }
-
-
-    // ожидаем версию портфеля slave
-    void checkMasterSignalsCount(UUID strategyId) throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
-            Thread.sleep(3000);
-            signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId);
-            if (signalsCount.getStrategyId() == null) {
-                Thread.sleep(5000);
-            }
-        }
-    }
-
 
 }

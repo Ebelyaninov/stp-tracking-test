@@ -240,7 +240,7 @@ public class CalculateMasterPortfolioRateTest {
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
         checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -335,7 +335,7 @@ public class CalculateMasterPortfolioRateTest {
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
         checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -427,7 +427,7 @@ public class CalculateMasterPortfolioRateTest {
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
         checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -527,7 +527,7 @@ public class CalculateMasterPortfolioRateTest {
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
         await().pollDelay(Duration.ofMillis(500));
         checkMasterPortfolioRate(strategyId);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -593,7 +593,7 @@ public class CalculateMasterPortfolioRateTest {
         typesNew.put("money", BigDecimal.ONE.subtract(sectorRateSumNew));
         companysNew.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSumNew));
         checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         //Проверяем параметры
         checkParam(sectorsNew, typesNew, companysNew, cut, cutInCommand);
@@ -722,9 +722,7 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
-        await().pollDelay(Duration.ofMillis(500));
-        checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -799,9 +797,7 @@ public class CalculateMasterPortfolioRateTest {
         sectors.put("money", BigDecimal.ONE.subtract(typeRateSum));
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
-        await().pollDelay(Duration.ofMillis(500));
-        checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -978,7 +974,7 @@ public class CalculateMasterPortfolioRateTest {
         types.put("money", BigDecimal.ONE.subtract(sectorRateSum));
         companys.put("Денежные средства", BigDecimal.ONE.subtract(companyRateSum));
         //checkMasterPortfolioRate(strategyId);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(FIVE_HUNDRED_MILLISECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolioRate = masterPortfolioRateDao.getMasterPortfolioRateByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioRate.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
