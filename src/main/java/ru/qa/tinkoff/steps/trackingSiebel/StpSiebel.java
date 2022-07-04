@@ -95,4 +95,10 @@ public class StpSiebel {
 
     // socialTrackingStrategy //
     public String siebelIdMasterSocialTrackingStrategy = "1-27VDZ7I";
+
+    //handleEnableSynchronizationCommand
+
+    public String siebelIdSlaveEnable = "5-1YKYXIHWO";
+    public String siebelIdMasterEnable = "1-CLKT3FQ";
+
 }
