@@ -554,13 +554,13 @@ public class MocksBasicSteps {
     }
 
 
-    public void createDataForMasterSignal (String ticker, String classCode, String exchange, String price) {
+    public void createDataForMasterSignal (String ticker, String classCode, String firstExchange, String secondExchange, String price) {
         String tickerAndClassCode = ticker + "_" + classCode;
         //очищаем расписание
         tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         //создаём расписание
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeDefaultTime(exchange));
-
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeDefaultTime(firstExchange));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeDefaultTime(secondExchange));
         //Создаем цены в MD
         mockMarketDataSteps.clearMocks(tickerAndClassCode);
         ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
