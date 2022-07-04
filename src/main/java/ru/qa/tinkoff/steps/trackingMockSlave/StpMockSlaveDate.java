@@ -42,4 +42,13 @@ public class StpMockSlaveDate {
     public String clientCodeSlaveSynch = "770016232387";
 
 
+    public String investIdMasterEnable = "d32f54da-a67c-4f63-8d0e-f054c683a51b";
+    public String contractIdMasterEnable = "2000080362";
+
+    public String investIdSlaveEnable = "537a318c-39ac-4ad4-ab85-27ae6566c183";
+    public String contractIdSlaveEnable = "2052522600";
+    public String clientCodeSlaveEnable = "770014737400";
+
+
+
 }

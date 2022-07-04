@@ -31,9 +31,15 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -73,7 +79,10 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
-    StpTrackingInstrumentConfiguration.class
+    StpTrackingInstrumentConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class
 })
 
 public class HandleEnableSynchronizationCommandTest {
@@ -106,10 +115,18 @@ public class HandleEnableSynchronizationCommandTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
+    @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
+    @Autowired
+    StpSiebel stpSiebel;
 
 
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder;
+    String slaveEnable;
+    String masterEnable;
     Client clientSlave;
 
     String contractIdMaster;
@@ -117,9 +134,6 @@ public class HandleEnableSynchronizationCommandTest {
 
     UUID investIdSlave;
     UUID investIdMaster;
-
-    String siebelIdMaster = "1-CLKT3FQ";
-    String siebelIdSlave = "5-6UTY74RE";
 
     Subscription subscription;
 
@@ -185,14 +199,25 @@ public class HandleEnableSynchronizationCommandTest {
 
     @BeforeAll
     void getDataClients() {
+        slaveEnable = stpSiebel.siebelIdSlaveEnable;
+        masterEnable = stpSiebel.siebelIdMasterEnable;
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterEnable);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(slaveEnable);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+    }
+
+    @SneakyThrows
+    @BeforeAll
+    void createMock() {
+        //создаем мок
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
+            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
+            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3");
     }
 
     @BeforeEach
@@ -204,6 +229,7 @@ public class HandleEnableSynchronizationCommandTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1388423")
     @DisplayName("1388423. Успешная обработка команды на включение синхронизации в обе стороны для share.Sell")
     @Subfeature("Успешные сценарии")
@@ -237,18 +263,8 @@ public class HandleEnableSynchronizationCommandTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
-        //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
-            .filter(key -> key.getKey().equals(contractIdSlave))
-            .sorted(Collections.reverseOrder())
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //получаем портфель slave
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
-        //Проверяем, данные в сообщении
-        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем данные портфеля
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
@@ -265,6 +281,7 @@ public class HandleEnableSynchronizationCommandTest {
 
     @SneakyThrows
     @Test
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1378785")
     @DisplayName("1378785. Успешная обработка команды на включение синхронизации в обе стороны для share.Buy")
     @Subfeature("Успешные сценарии")
@@ -298,22 +315,12 @@ public class HandleEnableSynchronizationCommandTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
-//        //Смотрим, сообщение, которое поймали в топике kafka
-//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-//        Pair<String, byte[]> message = messages.stream()
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //получаем портфель slave
         await().atMost(TEN_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         int quantity = (int) Math.round(slavePortfolio.getPositions().get(0).getQuantityDiff().doubleValue());
         //получаем выставленную заявку
-        //Thread.sleep(10000);
         slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId);
-        //Проверяем, данные в сообщении
-//        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //Проверяем данные портфеля
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
@@ -329,6 +336,7 @@ public class HandleEnableSynchronizationCommandTest {
     @SneakyThrows
     @Test
     @AllureId("1578651")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @DisplayName("1578651 Определяем, находится ли портфель slave'а в процессе синхронизации. order.state = 0")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
@@ -341,7 +349,7 @@ public class HandleEnableSynchronizationCommandTest {
         //создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerFB, instrument.tradingClearingAccountFB,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "1", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "21512", masterPos);
         //создаем подписку на стратегию
@@ -353,42 +361,31 @@ public class HandleEnableSynchronizationCommandTest {
         subscriptionId = subscription.getId();
         //создаем портфель slave с позицией в кассандре
         String baseMoneySl = "4320.0";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerFB, instrument.tradingClearingAccountFB,
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
             "3", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, instrument.tickerFB, instrument.tradingClearingAccountFB);
+            id, new BigDecimal(109), new BigDecimal(3), (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
-//        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
-//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-//        Pair<String, byte[]> message = messages.stream()
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
-//        //Проверяем, данные в сообщении из tracking.slave.command
-//        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //получаем портфель slave
         await().atMost(TEN_SECONDS).until(() ->
-        //Thread.sleep(10000);
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем выставленную заявку
-        //Thread.sleep(10000);
         slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave);
         //Проверяем данные портфеля
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
         //Проверяем данные заявки
-        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerFB));
-        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
+        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL));
+        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+        assertThat("state не равен", slaveOrder.getState().intValue(), is(2));
         assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(2));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
 
@@ -444,15 +441,15 @@ public class HandleEnableSynchronizationCommandTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
-//        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
-//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-//        Pair<String, byte[]> message = messages.stream()
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
-//        //Проверяем, данные в сообщении из tracking.slave.command
-//        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .filter(key -> key.getKey().equals(contractIdSlave))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        //Проверяем, данные в сообщении из tracking.slave.command
+        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //получаем портфель slave
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //получаем выставленную заявку
@@ -467,26 +464,28 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("action не равен", slaveOrder.getAction().intValue(), is(1));
         assertThat("version не равна", slaveOrder.getVersion(), is(2));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
-        assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
-        if (attempts_count == 1) {
-            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(1));
+        switch (attempts_count) {
+            case 1:
+                assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(1));
+                assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+                break;
+            case 125:
+                assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(126));
+                assertThat("state не равен", slaveOrder.getState(), is(nullValue()));
+                //проверяем, что контракт заблокирован
+                assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
+                break;
+            case 126:
+                assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(126));
+                assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+                break;
         }
-        if (attempts_count == 125) {
-            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(126));
-            //проверяем, что контракт заблокирован
-            assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
-        }
-        else {
-            assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(126));
-        }
-
-
     }
 
     private static Stream<Arguments> Params() {
         return Stream.of(
-            Arguments.of("AAPL", "TKCBM_TCAB", 1),
-            Arguments.of("ALFAperp", "TKCBM_TCAB", 0)
+            Arguments.of("ALFAperp", "TKCBM_TCAB", 0),
+            Arguments.of("AAPL", "TKCBM_TCAB", 1)
         );
     }
 
@@ -494,11 +493,15 @@ public class HandleEnableSynchronizationCommandTest {
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("Params")
+    @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1654361")
     @DisplayName("1654361 handleEnableSynchronizationCommand. state = 0. ticker + trading_clearing_account + action из slave_order != значению ticker + trading_clearing_account + action выставляемой заявки")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1654361(String tickerA, String tradingClearingAccountA, int action) {
+        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
+            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
+            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
         //создаем клиента, контракт и стратегию
         steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
@@ -531,15 +534,6 @@ public class HandleEnableSynchronizationCommandTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
-//        //Смотрим, сообщение, которое поймали в топике tracking.slave.command
-//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
-//        Pair<String, byte[]> message = messages.stream()
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
-//        //Проверяем, данные в сообщении из tracking.slave.command
-//        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
         //получаем портфель slave
         await().pollDelay(Duration.ofNanos(200)).atMost(Duration.ofSeconds(3)).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId), notNullValue());
@@ -556,7 +550,7 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("action не равен", slaveOrder.getAction().intValue(), is(0));
         assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("state не равен", slaveOrder.getState().intValue(), is(0));
+        assertThat("state не равен", slaveOrder.getState().intValue(), is(2));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(quantity));
         assertThat("attempts_count не равно", slaveOrder.getAttemptsCount().intValue(), is(number));
     }
