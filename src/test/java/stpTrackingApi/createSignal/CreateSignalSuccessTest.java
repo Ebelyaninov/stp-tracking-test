@@ -256,7 +256,7 @@ public class CreateSignalSuccessTest {
         BigDecimal price = new BigDecimal("107.0");
         int quantityRequest = 3;
         int version = 1;
-        //mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -325,7 +325,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 4;
         int version = 2;
         double quantityPosMasterPortfolio = 12.0;
-//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -388,7 +388,7 @@ public class CreateSignalSuccessTest {
         int quantityRequest = 4;
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", String.valueOf(price));
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         //создаем в БД tracking статегию на ведущего
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -1516,7 +1516,7 @@ public class CreateSignalSuccessTest {
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(response -> response);
         //рассчёты
-        // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
+        //сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
         BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(quantityPosMasterPortfolio))
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
