@@ -62,6 +62,7 @@ import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static ru.qa.tinkoff.kafka.Topics.*;
 import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
 
@@ -72,7 +73,7 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.*;
 @DisplayName("social-tracking-client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Owner("ext.ebelyaninov")
-@Tags({@Tag("social-tracking-client"),@Tag("handleAccountRegistrationEvent")})
+@Tags({@Tag("social-tracking-client"), @Tag("handleAccountRegistrationEvent")})
 @SpringBootTest(classes = {
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
@@ -268,7 +269,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEventWithOutStrategy(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEventWithOutStrategy(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> clientService
                 .findClient(investIdAgressive).isPresent());
         checkClient(investIdAgressive, ClientRiskProfile.aggressive);
@@ -295,9 +296,9 @@ public class HandleAccountRegistrationEventTest {
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdConservative).isPresent());
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdConservative).get().getStatus(), equalTo(SubscriptionStatus.active));
         //Проверить добавления записи в client
         checkClient(investIdCOnservative, ClientRiskProfile.conservative);
@@ -309,7 +310,7 @@ public class HandleAccountRegistrationEventTest {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd' 'HH");
         String dateNow = (formatter.format(dateNowOne));
 
-        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active, true);
+        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active, true, false);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -347,7 +348,7 @@ public class HandleAccountRegistrationEventTest {
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
         //Проверить добавления записи в client
         checkClient(investIdMedium, ClientRiskProfile.moderate);
@@ -359,7 +360,7 @@ public class HandleAccountRegistrationEventTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
         String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
-        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true);
+        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true, false);
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION.getAlias());
         //Проверить актуализируем кол-во подписчиков на стратегию
@@ -388,7 +389,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
         //Проверить добавления записи в client
         checkClient(investIdMedium, ClientRiskProfile.moderate);
@@ -400,7 +401,7 @@ public class HandleAccountRegistrationEventTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
         String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
-        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true);
+        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true, false);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -451,12 +452,12 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
         //Проверяем тариф клиента
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(400))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofSeconds(1)).pollInterval(Duration.ofNanos(400)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions()
             .until(() -> subscriptionService.findSubscriptionByContractIdAndStatus(contractIdAgressive, SubscriptionStatus.active).getStatus().equals(SubscriptionStatus.active));
         //Для события в статусе open добавляем подписку в статусе draft и не вызывали метод офферов
-        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  false);
+        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  false, false);
         checkContract(contractIdAgressive, investIdAgressive, ContractState.tracked, strategyId);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 0", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(0));
@@ -506,14 +507,14 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).get().getStatus().equals(subscriptionStatus));
 
         checkClient(investIdAgressive, ClientRiskProfile.aggressive);
         checkContract(contractIdAgressive, investIdAgressive, ContractState.tracked, strategyId);
-        checkSubscription(contractIdAgressive, strategyId, subscriptionStatus,  false);
+        checkSubscription(contractIdAgressive, strategyId, subscriptionStatus,  false, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 0", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(0));
     }
@@ -539,14 +540,14 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdAgressive, typeBroker, statusNew, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(2)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).get().getStatus().equals(SubscriptionStatus.active));
 
         checkClient(investIdAgressive, ClientRiskProfile.aggressive);
         checkContract(contractIdAgressive, investIdAgressive, ContractState.tracked, strategyId);
-        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  false);
+        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  false, true);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 0", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(0));
     }
@@ -568,12 +569,12 @@ public class HandleAccountRegistrationEventTest {
         byte[] eventBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).toByteArray();
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdMedium, typeBroker, statusNew, investIdMedium, SIEBEL_ID_MEDIUM, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdMedium).isPresent());
 
         checkClient(investIdMedium, ClientRiskProfile.moderate);
         checkContract(contractIdMedium, investIdMedium, ContractState.untracked, null);
-        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft,  true);
+        checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft,  true, false);
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.RISK_PROFILE.getAlias());
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION.getAlias());
@@ -601,12 +602,12 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId).getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).get().getStatus().equals(SubscriptionStatus.active));
 
-        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  true);
+        checkSubscription(contractIdAgressive, strategyId, SubscriptionStatus.active,  true, false);
         checkContract(contractIdAgressive, investIdAgressive, ContractState.tracked, strategyId);
         checkSubscriptionBlockWithReasone(contractIdAgressive, SubscriptionBlockReason.RISK_PROFILE.getAlias());
         checkSubscriptionBlockWithReasone(contractIdAgressive, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
@@ -635,7 +636,7 @@ public class HandleAccountRegistrationEventTest {
         byte[] keyBytes = createMessageForHandleAccountRegistrationEvent(actionCreated, contractIdConservative, typeBroker, statusOpened, investIdCOnservative, SIBEL_ID_CONSERVATIVE, strategyId).getId().toByteArray();
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofSeconds(5)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdConservative).isPresent());
         //Добавил задержку 3с, для обработки данных приложением(Возможно не сразу получим ответ от тарифного модуля)
         await().atLeast(Duration.ofSeconds(3));
@@ -645,7 +646,7 @@ public class HandleAccountRegistrationEventTest {
         checkContract(contractIdConservative, investIdCOnservative, ContractState.untracked, null);
 
         //Проверяем, что добавили подписку в статусе draft
-        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.draft, true);
+        checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.draft, true, false);
         //Проверить актуализируем кол-во подписчиков на стратегию
         assertThat("Slaves_count != 1", strategyService.getStrategy(strategyId).getSlavesCount(), equalTo(1));
 
@@ -798,29 +799,40 @@ public class HandleAccountRegistrationEventTest {
     }
 
     //проверяем данные в subscription
-    void checkSubscription (String contractId, UUID strategyId, SubscriptionStatus status, Boolean blocked) {
-        Date dateNowOne = new Date(System.currentTimeMillis());
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd' 'HH");
-        String dateNow = (formatter.format(dateNowOne));
+    void checkSubscription (String contractId, UUID strategyId, SubscriptionStatus status, Boolean blocked, Boolean subscriptionWasPresent) {
+        ZonedDateTime zonedDateTime = Instant.now().atZone(ZoneId.of("UTC+03:00"));
+        DateTimeFormatter formatterInstance = DateTimeFormatter.ofPattern("yyyy-MM-dd' 'HH");
+        String formattedString = zonedDateTime.format(formatterInstance);
         Subscription getSubscription = subscriptionService.getSubscriptionByContract(contractId);
-        assertThat("slave_contract_id != " + contractId, getSubscription.getSlaveContractId(), equalTo(contractId));
-        assertThat("strategy_id != " + strategyId, getSubscription.getStrategyId(), equalTo(strategyId));
-        assertThat("start_time != " + dateNow, getSubscription.getStartTime().toString().substring(0,13), equalTo(dateNow));
-        assertThat("status != " + status, getSubscription.getStatus(), equalTo(status));
-        assertThat("end_time != null", getSubscription.getEndTime(), equalTo(null));
-        assertThat("blocked != " + blocked, getSubscription.getBlocked(), equalTo(blocked));
+        assertAll(
+            () -> assertThat("slave_contract_id != " + contractId, getSubscription.getSlaveContractId(), equalTo(contractId)),
+            () -> assertThat("strategy_id != " + strategyId, getSubscription.getStrategyId(), equalTo(strategyId)),
+            () -> assertThat("status != " + status, getSubscription.getStatus(), equalTo(status)),
+            () -> assertThat("end_time != null", getSubscription.getEndTime(), equalTo(null)),
+            () -> assertThat("blocked != " + blocked, getSubscription.getBlocked(), equalTo(blocked))
+        );
+        if(subscriptionWasPresent.equals(false)){
+            assertThat("start_time != " + formattedString, getSubscription.getStartTime().toString().substring(0, 13), equalTo(formattedString));
+        }
+        else {
+            assertThat("start_time != " + startTime, getSubscription.getStartTime(), equalTo(startTime));
+        }
     }
 
     //проверяем блокировку подписки
     void checkSubscriptionBlockWithReasone (String contractId, String subscriptionBlockReason) {
-        Date dateNowOne = new Date(System.currentTimeMillis());
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-        String dateNow = (formatter.format(dateNowOne));
+//        Date dateNowOne = new Date(System.currentTimeMillis());
+//        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+//        String dateNow = (formatter.format(dateNowOne));
+        ZonedDateTime zonedDateTime = Instant.now().atZone(ZoneId.of("UTC+03:00"));
+        DateTimeFormatter formatterInstance = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        String dateNow = zonedDateTime.format(formatterInstance);
         SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId(), subscriptionBlockReason);
-        assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0, 16), equalTo(dateNow));
-        assertThat("upper(period) !=  null" , getDataFromSubscriptionBlock.getPeriod().upper(), nullValue());
-        assertThat("upper(period) !=  null" , getDataFromSubscriptionBlock.getPeriod().upper(), nullValue());
-        assertThat("subscriptionBlockReason !=  risk-profile" , getDataFromSubscriptionBlock.getReason(), equalTo(subscriptionBlockReason));
+        assertAll(
+            () -> assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0, 16), equalTo(dateNow)),
+            () -> assertThat("upper(period) !=  null" , getDataFromSubscriptionBlock.getPeriod().upper(), nullValue()),
+            () -> assertThat("subscriptionBlockReason !=  risk-profile" , getDataFromSubscriptionBlock.getReason(), equalTo(subscriptionBlockReason))
+        );
     }
 
     //проверяем блокировку подписки
