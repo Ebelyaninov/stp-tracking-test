@@ -254,12 +254,12 @@ public class CreateSignalSuccessTest {
     void C653779() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("2.058");
         int version = 1;
         mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -272,7 +272,7 @@ public class CreateSignalSuccessTest {
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
-            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, version);
         // вызываем метод CreateSignal
         signalApiCreator.get().createSignal()
             .xAppNameHeader("invest")
@@ -297,18 +297,18 @@ public class CreateSignalSuccessTest {
 //            is(createAt.truncatedTo(ChronoUnit.SECONDS)));
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем значения в полученной команде
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerSBER, instrument.tradingClearingAccountSBER);
     }
 
 
@@ -322,7 +322,7 @@ public class CreateSignalSuccessTest {
     void C659115() {
         double money = 3500.0;
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("0.01");
         int version = 2;
         double quantityPosMasterPortfolio = 12.0;
         mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
@@ -360,11 +360,11 @@ public class CreateSignalSuccessTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         log.info("Команда в tracking.slave.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = quantityPosMasterPortfolio + quantityRequest;
+        double quantityPosition = quantityPosMasterPortfolio + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         versionNew = version + 1;
@@ -385,7 +385,7 @@ public class CreateSignalSuccessTest {
     void C659236() {
         double money = 3500.0;
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
         mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
@@ -424,11 +424,11 @@ public class CreateSignalSuccessTest {
         Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
         log.info("Команда в tracking.slave.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money + (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money + (price.multiply(quantityRequest)).doubleValue();
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = quantityPosMasterPortfolio - quantityRequest;
+        double quantityPosition = quantityPosMasterPortfolio - quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем параметры полученной команды
@@ -448,7 +448,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1312630() {
         double money = 1500.0;
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 1;
         //mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp, "SPB", "105");
         strategyId = UUID.randomUUID();
@@ -495,7 +495,7 @@ public class CreateSignalSuccessTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMon = money - (priceBond.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMon = money - (priceBond.multiply(quantityRequest)).floatValue();
         BigDecimal quantityReqBaseMoney = new BigDecimal(Double.toString(quantityReqBaseMon));
         quantityReqBaseMoney = quantityReqBaseMoney.setScale(2, RoundingMode.HALF_UP);
         double quantityCommandBaseMon = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
@@ -503,7 +503,7 @@ public class CreateSignalSuccessTest {
         BigDecimal quantityCommandBaseMoney = new BigDecimal(Double.toString(quantityCommandBaseMon));
         quantityCommandBaseMoney = quantityCommandBaseMoney.setScale(2, RoundingMode.HALF_UP);
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем значения в полученной команде
@@ -523,7 +523,7 @@ public class CreateSignalSuccessTest {
     void C1434620() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 6;
+        BigDecimal quantityRequest = new BigDecimal("6.0");
         int version = 1;
         String tailValue = "6259.17";
         strategyId = UUID.randomUUID();
@@ -563,7 +563,7 @@ public class CreateSignalSuccessTest {
         // сумма всех позиции master_portoflio.positions умноженная на стоимость и плюс базовая валюта
         BigDecimal masterPortfolioValue = new BigDecimal(Double.toString(money));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        BigDecimal signalValue = quantityRequest.multiply(price);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -590,7 +590,7 @@ public class CreateSignalSuccessTest {
     void C1434604() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("108.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 2;
         String tailValue = "6259.17";
         double quantityPosMasterPortfolio = 6.0;
@@ -636,7 +636,7 @@ public class CreateSignalSuccessTest {
             .multiply(new BigDecimal(priceLast))
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        BigDecimal signalValue = quantityRequest.multiply(price);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -661,7 +661,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1434098() {
         double money = 1500.0;
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 2;
         String tailValue = "6259.17";
         double quantityPosMasterPortfolio = 3.0;
@@ -709,7 +709,7 @@ public class CreateSignalSuccessTest {
             .multiply(priceLastBond)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = new BigDecimal(Integer.toString(quantityRequest)).multiply(price);
+        BigDecimal signalValue = quantityRequest.multiply(price);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue, 4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -738,7 +738,7 @@ public class CreateSignalSuccessTest {
     void C1740596() {
         double money = 784.84;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 3;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -778,11 +778,11 @@ public class CreateSignalSuccessTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money + (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money + (price.multiply(quantityRequest)).floatValue();
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем значения в полученной команде
@@ -803,7 +803,7 @@ public class CreateSignalSuccessTest {
     void C1737220() {
         double money = 784.84;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 3;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -843,11 +843,11 @@ public class CreateSignalSuccessTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).floatValue();
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем значения в полученной команде
@@ -868,7 +868,7 @@ public class CreateSignalSuccessTest {
     void C1740662() {
         double money = 891.84;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 2;
+        BigDecimal quantityRequest = new BigDecimal("2.0");
         int version = 4;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -907,11 +907,11 @@ public class CreateSignalSuccessTest {
         assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
-        double quantityReqBaseMoney = money - (price.multiply(new BigDecimal(quantityRequest))).floatValue();
+        double quantityReqBaseMoney = money - (price.multiply((quantityRequest)).floatValue());
         double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
-        double quantityPosition = 0.0 + quantityRequest;
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
             * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
         // проверяем значения в полученной команде
@@ -932,7 +932,7 @@ public class CreateSignalSuccessTest {
     void C1742644() {
         double money = 391.84;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 5;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -974,7 +974,7 @@ public class CreateSignalSuccessTest {
     void C1744047() {
         double money = 391.84;
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 5;
         strategyId = UUID.randomUUID();
         //создаем стратегию
@@ -1014,7 +1014,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439791() {
         BigDecimal price = new BigDecimal("105");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1056,7 +1056,7 @@ public class CreateSignalSuccessTest {
         //Получаем цену покупки
         String priceAsk = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "ask", SIEBEL_ID, instrument.instrumentAAPL);
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1067,7 +1067,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerALFAperp));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountALFAperp));
 }
@@ -1081,7 +1081,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439796() {
         BigDecimal price = new BigDecimal("105");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1125,7 +1125,7 @@ public class CreateSignalSuccessTest {
         //Получаем цену покупки
         String priceBid = steps.getPriceFromExchangePositionPriceCache(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "bid", SIEBEL_ID, instrument.instrumentALFAperp);
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1137,7 +1137,7 @@ public class CreateSignalSuccessTest {
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
         //assertThat("price", masterSignal.getPrice(), is(price));
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerALFAperp));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountALFAperp));
     }
@@ -1152,7 +1152,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1440696() {
         BigDecimal price = new BigDecimal("3300.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1196,7 +1196,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803799() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 10;
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1236,7 +1236,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1249,7 +1249,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerSBER));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
@@ -1264,7 +1264,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1799366() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 10;
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1306,7 +1306,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1319,7 +1319,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerSBER));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
 
@@ -1335,7 +1335,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1807504() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 10;
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1376,7 +1376,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1389,7 +1389,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerSBER));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
@@ -1405,7 +1405,7 @@ public class CreateSignalSuccessTest {
     void C1430348() {
        // mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp);
         BigDecimal price = new BigDecimal("105");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 2;
         String tailValue = "150000";
         double money = 3885.0;
@@ -1455,7 +1455,7 @@ public class CreateSignalSuccessTest {
             .multiply(priceLastBond)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем лимит концентрации
-        BigDecimal positionValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal positionValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal positionRate = positionValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1466,7 +1466,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerALFAperp));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountALFAperp));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
@@ -1482,7 +1482,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430357() {
         BigDecimal price = new BigDecimal("105");
-        int quantityRequest = 2;
+        BigDecimal quantityRequest = new BigDecimal("2.0");
         int version = 2;
         String tailValue = "150000";
         double money = 345690;
@@ -1521,7 +1521,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем лимит концентрации
-        BigDecimal positionValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal positionValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal positionRate = positionValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1532,7 +1532,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerAAPL));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
@@ -1548,7 +1548,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430350() {
         BigDecimal price = new BigDecimal("105");
-        int quantityRequest = 5;
+        BigDecimal quantityRequest = new BigDecimal("5.0");
         int version = 2;
         String tailValue = "1500";
         double money = 1000;
@@ -1587,7 +1587,7 @@ public class CreateSignalSuccessTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем лимит концентрации
-        BigDecimal positionValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal positionValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal positionRate = positionValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1598,7 +1598,7 @@ public class CreateSignalSuccessTest {
         await().atMost(FIVE_SECONDS).until(() ->
             masterSignal = masterSignalDao.getMasterSignalByVersion(strategyId, version + 1), notNullValue());
         //проверяем выставленный сигнал
-        assertThat("quantity", masterSignal.getQuantity().intValue(), is(quantityRequest));
+        assertThat("quantity", masterSignal.getQuantity(), is(quantityRequest));
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerAAPL));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
@@ -1653,7 +1653,7 @@ public class CreateSignalSuccessTest {
 
     void assertCommand(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
                        double quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, double quantityReqBaseMoney, BigDecimal price,
-                       int quantityRequest, String ticker, String tradingClearingAccount) {
+                       BigDecimal quantityRequest, String ticker, String tradingClearingAccount) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -1673,13 +1673,13 @@ public class CreateSignalSuccessTest {
         assertThat("значение price  не равен", BigDecimal.valueOf(pricePositionCommand), is(price));
         double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
-        assertThat("значение quantity  не равен", quaSignalPositionCommand, is(Double.valueOf(quantityRequest)));
+        assertThat("значение quantity  не равен", quaSignalPositionCommand, is(quantityRequest.doubleValue()));
     }
 
 
     void assertCommandBond(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
                            BigDecimal quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, BigDecimal quantityReqBaseMoney, BigDecimal price,
-                           int quantityRequest, String ticker, String tradingClearingAccount) {
+                           BigDecimal quantityRequest, String ticker, String tradingClearingAccount) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -1702,12 +1702,12 @@ public class CreateSignalSuccessTest {
         assertThat("значение price  не равен", pricePositionCommand, is(price));
         double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
-        assertThat("значение quantity  не равен", quaSignalPositionCommand, is(Double.valueOf(quantityRequest)));
+        assertThat("значение quantity  не равен", quaSignalPositionCommand, is(quantityRequest.doubleValue()));
     }
 
 
     public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, BigDecimal price,
-                                                   int quantityRequest, UUID strategyId, String ticker,
+                                                   BigDecimal quantityRequest, UUID strategyId, String ticker,
                                                    String tradingClearingAccount, int version) {
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(actionEnum);

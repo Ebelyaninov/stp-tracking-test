@@ -209,7 +209,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C653780(String appName, String appVersion, String appPlatform) {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
@@ -247,7 +247,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C655896() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -275,13 +275,13 @@ public class CreateSignalErrorTest {
 
     private static Stream<Arguments> provideStringsForBodyCreateSignal() {
         return Stream.of(
-            Arguments.of(null, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(null, new BigDecimal("10.0"), new BigDecimal("4.0"), UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
 //            Arguments.of(CreateSignalRequest.ActionEnum.SELL, "2000356465", null, 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
             Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), null, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, null, "XS0587031096", "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), null, "L01+00000SPB", 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", null, 1),
-            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), 4, UUID.randomUUID(), "XS0587031096", "L01+00000SPB", null)
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), new BigDecimal("4.0"), null, "XS0587031096", "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), new BigDecimal("4.0"), UUID.randomUUID(), null, "L01+00000SPB", 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), new BigDecimal("4.0"), UUID.randomUUID(), "XS0587031096", null, 1),
+            Arguments.of(CreateSignalRequest.ActionEnum.SELL, new BigDecimal("10.0"), new BigDecimal("4.0"), UUID.randomUUID(), "XS0587031096", "L01+00000SPB", null)
         );
     }
 
@@ -292,7 +292,7 @@ public class CreateSignalErrorTest {
     @DisplayName("C656034.CreateSignal.Валидация запроса: contractId, strategyId, version, ticker, tradingClearingAccount, action, quantity, price")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
-    void C656034(CreateSignalRequest.ActionEnum action, BigDecimal price, Integer quantityRequest,
+    void C656034(CreateSignalRequest.ActionEnum action, BigDecimal price, BigDecimal quantityRequest,
                  UUID strategyIdTest, String ticker, String tradingClearingAccount, Integer version) {
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = new CreateSignalRequest();
@@ -337,7 +337,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C655947(String siebelId) {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
 //        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
@@ -381,7 +381,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656466(String ticker) {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
         strategyId = UUID.randomUUID();
@@ -420,7 +420,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656470(String tradingClearingAccount) {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -458,7 +458,7 @@ public class CreateSignalErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656271(BigDecimal price) {
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -489,7 +489,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656481() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -521,7 +521,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656494() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         String contractOther = contractService.findOneContract().get().getId();
@@ -554,7 +554,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656557() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -585,7 +585,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657123() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -626,7 +626,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657138() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -673,7 +673,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657144() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -720,7 +720,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657162() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 5;
         String ticker = "FXITTEST";
         String tradingClearingAccount = "L01+00002F00";
@@ -767,7 +767,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657198() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 4;
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 5;
         String ticker = "MTS_TEST";
         String tradingClearingAccount = "L01+00000SPB";
@@ -813,7 +813,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656524() {
         BigDecimal price = new BigDecimal("278.14");
-        int quantityRequest = 10;
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 5;
         String ticker = "SBER";
         String tradingClearingAccount = "L01+00002F00";
@@ -862,7 +862,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657204() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
 //        String ticker = "XS0424860947";
 //        String tradingClearingAccount = "L01+00002F00";
@@ -913,7 +913,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657314() {
         BigDecimal price = new BigDecimal("1000.0");
-        int quantityRequest = 6;
+        BigDecimal quantityRequest = new BigDecimal("6.0");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -960,7 +960,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657490() {
         BigDecimal price = new BigDecimal("10.0");
-        int quantityRequest = 16;
+        BigDecimal quantityRequest = new BigDecimal("16.0");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1007,7 +1007,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657523() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 30;
+        BigDecimal quantityRequest = new BigDecimal("30.0");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1054,7 +1054,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657577() {
         BigDecimal price = new BigDecimal("6.3825");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 2;
 //        String instrument.tickerTRUR = "TRUR";
 //        String tradingClearingAccount = "L01+00002F00";
@@ -1105,7 +1105,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658177() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1270,7 +1270,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658178() {
         BigDecimal price = new BigDecimal("500");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1319,7 +1319,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1434603() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1368,7 +1368,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430347() {
         BigDecimal price = new BigDecimal("101");
-        int quantityRequest = 70;
+        BigDecimal quantityRequest = new BigDecimal("70.0");
         int version = 4;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1415,7 +1415,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1496918() {
         BigDecimal price = new BigDecimal("292");
-        int quantityRequest = 6;
+        BigDecimal quantityRequest = new BigDecimal("6.0");
         int version = 4;
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
@@ -1471,7 +1471,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1742768() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1519,7 +1519,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1456532() {
         BigDecimal price = new BigDecimal("107.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1572,7 +1572,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1440667() {
         BigDecimal price = new BigDecimal("3300.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1623,7 +1623,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439792() {
         BigDecimal price = new BigDecimal("5341.8");
-        int quantityRequest = 8;
+        BigDecimal quantityRequest = new BigDecimal("8.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1678,7 +1678,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439793() {
         BigDecimal price = new BigDecimal("5341.8");
-        int quantityRequest = 8;
+        BigDecimal quantityRequest = new BigDecimal("8.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1733,7 +1733,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1807503() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 10;
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1785,7 +1785,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803801() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 300;
+        BigDecimal quantityRequest = new BigDecimal("300.0");
         int version = 4;
         String tailValue = "15000000";
         double money = 100000.0;
@@ -1816,7 +1816,7 @@ public class CreateSignalErrorTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1853,7 +1853,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803792() {
         BigDecimal price = new BigDecimal("135");
-        int quantityRequest = 300;
+        BigDecimal quantityRequest = new BigDecimal("300.0");
         int version = 4;
         String tailValue = "15000000";
         double money = 100000.0;
@@ -1886,7 +1886,7 @@ public class CreateSignalErrorTest {
             .multiply(price)
             .add(new BigDecimal(Double.toString(money)));
         //Рассчитываем объем выставляемого сигнала
-        BigDecimal signalValue = price.multiply(BigDecimal.valueOf(quantityRequest));
+        BigDecimal signalValue = price.multiply(quantityRequest);
         //Рассчитываем долю сигнала относительно всего портфеля
         BigDecimal signalRate = signalValue.divide(masterPortfolioValue,4, RoundingMode.HALF_UP);
         //Определяем объем заявок на ведомых в случае выставления сигнала
@@ -1924,7 +1924,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430349() {
         BigDecimal price = new BigDecimal("2422");
-        int quantityRequest = 1;
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 2;
         String tailValue = "150000";
         double money = 48250;
@@ -1976,7 +1976,7 @@ public class CreateSignalErrorTest {
     void C1888691() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("4.0");
-        int quantityRequest = 3;
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 1;
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -2082,7 +2082,7 @@ public class CreateSignalErrorTest {
 
 
     public CreateSignalRequest createSignalRequest(CreateSignalRequest.ActionEnum actionEnum, BigDecimal price,
-                                                   int quantityRequest, UUID strategyId, String ticker,
+                                                   BigDecimal quantityRequest, UUID strategyId, String ticker,
                                                    String tradingClearingAccount, int version) {
         CreateSignalRequest request = new CreateSignalRequest();
         request.setAction(actionEnum);
