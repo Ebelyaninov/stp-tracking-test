@@ -52,6 +52,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,6 +62,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
@@ -380,7 +382,7 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(2))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofMillis(200)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdConservative).get().getBlocked(), equalTo(false));
         //Проверить, что не изменили risk_profile = aggressive
         checkClient(investIdCOnservative, ClientRiskProfile.aggressive);
@@ -469,7 +471,7 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.AGGRESSIVE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdMedium).get().getBlocked(), equalTo(false));
         //Проверить, что не изменили risk_profile = aggressive
         checkClient(investIdMedium, ClientRiskProfile.aggressive);
@@ -510,15 +512,15 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.MODERATE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdMedium, TestingRiskNotification.Event.Type.MODERATE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> subscriptionService.findSubcription(contractIdMedium).get().getBlocked(), equalTo(true));
-        OffsetDateTime time = OffsetDateTime.now();
+        ZonedDateTime time = Instant.now().atZone(ZoneId.of("UTC+03:00"));
         //Проверить, что изменили risk_profile = moderate
         checkClient(investIdMedium, ClientRiskProfile.moderate);
         //Проверяем, что  заблокировали подписку
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.active,  true, null);
         SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractIdMedium).getId(), SubscriptionBlockReason.RISK_PROFILE.getAlias());
-        assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0,18), equalTo(time.toString().substring(0,18)));
+        assertThat("lower(period) !=  now()", getDataFromSubscriptionBlock.getPeriod().lower().toString().substring(0,18), equalTo(time.toString().substring(0,18)));
         assertThat("upper(period) !=  ", getDataFromSubscriptionBlock.getPeriod().upper(), equalTo(null));
         assertThat("subscriptionBlockReason !=  risk-profile" , getDataFromSubscriptionBlock.getReason(), equalTo(SubscriptionBlockReason.RISK_PROFILE.getAlias()));
         //Ищем и проверяем событие в топике tracking.contract.event
@@ -583,7 +585,7 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> clientService.findClient(investIdCOnservative).get().getRiskProfile(), equalTo(ClientRiskProfile.conservative));
         //Проверить, что изменили risk_profile = conservative
         checkClient(investIdCOnservative, ClientRiskProfile.conservative);
@@ -659,7 +661,7 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, TestingRiskNotification.Event.Type.CONSERVATIVE).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> clientService.findClient(investIdCOnservative).get().getRiskProfile(), equalTo(ClientRiskProfile.conservative));
         //Проверить, что изменили risk_profile = conservative
         checkClient(investIdCOnservative, ClientRiskProfile.conservative);
@@ -721,7 +723,7 @@ public class HandleRiskProfileEventTest {
         byte[] eventBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, riskProfileForUpdate).toByteArray();
         byte[] keyBytes = createMessageForhandleRiskProfileEvent(investIdCOnservative, riskProfileForUpdate).toByteArray();
         oldKafkaService.send(ORIGINATION_TESTING_RISK_NOTIFICATION_RAW, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(3)).ignoreExceptions()
             .until(() -> clientService.findClient(investIdCOnservative).get().getRiskProfile(), equalTo(riskProfileAfterUpdate));
         //Проверить, что изменили risk_profile
         checkClient(investIdCOnservative, riskProfileAfterUpdate);
@@ -766,23 +768,25 @@ public class HandleRiskProfileEventTest {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd' 'HH");
         String dateNow = (formatter.format(dateNowOne));
         Subscription getSubscription = subscriptionService.getSubscriptionByContract(contractId);
-        assertThat("slave_contract_id != " + contractId, getSubscription.getSlaveContractId(), equalTo(contractId));
-        assertThat("strategy_id != " + strategyId, getSubscription.getStrategyId(), equalTo(strategyId));
-        assertThat("start_time != " + dateNow, getSubscription.getStartTime(), equalTo(startTime));
-        assertThat("status != " + status, getSubscription.getStatus(), equalTo(status));
-        assertThat("end_time !=" + endTime, getSubscription.getEndTime(), equalTo(endTime));
-        assertThat("blocked != " + blocked, getSubscription.getBlocked(), equalTo(blocked));
+        assertAll(
+            () -> assertThat("slave_contract_id != " + contractId, getSubscription.getSlaveContractId(), equalTo(contractId)),
+            () -> assertThat("strategy_id != " + strategyId, getSubscription.getStrategyId(), equalTo(strategyId)),
+            () -> assertThat("start_time != " + dateNow, getSubscription.getStartTime(), equalTo(startTime)),
+            () -> assertThat("status != " + status, getSubscription.getStatus(), equalTo(status)),
+            () -> assertThat("end_time !=" + endTime, getSubscription.getEndTime(), equalTo(endTime)),
+            () -> assertThat("blocked != " + blocked, getSubscription.getBlocked(), equalTo(blocked))
+        );
     }
 
     //проверяем блокировку подписки
     void checkSubscriptionBlock (String contractId, String subscriptionBlockReason, String lowerPeriod, String upperPeriod) {
-        Date dateNowOne = new Date(System.currentTimeMillis());
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH");
-        String dateNow = (formatter.format(dateNowOne));
+        ZonedDateTime zonedDateTime = Instant.now().atZone(ZoneId.of("UTC+03:00"));
+        DateTimeFormatter formatterInstance = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH");
+        String formattedString = zonedDateTime.format(formatterInstance);
         SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId(), SubscriptionBlockReason.RISK_PROFILE.getAlias());
         assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString(), equalTo(lowerPeriod));
         if (upperPeriod != null){
-            assertThat("upper(period) !=  " + dateNow, getDataFromSubscriptionBlock.getPeriod().upper().toString().substring(0, 13), equalTo(dateNow));
+            assertThat("upper(period) !=  " + formattedString, getDataFromSubscriptionBlock.getPeriod().upper().toString().substring(0, 13), equalTo(formattedString));
         }
         else {
             assertThat("upper(period) !=  null", getDataFromSubscriptionBlock.getPeriod().upper(), equalTo(null));

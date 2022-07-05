@@ -218,7 +218,7 @@ public class HandleAccountRegistrationEventErrorTest {
         //вычитываем все события из топика
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
         List<Client> clients = clientService.findClinetsByInvestId(investIdAgressive);
         assertThat("Добавили запись в таблицу client", clients.size(), equalTo(0));
@@ -242,7 +242,7 @@ public class HandleAccountRegistrationEventErrorTest {
         byte[] keyBytes = event.getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
 
         List<Subscription> getSubscriptions = subscriptionService.getSubscriptionByStrategy(strategyId);
@@ -253,7 +253,7 @@ public class HandleAccountRegistrationEventErrorTest {
 
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isEmpty());
 
         List<Subscription> getSubscriptionsAfterClear = subscriptionService.getSubscriptionByStrategy(strategyId);
@@ -274,7 +274,7 @@ public class HandleAccountRegistrationEventErrorTest {
 
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500))
             .until(() -> contractService.findContract(contractIdAgressive).isPresent());
 
         Client getClient = clientService.getClient(investIdAgressive);
@@ -309,7 +309,7 @@ public class HandleAccountRegistrationEventErrorTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500))
             .until(() -> subscriptionService.findSubcription(contractIdAgressive).isPresent());
         Subscription subscription = subscriptionService.findSubcription(contractIdAgressive).get();
         assertThat("Активировали подписку", subscription.getStatus(), equalTo(SubscriptionStatus.draft));
@@ -332,7 +332,7 @@ public class HandleAccountRegistrationEventErrorTest {
         byte[] keyBytes = event.getId().toByteArray();
         oldKafkaService.send(ORIGINATION_ACCOUNT_REGISTRATION_EVENT, keyBytes, eventBytes);
 
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofNanos(500))
+        await().atMost(Duration.ofSeconds(3)).pollDelay(Duration.ofNanos(500)).ignoreExceptions()
             .until(() -> contractService.findContract(contractIdAgressive).isPresent());
 
         Client client = clientService.getClient(investIdAgressive);
