@@ -263,6 +263,21 @@ public class MocksBasicSteps {
     }
 
 
+    public void createShedulesEMockAnalizeShedulesExchange()
+        throws InterruptedException {
+        //Создание моков
+        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+        Thread.sleep(1000);
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX_PLUS"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX_MORNING"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("FX"));
+        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX_PLUS_WEEKEND"));
+
+    }
+
 
     public void createDataForMockAnalizeMdPrices(String ticker, String classCode, String lastPrice, String bidPrice, String askPrice)
         throws InterruptedException {
