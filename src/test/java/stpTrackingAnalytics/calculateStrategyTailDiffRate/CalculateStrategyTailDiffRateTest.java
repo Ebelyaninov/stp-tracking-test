@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -286,7 +287,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -345,7 +346,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -383,7 +384,7 @@ public class CalculateStrategyTailDiffRateTest {
         result.put((float) 0.99, (float) 0.0);
         result.put((float) 1.0, (float) 0.0);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -440,7 +441,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -498,7 +499,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -556,7 +557,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -610,7 +611,7 @@ public class CalculateStrategyTailDiffRateTest {
         result.put((float) 0.99, (float) 0.55);
         result.put((float) 1.0, (float) 0.55);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }
@@ -669,7 +670,7 @@ public class CalculateStrategyTailDiffRateTest {
         //рассчитываем кривизну и записываем результат
         Map<Float, Float> result = calculateQuantiles(strategyTailDiffRateQuantiles, diffRates);
 //        checkStrategyTailDiffRate(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailDiffRate = strategyTailDiffRateDao.getStrategyTailDiffRateByStrategyId(strategyId), notNullValue());
         assertThat("значение в каждом квантиле не равно", strategyTailDiffRate.getValues(), is(result));
     }

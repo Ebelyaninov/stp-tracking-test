@@ -50,6 +50,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -231,7 +232,7 @@ public class СalculateSignalFrequencyTest {
         Date end = Date.from(cutTime.toInstant());
         int count = countUniqueMasterSignalDays(strategyId, start, end);
 //        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -269,7 +270,7 @@ public class СalculateSignalFrequencyTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
 //        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -310,7 +311,7 @@ public class СalculateSignalFrequencyTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
 //        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -378,7 +379,7 @@ public class СalculateSignalFrequencyTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
 //        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -408,7 +409,7 @@ public class СalculateSignalFrequencyTest {
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
 //        checkMasterSignalFrequency(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);

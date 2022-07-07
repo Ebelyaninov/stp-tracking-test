@@ -61,6 +61,7 @@ import static io.qameta.allure.Allure.step;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -204,7 +205,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofSeconds(1));
 //        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -268,7 +269,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
 //        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -330,7 +331,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofMillis(500));
 //        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),
@@ -425,7 +426,7 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
 //        checkMasterPortfolioTopPositions(strategyId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(masterPortfolioTopPositions.getCut().toInstant(),

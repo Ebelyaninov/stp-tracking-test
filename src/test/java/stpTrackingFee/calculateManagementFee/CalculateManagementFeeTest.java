@@ -504,6 +504,8 @@ public class CalculateManagementFeeTest {
         //отправляем команду в топик kafka tracking.fee.command
         kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
         log.info("Команда в tracking.fee.command:  {}", command);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 0), notNullValue());
         Optional<ManagementFee> portfolioValue = managementFeeDao.findManagementFee(contractIdSlave, strategyId, subscriptionId, 0);
         assertThat("запись по расчету комиссии за управления не равно", portfolioValue.isPresent(), is(true));
     }
@@ -903,7 +905,6 @@ public class CalculateManagementFeeTest {
         //создаем записи о расчете комиссии за управление
         createManagemetFee(subscriptionId);
         //вычитываем все события из топика tracking.fee.calculate.command
-//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -938,7 +939,8 @@ public class CalculateManagementFeeTest {
             .getEndedAt().getSeconds()), ZoneId.of("UTC"));
         assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
         assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
-        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(2)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3), notNullValue());
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is("contractBlocked"));
         double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
@@ -1108,7 +1110,6 @@ public class CalculateManagementFeeTest {
         //создаем записи о расчете комиссии за управление
         createManagemetFeeWithBlocked(subscriptionId);
         //вычитываем все события из топика tracking.fee.calculate.command
-//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -1143,7 +1144,8 @@ public class CalculateManagementFeeTest {
             .getEndedAt().getSeconds()), ZoneId.of("UTC"));
         assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
         assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
-        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(2)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3), notNullValue());
         BigDecimal portfolioValue = managementFee.getContext().getPortfolioValue();
         double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
         BigDecimal value = BigDecimal.valueOf(feeCommand.getManagement().getPortfolioValue().getUnscaled()).multiply(BigDecimal.valueOf(scale));
@@ -1457,7 +1459,8 @@ public class CalculateManagementFeeTest {
             .getEndedAt().getSeconds()), ZoneId.of("UTC"));
         assertThat("settlement_period started_at не равен", commandStartTime.toString(), is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toString()));
         assertThat("settlement_period ended_at не равен", commandEndTime.toString(), is(LocalDate.now().atStartOfDay().minusHours(3).toString()));
-        managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(2)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, this.strategyId, subscriptionId, 3), notNullValue());
         assertThat("notChargedReasons не равно", managementFee.getContext().getNotChargedReasons().get(0),
             is("strategyFrozen"));
         double scale = Math.pow(10, -1 * feeCommand.getManagement().getPortfolioValue().getScale());
@@ -1692,7 +1695,7 @@ public class CalculateManagementFeeTest {
         BigDecimal basemoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
         log.info("valuePortfolio:  {}", basemoney);
         checkComparedToMasterFeeVersion(1, subscriptionId);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
         assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(basemoney));
         assertThat("settlement_period_started_at не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
