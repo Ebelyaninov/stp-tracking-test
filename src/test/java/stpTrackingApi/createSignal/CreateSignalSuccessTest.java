@@ -28,6 +28,7 @@ import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
@@ -82,6 +83,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+    KafkaOldConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
@@ -256,7 +258,7 @@ public class CreateSignalSuccessTest {
         BigDecimal price = new BigDecimal("107.0");
         BigDecimal quantityRequest = new BigDecimal("2.058");
         int version = 1;
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
+        //mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -1602,6 +1604,149 @@ public class CreateSignalSuccessTest {
         assertThat("ticker", masterSignal.getTicker(), is(instrument.tickerAAPL));
         assertThat("tradingClearingAccount", masterSignal.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
         assertThat("tailOrderQuantity", masterSignal.getTailOrderQuantity(), is(tailOrderQuantity));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa2")})
+    @AllureId("1889573")
+    @DisplayName("1889573 У позиции status IN (список из настройки trading-statuses со значением true), проверка на паузу если последняя приостановка торгов status NOT IN trading-statuses")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1889573() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerYNDX, instrument.classCodeYNDX, "SPB", "MOEX",String.valueOf(price));
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //создаем и отправляем событие о статусе в топик test.topic.to.delete
+        steps.createCommandForStatusCache(instrument.tickerYNDX, instrument.classCodeYNDX, "trading",  LocalDateTime.now().minusMinutes(31));
+        steps.createCommandForStatusCache(instrument.tickerYNDX, instrument.classCodeYNDX, "normal_trading",  LocalDateTime.now().minusMinutes(25));
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(response -> response);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+//        assertThat("createAt не равен", time.toInstant().truncatedTo(ChronoUnit.SECONDS),
+//            is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
+        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX);
+    }
+
+
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa2")})
+    @AllureId("1889522")
+    @DisplayName("1889522 У позиции status IN (список из настройки trading-statuses со значением true), не найдена последняя приостановка торгов")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1889522() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerVTBM, instrument.classCodeVTBM, "SPB", "MOEX",String.valueOf(price));
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //создаем и отправляем событие о статусе в топик test.topic.to.delete
+        steps.createCommandForStatusCache(instrument.tickerVTBM, instrument.classCodeVTBM, "normal_trading",  LocalDateTime.now().minusMinutes(25));
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerVTBM, instrument.tradingClearingAccountVTBM, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(202))
+            .execute(response -> response);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(31));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand commandKafka = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        Instant createAt = Instant.ofEpochSecond(commandKafka.getCreatedAt().getSeconds(), commandKafka.getCreatedAt().getNanos());
+        //проверяем параметры команды по синхронизации
+        assertThat("Operation команды не равен", commandKafka.getOperation(), is(Tracking.PortfolioCommand.Operation.ACTUALIZE));
+        assertThat("ContractId команды не равен", commandKafka.getContractId(), is(contractIdMaster));
+//        assertThat("createAt не равен", time.toInstant().truncatedTo(ChronoUnit.SECONDS),
+//            is(createAt.truncatedTo(ChronoUnit.SECONDS)));
+        log.info("Команда в tracking.master.command:  {}", commandKafka);
+        //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
+        double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
+        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
+        double quantityPosition = 0.0 + quantityRequest.doubleValue();
+        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        // проверяем значения в полученной команде
+        versionNew = version + 1;
+        assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
+            quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
+            quantityRequest, instrument.tickerVTBM, instrument.tradingClearingAccountVTBM);
     }
 
 
