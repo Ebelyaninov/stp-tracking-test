@@ -51,6 +51,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -235,7 +236,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -272,7 +273,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -324,7 +325,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -389,7 +390,7 @@ public class CalculateSignalsCountTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
@@ -418,7 +419,7 @@ public class CalculateSignalsCountTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
         long countRecord = signalsCountDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             signalsCount = signalsCountDao.getSignalsCountByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalsCount.getCut().toInstant(),
             ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
