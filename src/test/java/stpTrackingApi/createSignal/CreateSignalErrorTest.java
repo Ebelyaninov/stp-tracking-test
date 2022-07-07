@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.RequestBuilder;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
@@ -30,17 +31,20 @@ import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
+import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
+import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
+import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
+import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.services.database.ProfileService;
-import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
-import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
+import ru.qa.tinkoff.steps.*;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
@@ -60,6 +64,7 @@ import ru.qa.tinkoff.tracking.services.database.StrategyService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -88,16 +93,19 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
     SocialDataBaseAutoConfiguration.class,
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
+    KafkaOldConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
     StpTrackingAdminStepsConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
+    MocksBasicStepsConfiguration.class,
+    StpTrackingMockSlaveDateConfiguration.class,
     ApiCreatorConfiguration.class,
     AdminApiCreatorConfiguration.class
 })
 public class CreateSignalErrorTest {
     @Autowired
-    StringSenderService stringSenderService;
+    OldKafkaService oldKafkaService;
     @Autowired
     ProfileService profileService;
     @Autowired
@@ -123,6 +131,10 @@ public class CreateSignalErrorTest {
     @Autowired
     StpSiebel stpSiebel;
     @Autowired
+    MocksBasicSteps mocksBasicSteps;
+    @Autowired
+    StpMockSlaveDate mockSlaveDate;
+    @Autowired
     ApiCreator<SignalApi> signalApiCreator;
     @Autowired
     ApiAdminCreator<ExchangePositionApi> exchangePositionApiAdminCreator;
@@ -141,7 +153,7 @@ public class CreateSignalErrorTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(stpSiebel.siebelIdApiMaster);
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         investIdMaster = resAccountMaster.getInvestId();
-        steps.deleteDataFromDb(SIEBEL_ID);
+        //steps.deleteDataFromDb(SIEBEL_ID);
     }
 
     @AfterEach
@@ -2008,6 +2020,150 @@ public class CreateSignalErrorTest {
         //Проверяем тело ошибки
         ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
         adminSteps.checkErrors(errorResponse, "Error", "Сервис временно недоступен");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa2")})
+    @AllureId("1889466")
+    @DisplayName("1889466 У позиции status IN (список из настройки trading-statuses со значением false)")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1889466() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //создаем и отправляем событие о статусе в топик test.topic.to.delete
+        steps.createCommandForStatusCache(instrument.tickerNOK, instrument.classCodeNOK, "not_available_for_trading",  LocalDateTime.now());
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerNOK, instrument.tradingClearingAccountNOK, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем тело ошибки
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        adminSteps.checkErrors(errorResponse, "Error", "Торги по инструменту сейчас не проводятся");
+    }
+
+
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa2")})
+    @AllureId("1889456")
+    @DisplayName("1889456 У позиции status NOT IN (список из настройки trading-statuses)")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1889456() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //создаем и отправляем событие о статусе в топик test.topic.to.delete
+        steps.createCommandForStatusCache(instrument.tickerNOK, instrument.classCodeNOK, "trading", LocalDateTime.now());
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerNOK, instrument.tradingClearingAccountNOK, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем тело ошибки
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        adminSteps.checkErrors(errorResponse, "Error", "Торги по инструменту сейчас не проводятся");
+    }
+
+    @SneakyThrows
+    @Test
+    @Tags({@Tag("qa2")})
+    @AllureId("1889528")
+    @DisplayName("1889528 У позиции status IN (список из настройки trading-statuses со значением true), но достаточная пауза после возобновления торгов еще не прошла")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C1889528() {
+        double money = 1500.0;
+        BigDecimal price = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
+        int version = 1;
+        strategyId = UUID.randomUUID();
+        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionList, version, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6259.17");
+        //создаем и отправляем событие о статусе в топик test.topic.to.delete
+        steps.createCommandForStatusCache(instrument.tickerNOK, instrument.classCodeNOK, "not_available_for_trading",  LocalDateTime.now());
+        steps.createCommandForStatusCache(instrument.tickerNOK, instrument.classCodeNOK, "normal_trading",  LocalDateTime.now());
+        //вычитываем из топика кафка tracking.master.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY, price, quantityRequest, strategyId,
+            instrument.tickerNOK, instrument.tradingClearingAccountNOK, version);
+
+        // вызываем метод CreateSignal
+        Response createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422))
+            .execute(response -> response);
+        //Проверяем тело ошибки
+        ru.qa.tinkoff.swagger.tracking.model.ErrorResponse errorResponse = createSignal.as(ErrorResponse.class);
+        adminSteps.checkErrors(errorResponse, "Error", "Торги по инструменту возобновились недавно, необходимо выждать паузу");
     }
 
 

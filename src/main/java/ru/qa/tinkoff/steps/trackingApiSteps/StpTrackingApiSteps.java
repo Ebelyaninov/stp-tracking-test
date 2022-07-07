@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.creator.ApiCacheApiCreator;
+import ru.qa.tinkoff.creator.FiregInstrumentsCreator;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.MarketDataCreator;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -24,6 +26,7 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.Topics;
+import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.Profile;
@@ -31,6 +34,8 @@ import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
+import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
+import ru.qa.tinkoff.swagger.fireg.model.InstrumentGetResponse;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
@@ -70,6 +75,7 @@ public class StpTrackingApiSteps {
     private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     private final ApiCacheApiCreator<ru.qa.tinkoff.swagger.trackingApiCache.api.CacheApi> cacheApiCacheApiCreator;
     private final MarketDataCreator<PricesApi> pricesMDApiCreator;
+    private final FiregInstrumentsCreator<InstrumentsApi> firegInstrumentsApiCreator;
     private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
     private final StrategyService strategyService;
 
@@ -79,6 +85,8 @@ public class StpTrackingApiSteps {
     StrategyTailValueDao strategyTailValueDao;
     @Autowired(required = false)
     MasterSignalDao masterSignalDao;
+    @Autowired(required = false)
+    OldKafkaService oldKafkaService;
 
     public Client clientMaster;
     public Contract contractMaster;
@@ -1034,5 +1042,54 @@ public class StpTrackingApiSteps {
             .build();
         return command;
     }
+
+
+    @Step("Получаем instrumentUID инструмента из фирега")
+    public String getInstrumentUID(String ticker, String classCode){
+        Response instrumentFireg = firegInstrumentsApiCreator.get().instrumentsInstrumentIdGet()
+            .instrumentIdPath(ticker)
+            .idKindQuery("ticker")
+            .classCodeQuery(classCode)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String instrumentUID = instrumentFireg.getBody().jsonPath().getString("uid");
+        return instrumentUID;
+    }
+
+
+    @SneakyThrows
+    Object[] createJsonForCommand(String ticker, String classCode, String status, LocalDateTime time){
+        String key;
+        String message;
+        String instrumentUID = getInstrumentUID(ticker, classCode);
+        OffsetDateTime newTime = time.atOffset(ZoneOffset.UTC).minusHours(3);
+
+        JSONObject jsonKey = new JSONObject();
+        jsonKey.put("instrument_id", ticker + "_" + classCode);
+
+        JSONObject json = new JSONObject();
+        json.put("instrument_uid", instrumentUID);
+        json.put("instrument_id", ticker + "_" + classCode);
+        json.put("status", status);
+        json.put("ts", newTime);
+
+        key = jsonKey.toString();
+        message = json.toString();
+
+        return new Object[]{key, message};
+
+    }
+
+    //  метод отправляет команду в тестовый топик test.topic.to.delete
+    public void createCommandForStatusCache(String ticker, String classCode, String status, LocalDateTime time) {
+        //создаем команду
+        Object[] command = createJsonForCommand(ticker, classCode, status, time);
+        String key = (String) command[0];
+        String message = (String) command[1];
+        log.info("Команда в test.topic.to.delete:  {}", message);
+        //отправляем событие в топик kafka test.topic.to.delete
+        oldKafkaService.send(Topics.TEST_TOPIC_TO_DELETE, key, message);
+    }
+
 
 }
