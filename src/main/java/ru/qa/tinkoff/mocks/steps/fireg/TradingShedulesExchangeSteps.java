@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import ru.qa.tinkoff.mocks.model.TextResourceEnhancer;
+import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeMOEXPLUSTemplateEnhancer;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeSetTimeTemplate;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateEnhancer;
 import ru.qa.tinkoff.mocks.model.fireg.TradingShedulesExchangeTemplateFX;
@@ -67,6 +68,17 @@ public class TradingShedulesExchangeSteps {
         String currentDatePlusTwo = date.plusDays(2).format(formatter);
         String body = TextResourceEnhancer.enhance(
             new TradingShedulesExchangeTemplateEnhancer (exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
+        return  body;
+    }
+
+    public String createBodyForMOEXMORNINGTradingShedulesExchange (String exchange){
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String currentDate = date.format(formatter);
+        String currentDatePlusOne = date.plusDays(1).format(formatter);
+        String currentDatePlusTwo = date.plusDays(2).format(formatter);
+        String body = TextResourceEnhancer.enhance(
+            new TradingShedulesExchangeMOEXPLUSTemplateEnhancer(exchange, currentDate, currentDatePlusOne, currentDatePlusTwo));
         return  body;
     }
 

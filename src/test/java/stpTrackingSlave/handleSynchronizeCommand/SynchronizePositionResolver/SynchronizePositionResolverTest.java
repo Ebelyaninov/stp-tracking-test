@@ -19,10 +19,13 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
+import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
+import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
+import ru.qa.tinkoff.mocks.steps.fireg.TradingShedulesExchangeSteps;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -72,7 +75,8 @@ import static org.hamcrest.Matchers.*;
     StpTrackingInstrumentConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     MocksBasicStepsConfiguration.class,
-    StpTrackingMockSlaveDateConfiguration.class
+    StpTrackingMockSlaveDateConfiguration.class,
+    KafkaOldConfiguration.class
 })
 
 public class SynchronizePositionResolverTest {
@@ -108,6 +112,8 @@ public class SynchronizePositionResolverTest {
     MocksBasicSteps mocksBasicSteps;
     @Autowired
     StpMockSlaveDate stpMockSlaveDate;
+    @Autowired
+    TradingShedulesExchangeSteps tradingShedulesExchangeSteps;
 
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder2;
@@ -127,9 +133,11 @@ public class SynchronizePositionResolverTest {
 
     public String value;
 
+
     @BeforeAll void createDataForTests() {
         SIEBEL_ID_MASTER = stpSiebel.siebelIdSlaveMaster;
         SIEBEL_ID_SLAVE = stpSiebel.siebelIdSlaveSlave;
+        //tradingShedulesExchangeSteps.clearTradingShedulesExchange();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         investIdMaster = resAccountMaster.getInvestId();
@@ -138,6 +146,7 @@ public class SynchronizePositionResolverTest {
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        //mocksBasicSteps.createTradingShedules();
     }
 
     @AfterEach
@@ -204,7 +213,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C690419() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
-            "0", "7000", "0", "0");
+            "Sell","0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         BigDecimal lot = new BigDecimal("1");
@@ -237,6 +246,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -249,7 +260,7 @@ public class SynchronizePositionResolverTest {
         quantityDiff = position.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -266,7 +277,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695626() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerQCOM, instrument.classCodeQCOM, instrument.tradingClearingAccountQCOM,
-            "0", "7000", "0", "0");
+            "Sell", "0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -301,6 +312,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -313,7 +326,7 @@ public class SynchronizePositionResolverTest {
         quantityDiff = position.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -330,7 +343,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323820() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+            "Sell","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -363,10 +376,16 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
+        log.info("waiting was started");
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        log.info("waiting was ended");
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion();
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         BigDecimal quantityDiff = BigDecimal.ZERO;
         List<SlavePortfolio.Position> positionUSDRUB = slavePortfolio.getPositions().stream()
@@ -375,8 +394,6 @@ public class SynchronizePositionResolverTest {
         quantityDiff = positionUSDRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
-            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
@@ -392,7 +409,9 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1323880() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+            "Sell","0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerUSDRUB, instrument.classCodeUSDRUB, instrument.tradingClearingAccountUSDRUB,
+            "Sell","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -433,10 +452,14 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion();
+        await().atMost(FIVE_SECONDS).ignoreExceptions().ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         List<SlavePortfolio.Position> positionUSDRUB = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerUSDRUB))
@@ -444,8 +467,6 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = positionUSDRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
-            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
@@ -460,8 +481,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1349227() {
-        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerGBP, instrument.classCodeGBP, instrument.tradingClearingAccountGBP,
+            "Sell","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -502,10 +523,14 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion();
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         List<SlavePortfolio.Position> positionGBPRUB = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerGBP))
@@ -513,8 +538,6 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = positionGBPRUB.get(0).getQuantityDiff();
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
-            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
         checkParamSlaveOrder("1", lots, lot, instrument.tickerGBP, instrument.tradingClearingAccountGBP);
@@ -530,7 +553,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695911() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+            "Sell","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -563,6 +586,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -605,7 +630,7 @@ public class SynchronizePositionResolverTest {
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -622,7 +647,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695957() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-            "0", "7000", "0", "0");
+            "Sell","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -660,6 +685,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -706,7 +733,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal lotsСalc = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = quantity.divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = min(lots, lotsСalc);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -724,7 +751,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695978() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-            "0", "7000", "0", "0");
+            "Buy","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -753,6 +780,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -767,7 +796,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal lotsСalc = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lots = positionSU29009RMFS6.get(0).getQuantity().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = min(lots, lotsСalc);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -785,7 +814,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C695986() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerXS0191754729, instrument.classCodeXS0191754729, instrument.tradingClearingAccountXS0191754729,
-            "0", "7000", "0", "0");
+            "Buy","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -822,6 +851,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -880,7 +911,7 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyALFAperp, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -897,7 +928,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697301() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+            "Buy","0", "7000", "0", "0");
         BigDecimal lot = new BigDecimal("1");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -935,6 +966,8 @@ public class SynchronizePositionResolverTest {
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -994,7 +1027,7 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyQCOM, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -1012,7 +1045,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C697225() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-            "0", "7000", "0", "0");
+            "Buy","0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1033,9 +1066,11 @@ public class SynchronizePositionResolverTest {
             null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         //создаем портфель для ведомого
         List<SlavePortfolio.Position> createListSlavePos = new ArrayList<>();
-        String baseMoneySlave = "350";
+        String baseMoneySlave = "500";
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         checkComparedToMasterVersion();
@@ -1083,7 +1118,7 @@ public class SynchronizePositionResolverTest {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyAAPL, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -1101,7 +1136,7 @@ public class SynchronizePositionResolverTest {
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1518574() {
         mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerAAPL, instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL,
-            "0", "7000", "0", "0");
+            "Buy","0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1133,12 +1168,14 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "5759.2";
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
         checkComparedToMasterVersion();
         //получаем портфель slave
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //сохраняем в списки значения по позициям в портфеле
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
@@ -1199,7 +1236,7 @@ public class SynchronizePositionResolverTest {
         }
         lots = min(lots, lotsMax);
         //проверяем, что выставили заявку по выбранной позиции и правильным числом лотов
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -1216,8 +1253,8 @@ public class SynchronizePositionResolverTest {
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
     void C1695490() {
-        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerSBER, instrument.classCodeSBER, instrument.tradingClearingAccountSBER,
-            "0", "7000", "0", "0");
+        mocksBasicSteps.createDataForMocksForSynchronizePositionResolver(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveSynchronizePositionResolver, instrument.tickerFB, instrument.classCodeFB, instrument.tradingClearingAccountFB,
+            "Buy","0", "7000", "0", "0");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         BigDecimal lot = new BigDecimal("1");
         Date date = Date.from(utc.toInstant());
@@ -1241,6 +1278,8 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "1759.2";
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_SECONDS).ignoreExceptions().until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель slave
@@ -1305,7 +1344,7 @@ public class SynchronizePositionResolverTest {
         }
         lots = min(lots, lotsMax);
         //проверяем, что выставили заявку по выбранной позиции и правильным числом лотов
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
@@ -1340,7 +1379,7 @@ public class SynchronizePositionResolverTest {
 
     @Step("Ожидаем записи в slave_portfolio: ")
     void checkComparedToMasterVersion() throws InterruptedException {
-        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
     }
 }
