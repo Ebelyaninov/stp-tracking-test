@@ -133,7 +133,7 @@ public class StpTrackingApiSteps {
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score,
                                                     String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield,
-                                                    String shortDescription, String ownerDescription) {
+                                                    String shortDescription, String ownerDescription, Boolean buyEnabled, Boolean sellEnabled) {
         //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -179,8 +179,8 @@ public class StpTrackingApiSteps {
             .setExpectedRelativeYield(expectedRelativeYield)
             .setShortDescription(shortDescription)
             .setOwnerDescription(ownerDescription)
-            .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setBuyEnabled(buyEnabled)
+            .setSellEnabled(sellEnabled);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

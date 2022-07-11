@@ -171,7 +171,7 @@ public class HandleTariffChangeEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         // создаем запись о договоре клиента в tracking.contract
         createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.untracked,
             strategyId, SubscriptionStatus.draft,  false, startTime, null);
@@ -216,7 +216,7 @@ public class HandleTariffChangeEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //Добавляем подписку slave
         java.sql.Timestamp endTime = null;
         if (subscriptionStatus.equals(SubscriptionStatus.inactive)){
@@ -258,7 +258,7 @@ public class HandleTariffChangeEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //Добавляем подписку slave
         clientSlave = clientService.createClient(investIdSlave, ClientStatusType.none, null, ClientRiskProfile.conservative);
         UUID strategyIdBeforeUpdate = UUID.randomUUID();

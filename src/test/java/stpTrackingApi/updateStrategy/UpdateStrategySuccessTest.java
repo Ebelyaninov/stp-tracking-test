@@ -135,7 +135,7 @@ public class UpdateStrategySuccessTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11");
+            "TEST", "TEST11",true,true);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -178,7 +178,7 @@ public class UpdateStrategySuccessTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11");
+            "TEST", "TEST11",true,true);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -221,7 +221,7 @@ public class UpdateStrategySuccessTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11");
+            "TEST", "TEST11",true,true);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
