@@ -46,7 +46,7 @@ public class StpInstrument {
     public String imageSBER ="sber.png";
 
 
-    public String tickerFB = "FB";
+    public String tickerFB = "META";
     public String tradingClearingAccountFB = "TKCBM_TCAB";
     public String typeFB = "share";
     public String classCodeFB = "SPBXM";
@@ -57,7 +57,8 @@ public class StpInstrument {
 
     public String tickerNOK = "NOK";
     public String classCodeNOK = "SPBXM";
-    public String tradingClearingAccountNOK = "L01+00000SPB";
+    //public String tradingClearingAccountNOK = "L01+00000SPB";
+    public String tradingClearingAccountNOK = "TKCBM_TCAB";
     public String briefNameNOK = "Nokia";
     public String imageNOK = "US6549022043.png";
     public String typeNOK = "share";
@@ -76,7 +77,8 @@ public class StpInstrument {
 
 
     public String tickerXS0191754729 = "XS0191754729";
-    public String tradingClearingAccountXS0191754729 = "L01+00000F00";
+    //public String tradingClearingAccountXS0191754729 = "L01+00000F00";
+    public String tradingClearingAccountXS0191754729 = "L01+00002F00";
     public String typeXS0191754729 = "bond";
     public String classCodeXS0191754729 = "TQOD";
     public String instrumentXS0191754729 =tickerXS0191754729 + "_" + classCodeXS0191754729;
@@ -266,7 +268,8 @@ public class StpInstrument {
 
 
     public String tickerQCOM = "QCOM";
-    public String tradingClearingAccountQCOM = "L01+00000SPB";
+    //public String tradingClearingAccountQCOM = "L01+00000SPB";
+    public String tradingClearingAccountQCOM = "TKCBM_TCAB";
     public String classCodeQCOM = "SPBXM";
 
 
@@ -321,7 +324,8 @@ public class StpInstrument {
     public String tradingClearingAccountLNT = "L01+00000SPB";
 
     public String tickerVTBM = "VTBM";
-    public String tradingClearingAccountVTBM = "L01+00000F00";
+    //public String tradingClearingAccountVTBM = "L01+00000F00";
+    public String tradingClearingAccountVTBM = "L01+00002F00";
     public String classCodeVTBM = "TQTF";
     public String instrumentVTBM = tickerVTBM + "_" + classCodeVTBM;
 
