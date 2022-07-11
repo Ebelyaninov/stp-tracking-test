@@ -135,7 +135,7 @@ public class GetLiteStrategyErrorTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11",true,true);
 
         ErrorResponse getLiteStrategyErrorResponse = strategyApiCreator.get().getLiteStrategy()
             .xAppNameHeader("invest")
@@ -168,7 +168,7 @@ public class GetLiteStrategyErrorTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null, "TEST", "TEST11",true,true);
 
         StrategyApi.GetLiteStrategyOper getLiteStrategyError = strategyApiCreator.get().getLiteStrategy()
             .strategyIdPath(strategyId)

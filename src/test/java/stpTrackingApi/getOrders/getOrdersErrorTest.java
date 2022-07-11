@@ -178,7 +178,7 @@ public class getOrdersErrorTest {
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
-            false, new BigDecimal(58.00), "TEST", "TEST11");
+            false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
@@ -221,7 +221,7 @@ public class getOrdersErrorTest {
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
-            false, new BigDecimal(58.00), "TEST", "TEST11");
+            false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
@@ -257,7 +257,7 @@ public class getOrdersErrorTest {
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
-            false, new BigDecimal(58.00), "TEST", "TEST11");
+            false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
@@ -291,7 +291,7 @@ public class getOrdersErrorTest {
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
-            false, new BigDecimal(58.00), "TEST", "TEST11");
+            false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //вставляем запись о заявке в таблицу slave_order
         createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
         //вызываем метод getOrders
@@ -320,7 +320,7 @@ public class getOrdersErrorTest {
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,
