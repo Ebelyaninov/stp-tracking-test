@@ -196,6 +196,7 @@ public class SaveDividentTest {
     @Subfeature("Успешные сценарии")
     @Description("saveDividend Начисление дивидендов в виртуальный портфель")
     void C1858514(StrategyStatus strategyStatus) {
+        UUID instrumentUID = steps.getInstrumentUID(ticker, instrument.classCodeXS0587031096);
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
@@ -225,6 +226,7 @@ public class SaveDividentTest {
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
             .quantity(new BigDecimal("1"))
+                .positionId(instrumentUID)
             .build());
         createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version -1);
         createMasterPortfolioWithPosition(positionList, baseMoneyPortfolio.toString(), date, version);

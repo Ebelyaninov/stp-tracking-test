@@ -41,6 +41,8 @@ public class MasterPortfolio {
         private Integer lastChangeDetectedVersion;
         @Field(name = "last_change_action")
         private Byte lastChangeAction;
+        @Field(name = "position_id")
+        private UUID positionId;
     }
 
     @UDT(name = "master_portfolio_base_money_position")

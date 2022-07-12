@@ -1,19 +1,23 @@
 package ru.qa.tinkoff.steps.trackingMasterSteps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
+import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.qa.tinkoff.creator.FiregInstrumentsCreator;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
+import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
@@ -26,6 +30,7 @@ import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.allure.AllureMasterSteps;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -54,6 +59,7 @@ public class StpTrackingMasterSteps {
     private final StringToByteSenderService kafkaSender;
     private final InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     private final ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
+    private final FiregInstrumentsCreator<InstrumentsApi> firegInstrumentsApiCreator;
     private final AllureMasterSteps allureSteps;
 
     public Client clientMaster;
@@ -62,6 +68,8 @@ public class StpTrackingMasterSteps {
     public Subscription subscription;
     public Contract contractSlave;
     public Client clientSlave;
+
+    UtilsTest utilsTest = new UtilsTest();
 
     //Создаем в БД tracking данные по ведущему (Master-клиент): client, contract, strategy
     @Step("Создание стратегии мастеру strategyId: \"{strategyId}\" \n в статусе: {strategyStatus}, \n для контракта: {contractId} \n c базовой валютой: {strategyCurrency}")
@@ -200,8 +208,10 @@ public class StpTrackingMasterSteps {
     public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommand(String contractId, OffsetDateTime time, int version,
                                                                                    long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
                                                                                    Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount,
-                                                                                   Double dynamicLimitQuantity, Tracking.Decimal tailOrderQuantity) {
+                                                                                   Tracking.Decimal quantityS, String ticker,
+                                                                                   String tradingClearingAccount, String classCode, Double dynamicLimitQuantity,
+                                                                                   Tracking.Decimal tailOrderQuantity) {
+        UUID positionId = getInstrumentUID(ticker, classCode);
         Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
             .setUnscaled(unscaled)
             .setScale(scale)
@@ -216,6 +226,7 @@ public class StpTrackingMasterSteps {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(action).build())
             .setQuantity(quantity)
+            .setPositionId(utilsTest.buildByteString(positionId))
             .build();
         Tracking.PortfolioCommand command;
         Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
@@ -251,7 +262,8 @@ public class StpTrackingMasterSteps {
     public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithOutTailOrderQuantity(String contractId, OffsetDateTime time, int version,
                                                                                    long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
                                                                                    Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount){
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount, String classCode){
+        UUID positionId = getInstrumentUID(ticker, classCode);
         Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
             .setUnscaled(unscaled)
             .setScale(scale)
@@ -266,6 +278,7 @@ public class StpTrackingMasterSteps {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(action).build())
             .setQuantity(quantity)
+            .setPositionId(utilsTest.buildByteString(positionId))
             .build();
         Tracking.PortfolioCommand command;
         Tracking.Portfolio.BaseMoneyPosition baseMoneyPosition = Tracking.Portfolio.BaseMoneyPosition.newBuilder()
@@ -461,6 +474,18 @@ public class StpTrackingMasterSteps {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetBrokerAccountsResponse.class));
         return resAccount;
+    }
+
+
+    public UUID getInstrumentUID(String ticker, String classCode){
+        Response instrumentFireg = firegInstrumentsApiCreator.get().instrumentsInstrumentIdGet()
+            .instrumentIdPath(ticker)
+            .idKindQuery("ticker")
+            .classCodeQuery(classCode)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response);
+        String instrumentUID = instrumentFireg.getBody().jsonPath().getString("position_security_uid");
+        return UUID.fromString(instrumentUID);
     }
 
 }
