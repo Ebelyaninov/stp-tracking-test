@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -146,7 +146,7 @@ public class HandleCorpActionCommandTest {
     @BeforeAll
     void getdataFromInvestmentAccount() {
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
-        createDataForMockRestAccount("3c28450a-766a-458c-b0ad-62a1d56adff8", siebelIdMaster, "2000058046");
+//        createDataForMockRestAccount("3c28450a-766a-458c-b0ad-62a1d56adff8", siebelIdMaster, "2000058046");
         int randomNumber = 0 + (int) (Math.random() * 100);
         title = "Autotest " + String.valueOf(randomNumber);
         description = "autotest handleCorpActionCommand for Master";
@@ -162,29 +162,29 @@ public class HandleCorpActionCommandTest {
         String paymentDateMinusSevenDays = localDateNow.minusDays(7) + "T03:00:00+03:00";
         lastBuyDate = localDateNow.minusDays(14).format(formatter) + "T03:00:00+03:00";
         lastBuyDateMinus65Days = localDateNow.minusDays(65).format(formatter) + "T03:00:00+03:00";
-        getDividendsSteps.clearGetDevidends();
-        createMockForAAPL();
-        createMockForGetDividendsWithOneItems(instrument.tickerNOK, instrument.classCodeNOK, dividendIdNOK, "1911",
-            dividendNetNOK, "usd", paymentDate, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerSBER, instrument.classCodeSBER, dividendIdSBER, dividendIdNOK,
-            dividendNetSBER, "rub", paymentDate, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerSTM, instrument.classCodeSTM, "524433", "9309",
-            "0.06", "usd", paymentDatePlusTwoDays, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerFB, instrument.classCodeFB, "524612", "2181",
-            "0.22", "usd", paymentDatePlusDay, lastBuyDate, "READY");
+//        getDividendsSteps.clearGetDevidends();
+//        createMockForAAPL();
+//        createMockForGetDividendsWithOneItems(instrument.tickerNOK, instrument.classCodeNOK, dividendIdNOK, "1911",
+//            dividendNetNOK, "usd", paymentDate, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerSBER, instrument.classCodeSBER, dividendIdSBER, dividendIdNOK,
+//            dividendNetSBER, "rub", paymentDate, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerSTM, instrument.classCodeSTM, "524433", "9309",
+//            "0.06", "usd", paymentDatePlusTwoDays, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerFB, instrument.classCodeFB, "524612", "2181",
+//            "0.22", "usd", paymentDatePlusDay, lastBuyDate, "READY");
         //Для pay-dividend-processing-days = 7d
 //        createMockForGetDividendsWithOneItems(instrument.tickerLNT, instrument.classCodeLNT, "479179", "2111",
 //            "0.4275", "usd", paymentDateMinusSevenDays, lastBuyDate, "READY");
         //Для pay-dividend-processing-days = 1d
         String paymentDateMinusDay = localDateNow.minusDays(1) + "T03:00:00+03:00";
-        createMockForGetDividendsWithOneItems(instrument.tickerLNT, instrument.classCodeLNT, "479179", "2111",
-            "0.4275", "usd", paymentDateMinusDay, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerABBV, instrument.classCodeABBV, dividendIdABBV, "2268",
-            dividendNetABBV, "usd", paymentDate, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerXS0191754729, instrument.classCodeXS0191754729, dividendIdXS0191754729, "2017",
-            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
-        createMockForGetDividendsWithOneItems(instrument.tickerNMR, instrument.classCodeNMR, dividendIdNMR, "822",
-            dividendNetNMR, "usd", paymentDate, lastBuyDateMinus65Days, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerLNT, instrument.classCodeLNT, "479179", "2111",
+//            "0.4275", "usd", paymentDateMinusDay, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerABBV, instrument.classCodeABBV, dividendIdABBV, "2268",
+//            dividendNetABBV, "usd", paymentDate, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerXS0191754729, instrument.classCodeXS0191754729, dividendIdXS0191754729, "2017",
+//            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
+//        createMockForGetDividendsWithOneItems(instrument.tickerNMR, instrument.classCodeNMR, dividendIdNMR, "822",
+//            dividendNetNMR, "usd", paymentDate, lastBuyDateMinus65Days, "READY");
     }
 
     @AfterEach
@@ -231,6 +231,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1865779() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId = ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -271,7 +272,7 @@ public class HandleCorpActionCommandTest {
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
        // проверяем запись в таблице corp_action
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         assertThat("strategy_id не равен", corpAction.getStrategyId(), is(strategyId));
         assertThat("cut из входной команды не равен", corpAction.getCut().toLocalDate(), is(cut.toLocalDate().plusDays(1)));
@@ -287,6 +288,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1865780() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId :  {}", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -327,7 +329,7 @@ public class HandleCorpActionCommandTest {
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
         // проверяем запись в таблице corp_action
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofSeconds(3)).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
         assertThat("запись по стратегии не равно", corpActionOpt.isPresent(), is(false));
@@ -404,7 +406,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(12)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(Duration.ofNanos(200)).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -479,6 +481,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1892424() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -532,7 +535,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(12)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -555,7 +558,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не 1 событие в топике", messages.size(), is(1));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
     }
 
 
@@ -568,6 +571,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866174() {
         strategyId = UUID.randomUUID();
+        log.info("Genereted strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -613,7 +617,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(ONE_SECOND).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -636,7 +640,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не 2 события в топике", messages.size(), is(2));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
     }
 
 
@@ -649,6 +653,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866182() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -695,7 +700,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -724,6 +729,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866175() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -771,7 +777,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -807,6 +813,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866180() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -865,7 +872,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -894,6 +901,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1911883() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -920,7 +928,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -949,6 +957,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1913452() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -983,7 +992,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -1002,7 +1011,7 @@ public class HandleCorpActionCommandTest {
         //Проверяем тело события
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
     }
 
 
@@ -1015,6 +1024,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1914706() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1054,7 +1064,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -1083,6 +1093,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915322() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1116,7 +1127,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -1132,7 +1143,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли события в топике", messages.size(), is(1));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
     }
 
 
@@ -1145,6 +1156,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915391() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1180,7 +1192,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -1249,7 +1261,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
@@ -1284,6 +1296,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1873536() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1330,7 +1343,7 @@ public class HandleCorpActionCommandTest {
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
-        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(5)).pollInterval(Duration.ofNanos(500)).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
             corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
         //Проверяем запись в corpAction
         Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
