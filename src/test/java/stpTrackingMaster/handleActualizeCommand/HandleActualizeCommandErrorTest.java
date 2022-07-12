@@ -426,7 +426,7 @@ public class HandleActualizeCommandErrorTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем запись о сигнале
         Byte action = (byte) 11;
@@ -496,7 +496,7 @@ public class HandleActualizeCommandErrorTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620,
             quantityPos, positionAction, versionPos, versionPortfolio, baseMoneyPortfolio, date);
         //создаем запись о сигнале
         Byte action = (byte) 12;
@@ -749,9 +749,10 @@ public class HandleActualizeCommandErrorTest {
     }
 
     //создаем портфель master в cassandra с позицией
-    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String quantityPos,
+    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String classCode, String quantityPos,
                                            Tracking.Portfolio.Position position,
                                            int versionPos, int version, String money, Date date) {
+        UUID instrumentUID = steps.getInstrumentUID(ticker, classCode);
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
@@ -760,6 +761,7 @@ public class HandleActualizeCommandErrorTest {
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
             .quantity(new BigDecimal(quantityPos))
+                .positionId(instrumentUID)
             .build());
         //базовая валюта
         MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()

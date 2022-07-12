@@ -240,7 +240,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -309,7 +309,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -383,7 +383,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем запись о сигнале
         Byte action = (byte) 12;
@@ -462,7 +462,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -561,7 +561,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
@@ -590,6 +590,7 @@ public class HandleActualizeCommandTest {
         List<MasterPortfolio.Position> positionMTS0620 = masterPortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerMTS0620))
             .collect(Collectors.toList());
+        UUID positionIdXS0587031096 = UtilsTest.getGuidFromByteArray(command.getPortfolio().getPosition(0).getPositionId().toByteArray());
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney.toString()));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
@@ -601,6 +602,7 @@ public class HandleActualizeCommandTest {
         assertThat("LastChangeAction позиции не равен", positionMTS0620.get(0).getLastChangeAction().toString(), is("12"));
         assertThat("ticker позиции не равен", positionXS0587031096.get(0).getTicker(), is(instrument.tickerXS0587031096));
         assertThat("tradingClearingAccountPos позиции не равен", positionXS0587031096.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
+        assertThat("position_id не равен", positionXS0587031096.get(0).getPositionId(), is(positionIdXS0587031096));
         assertThat("quantity позиции не равен", positionXS0587031096.get(0).getQuantity().toString(), is("10"));
         assertThat("ChangedAt позиции не равен", positionXS0587031096.get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertThat("last_change_detected_version позиции не равен", positionXS0587031096.get(0).getLastChangeDetectedVersion(), is(version));
@@ -640,7 +642,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, quantityPos, positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, instrument.classCodeXS0587031096, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -723,7 +725,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем  активную подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -892,11 +894,11 @@ public class HandleActualizeCommandTest {
 
     @SneakyThrows
     @Test
-    @AllureId("1991353")
-    @DisplayName("1991353 HandleActualizeCommand.SaveSignal.Сохраняем переданный position_id")
+    @AllureId("1992650")
+    @DisplayName("1992650 HandleActualizeCommand.SaveSignal.Сохраняем переданный position_id. Позиция есть в портфеле")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
-    void C1991353() {
+    void C1992650() {
         strategyId = UUID.randomUUID();
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
@@ -916,7 +918,7 @@ public class HandleActualizeCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
+        createMasterPortfolioWithPosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, instrument.classCodeXS0587031096, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -946,13 +948,13 @@ public class HandleActualizeCommandTest {
         assertThat("Версия последнего портфеля ведущего не равна", masterPortfolio.getVersion(), is(version));
         assertThat("quantity по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getQuantity().toString(), is("4985.0"));
         assertThat("changed_at по базовой валюте не равен", masterPortfolio.getBaseMoneyPosition().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(1).getTicker(), is(instrument.tickerXS0587031096));
-        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
-        assertThat("position_id не равен", masterPortfolio.getPositions().get(1).getPositionId(), is(positionId));
-        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(1).getQuantity().toString(), is("10"));
-        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(1).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
-        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeDetectedVersion(), is(version));
-        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(1).getLastChangeAction().toString(), is("12"));
+        assertThat("ticker позиции не равен", masterPortfolio.getPositions().get(0).getTicker(), is(instrument.tickerXS0587031096));
+        assertThat("tradingClearingAccountPos позиции не равен", masterPortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountXS0587031096));
+        assertThat("position_id не равен", masterPortfolio.getPositions().get(0).getPositionId(), is(positionId));
+        assertThat("quantity позиции не равен", masterPortfolio.getPositions().get(0).getQuantity().toString(), is("10"));
+        assertThat("ChangedAt позиции не равен", masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(now.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+        assertThat("last_change_detected_version позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeDetectedVersion(), is(version));
+        assertThat("LastChangeAction позиции не равен", masterPortfolio.getPositions().get(0).getLastChangeAction().toString(), is("12"));
     }
 
 
@@ -1009,9 +1011,10 @@ public class HandleActualizeCommandTest {
 
 
     //создаем портфель master в cassandra с позицией
-    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String quantityPos,
+    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String classCode, String quantityPos,
                                            Tracking.Portfolio.Position position,
                                            int versionPos, int version, String money, Date date) {
+        UUID instrumentUID = steps.getInstrumentUID(ticker, classCode);
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
@@ -1020,6 +1023,7 @@ public class HandleActualizeCommandTest {
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
             .quantity(new BigDecimal(quantityPos))
+                .positionId(instrumentUID)
             .build());
         //базовая валюта
         MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
