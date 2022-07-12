@@ -142,7 +142,7 @@ public class HandleCorpActionCommandErrorTest {
     void getdataFromInvestmentAccount() {
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
         //Создаем мок
-        createDataForMockRestAccount("3c28450a-766a-458c-b0ad-62a1d56adff8", siebelIdMaster, "2000058046");
+//        createDataForMockRestAccount("3c28450a-766a-458c-b0ad-62a1d56adff8", siebelIdMaster, "2000058046");
         int randomNumber = 0 + (int) (Math.random() * 100);
         title = "Autotest " + String.valueOf(randomNumber);
         description = "autotest handleCorpActionCommand for Master";
@@ -154,10 +154,10 @@ public class HandleCorpActionCommandErrorTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         paymentDate = localDateNow + "T03:00:00+03:00";
         lastBuyDate = localDateNow.minusDays(14).format(formatter) + "T03:00:00+03:00";
-        getDividendsSteps.clearGetDevidends();
-        createMockForAAPL();
-        createMockForGetDividendsWithOneItems(tickerNotFound, instrument.classCodeXS0191754729, "228", "191121",
-            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
+        //getDividendsSteps.clearGetDevidends();
+//        createMockForAAPL();
+//        createMockForGetDividendsWithOneItems(tickerNotFound, instrument.classCodeXS0191754729, "228", "191121",
+//            dividendNetXS0191754729, "usd", paymentDate, lastBuyDate, "READY");
     }
 
     @AfterEach

@@ -44,8 +44,6 @@ public class MocksBasicSteps {
     StpInstrument instrument;
     @Autowired
     StpMockSlaveDate stpMockSlaveDate;
-//    @Autowired
-//    OldKafkaService oldKafkaService;
 
 //    private final OldKafkaService oldKafkaService;
 
