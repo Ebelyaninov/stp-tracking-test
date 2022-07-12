@@ -47,7 +47,7 @@ public class MocksBasicSteps {
 //    @Autowired
 //    OldKafkaService oldKafkaService;
 
-    private final OldKafkaService oldKafkaService;
+//    private final OldKafkaService oldKafkaService;
 
 
     public void createDataForMasterMock (String siebelIdMaster) {
