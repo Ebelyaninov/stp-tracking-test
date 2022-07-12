@@ -83,9 +83,9 @@ app:
   rest-client:
     tracking-api-base-uri: http://stp-tracking-api.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/api/v1/
     tracking-api-admin-base-uri: http://stp-tracking-admin.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/admin/v1/
-    invest-account-public-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/invest-account-tracking-mock
-    md-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/market-data-tracking-mock/v1/md
-    miof-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/millde-tracking_mock-qa2/api/miof/
+    invest-account-public-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/invest-account-tracking-qa2-mock/account/public/v1/
+    md-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/market-data-tracking-mock/v1/md/
+    miof-api-base-url: http://mock-proxy.top-infra-process.v2.dev2.k8s.tcsbank.ru/mock-proxy/web/middle-tracking-mock/api/miof/
     tracking-cache-slave-base-url: http://stp-tracking-slave.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/slave/v1/
     tracking-api-social-strategy-base-url: http://social-tracking-strategy.invest-stp-tracking-qa2.v2.dev2.k8s.tcsbank.ru/tracking/strategy/v1
 #      investTracking:
