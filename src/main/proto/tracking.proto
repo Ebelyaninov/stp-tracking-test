@@ -360,6 +360,10 @@ message Portfolio {
 
     // Действие над позицией
     ActionValue action = 4;
+
+    // Идентификатор позиции
+    bytes position_id = 5;
+
   }
 
   // Позиция базовой валюты портфеля
