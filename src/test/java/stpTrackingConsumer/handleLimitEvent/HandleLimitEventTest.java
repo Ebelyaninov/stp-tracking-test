@@ -1,6 +1,7 @@
 package stpTrackingConsumer.handleLimitEvent;
 
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Int32Value;
 import com.google.protobuf.InvalidProtocolBufferException;
 import extenstions.RestAssuredExtension;
@@ -48,6 +49,7 @@ import ru.qa.tinkoff.tracking.services.grpc.utils.GrpcServicesAutoConfiguration;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -965,13 +967,18 @@ public class HandleLimitEventTest {
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
         Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
+
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
         assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(1));
         assertThat("delayed_correction не равен", portfolioCommand.getPortfolio().getDelayedCorrection(), is(false));
         assertThat("Action не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().getAction().getAction().name(), is("TRACKING_STATE_UPDATE"));
+        assertThat("positionId не равен",  uuid(portfolioCommand.getPortfolio().getPosition(0).getPositionId()).toString(),
+            is("33e24a92-aab0-409c-88b8-f2d57415b920"));
     }
+
+
 
 
     @SneakyThrows
@@ -1347,5 +1354,10 @@ public class HandleLimitEventTest {
             .collect(Collectors.toList());
         log.info("waiting for message");
         return messages;
+    }
+
+    public UUID uuid(ByteString bytes) {
+        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
+        return new UUID(buff.getLong(), buff.getLong());
     }
 }
