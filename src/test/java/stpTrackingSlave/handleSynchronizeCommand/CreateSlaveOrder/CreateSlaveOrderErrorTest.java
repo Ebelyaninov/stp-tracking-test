@@ -286,7 +286,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "Rejected", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+            mockSlaveDate.clientCodeSlaveOrder, "Rejected", instrument.tickerDOW, instrument.classCodeDOW, "Buy","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -302,8 +302,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerDOW,
+            instrument.tradingClearingAccountDOW, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -316,8 +316,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerDOW,
+            instrument.tradingClearingAccountDOW, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -361,7 +361,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "Cancelled", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "0");
+            mockSlaveDate.clientCodeSlaveOrder, "Cancelled", instrument.tickerF, instrument.classCodeF, "Buy","3", "0");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -377,8 +377,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerF,
+            instrument.tradingClearingAccountF,
             "5", date, 4, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -390,8 +390,8 @@ public class CreateSlaveOrderErrorTest {
         //получаем идентификатор подписки
         subscriptionId = subscription.getId();
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerF,
+            instrument.tradingClearingAccountF, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -427,7 +427,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2065560563";*/
         mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Symbol not found for SecurityId(SPBXM,AAPL)", "SymbolNotFound");
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerEBAY, instrument.classCodeEBAY, "Buy", "Symbol not found for SecurityId(SPBXM,AAPL)", "SymbolNotFound");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -443,8 +443,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerEBAY,
+            instrument.tradingClearingAccountEBAY, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -457,8 +457,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerEBAY,
+            instrument.tradingClearingAccountEBAY, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -495,7 +495,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2054235441";*/
         mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Ошибка тарифного модуля", "TariffModuleError");
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerGE, instrument.classCodeGE, "Buy", "Ошибка тарифного модуля", "TariffModuleError");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -511,8 +511,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerGE,
+            instrument.tradingClearingAccountGE, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -522,14 +522,14 @@ public class CreateSlaveOrderErrorTest {
 
 //        steps.createSubscriptionSlave(SIEBEL_ID_SLAVE, contractIdSlave, strategyId);
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerGE,
+            instrument.tradingClearingAccountGE, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(20)).stream()
@@ -559,7 +559,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "New", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+            mockSlaveDate.clientCodeSlaveOrder, "New", instrument.tickerDAL, instrument.classCodeDAl, "Buy","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -575,8 +575,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerDAL,
+            instrument.tradingClearingAccountDAL, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -589,8 +589,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerDAL,
+            instrument.tradingClearingAccountDAL, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -634,7 +634,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "Welcome", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+            mockSlaveDate.clientCodeSlaveOrder, "Welcome", instrument.tickerILMN, instrument.classCodeILMN, "Buy","3", "3");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -650,8 +650,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerILMN,
+            instrument.tradingClearingAccountILMN, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -664,15 +664,15 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerILMN,
+            instrument.tradingClearingAccountILMN, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.contract.event все offset
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
         Instant createdAtSlaveOrder = createdAt.toInstant();
@@ -712,7 +712,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2065560563";*/
         mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Trading don't work", "NotWorking");
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerINTU, instrument.classCodeINTU, "Buy", "Trading don't work", "NotWorking");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -728,8 +728,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerINTU,
+            instrument.tradingClearingAccountINTU, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -742,8 +742,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerINTU,
+            instrument.tradingClearingAccountINTU, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.contract.event все offset
@@ -779,7 +779,7 @@ public class CreateSlaveOrderErrorTest {
         contractIdSlave = "2065560563";*/
         mocksBasicSteps.createDataForMockCreateSlaveOrdersError(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerAAPL, instrument.classCodeAAPL, "Buy", "Server Error", "INTERNAL_ERROR");
+            mockSlaveDate.clientCodeSlaveOrder, instrument.tickerDD, instrument.classCodeDD, "Buy", "Server Error", "INTERNAL_ERROR");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -795,8 +795,8 @@ public class CreateSlaveOrderErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "5", date, 4,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerDD,
+            instrument.tradingClearingAccountDD, "5", date, 4,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -809,8 +809,8 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerDD,
+            instrument.tradingClearingAccountDD, "2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -887,7 +887,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL,
             new BigDecimal(3), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
@@ -973,7 +973,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "PartiallyFill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "2");
+            mockSlaveDate.clientCodeSlaveOrder, "PartiallyFill", instrument.tickerINTC, instrument.classCodeINTC, "Buy","3", "2");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -989,8 +989,8 @@ public class CreateSlaveOrderErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,  "5", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerINTC,
+            instrument.tradingClearingAccountINTC,  "5", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -1002,18 +1002,18 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000.0";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerINTC,
+            instrument.tradingClearingAccountINTC,"2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
-        checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL,
-            lot, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        checkParamSlaveOrder(2, "1", "0", instrument.classCodeINTC,
+            lot, instrument.tickerINTC, instrument.tradingClearingAccountINTC);
     }
 
 
@@ -1028,7 +1028,7 @@ public class CreateSlaveOrderErrorTest {
         //создаем мока для миддл
         mocksBasicSteps.createDataForMockCreateSlaveOrders(masterOrder, slaveOrder,
             mockSlaveDate.investIdMasterOrder, mockSlaveDate.investIdSlaveOrder, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveOrder,
-            mockSlaveDate.clientCodeSlaveOrder, "Cancelled", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "2");
+            mockSlaveDate.clientCodeSlaveOrder, "Cancelled", instrument.tickerGILD, instrument.classCodeGILD, "Buy","3", "2");
         strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(masterOrder);
@@ -1044,8 +1044,8 @@ public class CreateSlaveOrderErrorTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,  "5", date, 2,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerGILD,
+            instrument.tradingClearingAccountGILD,  "5", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 4, "6551.10", masterPos);
         //создаем подписку на стратегию
@@ -1057,18 +1057,18 @@ public class CreateSlaveOrderErrorTest {
         subscriptionId = subscription.getId();
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "7000.0";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerGILD,
+            instrument.tradingClearingAccountGILD,"2", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 4,
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
-            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+            slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
-        checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL,
-            lot, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        checkParamSlaveOrder(2, "1", "0", instrument.classCodeGILD,
+            lot, instrument.tickerGILD, instrument.tradingClearingAccountGILD);
     }
 
 
