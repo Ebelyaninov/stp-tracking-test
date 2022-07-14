@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 //здесь храним список используемых инструментов в авто-тестах
 @Slf4j
@@ -20,6 +21,7 @@ public class StpInstrument {
 
     public String tickerAAPL = "AAPL";
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";
+    public UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
 //    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
     public String typeAAPL = "share";
     public String classCodeAAPL = "SPBXM";
@@ -31,12 +33,14 @@ public class StpInstrument {
 
     public String tickerABBV = "ABBV";
     public String tradingClearingAccountABBV = "TKCBM_TCAB";
+    public UUID positionIdABBV = UUID.fromString("4800523a-8e7c-48f7-8bf1-2a9e2a84378d");
     public String classCodeABBV = "SPBXM";
     public String instrumentABBV = tickerABBV + "_" + classCodeABBV;
 
     public String tickerSBER = "SBER";
     public String tradingClearingAccountSBER = "L01+00002F00";
     public String tradingClearingAccountSBER1 = "L01+00000F00";
+    public UUID positionIdSBER = UUID.fromString("41eb2102-5333-4713-bf15-72b204c4bf7b");
     public String sectorSBER = "financial";
     public String typeSBER = "share";
     public String companySBER = "Сбер Банк";
@@ -48,6 +52,7 @@ public class StpInstrument {
 
     public String tickerFB = "META";
     public String tradingClearingAccountFB = "TKCBM_TCAB";
+    public UUID positionIdFB = UUID.fromString("fce134ae-bb91-498c-aa5d-4f49ad2e5392");
     public String typeFB = "share";
     public String classCodeFB = "SPBXM";
     public String briefNameFB = "Meta Platforms";
@@ -79,6 +84,8 @@ public class StpInstrument {
     public String tickerXS0191754729 = "XS0191754729";
     //public String tradingClearingAccountXS0191754729 = "L01+00000F00";
     public String tradingClearingAccountXS0191754729 = "L01+00002F00";
+    public UUID positionIdXS0191754729 = UUID.fromString("9bbe359f-3345-4b14-b275-b907e266dc3d");
+
     public String typeXS0191754729 = "bond";
     public String classCodeXS0191754729 = "TQOD";
     public String instrumentXS0191754729 =tickerXS0191754729 + "_" + classCodeXS0191754729;
@@ -135,6 +142,7 @@ public class StpInstrument {
 
     public String tickerYNDX = "YNDX";
     public String tradingClearingAccountYNDX = "L01+00002F00";
+    public UUID positionIdYNDX = UUID.fromString("cb51e157-1f73-4c62-baac-93f11755056a");
 //    public String tradingClearingAccountYNDX = "Y02+00001F00";
     public String classCodeYNDX = "TQBR";
     public String sectorYNDX = "telecom";
@@ -145,6 +153,7 @@ public class StpInstrument {
 
     public String tickerUSD = "USD000UTSTOM";
     public String tradingClearingAccountUSD = "MB9885503216";
+    public UUID positionIdUSD = UUID.fromString("6e97aa9b-50b6-4738-bce7-17313f2b2cc2");
     public String classCodeUSD = "CETS";
     public String sectorUSD = "money";
     public String typeUSD = "money";
@@ -172,16 +181,19 @@ public class StpInstrument {
 
     public String tickerTRUR = "TRUR";
     public String classCodeTRUR = "TQTF";
-    public String tradingClearingAccountTRUR = "L01+00000F00";
+//    public String tradingClearingAccountTRUR = "L01+00000F00";
+    public String tradingClearingAccountTRUR = "L01+00002F00";
+    public UUID positionIdTRUR = UUID.fromString("8005e2ec-66b3-49ae-9711-a424d9c9b61b");
 
 
     public String tickerXS0424860947 = "XS0424860947";
     public String classCodeXS0424860947 = "TQOD";
     public String tradingClearingAccountXS0424860947 = "L01+00000F00";
-
+    public UUID positionIdXS0424860947 = UUID.fromString("aa9fc0b7-7eea-4b15-b753-89bfb3fed79d");
 
     public String tickerALFAperp = "ALFAperp";
     public String tradingClearingAccountALFAperp = "TKCBM_TCAB";
+    public UUID positionIdALFAperp = UUID.fromString("bfa1b011-c9a0-4126-92f8-0d7a80aebbf1");
     public String classCodeALFAperp = "SPBBND";
     public String instrumentALFAperp = tickerALFAperp + "_" + classCodeALFAperp;
 

@@ -501,7 +501,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656481() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -533,7 +533,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656494() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 1;
         strategyId = UUID.randomUUID();
         String contractOther = contractService.findOneContract().get().getId();
@@ -566,7 +566,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656557() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 1;
         strategyId = UUID.randomUUID();
         //формируем тело запроса метода CreateSignal
@@ -597,7 +597,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657123() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 1;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -638,7 +638,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657138() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -653,8 +653,8 @@ public class CreateSignalErrorTest {
             false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 3, "3556.78", date);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
@@ -685,7 +685,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657144() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -698,8 +698,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -732,10 +732,11 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657162() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 5;
         String ticker = "FXITTEST";
         String tradingClearingAccount = "L01+00002F00";
+        UUID positionId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -747,8 +748,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
+            tradingClearingAccount,positionId,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
@@ -779,10 +780,11 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657198() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4.0");
+        BigDecimal quantityRequest = new BigDecimal("4");
         int version = 5;
         String ticker = "MTS_TEST";
         String tradingClearingAccount = "L01+00000SPB";
+        UUID positionId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -794,8 +796,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
+            tradingClearingAccount,positionId,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
@@ -825,10 +827,11 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C656524() {
         BigDecimal price = new BigDecimal("278.14");
-        BigDecimal quantityRequest = new BigDecimal("10.0");
+        BigDecimal quantityRequest = new BigDecimal("10");
         int version = 5;
         String ticker = "SBER";
         String tradingClearingAccount = "L01+00002F00";
+        UUID positionId = UUID.fromString("41eb2102-5333-4713-bf15-72b204c4bf7b");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -840,8 +843,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "10");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
+            tradingClearingAccount, positionId,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.MOEX, true, 1000);
@@ -874,7 +877,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657204() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
 //        String ticker = "XS0424860947";
 //        String tradingClearingAccount = "L01+00002F00";
@@ -892,8 +895,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerXS0424860947,
+            instrument.tradingClearingAccountXS0424860947, instrument.positionIdXS0424860947,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
         getExchangePosition(instrument.tickerXS0424860947, instrument.tradingClearingAccountXS0424860947, Exchange.SPB, true, 1000);
@@ -925,7 +928,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657314() {
         BigDecimal price = new BigDecimal("1000.0");
-        BigDecimal quantityRequest = new BigDecimal("6.0");
+        BigDecimal quantityRequest = new BigDecimal("6");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -938,8 +941,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -972,7 +975,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657490() {
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("16.0");
+        BigDecimal quantityRequest = new BigDecimal("16");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -985,8 +988,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -1019,7 +1022,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657523() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("30.0");
+        BigDecimal quantityRequest = new BigDecimal("30");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1032,8 +1035,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -1066,7 +1069,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C657577() {
         BigDecimal price = new BigDecimal("6.3825");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 2;
 //        String instrument.tickerTRUR = "TRUR";
 //        String tradingClearingAccount = "L01+00002F00";
@@ -1081,8 +1084,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerTRUR, instrument.tradingClearingAccountTRUR,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerTRUR,
+            instrument.tradingClearingAccountTRUR,instrument.positionIdTRUR, "12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -1117,7 +1120,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658177() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1130,8 +1133,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -1173,7 +1176,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1641339(CreateSignalRequest.ActionEnum action) {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 2;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1186,8 +1189,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",false,false);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -1338,7 +1341,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C658178() {
         BigDecimal price = new BigDecimal("500");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1353,8 +1356,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerFB, instrument.tradingClearingAccountFB,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -1387,7 +1390,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1434603() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1402,8 +1405,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "12");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
 //        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
@@ -1436,7 +1439,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430347() {
         BigDecimal price = new BigDecimal("101");
-        BigDecimal quantityRequest = new BigDecimal("70.0");
+        BigDecimal quantityRequest = new BigDecimal("70");
         int version = 4;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1449,8 +1452,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "5");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"5");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "10259.17", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "5000");
@@ -1483,10 +1486,11 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1496918() {
         BigDecimal price = new BigDecimal("292");
-        BigDecimal quantityRequest = new BigDecimal("6.0");
+        BigDecimal quantityRequest = new BigDecimal("6");
         int version = 4;
         String ticker = "ABBV";
         String tradingClearingAccount = "TKCBM_TCAB";
+        UUID positionId = UUID.fromString("4800523a-8e7c-48f7-8bf1-2a9e2a84378d");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1498,8 +1502,8 @@ public class CreateSignalErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "30");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
+            tradingClearingAccount, positionId, "30");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "15000.0", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "6513");
@@ -1539,7 +1543,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1742768() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("1.0");
+        BigDecimal quantityRequest = new BigDecimal("1");
         int version = 5;
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
@@ -1587,7 +1591,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1456532() {
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1640,7 +1644,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1440667() {
         BigDecimal price = new BigDecimal("3300.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1691,7 +1695,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439792() {
         BigDecimal price = new BigDecimal("5341.8");
-        BigDecimal quantityRequest = new BigDecimal("8.0");
+        BigDecimal quantityRequest = new BigDecimal("8");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1746,7 +1750,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439793() {
         BigDecimal price = new BigDecimal("5341.8");
-        BigDecimal quantityRequest = new BigDecimal("8.0");
+        BigDecimal quantityRequest = new BigDecimal("8");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1764,8 +1768,8 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp,
-            "3");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp,"3");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
@@ -1801,7 +1805,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1807503() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("10.0");
+        BigDecimal quantityRequest = new BigDecimal("10");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1853,7 +1857,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803801() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("300.0");
+        BigDecimal quantityRequest = new BigDecimal("300");
         int version = 4;
         String tailValue = "15000000";
         double money = 100000.0;
@@ -1921,7 +1925,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803792() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("300.0");
+        BigDecimal quantityRequest = new BigDecimal("300");
         int version = 4;
         String tailValue = "15000000";
         double money = 100000.0;
@@ -1940,8 +1944,8 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan");
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER,
-            "300");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER,instrument.positionIdSBER, "300");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
@@ -1992,7 +1996,7 @@ public class CreateSignalErrorTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430349() {
         BigDecimal price = new BigDecimal("2422");
-        BigDecimal quantityRequest = new BigDecimal("1.0");
+        BigDecimal quantityRequest = new BigDecimal("1");
         int version = 2;
         String tailValue = "150000";
         double money = 48250;
@@ -2011,8 +2015,8 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX,
-            "3");
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerYNDX,
+            instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"3");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now().minusHours(5);
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);
@@ -2044,7 +2048,7 @@ public class CreateSignalErrorTest {
     void C1888691() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("4.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 1;
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -2089,10 +2093,10 @@ public class CreateSignalErrorTest {
     void C1889466() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("4.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 1;
         strategyId = UUID.randomUUID();
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
@@ -2137,10 +2141,10 @@ public class CreateSignalErrorTest {
     void C1889456() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("4.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 1;
         strategyId = UUID.randomUUID();
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
@@ -2184,10 +2188,10 @@ public class CreateSignalErrorTest {
     void C1889528() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("4.0");
-        BigDecimal quantityRequest = new BigDecimal("3.0");
+        BigDecimal quantityRequest = new BigDecimal("3");
         int version = 1;
         strategyId = UUID.randomUUID();
-        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
@@ -2335,26 +2339,26 @@ public class CreateSignalErrorTest {
             "1500", Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(17).toInstant()));
         //вторая версия без с одной позицией
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "2");
+                .now(ZoneOffset.UTC).minusMinutes(16).toInstant()), instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"2");
         steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, positionMasterList, 2, "1284.84", Date.from(OffsetDateTime
             .now(ZoneOffset.UTC).minusMinutes(16).toInstant()));
         //третья версия
         List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "2", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+            instrument.positionIdAAPL,"2", instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB,"1");
         steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositions, 3, "784.84",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5).toInstant()));
         //четвертая версия
         List<MasterPortfolio.Position> masterTwoPositionsVersionFour = steps.masterTwoPositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(4).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "1");
+                .now(ZoneOffset.UTC).minusDays(4).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB,  instrument.positionIdFB, "1");
         steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFour, 4, "891.84",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(4).toInstant()));
         //пятая версия
         List<MasterPortfolio.Position> masterTwoPositionsVersionFive = steps.masterTwoPositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(1).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, "2");
+                .now(ZoneOffset.UTC).minusDays(1).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
+            "1", instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB,"2");
         steps.createMasterPortfolio(contractIdMaster, strategyIdMaxCount, masterTwoPositionsVersionFive, 5, "391.84",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1).toInstant()));
     }

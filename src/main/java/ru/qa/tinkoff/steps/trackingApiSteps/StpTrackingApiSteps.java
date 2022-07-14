@@ -655,7 +655,7 @@ public class StpTrackingApiSteps {
 
     @Step("Добавляем позицию в  портфель в master_portfolio")
     public List<MasterPortfolio.Position> masterOnePositions(Date date, String ticker, String tradingClearingAccount,
-                                                             String quantity) {
+                                                             UUID positionId, String quantity) {
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
@@ -664,6 +664,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantity))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
@@ -674,7 +675,8 @@ public class StpTrackingApiSteps {
 
     @Step("Добавляем две позиции в  портфель в master_portfolio")
     public List<MasterPortfolio.Position> masterTwoPositions(Date date, String ticker1, String tradingClearingAccount1,
-                                                             String quantity1, String ticker2, String tradingClearingAccount2,
+                                                             UUID positionId1, String quantity1, String ticker2,
+                                                             String tradingClearingAccount2, UUID positionId2,
                                                              String quantity2) {
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -684,6 +686,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantity1))
             .changedAt(date)
             .lastChangeDetectedVersion(null)
@@ -692,6 +695,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantity2))
             .changedAt(date)
             .lastChangeDetectedVersion(null)
@@ -701,9 +705,9 @@ public class StpTrackingApiSteps {
     }
 
     @Step("Добавляем три позиции в  портфель в master_portfolio")
-    public List<MasterPortfolio.Position> masterThreePositions(Date date, String ticker1, String tradingClearingAccount1,
-                                                               String quantity1, String ticker2, String tradingClearingAccount2,
-                                                               String quantity2, String ticker3, String tradingClearingAccount3,
+    public List<MasterPortfolio.Position> masterThreePositions(Date date, String ticker1, String tradingClearingAccount1, UUID positionId1,
+                                                               String quantity1, String ticker2, String tradingClearingAccount2,UUID positionId2,
+                                                               String quantity2, String ticker3, String tradingClearingAccount3,UUID positionId3,
                                                                String quantity3) {
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -713,6 +717,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantity1))
             .changedAt(date)
             .lastChangeDetectedVersion(null)
@@ -721,6 +726,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantity2))
             .changedAt(date)
             .lastChangeDetectedVersion(null)
@@ -729,6 +735,7 @@ public class StpTrackingApiSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker3)
             .tradingClearingAccount(tradingClearingAccount3)
+            .positionId(positionId3)
             .quantity(new BigDecimal(quantity3))
             .changedAt(date)
             .lastChangeDetectedVersion(null)
@@ -1003,6 +1010,7 @@ public class StpTrackingApiSteps {
         Tracking.ExchangePosition command = Tracking.ExchangePosition.newBuilder()
             .setTicker(ticker)
             .setTradingClearingAccount(tradindClearingAccount)
+            .setExchange(Tracking.Exchange.SPB)
             .setTrackingAllowed(true)
             .setDailyQuantityLimit(Int32Value.of(dailyLimit))
             .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()
@@ -1032,6 +1040,7 @@ public class StpTrackingApiSteps {
         Tracking.ExchangePosition command = Tracking.ExchangePosition.newBuilder()
             .setTicker(ticker)
             .setTradingClearingAccount(tradindClearingAccount)
+            .setExchange(Tracking.Exchange.SPB)
             .setTrackingAllowed(true)
             .setDailyQuantityLimit(Int32Value.of(dailyLimit))
             .addOrderQuantityLimit(Tracking.ExchangePosition.OrderQuantityLimit.newBuilder()

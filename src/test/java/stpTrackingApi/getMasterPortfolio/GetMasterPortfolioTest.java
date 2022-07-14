@@ -274,7 +274,8 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "300000.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
-            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerUSD, instrument.tradingClearingAccountUSD, quantityUSD);
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerUSD, instrument.tradingClearingAccountUSD,
+            instrument.positionIdUSD, quantityUSD);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "80190.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
         // вызываем метод getMasterPortfolio
@@ -362,18 +363,21 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
-            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantity1);
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            instrument.positionIdAAPL, quantity1);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "1958.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
         List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729);
+            instrument.positionIdAAPL, quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "1229.3",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         List<MasterPortfolio.Position> masterThreePositions = steps.masterThreePositions(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, quantityFB);
+            instrument.positionIdAAPL, quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729,
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB, quantityFB);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
@@ -610,6 +614,7 @@ public class GetMasterPortfolioTest {
     void C1184334() {
         String ticker1 = "TEST";
         String tradingClearingAccount1 = "TEST";
+        UUID positionId1 = UUID.randomUUID();
         String quantity1 = "5";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -619,18 +624,23 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
-            .now(ZoneOffset.UTC).minusDays(7).toInstant()), ticker1, tradingClearingAccount1, quantity1);
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), ticker1, tradingClearingAccount1, positionId1, quantity1);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "1958.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
+
         List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729);
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1, positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "1229.3",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
+
         List<MasterPortfolio.Position> masterThreePositions = steps.masterThreePositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, quantityFB);
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1,positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729,
+            instrument.tickerFB, instrument.tradingClearingAccountFB,instrument.positionIdFB, quantityFB);
+
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
@@ -696,6 +706,7 @@ public class GetMasterPortfolioTest {
     void C1184396() {
         String ticker1 = "SPNV";
         String tradingClearingAccount1 = "NDS000000001";
+        UUID positionId1 = UUID.fromString("98b083fe-f3e3-483b-b32e-9eb242269c67");
         String quantity1 = "5";
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -705,18 +716,20 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
-            .now(ZoneOffset.UTC).minusDays(7).toInstant()), ticker1, tradingClearingAccount1, quantity1);
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), ticker1, tradingClearingAccount1, positionId1, quantity1);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "1958.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
         List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729);
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1, positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "1229.3",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         List<MasterPortfolio.Position> masterThreePositions = steps.masterThreePositions(Date.from(OffsetDateTime
-                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1,
-            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, quantityFB);
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1, positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729,
+            instrument.tickerFB, instrument.tradingClearingAccountFB,instrument.positionIdFB, quantityFB);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
         // вызываем метод getMasterPortfolio
@@ -777,18 +790,21 @@ public class GetMasterPortfolioTest {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
-            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityAAPL);
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            instrument.positionIdAAPL, quantityAAPL);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "1958.35",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
         List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            quantityAAPL, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729);
+            instrument.positionIdAAPL, quantityAAPL, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "1229.3",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
         List<MasterPortfolio.Position> masterThreePositions = steps.masterThreePositions(Date.from(OffsetDateTime
                 .now(ZoneOffset.UTC).minusDays(5).toInstant()), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            quantityAAPL, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityXS0191754729,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, quantityFB);
+            instrument.positionIdAAPL, quantityAAPL, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729,
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB, quantityFB);
         steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
             Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
     }
