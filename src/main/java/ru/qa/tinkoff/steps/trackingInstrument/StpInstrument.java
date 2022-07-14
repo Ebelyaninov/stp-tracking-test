@@ -330,6 +330,61 @@ public class StpInstrument {
     public String classCodeVTBM = "TQTF";
     public String instrumentVTBM = tickerVTBM + "_" + classCodeVTBM;
 
+    public String tickerDAL = "DAL";
+    public String tradingClearingAccountDAL = "TKCBM_TCAB";
+    public String classCodeDAl = "SPBXM";
+
+    public String tickerDD = "DD";
+    public String tradingClearingAccountDD = "TKCBM_TCAB";
+    public String classCodeDD = "SPBXM";
+
+    public String tickerDOW = "DOW";
+    public String tradingClearingAccountDOW = "TKCBM_TCAB";
+    public String classCodeDOW = "SPBXM";
+
+    public String tickerINTC = "INTC";
+    public String tradingClearingAccountINTC = "TKCBM_TCAB";
+    public String classCodeINTC = "SPBXM";
+
+    public String tickerGE = "GE";
+    public String tradingClearingAccountGE = "TKCBM_TCAB";
+    public String classCodeGE = "SPBXM";
+
+    public String tickerF = "F";
+    public String tradingClearingAccountF= "TKCBM_TCAB";
+    public String classCodeF = "SPBXM";
+
+    public String tickerGILD = "GILD";
+    public String tradingClearingAccountGILD = "TKCBM_TCAB";
+    public String classCodeGILD = "SPBXM";
+
+    public String tickerIBM = "IBM";
+    public String tradingClearingAccountIBM= "TKCBM_TCAB";
+    public String classCodeIBM = "SPBXM";
+
+    public String tickerILMN = "ILMN";
+    public String tradingClearingAccountILMN= "TKCBM_TCAB";
+    public String classCodeILMN = "SPBXM";
+
+    public String tickerEBAY = "EBAY";
+    public String tradingClearingAccountEBAY= "TKCBM_TCAB";
+    public String classCodeEBAY = "SPBXM";
+
+    public String tickerINTU = "INTU";
+    public String tradingClearingAccountINTU= "TKCBM_TCAB";
+    public String classCodeINTU = "SPBXM";
+
+    public String tickerIP = "IP";
+    public String tradingClearingAccountIP = "TKCBM_TCAB";
+    public String classCodeIP = "SPBXM";
+
+    public String tickerIRM = "IRM";
+    public String tradingClearingAccountIRM = "TKCBM_TCAB";
+    public String classCodeIRM = "SPBXM";
+
+    public String tickerHUM= "HUM";
+    public String tradingClearingAccountHUM = "TKCBM_TCAB";
+    public String classCodeHUM = "SPBXM";
 
     public List<String> tradingStatusesFalse = Arrays.asList(
         "not_available_for_trading",
