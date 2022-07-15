@@ -211,14 +211,14 @@ public class HandleEnableSynchronizationCommandTest {
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
     }
 
-    @SneakyThrows
-    @BeforeAll
-    void createMock() {
-        //создаем мок
-        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
-            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
-            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3");
-    }
+//    @SneakyThrows
+//    @BeforeAll
+//    void createMock() {
+//        //создаем мок
+//        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
+//            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
+//            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Sell","3", "3");
+//    }
 
     @BeforeEach
     void getStrategyData(){
@@ -269,7 +269,7 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
         //получаем выставленную заявку
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave), notNullValue());
         //Проверяем данные заявки
         assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL));
@@ -316,7 +316,7 @@ public class HandleEnableSynchronizationCommandTest {
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
         //получаем портфель slave
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         int quantity = (int) Math.round(slavePortfolio.getPositions().get(0).getQuantityDiff().doubleValue());
         //получаем выставленную заявку
@@ -374,7 +374,7 @@ public class HandleEnableSynchronizationCommandTest {
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
         //получаем портфель slave
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //получаем выставленную заявку
         slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave);
@@ -499,9 +499,9 @@ public class HandleEnableSynchronizationCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1654361(String tickerA, String tradingClearingAccountA, int action) {
-        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
-            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
-            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
+//        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
+//            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
+//            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
         //создаем клиента, контракт и стратегию
         steps.createClientWithContractAndStrategy(investIdMaster,
             ClientRiskProfile.aggressive, contractIdMaster, null, ContractState.untracked,
@@ -535,9 +535,10 @@ public class HandleEnableSynchronizationCommandTest {
         //отправляем команду на синхронизацию
         steps.createCommandEnableSynchronization(contractIdSlave);
         //получаем портфель slave
-        await().pollDelay(Duration.ofNanos(200)).atMost(Duration.ofSeconds(3)).until(() ->
+        await().pollDelay(Duration.ofSeconds(2)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
+        await().pollDelay(Duration.ofNanos(200)).atMost(Duration.ofSeconds(1)).until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder2ByStrategy(contractIdSlave, strategyId), notNullValue());
-        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         int quantity = (int) Math.round(slavePortfolio.getPositions().get(0).getQuantityDiff().doubleValue());
         //получаем выставленную заявку
         List<SlaveOrder2> slaveOrder2List = slaveOrderDao.getSlaveOrders2WithStrategy(contractIdSlave, strategyId);
