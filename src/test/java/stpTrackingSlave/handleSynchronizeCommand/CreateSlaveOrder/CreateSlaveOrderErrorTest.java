@@ -325,7 +325,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
         Instant createdAtSlaveOrder = createdAt.toInstant();
@@ -398,7 +398,7 @@ public class CreateSlaveOrderErrorTest {
         steps.resetOffsetToLate(TRACKING_DELAY_COMMAND);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave).getState(), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры SlaveOrder
@@ -466,7 +466,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
@@ -598,7 +598,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
         Instant createdAtSlaveOrder = createdAt.toInstant();
@@ -750,7 +750,7 @@ public class CreateSlaveOrderErrorTest {
         steps.resetOffsetToLate(TRACKING_CONTRACT_EVENT);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
+        await().atMost(FIVE_SECONDS).pollDelay(Duration.ofNanos(500)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //смотрим, сообщение, которое поймали в топике kafka tracking.event
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20)).stream()
@@ -818,7 +818,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         Thread.sleep(5000);
-        await().atMost(FIVE_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         OffsetDateTime createdAt = slaveOrder2.getCreateAt().toInstant().atOffset(ZoneOffset.UTC);
         Instant createdAtSlaveOrder = createdAt.toInstant();
@@ -886,7 +886,7 @@ public class CreateSlaveOrderErrorTest {
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL,
@@ -1008,7 +1008,7 @@ public class CreateSlaveOrderErrorTest {
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
@@ -1063,7 +1063,7 @@ public class CreateSlaveOrderErrorTest {
             baseMoneySl, date, createListSlaveOnePos);
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
-        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(TEN_SECONDS).pollDelay(Duration.ofSeconds(3)).ignoreExceptions().until(() ->
             slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
