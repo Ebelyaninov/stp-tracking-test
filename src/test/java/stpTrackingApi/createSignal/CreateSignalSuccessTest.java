@@ -156,7 +156,6 @@ public class CreateSignalSuccessTest {
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //steps.deleteDataFromDb(SIEBEL_ID);
-
         try {
             strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractIdMaster).get());
         } catch (Exception e) {
@@ -176,12 +175,12 @@ public class CreateSignalSuccessTest {
         updateExchangePositionCacheLimit(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1000, 10,10,10,10);
     }
 
+
     @BeforeEach
     void changePositionLimitBeforeEach (){
         //Обновляем данные по лимитам
         updateExchangePositionCacheLimit(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1000, 100,100,100,100);
         updateExchangePositionDefaultLimit(instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, 22845, 100);
-
     }
 
 //    @BeforeAll
@@ -256,9 +255,11 @@ public class CreateSignalSuccessTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C653779() {
-        double money = 1500.0;
+        //было 1500
+        double money = 7500.0;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("2");
+        //Возможно тут была дробная позиция(до фикса было 2)
+        BigDecimal quantityRequest = new BigDecimal("10");
         int version = 1;
         //mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
@@ -366,12 +367,14 @@ public class CreateSignalSuccessTest {
         log.info("Команда в tracking.slave.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
         double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
-        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
-            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+//        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+//            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        double quantityCommandBaseMoney = BigDecimal.valueOf(commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled(), commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale()).doubleValue();
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
         double quantityPosition = quantityPosMasterPortfolio + quantityRequest.doubleValue();
-        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
-            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+//        double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+//            * Math.pow(10, -1 * commandKafka.getPortfolio().getPosition(0).getQuantity().getScale());
+        double quantityPositionCommand = BigDecimal.valueOf(commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled(), commandKafka.getPortfolio().getPosition(0).getQuantity().getScale()).doubleValue();
         versionNew = version + 1;
         // проверяем значения в полученной команде
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
@@ -1821,11 +1824,15 @@ public class CreateSignalSuccessTest {
         assertThat("значение action  не равен", portfolioCommand.getPortfolio().getPosition(0).
             getAction().getAction().toString(), is(action));
         assertThat("quantity базовой валюты  не равен", quantityCommandBaseMoney, is(quantityReqBaseMoney));
-        double pricePositionCommand = portfolioCommand.getSignal().getPrice().getUnscaled()
-            * Math.pow(10, -1 * portfolioCommand.getSignal().getPrice().getScale());
+//        double pricePositionCommand = portfolioCommand.getSignal().getPrice().getUnscaled()
+//            * Math.pow(10, -1 * portfolioCommand.getSignal().getPrice().getScale());
+        double pricePositionCommand = BigDecimal.valueOf(portfolioCommand.getSignal().getPrice().getUnscaled(),
+            portfolioCommand.getSignal().getPrice().getScale()).doubleValue();
         assertThat("значение price  не равен", BigDecimal.valueOf(pricePositionCommand), is(price));
-        double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
-            * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
+//        double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
+//            * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
+        double quaSignalPositionCommand = BigDecimal.valueOf(portfolioCommand.getSignal().getQuantity().getUnscaled(),
+            portfolioCommand.getSignal().getQuantity().getScale()).doubleValue();
         assertThat("значение quantity  не равен", quaSignalPositionCommand, is(quantityRequest.doubleValue()));
     }
 
