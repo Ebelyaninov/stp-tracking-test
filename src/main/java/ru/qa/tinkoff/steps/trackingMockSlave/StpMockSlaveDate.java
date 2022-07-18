@@ -19,7 +19,7 @@ public class StpMockSlaveDate {
     public String investIdMasterHandleActualizeCommand = "61d87339-89fa-4c4a-aab7-d7573f92035e";
     public String investIdSlaveHandleActualizeCommand = "c76ab3d2-de36-4546-a0f2-0a2f8613a34e";
     public String contractIdMasterHandleActualizeCommand = "2000006623";
-    public String contractIdSlaveHandleActualizeCommand = "2000115978";
+    public String contractIdSlaveHandleActualizeCommand = "2011514581";
     public String clientCodeSlaveHandleActualizeCommand = "KNM219525193";
 
     public String investIdMasterOrder = "37d597a9-ddb4-4f5c-a23a-72c81f7608b3";

@@ -92,67 +92,67 @@ public class MocksBasicSteps {
     public void createDataForMocksForHandleActualizeCommand (String siebelIdSlave, String contractIdSlave, String ticker, String classCode, String tradingClearAccount, String rubQuantity, String usdQuantity, String usdScaledQty, String quantityForGRPCInstrument) {
         String tickerAndClassCode = ticker + "_" + classCode;
         //Создание моков
-        String investIdSlave = stpMockSlaveDate.investIdSlaveHandleActualizeCommand;
-        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX"));
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING"));
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeFX("FX"));
+//        String investIdSlave = stpMockSlaveDate.investIdSlaveHandleActualizeCommand;
+//        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+//        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("MOEX"));
+//        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB_MORNING"));
+//        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeFX("FX"));
         //getInvestID
-        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
-        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+//        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+//        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
         //GetBrockerAccountBySiebelId
-        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
-        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdSlave, siebelIdSlave, contractIdSlave));
+//        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+//        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdSlave, siebelIdSlave, contractIdSlave));
         //Очистить мок grpc
         mockMiddleSteps.clearMocksForGrpc();
         //Добавляем данный grpc
         mockMiddleSteps.createGrpcMock(mockMiddleSteps.createBodyForGrpc(contractIdSlave, "0", rubQuantity, usdQuantity, usdScaledQty, quantityForGRPCInstrument, ticker, tradingClearAccount));
         //Создаем цены в MD
-        mockMarketDataSteps.clearMocks(tickerAndClassCode);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCode);
         String tickerAndClassCodeABBV = instrument.tickerABBV + "_" + instrument.classCodeABBV;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeABBV);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeABBV);
         String tickerAndClassCodeHKD = instrument.tickerHKD + "_" + instrument.classCodeHKD;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeHKD);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeHKD);
         String tickerAndClassCodeCHF = instrument.tickerCHF + "_" + instrument.classCodeCHF;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeCHF);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeCHF);
         //Задержка 300мс
-        await().pollDelay(Duration.ofMillis(300));
+//        await().pollDelay(Duration.ofMillis(300));
         ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "last", date.toString(), "108.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "bid", date.toString(), "109.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCode, "ask", date.toString(), "107.22"));
 
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "last", date.toString(), "292"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "bid", date.toString(), "289.4"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "ask", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "last", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "bid", date.toString(), "289.4"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeABBV, "ask", date.toString(), "292"));
 
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "last", date.toString(), "292"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "bid", date.toString(), "289"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "ask", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "last", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "bid", date.toString(), "289"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeHKD, "ask", date.toString(), "292"));
 
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "last", date.toString(), "100.9825"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "bid", date.toString(), "101.9825"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "ask", date.toString(), "102.9825"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "last", date.toString(), "100.9825"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "bid", date.toString(), "101.9825"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCHF, "ask", date.toString(), "102.9825"));
         //Очищаем мок rest мок MD
-        mockMiddleSteps.clearMocksForRestOrder();
+//        mockMiddleSteps.clearMocksForRestOrder();
         //Создать ответ от MD на order
-        mockMiddleSteps.createRestOrder(mockMiddleSteps.createBodyForRestOrder(ticker, "Buy", contractIdSlave, classCode, "FillAndKill", "Fill", "1", "1", stpMockSlaveDate.clientCodeSlaveHandleActualizeCommand));
+//        mockMiddleSteps.createRestOrder(mockMiddleSteps.createBodyForRestOrder(ticker, "Buy", contractIdSlave, classCode, "FillAndKill", "Fill", "1", "1", stpMockSlaveDate.clientCodeSlaveHandleActualizeCommand));
     }
 
 
     public void createDataForMocksSlaveVersionsGRPC (String siebelIdSlave, String contractIdSlave, String usdScaledQty, String quantity, String ticker, String tradingAccount, String quantityCCL) {
         //String tickerAndClassCode = ticker + "_" + classCode;
         //Создание моков
-        String investIdSlave = stpMockSlaveDate.investIdSlaveHandleActualizeCommand;
-        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB"));
-        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeFX("SPB_MORNING"));
+//        String investIdSlave = stpMockSlaveDate.investIdSlaveHandleActualizeCommand;
+//        tradingShedulesExchangeSteps.clearTradingShedulesExchange();
+//        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchange("SPB"));
+//        tradingShedulesExchangeSteps.createTradingShedulesExchange(tradingShedulesExchangeSteps.createBodyForTradingShedulesExchangeFX("SPB_MORNING"));
         //getInvestID
-        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
-        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
+//        mockInvestmentAccountSteps.clearMocks("/account/public/v1/invest/siebel/" + siebelIdSlave);
+//        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetInvestId("/account/public/v1/invest/siebel/" + siebelIdSlave, investIdSlave));
         //GetBrockerAccountBySiebelId
-        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
-        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdSlave, siebelIdSlave, contractIdSlave));
+//        mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdSlave);
+//        mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdSlave, siebelIdSlave, contractIdSlave));
         //Очистить мок grpc
         mockMiddleSteps.clearMocksForGrpc();
         //Добавляем данный grpc
@@ -160,25 +160,25 @@ public class MocksBasicSteps {
         //Создаем цены в MD
         //mockMarketDataSteps.clearMocks(tickerAndClassCode);
         String tickerAndClassCodeFB = instrument.tickerFB + "_" + instrument.classCodeFB;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeFB);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeFB);
         String tickerAndClassCodeCCL = instrument.tickerCCL + "_" + instrument.classCodeCCL;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeCCL);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeCCL);
         String tickerAndClassCodeAAPL = instrument.tickerAAPL + "_" + instrument.classCodeAAPL;
-        mockMarketDataSteps.clearMocks(tickerAndClassCodeAAPL);
+//        mockMarketDataSteps.clearMocks(tickerAndClassCodeAAPL);
         //Задержка 300мс
-        await().pollDelay(Duration.ofMillis(300));
+//        await().pollDelay(Duration.ofMillis(300));
         ZonedDateTime date = LocalDateTime.now().withHour(0).atZone(ZoneId.of("Z"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "last", date.toString(), "108.22"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "bid", date.toString(), "109.22"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "ask", date.toString(), "107.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "last", date.toString(), "108.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "bid", date.toString(), "109.22"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeAAPL, "ask", date.toString(), "107.22"));
 
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "last", date.toString(), "500"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "bid", date.toString(), "500.4"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "ask", date.toString(), "500"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "last", date.toString(), "500"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "bid", date.toString(), "500.4"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeFB, "ask", date.toString(), "500"));
 
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "last", date.toString(), "292"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "bid", date.toString(), "289"));
-        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "ask", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "last", date.toString(), "292"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "bid", date.toString(), "289"));
+//        mockMarketDataSteps.createRestMock(mockMarketDataSteps.createBodyForInstrumentPrices(tickerAndClassCodeCCL, "ask", date.toString(), "292"));
 
 /*        //Очищаем мок rest мок MD
         mockMiddleSteps.clearMocksForRestOrder();
