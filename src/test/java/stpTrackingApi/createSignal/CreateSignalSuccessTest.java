@@ -259,7 +259,7 @@ public class CreateSignalSuccessTest {
         double money = 7500.0;
         BigDecimal price = new BigDecimal("107.0");
         //Возможно тут была дробная позиция(до фикса было 2)
-        BigDecimal quantityRequest = new BigDecimal("10");
+        BigDecimal quantityRequest = new BigDecimal("2.058");
         int version = 1;
         //mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
         strategyId = UUID.randomUUID();
@@ -327,7 +327,7 @@ public class CreateSignalSuccessTest {
     void C659115() {
         double money = 3500.0;
         BigDecimal price = new BigDecimal("107.8");
-        BigDecimal quantityRequest = new BigDecimal("1");
+        BigDecimal quantityRequest = new BigDecimal("0.01");
         int version = 2;
         double quantityPosMasterPortfolio = 12.0;
 //        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
@@ -395,7 +395,7 @@ public class CreateSignalSuccessTest {
     void C659236() {
         double money = 3500.0;
         BigDecimal price = new BigDecimal("10.0");
-        BigDecimal quantityRequest = new BigDecimal("4");
+        BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 3;
         double quantityPosMasterPortfolio = 12.0;
 //        mocksBasicSteps.createDataForMasterSignal(instrument.tickerAAPL, instrument.classCodeAAPL, "SPB", "MOEX",String.valueOf(price));
@@ -459,7 +459,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1312630() {
         double money = 1500.0;
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 1;
         //mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp, "SPB", "105");
         strategyId = UUID.randomUUID();
@@ -534,7 +534,7 @@ public class CreateSignalSuccessTest {
     void C1434620() {
         double money = 1500.0;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("6");
+        BigDecimal quantityRequest = new BigDecimal("6.0");
         int version = 1;
         String tailValue = "6259.17";
         strategyId = UUID.randomUUID();
@@ -751,7 +751,7 @@ public class CreateSignalSuccessTest {
     void C1740596() {
         double money = 784.84;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("1");
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 3;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -816,7 +816,7 @@ public class CreateSignalSuccessTest {
     void C1737220() {
         double money = 784.84;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 3;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -881,7 +881,7 @@ public class CreateSignalSuccessTest {
     void C1740662() {
         double money = 891.84;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("2");
+        BigDecimal quantityRequest = new BigDecimal("2.0");
         int version = 4;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -945,7 +945,7 @@ public class CreateSignalSuccessTest {
     void C1742644() {
         double money = 391.84;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("1");
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 5;
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -987,7 +987,7 @@ public class CreateSignalSuccessTest {
     void C1744047() {
         double money = 391.84;
         BigDecimal price = new BigDecimal("107.0");
-        BigDecimal quantityRequest = new BigDecimal("1");
+        BigDecimal quantityRequest = new BigDecimal("1.0");
         int version = 5;
         strategyId = UUID.randomUUID();
         //создаем стратегию
@@ -1027,7 +1027,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439791() {
         BigDecimal price = new BigDecimal("105");
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1094,7 +1094,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1439796() {
         BigDecimal price = new BigDecimal("105");
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1165,7 +1165,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1440696() {
         BigDecimal price = new BigDecimal("3300.0");
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 4;
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1209,7 +1209,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1803799() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("10");
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1277,7 +1277,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1799366() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("10");
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1348,7 +1348,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1807504() {
         BigDecimal price = new BigDecimal("135");
-        BigDecimal quantityRequest = new BigDecimal("10");
+        BigDecimal quantityRequest = new BigDecimal("10.0");
         int version = 4;
         String tailValue = "150000";
         double money = 100000.0;
@@ -1418,7 +1418,7 @@ public class CreateSignalSuccessTest {
     void C1430348() {
        // mocksBasicSteps.createDataForMasterSignal(instrument.tickerALFAperp, instrument.classCodeALFAperp);
         BigDecimal price = new BigDecimal("105");
-        BigDecimal quantityRequest = new BigDecimal("3");
+        BigDecimal quantityRequest = new BigDecimal("3.0");
         int version = 2;
         String tailValue = "150000";
         double money = 3885.0;
@@ -1495,7 +1495,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430357() {
         BigDecimal price = new BigDecimal("105");
-        BigDecimal quantityRequest = new BigDecimal("2");
+        BigDecimal quantityRequest = new BigDecimal("2.0");
         int version = 2;
         String tailValue = "150000";
         double money = 345690;
@@ -1561,7 +1561,7 @@ public class CreateSignalSuccessTest {
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1430350() {
         BigDecimal price = new BigDecimal("105");
-        BigDecimal quantityRequest = new BigDecimal("5");
+        BigDecimal quantityRequest = new BigDecimal("5.0");
         int version = 2;
         String tailValue = "1500";
         double money = 1000;
