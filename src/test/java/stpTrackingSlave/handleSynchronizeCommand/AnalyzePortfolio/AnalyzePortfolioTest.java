@@ -3565,6 +3565,97 @@ public class AnalyzePortfolioTest {
         );
     }
 
+    @SneakyThrows
+    @Test
+    @AllureId("2002926")
+    @DisplayName("C2002926.AnalyzePortfolio. Отфильтровываем рублевую позицию, которая не является базовой валютой")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на актуализацию изменений виртуальных портфелей master'ов.")
+    void C2002926() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, ContractRole.master, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked, null,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        // создаем портфель мастера с позицией в кассандре
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build()).build();
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerRUB000UTSTOM,
+            instrument.tradingClearingAccountRUB000UTSTOM, "5", instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "2", date, 2,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "2000", masterPos);
+        //получаем идентификатор подписки
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        subscriptionId = subscription.getId();
+        //создаем портфель для slave в cassandra c пустой позицией по бумаге
+        String baseMoneySlave = "1680.00";
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerRUB000UTSTOM,
+            instrument.tradingClearingAccountRUB000UTSTOM, "5", true, true, instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, "0", true, true, date);
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
+            baseMoneySlave, date, createListSlaveOnePos);
+        //отправляем команду на синхронизацию
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollDelay(ONE_SECOND).until(() ->
+            slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        OffsetDateTime time = OffsetDateTime.now();
+        createCommandSynTrackingSlaveCommand(contractIdSlave, time);
+        BigDecimal priceABBV = new BigDecimal(steps.getPriceFromPriceCacheOrMD(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.instrumentABBV, "last"));
+        //получаем портфель мастера
+        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //получаем портфель slave
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
+        //выполняем расчеты
+        MasterPortfolio.Position masterPortfolioPosition = masterPortfolio.getPositions().stream()
+            .filter(ticker -> ticker.getTicker().equals(instrument.tickerABBV))
+            .findFirst().get();
+        BigDecimal masterPosQuantityABBV = masterPortfolioPosition.getQuantity();
+        BigDecimal masterPortfolioValue = masterPosQuantityABBV.multiply(priceABBV).add(masterPortfolio.getBaseMoneyPosition().getQuantity());
+        BigDecimal masterPositionRateABBV = masterPosQuantityABBV.multiply(priceABBV).divide(masterPortfolioValue, 4, BigDecimal.ROUND_HALF_UP);
+        //сохраняем в список значения по позиции в портфеле
+        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
+            .collect(Collectors.toList());
+        BigDecimal slavePositionsValue = (positionABBV.get(0).getQuantity().multiply(priceABBV));
+        BigDecimal baseMoneyPositionQuantity = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        BigDecimal slavePortfolioTotal = slavePositionsValue.add(baseMoneyPositionQuantity);
+        //определяем резерв под списание комиссии:
+        BigDecimal targetFeeReserveQuantity = (slavePositionsValue.add(baseMoneyPositionQuantity)).multiply(targetFeeReserveRate);
+
+        //считаем фактическое значение резерва actualFeeReserveQuantity
+        BigDecimal actualFeeReserveQuantity = min(targetFeeReserveQuantity, baseMoneyPositionQuantity);
+        //рассчитываем общую стоимость slave-портфеля slavePortfolioValue
+        BigDecimal slavePortfolioValue = slavePositionsValue.add( slavePortfolio.getBaseMoneyPosition().getQuantity()).subtract(actualFeeReserveQuantity);
+        //проверяем параметры позиции с расчетами
+        BigDecimal slavePositionRate = (slavePositionsValue.multiply(priceABBV)).divide(slavePortfolioTotal, 4, RoundingMode.HALF_UP);
+        //BigDecimal slavePositionRate = slavePositionsValue.divide(slavePortfolioTotal, 4, RoundingMode.HALF_UP);
+        BigDecimal slavePositionRateDiff = masterPositionRateABBV.subtract(slavePositionRate);
+        BigDecimal slavePositionQuantityDiff = slavePositionRateDiff.multiply(slavePortfolioValue).divide(priceABBV, 4,RoundingMode.HALF_UP);
+        assertAll(
+            () -> assertThat("ticker бумаги позиции в портфеле slave не равна", positionABBV.get(0).getTicker(), is(instrument.tickerABBV)),
+            () -> assertThat("tradingClearingAccount  бумаги позиции в портфеле slave не равна",
+                positionABBV.get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB)),
+            () -> assertThat("Quantity позиции в портфеле slave не равна", positionABBV.get(0).getQuantity().toString(), is("0")),
+            () -> assertThat("Price позиции в портфеле slave не равен", positionABBV.get(0).getPrice(), is(priceABBV)),
+            () -> assertThat("Rate позиции в портфеле slave не равен", positionABBV.get(0).getRate().doubleValue(), is(slavePositionRate.doubleValue())),
+            () -> assertThat("RateDiff позиции в портфеле slave не равен", positionABBV.get(0).getRateDiff(), is(slavePositionRateDiff)),
+            () -> assertThat("QuantityDiff позиции в портфеле slave не равен", positionABBV.get(0).getQuantityDiff(), is(slavePositionQuantityDiff)),
+            () -> assertThat("Проверяем флаг buy_enabled", positionABBV.get(0).getBuyEnabled(), is(true)),
+            () -> assertThat("Проверяем флаг sell_enabled", positionABBV.get(0).getSellEnabled(), is(true)),
+            //Проверяем, что отфильтровали позицию AAPl
+            () -> assertThat("Больше одной позиции", slavePortfolio.getPositions().size(), is(1))
+        );
+    }
+
 
 
     // методы для работы тестов*************************************************************************

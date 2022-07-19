@@ -398,6 +398,10 @@ public class StpInstrument {
     public String tradingClearingAccountHUM = "TKCBM_TCAB";
     public String classCodeHUM = "SPBXM";
 
+    public String tickerRUB000UTSTOM= "RUB000UTSTOM";
+    public String tradingClearingAccountRUB000UTSTOM = "MB9885503216";
+    public UUID positionIdRUB000UTSTOM = UUID.fromString("33e24a92-aab0-409c-88b8-f2d57415b920");
+
     public List<String> tradingStatusesFalse = Arrays.asList(
         "not_available_for_trading",
         "trading_closed",
