@@ -786,6 +786,103 @@ public class GetMasterPortfolioTest {
     }
 
 
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("2001631")
+    @DisplayName("C2001631.GetMasterPortfolio.Не найдены данные по позиции в кэш по смене ticker")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для получения данных виртуального портфеля ведущего")
+    void C2001631() {
+        String ticker1 = "FB";
+        String tradingClearingAccount1 = "TKCBM_TCAB";
+        UUID positionId1 = UUID.fromString("fce134ae-bb91-498c-aa5d-4f49ad2e5392");
+        String quantity1 = "5";
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+        // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
+        steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
+        List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
+            .now(ZoneOffset.UTC).minusDays(7).toInstant()), ticker1, tradingClearingAccount1, positionId1, quantity1);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterOnePositions, 2, "1958.35",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7).toInstant()));
+
+        List<MasterPortfolio.Position> masterTwoPositions = steps.masterTwoPositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1, positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterTwoPositions, 3, "1229.3",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(5).toInstant()));
+        List<MasterPortfolio.Position> masterThreePositions = steps.masterThreePositions(Date.from(OffsetDateTime
+                .now(ZoneOffset.UTC).minusDays(5).toInstant()), ticker1, tradingClearingAccount1, positionId1,
+            quantity1, instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729,
+            instrument.positionIdXS0191754729, quantityXS0191754729,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL, quantityAAPL);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, masterThreePositions, 4, "210.53",
+            Date.from(OffsetDateTime.now(ZoneOffset.UTC).minusDays(3).toInstant()));
+        // вызываем метод getMasterPortfolio
+        GetMasterPortfolioResponse getMasterPortfolioResponse = strategyApiCreator.get().getMasterPortfolio()
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xTcsSiebelIdHeader(SIEBEL_ID_MASTER)
+            .strategyIdPath(strategyId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetMasterPortfolioResponse.class));
+
+        // сохраняем данные по позициям
+        List<MasterPortfolioPosition> MasterPortfolio1 = getMasterPortfolioResponse.getPositions().stream()
+            .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerAAPL))
+            .collect(Collectors.toList());
+        List<MasterPortfolioPosition> MasterPortfolio2 = getMasterPortfolioResponse.getPositions().stream()
+            .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerXS0191754729))
+            .collect(Collectors.toList());
+        List<MasterPortfolioPosition> MasterPortfolio3 = getMasterPortfolioResponse.getPositions().stream()
+            .filter(ms -> ms.getExchangePosition().getTicker().equals(instrument.tickerFB))
+            .collect(Collectors.toList());
+        //получаем значение prices из кеш ExchangePositionPrice
+        String price1 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "last", SIEBEL_ID_MASTER, instrument.instrumentAAPL);
+        String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
+        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
+        //Пересчет цены облигаций в абсолютное значение
+        BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
+        //Рассчитываем positionValue position
+        BigDecimal positionValue1 = new BigDecimal(price1).multiply(new BigDecimal(quantityAAPL));
+        BigDecimal positionValue2 = priceNominal2.multiply(new BigDecimal(quantityXS0191754729));
+        BigDecimal positionValue3 = (new BigDecimal(price3).multiply(new BigDecimal(quantity1)));
+        //Рассчитываем portfolioValue
+        BigDecimal portfolioValue = positionValue1.add(positionValue2).add(positionValue3)
+            .add(new BigDecimal("210.53"));
+        //Рассчитываем positionRate position
+        BigDecimal positionRate1 = positionValue1.divide(portfolioValue, 4, RoundingMode.DOWN)
+            .multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN);
+        BigDecimal positionRate2 = (positionValue2.divide(portfolioValue, 4, RoundingMode.DOWN)
+            .multiply(new BigDecimal("100"))).setScale(2, RoundingMode.DOWN);
+        BigDecimal positionRate3 = (positionValue3.divide(portfolioValue, 4, RoundingMode.DOWN)
+            .multiply(new BigDecimal("100"))).setScale(2, RoundingMode.DOWN);
+        //Рассчитываем positionRate baseMoneyPosition
+        BigDecimal baseMoneyPositionRate = new BigDecimal("100").subtract(positionRate1.add(positionRate2).add(positionRate3));
+        assertThat("master_portfolio.version текущего портфеля не равно", getMasterPortfolioResponse.getVersion(), is(4));
+        //проверяем данные по позициям
+        checkParamPosition(MasterPortfolio1, instrument.tickerAAPL, instrument.briefNameAAPL,
+            instrument.imageAAPL, instrument.typeAAPL, quantityAAPL, price1, instrument.currencyAAPL,
+            positionValue1, positionRate1);
+        checkParamPosition(MasterPortfolio2, instrument.tickerXS0191754729, instrument.briefNameXS0191754729,
+            instrument.imageXS0191754729, instrument.typeXS0191754729, quantityXS0191754729, priceNominal2.toString(), instrument.currencyXS0191754729,
+            positionValue2, positionRate2);
+        checkParamPosition(MasterPortfolio3, instrument.tickerFB, instrument.briefNameFB, instrument.imageFB, instrument.typeFB, quantity1, price3, instrument.currencyFB,
+            positionValue3, positionRate3);
+        //проверяем данные по базовой валюте
+        assertThat("baseMoneyPosition.currency позиции не равно", getMasterPortfolioResponse.getBaseMoneyPosition().getCurrency().getValue(), is("usd"));
+        assertThat("baseMoneyPosition.rate позиции не равно", getMasterPortfolioResponse.getBaseMoneyPosition().getRate(), is(baseMoneyPositionRate));
+        assertThat("baseMoneyPosition.quantity позиции не равно", getMasterPortfolioResponse.getBaseMoneyPosition().getQuantity(), is(new BigDecimal("210.53")));
+    }
+
+
     void createMasterPortfolios() {
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
