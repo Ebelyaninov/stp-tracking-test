@@ -83,11 +83,11 @@ public class InvestTrackingAutoConfiguration extends AbstractCqlTemplateConfigur
         return mappingManager;
     }
 
-    @Bean
-    public ObjectMapper contextMapper() {
-        var objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
-        return objectMapper;
-    }
+//    @Bean
+//    public ObjectMapper contextMapper() {
+//        var objectMapper = new ObjectMapper();
+//        objectMapper.setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
+//        return objectMapper;
+//    }
 
 }

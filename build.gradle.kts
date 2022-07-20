@@ -4,11 +4,12 @@ group = "ru.qa.tinkoff"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val springBootVersion = "2.4.2"
+    val springBootVersion = "2.7.1"
     java
     application
-    id("io.freefair.lombok") version "5.3.0"
+    id("io.freefair.lombok") version "6.0.0-m2"
     id("org.springframework.boot") version springBootVersion
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("org.openapi.generator") version "4.3.1"
     id("io.qameta.allure") version "2.8.1"
     id("com.google.protobuf") version "0.8.17"
@@ -60,7 +61,7 @@ sourceSets {
 dependencies {
     implementation("org.jetbrains:annotations:19.0.0")
     val allureVersion = "2.13.7"
-    val springVersion = "2.4.2"
+    val springVersion = "2.7.1"
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:$springVersion") {
         exclude("junit", "junit")
@@ -74,6 +75,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-json:$springVersion")
     implementation("org.springframework.boot:spring-boot-starter-validation:$springVersion")
     implementation("org.springframework.boot:spring-boot-configuration-processor:$springVersion")
+    //kafka
+    implementation("org.springframework.kafka:spring-kafka")
+    //implementation("ru.tinkoff.invest.sdet:boostedkafka:0.0.7")
+    implementation("ru.tinkoff.invest.sdet:boostedkafka:1.2.0")
+
+//    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3")
+//    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:$springVersion")
     // Allure
     implementation("io.qameta.allure:allure-java-commons:$allureVersion")
@@ -90,11 +100,6 @@ dependencies {
 //  RestAssured
     implementation("io.rest-assured:rest-assured-all:4.3.3")
     implementation("io.rest-assured:rest-assured:4.3.3")
-
-    //kafka
-    implementation("org.springframework.kafka:spring-kafka:2.6.4")
-    //implementation("ru.tinkoff.invest.sdet:boostedkafka:0.0.7")
-    implementation("ru.tinkoff.invest.sdet:boostedkafka:1.2.0")
 
     // protobuf
     implementation("io.grpc:grpc-all:1.31.1")
@@ -161,6 +166,10 @@ allure {
 tasks.clean {
     delete("$rootDir/allure-results")
     delete("$rootDir/out")
+}
+
+tasks.withType<ProcessResources> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.compileJava {
