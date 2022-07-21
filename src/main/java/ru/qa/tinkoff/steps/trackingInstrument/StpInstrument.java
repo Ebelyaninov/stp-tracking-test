@@ -67,6 +67,8 @@ public class StpInstrument {
     public String briefNameNOK = "Nokia";
     public String imageNOK = "US6549022043.png";
     public String typeNOK = "share";
+    public UUID positionIdNOK = UUID.fromString("dbd150e9-799f-431c-8693-bd6d25892122");
+
 
 
     public String tickerFXDE = "FXDE";
@@ -269,6 +271,7 @@ public class StpInstrument {
     public String tickerNMR = "NMR";
     public String classCodeNMR = "NMR";
     public String tradingClearingAccountNMR = "NDS000000001";
+    public UUID positionIdNMR = UUID.fromString("ca958117-4eb8-4c30-af35-42367c5233d0");
 
     public String tickerBCR = "BCR";
     public String classCodeBCR = "SPBXM";
@@ -331,10 +334,12 @@ public class StpInstrument {
     public String tickerSTM = "STM";
     public String classCodeSTM = "STM";
     public String tradingClearingAccountSTM = "NDS000000001";
+    public UUID   positionIdSTM = UUID.fromString("0a0e23ad-efe1-4d35-b59b-aa9cb718d6eb");
 
     public String tickerLNT = "LNT";
     public String classCodeLNT = "SPBXM";
     public String tradingClearingAccountLNT = "L01+00000SPB";
+    public UUID positionIdLNT = UUID.fromString("69a8b572-008d-4b22-bdaa-e56b7cd740bc");
 
     public String tickerVTBM = "VTBM";
     //public String tradingClearingAccountVTBM = "L01+00000F00";

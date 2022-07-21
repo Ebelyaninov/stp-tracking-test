@@ -136,6 +136,7 @@ public class HandleCorpActionCommandErrorTest {
     String paymentDate;
     String lastBuyDate;
     final String tickerNotFound = "TESTTEST";
+    final UUID notFoundPositionId = UUID.fromString("d47e8733-1c1b-1e5b-1ad0-d1f9fd4ed4a2");
 
 
     @BeforeAll
@@ -219,12 +220,12 @@ public class HandleCorpActionCommandErrorTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -273,12 +274,12 @@ public class HandleCorpActionCommandErrorTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -411,12 +412,12 @@ public class HandleCorpActionCommandErrorTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
 
-        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, notFoundPositionId, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, notFoundPositionId, "20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись с lastBuyDate
-        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(tickerNotFound, instrument.tradingClearingAccountXS0191754729, notFoundPositionId, "100", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -525,13 +526,14 @@ public class HandleCorpActionCommandErrorTest {
 
     @Step("Создание портфеля ведущего MasterPortfolio:  ")
         //создаем портфель master в cassandra с позицией
-    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String quantityPos,
+    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, UUID positionId, String quantityPos,
                                            Tracking.Portfolio.Position position,
                                            int versionPos, int version, String money, Date date) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)

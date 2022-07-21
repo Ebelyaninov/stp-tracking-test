@@ -249,7 +249,7 @@ public class HandleCorpActionCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(UTC).minusDays(11);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerSTM, instrument.tradingClearingAccountSTM, quantityPos, positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerSTM, instrument.tradingClearingAccountSTM, instrument.positionIdSTM, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //формируем команду на  обработку совершенных корпоративных действий
         TrackingCorpAction.ActivateCorpActionCommand.Dividend dividend =
@@ -306,7 +306,7 @@ public class HandleCorpActionCommandTest {
         String baseMoneyPortfolio = "4990.0";
         OffsetDateTime utc = OffsetDateTime.now(UTC);
         Date date = Date.from(utc.toInstant());
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version, version,
             baseMoneyPortfolio, date);
         //формируем команду на  обработку совершенных корпоративных действий
         TrackingCorpAction.ActivateCorpActionCommand.Test dividendTest =
@@ -345,6 +345,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1873898() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= ", strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -364,9 +365,9 @@ public class HandleCorpActionCommandTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.positionIdNOK,"20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
 
         List<String> listOfTickers = new ArrayList<>();
@@ -381,6 +382,12 @@ public class HandleCorpActionCommandTest {
         listOfTradingClearAcconts.add(instrument.tradingClearingAccountLNT);
         listOfTradingClearAcconts.add(instrument.tradingClearingAccountFB);
         listOfTradingClearAcconts.add(instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = new ArrayList<>();
+        listOfPositionIds.add(instrument.positionIdAAPL);
+        listOfPositionIds.add(instrument.positionIdNOK);
+        listOfPositionIds.add(instrument.positionIdLNT);
+        listOfPositionIds.add(instrument.positionIdFB);
+        listOfPositionIds.add(instrument.positionIdSTM);
         List<String> listOfQty = new ArrayList<>();
         listOfQty.add("30");
         listOfQty.add("35");
@@ -389,12 +396,12 @@ public class HandleCorpActionCommandTest {
         listOfQty.add("300");
         listOfQty.add("400");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -481,7 +488,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1892424() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -501,9 +508,9 @@ public class HandleCorpActionCommandTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "10", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729, "10", positionAction, version, version,
             baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, "20", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.positionIdNOK,"20", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
 
         List<String> listOfTickers = new ArrayList<>();
@@ -514,16 +521,20 @@ public class HandleCorpActionCommandTest {
         listOfTradingClearAcconts.add(instrument.tradingClearingAccountXS0191754729);
         listOfTradingClearAcconts.add(instrument.tradingClearingAccountNOK);
 
+        List<UUID> listOfPositionIds = new ArrayList<>();
+        listOfPositionIds.add(instrument.positionIdXS0191754729);
+        listOfPositionIds.add(instrument.positionIdNOK);
+
         List<String> listOfQty = new ArrayList<>();
         listOfQty.add("30");
         listOfQty.add("35");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerXS0191754729, instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -594,18 +605,19 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdAAPL, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
         //Добавляем запись которую будем использовать в расчётах
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -640,7 +652,12 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не 2 события в топике", messages.size(), is(2));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
+        if (portfolioCommand.getDividend().getExchangePositionId().getTicker().equals(instrument.tickerNOK)) {
+            checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK);
+        }
+        else {
+            checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountNOK);
+        }
     }
 
 
@@ -676,19 +693,20 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdAAPL, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
         //Добавляем запись которую будем использовать в расчётах
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, createQtyList("0", "-30", "100", "200", "300")
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, createQtyList("0", "-30", "100", "200", "300")
             , version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -729,7 +747,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866175() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -752,18 +770,19 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdAAPL, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
         //Добавляем запись которую будем использовать в расчётах
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         //Добавляем запись в dividend
         dividendService.insertIntoDividend(Long.valueOf(dividendIdNOK), strategyId, java.sql.Timestamp.from(now.toInstant()));
@@ -813,7 +832,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866180() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " +  strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -836,31 +855,40 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdAAPL, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
 
         List<String> listOfTickersForCount = new ArrayList<>();
+        listOfTickersForCount.add(instrument.tickerAAPL);
         listOfTickersForCount.add(instrument.tickerLNT);
         listOfTickersForCount.add(instrument.tickerFB);
         listOfTickersForCount.add(instrument.tickerSTM);
         List<String> listOfTradingClearAccontsForCount = new ArrayList<>();
+        listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountAAPL);
         listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountLNT);
         listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountFB);
         listOfTradingClearAccontsForCount.add(instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIdForCount = new ArrayList<>();
+        listOfPositionIdForCount.add(null);
+        listOfPositionIdForCount.add(instrument.positionIdLNT);
+        listOfPositionIdForCount.add(instrument.positionIdFB);
+        listOfPositionIdForCount.add(instrument.positionIdSTM);
         List<String> listOfQtyForCount = new ArrayList<>();
+        listOfQtyForCount.add("200");
         listOfQtyForCount.add("200");
         listOfQtyForCount.add("300");
         listOfQtyForCount.add("400");
-        //Добавляем запись которую будем использовать в расчётах без AAPL и NOK
-        createMasterPortfolioWithListPosition(listOfTickersForCount, listOfTradingClearAccontsForCount, listOfQtyForCount, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
+        //Добавляем запись которую будем использовать в расчётах без NOK и AAPL positionId = null
+        createMasterPortfolioWithListPosition(listOfTickersForCount, listOfTradingClearAccontsForCount, listOfPositionIdForCount, listOfQtyForCount, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -916,8 +944,9 @@ public class HandleCorpActionCommandTest {
         //Создаем запись в мастер портфеле
         List<String> listOfTickers = createTickerList(instrument.tickerAAPL, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdAAPL, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(3).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(3).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
@@ -957,7 +986,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1913452() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -977,10 +1006,11 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdALFAperp, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(18).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(18).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"100", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -1024,7 +1054,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1914706() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1044,15 +1074,16 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNMR, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNMR, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdALFAperp, instrument.positionIdNMR, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
-        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, "100", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, instrument.positionIdNMR, "100", positionAction, version, version,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(10).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +1, version +1, baseMoneyPortfolio,
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,
             Date.from(lastBuyDateParsed.minusDays(5).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +2, version +2, baseMoneyPortfolio,
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,
             Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(10).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -1093,7 +1124,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915322() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1113,10 +1144,11 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNOK, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNOK, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdALFAperp, instrument.positionIdNOK, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
-        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, "100", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.positionIdNOK, "100", positionAction, version, version,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(65).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(62).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(62).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
@@ -1156,7 +1188,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1915391() {
         strategyId = UUID.randomUUID();
-        log.info("Generated strategyId= ", strategyId);
+        log.info("Generated strategyId= " +  strategyId);
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1176,12 +1208,13 @@ public class HandleCorpActionCommandTest {
 
         List<String> listOfTickers = createTickerList(instrument.tickerALFAperp, instrument.tickerNMR, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountALFAperp, instrument.tradingClearingAccountNMR, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdALFAperp, instrument.positionIdNMR, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("30", "35", "100", "200", "300");
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version, version,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version, version,
             baseMoneyPortfolio, Date.from(cut.minusDays(67).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, "100", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerNMR, instrument.tradingClearingAccountNMR, instrument.positionIdNMR, "100", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(cut.minusDays(65).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.plusDays(2).toInstant()));
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
@@ -1218,6 +1251,7 @@ public class HandleCorpActionCommandTest {
     @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
     void C1866164() {
         strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= " + strategyId.toString());
         //получаем текущую дату и время
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
@@ -1237,19 +1271,20 @@ public class HandleCorpActionCommandTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "100", positionAction, version, version,
+        //Игнорируем тикер, а получаем данные по positionId
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, "100", positionAction, version, version,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(3).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "200", positionAction, version +1, version +1,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, "200", positionAction, version +1, version +1,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем запись которую будем использовать в расчётах
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "70", positionAction, version +2, version +2,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, "70", positionAction, version +2, version +2,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountSBER, instrument.positionIdSBER, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -1258,6 +1293,9 @@ public class HandleCorpActionCommandTest {
         byte[] keyBytes = byteString(strategyId).toByteArray();
         //вычитываем все события из топика tracking.fee.calculate.command
         steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //Получаем позицию до обновления
+        MasterPortfolio.Position positionBeforeUpdate = masterPortfolioDao.getAllMasterPortfolio(contractIdMaster, strategyId).stream()
+            .filter(getVersion -> getVersion.getVersion().equals(version +2)).findFirst().get().getPositions().get(0);
         //отправляем событие в топик kafka tracking.corp-action.command
         byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
         log.info("Команда в tracking.corp-action.command:  {}", command);
@@ -1282,7 +1320,7 @@ public class HandleCorpActionCommandTest {
         //Проверяем отправку одного событий
         assertThat("Нашли не одно событие в топике", messages.size(), is(1));
         String key = message.getKey();
-        //Проверяем событие с stp-tracking-master-command
+        //Проверяем событие с stp-tracking-master-command (В БД не обновляем тикер, а отправляем актуальный в событии)
         checkPortfolioCommand(portfolioCommand, key, "70", dividendNetSBER, dividendIdSBER, Tracking.Currency.RUB, instrument.tickerSBER, instrument.tradingClearingAccountSBER);
     }
 
@@ -1319,18 +1357,19 @@ public class HandleCorpActionCommandTest {
         //После округления получим ammount = 0, а по nok qty = 0
         List<String> listOfTickers = createTickerList(instrument.tickerABBV, instrument.tickerAAPL, instrument.tickerLNT, instrument.tickerFB, instrument.tickerSTM);
         List<String> listOfTradingClearAcconts = createTradingClearAccountList(instrument.tradingClearingAccountABBV, instrument.tradingClearingAccountAAPL, instrument.tradingClearingAccountLNT, instrument.tradingClearingAccountFB, instrument.tradingClearingAccountSTM);
+        List<UUID> listOfPositionIds = createPositionIdList(instrument.positionIdABBV, instrument.positionIdAAPL, instrument.positionIdLNT, instrument.positionIdFB, instrument.positionIdSTM);
         List<String> listOfQty = createQtyList("1", "0", "100", "200", "300");
 
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts,  listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
         //Добавляем запись которую будем использовать в расчётах
-        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
         //Добавляем записи которые не попадают в lastBuyDate
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "100", positionAction, version +3, version +3,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "100", positionAction, version +3, version +3,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +4, version +4,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +4, version +4,
             baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
-        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, quantityPos, positionAction, version +5, version +5,
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, quantityPos, positionAction, version +5, version +5,
             baseMoneyPortfolio, date);
 
         TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
@@ -1362,6 +1401,98 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли событие в топике", messages.size(), is(0));
     }
 
+
+    @SneakyThrows
+    @Test
+    @AllureId("1866182")
+    @Tag("qa2")
+    @DisplayName("C2003936.HandleCorpActionCommand. Пропускаем позицию, если не заполнен positionId")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на обработку совершенных корпоративных действий")
+    void C2003936() {
+        strategyId = UUID.randomUUID();
+        log.info("Generated strategyId= " + strategyId);
+        //получаем текущую дату и время
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime cut = LocalDate.now().atStartOfDay().minusHours(3).atZone(UTC).toOffsetDateTime();
+        version = 2;
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего  в кассандре c позицией
+        String quantityPos = "4";
+        String baseMoneyPortfolio = "4990.0";
+        OffsetDateTime utc = OffsetDateTime.now(UTC);
+        OffsetDateTime lastBuyDateParsed = OffsetDateTime.parse(lastBuyDate);
+        Date date = Date.from(utc.toInstant());
+        //Создаем запись в мастер портфеле
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+
+        //Добавляем 2 позиции
+        List<String> listOfTickers = new ArrayList<>();
+        listOfTickers.add(instrument.tickerAAPL);
+        listOfTickers.add(instrument.tickerABBV);
+
+        List<String> listOfTradingClearAcconts = new ArrayList<>();
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountAAPL);
+        listOfTradingClearAcconts.add(instrument.tradingClearingAccountABBV);
+
+        List<UUID> listOfPositionIds = new ArrayList<>();
+        listOfPositionIds.add(null);
+        listOfPositionIds.add(instrument.positionIdABBV);
+
+        List<String> listOfQty = new ArrayList<>();
+        listOfQty.add("100");
+        listOfQty.add("200000");
+
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version, version, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(4).toInstant()));
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +1, version +1, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(2).toInstant()));
+        //Добавляем запись которую будем использовать в расчётах
+        createMasterPortfolioWithListPosition(listOfTickers, listOfTradingClearAcconts, listOfPositionIds, listOfQty, version +2, version +2, baseMoneyPortfolio,  Date.from(lastBuyDateParsed.minusDays(1).toInstant()));
+        //Добавляем записи которые не попадают в lastBuyDate
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, null, quantityPos, positionAction, version +3, version +3,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(1).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, null, quantityPos, positionAction, version +4, version +4,
+            baseMoneyPortfolio, Date.from(lastBuyDateParsed.plusDays(8).toInstant()));
+        createMasterPortfolioWithPosition(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, null, quantityPos, positionAction, version +5, version +5,
+            baseMoneyPortfolio, date);
+
+        TrackingCorpAction.ActivateCorpActionCommand command = createActivateCorpActionCommand(now, cut);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        byte[] keyBytes = byteString(strategyId).toByteArray();
+        //вычитываем все события из топика tracking.fee.calculate.command
+        steps.resetOffsetToLate(TRACKING_MASTER_COMMAND);
+        //отправляем событие в топик kafka tracking.corp-action.command
+        byteToByteSenderService.send(Topics.TRACKING_CORP_ACTION_COMMAND, keyBytes, eventBytes);
+        log.info("Команда в tracking.corp-action.command:  {}", command);
+        await().atMost(TEN_SECONDS).pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).ignoreExceptions().until(() ->
+            corpAction = corpActionService.getCorpActionByStrategyId(strategyId), notNullValue());
+        //Проверяем запись в corpAction
+        Optional<CorpAction> corpActionOpt = corpActionService.findCorpActionByStrategyId(strategyId);
+        checkdCorpAction(corpActionOpt, cut);
+        //Проверяем запись в таблице dividend
+        List<Dividend> dividendList = dividendService.getDividend(strategyId);
+        checkdDividend(dividendList, dividendIdABBV);
+        assertThat("Нашли записи в dividend c size != 1", dividendList.size(), is(1));
+
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_MASTER_COMMAND, Duration.ofSeconds(11)).stream()
+            .filter(key -> key.getKey().equals(contractIdMaster))
+            .collect(Collectors.toList());
+        //Проверяем отправку одного событий
+        assertThat("Нашли больще 1го события в топике", messages.size(), is(1));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
+        String key = messages.get(0).getKey();
+        checkPortfolioCommand(portfolioCommand, key, "200000", dividendNetABBV, dividendIdABBV, Tracking.Currency.USD, instrument.tickerABBV, instrument.tradingClearingAccountABBV);
+
+    }
+
     @Step("Создаем лист с ticker инструметов:  ")
     //создаем портфель master в cassandra с позицией
     public List<String> createTickerList(String firstPosition, String secondPosition, String thirdPosition, String fourthPosition, String fifthPosition) {
@@ -1386,6 +1517,18 @@ public class HandleCorpActionCommandTest {
         return listOfQty;
     }
 
+    @Step("Создаем лист positionId инструметов:  ")
+    //создаем портфель master в cassandra с позицией
+    public List<UUID> createPositionIdList (UUID firstPositionId, UUID secondPositionId, UUID thirdPositionId, UUID fourthPositionId, UUID fifthPositionId) {
+        List<UUID> listOfQty = new ArrayList<>();
+        listOfQty.add(firstPositionId);
+        listOfQty.add(secondPositionId);
+        listOfQty.add(thirdPositionId);
+        listOfQty.add(fourthPositionId);
+        listOfQty.add(fifthPositionId);
+        return listOfQty;
+    }
+
     @Step("Создаем лист с qty инструметов:  ")
         //создаем портфель master в cassandra с позицией
     public List<String> createQtyList(String firstPosition, String secondPosition, String thirdPosition, String fourthPosition, String fifthPosition) {
@@ -1402,13 +1545,14 @@ public class HandleCorpActionCommandTest {
 
     @Step("Создание портфеля ведущего MasterPortfolio:  ")
     //создаем портфель master в cassandra с позицией
-    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, String quantityPos,
+    void createMasterPortfolioWithPosition(String ticker, String tradingClearingAccount, UUID positionId, String quantityPos,
                                            Tracking.Portfolio.Position position,
                                            int versionPos, int version, String money, Date date) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .lastChangeAction((byte) position.getAction().getActionValue())
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
@@ -1457,7 +1601,7 @@ public class HandleCorpActionCommandTest {
     }
 
     //создаем портфель master в cassandra с позицией
-    void createMasterPortfolioWithListPosition(List<String> listOfTickers, List<String> listOfTradingClearAcconts, List<String> listOfQty, int versionPos, int version, String money, Date date) {
+    void createMasterPortfolioWithListPosition(List<String> listOfTickers, List<String> listOfTradingClearAcconts, List<UUID> positionIds, List<String> listOfQty, int versionPos, int version, String money, Date date) {
 
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -1469,6 +1613,7 @@ public class HandleCorpActionCommandTest {
             positionList.add(MasterPortfolio.Position.builder()
                 .ticker(listOfTickers.get(i))
                 .tradingClearingAccount(listOfTradingClearAcconts.get(i))
+                .positionId(positionIds.get(i))
                 .lastChangeAction((byte) positionAction.getAction().getActionValue())
                 .lastChangeDetectedVersion(versionPos)
                 .changedAt(date)
