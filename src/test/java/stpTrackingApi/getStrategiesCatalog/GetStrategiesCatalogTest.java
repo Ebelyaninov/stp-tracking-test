@@ -127,12 +127,14 @@ public class GetStrategiesCatalogTest {
         title = steps.getTitleStrategy();
         description = "стратегия autotest GetStrategiesCatalog";
         //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster1);
-        investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        steps.deleteDataFromDb(siebelIdMaster1);
-        steps.deleteDataFromDb(siebelIdMaster2);
-        steps.deleteDataFromDb(siebelIdMaster3);
+//        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster1);
+//        investIdMaster = resAccountMaster.getInvestId();
+        investIdMaster = UUID.fromString("b30be69f-2a2f-4df2-82b7-c1b44419e859");
+//        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        contractIdMaster = "2000014189";
+//        steps.deleteDataFromDb(siebelIdMaster1);
+//        steps.deleteDataFromDb(siebelIdMaster2);
+//        steps.deleteDataFromDb(siebelIdMaster3);
     }
 
     @AfterEach
@@ -203,6 +205,7 @@ public class GetStrategiesCatalogTest {
 
     @SneakyThrows
     @Test
+    @Disabled
     @AllureId("1098642")
     @DisplayName("C1098642.GetStrategiesCatalog.Валидация обязательных параметров: x-tcs-siebel-id")
     @Subfeature("Альтернативные сценарии")
@@ -233,6 +236,7 @@ public class GetStrategiesCatalogTest {
 
     @SneakyThrows
     @Test
+    @Disabled
     @AllureId("1100053")
     @DisplayName("C1100053.GetStrategiesCatalog.Не удалось получить clientId из кеш clientIdCache")
     @Subfeature("Альтернативные сценарии")
@@ -395,10 +399,11 @@ public class GetStrategiesCatalogTest {
         //выбираем из списка только те стратерии у соответствующая валюта и ограничиваем limit из настройки:
         //get-strategies-catalog.default-limit: 30
         List<LiteStrategy> liteStrategies = getLiteStrategiesResponse.getItems().stream()
-            .filter(liteStrategy -> liteStrategy.getBaseCurrency() == currency)
-            .sorted(new LiteStrategyByScoreAndRelativeYieldComparator().reversed())
+            .filter(liteStrategy -> liteStrategy.getBaseCurrency() == currency && liteStrategy.getStatus() != ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyStatus.FROZEN)
+            .sorted(liteStrategyComparator())
             .limit(30)
             .collect(Collectors.toList());
+        List<LiteStrategy> liteStrategies2 = sortStrategies(liteStrategies);
         //записываем stratedyId в множества и сравниваем их
         Set<UUID> listStrategyIdsFromApi = new HashSet<>();
         for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
@@ -485,13 +490,17 @@ public class GetStrategiesCatalogTest {
                         strategyCharacteristic.getId().equals("recommended-base-money-position-quantity")))
                 .sorted(new RecommendedBaseMoneyPositionQuantityComparator(courseUSD))
                 .collect(Collectors.toList());
+        liteStrategies = liteStrategies.stream()
+            .filter(liteStrategy -> liteStrategy.getStatus() != ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyStatus.FROZEN)
+            .collect(Collectors.toList());
             //находим сколько значений попадет в 25й перцентиль = N * 0,25 (где N - количество стратерии)
             BigDecimal valueInPercentile = new BigDecimal("0.25")
                 .multiply(BigDecimal.valueOf(liteStrategies.size()))
                 //округляем наверх
                 .round(new MathContext(1, RoundingMode.UP));
             //определяем значение 2-го элемента
-            LiteStrategy targetStrategy = liteStrategies.get(valueInPercentile.intValue() - 1);
+            LiteStrategy targetStrategy = liteStrategies
+                .get(valueInPercentile.intValue() - 1);
             double targetQuantity = RecommendedBaseMoneyPositionQuantityComparator
                 .getRecommendedBaseMoneyPositionQuantity(targetStrategy, courseUSD);
             //берем все значения, которые <= значение 2-го элемента
@@ -795,6 +804,21 @@ public class GetStrategiesCatalogTest {
             return compare;
         }
 
+    }
+
+    List<LiteStrategy> sortStrategies(List<LiteStrategy> strategies) {
+        return strategies.stream()
+            .sorted(liteStrategyComparator())
+            .collect(Collectors.toList());
+    }
+
+    private Comparator<LiteStrategy> liteStrategyComparator() {
+        return (o1, o2) -> {
+            Comparator<LiteStrategy> comparator = Comparator.comparing(LiteStrategy::getScore)
+                .thenComparing(LiteStrategy::getRelativeYield)
+                .reversed();
+            return comparator.compare(o1, o2);
+        };
     }
 
     static class RecommendedBaseMoneyPositionQuantityComparator implements Comparator<LiteStrategy> {
