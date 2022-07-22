@@ -121,6 +121,7 @@ public class getStrategiesCatalogTabsTest {
 
     @SneakyThrows
     @Test
+    @Disabled
     @AllureId("1500855")
     @DisplayName("1500855.getStrategiesCatalogTab. Не передан x-tcs-siebel-id")
     @Subfeature("Успешные сценарии")
@@ -143,6 +144,7 @@ public class getStrategiesCatalogTabsTest {
     @SneakyThrows
     @Test
     @AllureId("1501045")
+    @Disabled
     @DisplayName("1501045.getStrategiesCatalogTab. Клиент не найден в Сервисе Счетов")
     @Subfeature("Успешные сценарии")
     @Description("Метод возвращает список возможных вкладок (табов) для фильтрации в каталоге торговых стратегий.")
@@ -181,7 +183,21 @@ public class getStrategiesCatalogTabsTest {
             is("rub-currency"));
         assertThat("Первый title не равен", getStrategiesCatalogTabs.getItems().get(0).getTitle(),
             is("Рублевые"));
+        assertThat("Первый type не cloud", getStrategiesCatalogTabs.getItems().get(0).getType().toString(),
+            is("cloud"));
+        assertThat("Второй tabId не равен", getStrategiesCatalogTabs.getItems().get(1).getTabId(),
+            is("usd-currency"));
+        assertThat("Второй title не равен", getStrategiesCatalogTabs.getItems().get(1).getTitle(),
+            is("Долларовые"));
+        assertThat("Второй type не cloud", getStrategiesCatalogTabs.getItems().get(1).getType().toString(),
+            is("cloud"));
+        assertThat("Третий tabId не равен", getStrategiesCatalogTabs.getItems().get(2).getTabId(),
+            is("max-slaves-count"));
+        assertThat("Третий title не равен", getStrategiesCatalogTabs.getItems().get(2).getTitle(),
+            is("Популярные"));
+        assertThat("Третий type не cloud", getStrategiesCatalogTabs.getItems().get(2).getType().toString(),
+            is("square"));
         assertThat("количество табов не равно", getStrategiesCatalogTabs.getItems().size(),
-            is(5));
+            is(3));
     }
 }
