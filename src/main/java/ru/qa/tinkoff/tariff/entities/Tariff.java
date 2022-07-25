@@ -90,6 +90,7 @@ public class Tariff {
         INSURANCE,
         PRIVATE,
         TRACKING,
-        TINKOV_FAMILY_FUND
+        TINKOV_FAMILY_FUND,
+        SME
     }
 }
