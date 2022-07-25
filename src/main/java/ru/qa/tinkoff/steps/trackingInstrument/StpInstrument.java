@@ -328,7 +328,7 @@ public class StpInstrument {
     public String classCodeMTS0620 = "SPBBND";
 
     public String tickerCCL = "CCL";
-    public String tradingClearingAccountCCL = "L01+00000SPB";
+    public String tradingClearingAccountCCL = "TKCBM_TCAB";
     public String classCodeCCL = "SPBXM";
 
     public String tickerSTM = "STM";

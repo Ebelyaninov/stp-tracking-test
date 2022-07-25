@@ -2589,7 +2589,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         //получаем портфель slave
-        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(TWO_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
+        await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2).getVersion().equals(2));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2);
         assertThat("Время changed_at не равно", slavePortfolio.getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS),
@@ -2669,6 +2669,9 @@ public class HandleActualizeCommandTest {
         steps.createCommandActualizeTrackingSlaveCommand(contractIdSlave, command);
         //получаем портфель мастера
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
+        //Ожидаем insert order
+        await().atMost(TWO_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(Duration.ofMillis(100)).until(() ->
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(1)).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioWithVersion(contractIdSlave, strategyId, 2), notNullValue());
@@ -2924,6 +2927,7 @@ public class HandleActualizeCommandTest {
             slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS))).getFilledQuantity().equals(updatedFilledQuanitity));
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2CreateAt(contractIdSlave, Date.from(createAtLast.toInstant().truncatedTo(ChronoUnit.SECONDS)));
         assertAll(
+            //Возможно раньше получали ответ от MD и обновляли state (1 + 0)
             () -> assertThat("State не равно", slaveOrder2.getState().toString(), is("1")),
             () -> assertThat("filledQuantity не равно", slaveOrder2.getFilledQuantity(), is(updatedFilledQuanitity))
         );
@@ -4243,6 +4247,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1565814() {
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand, instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL, "0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4303,6 +4309,8 @@ public class HandleActualizeCommandTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на актуализацию slave-портфеля.")
     void C1565830(Tracking.Portfolio.Action action) {
+        mocksBasicSteps.createDataForMocksForHandleActualizeCommand(SIEBEL_ID_SLAVE, stpMockSlaveDate.contractIdSlaveHandleActualizeCommand, instrument.tickerAAPL,
+            instrument.classCodeAAPL, instrument.tradingClearingAccountAAPL, "0", "100", "0", "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4361,7 +4369,7 @@ public class HandleActualizeCommandTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании:")
     void C1470543() {
         mocksBasicSteps.createDataForMocksSlaveVersionsGRPC(SIEBEL_ID_SLAVE_GRPC, "2000075628",
-            "0", "5", "FB", "TKCBM_TCAB", "2");
+            "0", "5", instrument.tickerFB, instrument.tradingClearingAccountFB, "2");
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4480,15 +4488,16 @@ public class HandleActualizeCommandTest {
         //assertThat("lastChangeAction BaseMoney не равно", slavePortfolio.getBaseMoneyPosition().getLastChangeAction(), is((byte) 12));
         assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerAAPL));
         assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
+        //Нулевая позиция, отфильтровали на анализе
         assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
-        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(1).getTicker(), is(instrument.tickerFB));
-        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
-        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(1).getQuantity().toString(), is("0"));
-        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(1).getLastChangeAction(), is(nullValue()));
-        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(2).getTicker(), is(instrument.tickerCCL));
-        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(2).getTradingClearingAccount(), is(instrument.tradingClearingAccountCCL));
-        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(2).getQuantity().toString(), is("2"));
-        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(2).getLastChangeAction(), is((byte) 12));
+//        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(1).getTicker(), is(instrument.tickerFB));
+//        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
+//        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(1).getQuantity().toString(), is("0"));
+//        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(1).getLastChangeAction(), is(nullValue()));
+        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(1).getTicker(), is(instrument.tickerCCL));
+        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountCCL));
+        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(1).getQuantity().toString(), is("2"));
+        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(1).getLastChangeAction(), is((byte) 12));
     }
 
 
@@ -4502,7 +4511,7 @@ public class HandleActualizeCommandTest {
     void C1470518() {
         String SIEBEL_ID_SLAVE = "4-1W96A5ZF";
         mocksBasicSteps.createDataForMocksSlaveGRPC(SIEBEL_ID_SLAVE, "2000059093",
-            "300", "0", "2", "L01+00000SPB", "CCL");
+            "300", "0", "2", instrument.tradingClearingAccountCCL, instrument.tickerCCL);
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -4550,10 +4559,15 @@ public class HandleActualizeCommandTest {
             slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId).getVersion().equals(6));
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         checkSlavePortfolioParameters(6, 3, "300");
-        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
-        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
-        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
-        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is(nullValue()));
+        //Скорее всего раньше оставляли 0 позицию (сейчас отфильтровали)
+//        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
+//        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
+//        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
+//        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is(nullValue()));
+        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerCCL));
+        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountCCL));
+        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
+        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is((byte) 12));
     }
 
 
@@ -4620,14 +4634,15 @@ public class HandleActualizeCommandTest {
         for(int i = 0; i < positions.size(); i++) {
             assertThat("найден ticker " + instrument.tickerAAPL, positions.get(i).getTicker(), not(instrument.tickerAAPL));
         }
-        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
-        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
-        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
-        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is(nullValue()));
-        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(1).getTicker(), is(instrument.tickerCCL));
-        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountCCL));
-        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(1).getQuantity().toString(), is("2"));
-        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(1).getLastChangeAction(), is((byte) 12));
+        //Сейчас отфильтровали нулевую позицию в анализе (возможно уберут фильтрацию)
+//        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerFB));
+//        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountFB));
+//        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("0"));
+//        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is(nullValue()));
+        assertThat("ticker Position не равно", slavePortfolio.getPositions().get(0).getTicker(), is(instrument.tickerCCL));
+        assertThat("tradingClearingAccount Position не равно", slavePortfolio.getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountCCL));
+        assertThat("Quantity Position не равно", slavePortfolio.getPositions().get(0).getQuantity().toString(), is("2"));
+        assertThat("lastChangeAction Position не равно", slavePortfolio.getPositions().get(0).getLastChangeAction(), is((byte) 12));
     }
 
 
@@ -4738,6 +4753,7 @@ public class HandleActualizeCommandTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(FIVE_HUNDRED_MILLISECONDS).pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6).getVersion().equals(6));
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioByVersion(contractIdSlave, strategyId, 6);
         checkSlavePortfolioParameters(6, 2, "1000");
         //получаем обновленную заявку
         slaveOrder2 = slaveOrder2Dao.getSlaveOrderByVersion(contractIdSlave, 1);
