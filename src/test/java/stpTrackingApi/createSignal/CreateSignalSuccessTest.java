@@ -49,12 +49,10 @@ import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
-import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
-import ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit;
+import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.*;
+import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.tinkoff.trading.tracking.Tracking;
 
@@ -155,6 +153,10 @@ public class CreateSignalSuccessTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        steps.createCommandForStatusCache(instrument.tickerSBER, instrument.classCodeSBER, "normal_trading",  LocalDateTime.now().minusHours(4));
+        steps.createCommandForStatusCache(instrument.tickerAAPL, instrument.classCodeAAPL, "normal_trading",  LocalDateTime.now().minusHours(4));
+        //Добавил, ради обновление лимитов
+        updateExchangePosition();
         //steps.deleteDataFromDb(SIEBEL_ID);
         try {
             strategyService.deleteStrategy(strategyService.findStrategyByContractId(contractIdMaster).get());
@@ -303,8 +305,10 @@ public class CreateSignalSuccessTest {
         log.info("Команда в tracking.master.command:  {}", commandKafka);
         //считаем значение quantity по базовой валюте по формуле и приводитм полученное значение из команды к типу double
         double quantityReqBaseMoney = money - (price.multiply(quantityRequest)).doubleValue();
-        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
-            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+//        double quantityCommandBaseMoney = commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled()
+//            * Math.pow(10, -1 * commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale());
+        double quantityCommandBaseMoney = BigDecimal.valueOf(commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getUnscaled(),
+            commandKafka.getPortfolio().getBaseMoneyPosition().getQuantity().getScale()).doubleValue();
         // считаем значение quantity по позиции в запросе по формуле и приводит полученное значение из команды к типу double
         double quantityPosition = 0.0 + quantityRequest.doubleValue();
         double quantityPositionCommand = commandKafka.getPortfolio().getPosition(0).getQuantity().getUnscaled()
@@ -2075,6 +2079,28 @@ public class CreateSignalSuccessTest {
         String keyCommand = "\n" +
             "\u0004" + ticker + "\u0012\n" + tradingClearingAccount;
         stringToByteSenderService.send(Topics.EXCHANGE_POSITION, keyCommand, exchangePositionCommand.toByteArray());
+    }
+
+    void updateExchangePosition () {
+        ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit orderQuantityLimit
+            = new ru.qa.tinkoff.swagger.tracking_admin.model.OrderQuantityLimit();
+        orderQuantityLimit.setLimit(52);
+        orderQuantityLimit.setPeriodId("default");
+        UpdateExchangePositionRequest updateExchangePosition = new UpdateExchangePositionRequest();
+        updateExchangePosition.setOrderQuantityLimits(Collections.singletonList(orderQuantityLimit));
+        updateExchangePosition.exchange(Exchange.MOEX);
+        updateExchangePosition.setOrderQuantityLimits(Collections.singletonList(orderQuantityLimit));
+        updateExchangePosition.setTicker(instrument.tickerSBER);
+        updateExchangePosition.setDailyQuantityLimit(111);
+        updateExchangePosition.setTrackingAllowed(true);
+        updateExchangePosition.setDynamicLimits(false);
+        updateExchangePosition.setTradingClearingAccount(instrument.tradingClearingAccountSBER);
+        exchangePositionApiAdminCreator.get().updateExchangePosition()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .xAppNameHeader("invest")
+            .xDeviceIdHeader("test")
+            .xTcsLoginHeader("tracking_admin")
+            .body(updateExchangePosition);
     }
 
 }
