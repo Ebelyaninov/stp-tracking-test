@@ -115,12 +115,15 @@ public class HandleUnblockContractCommandTest {
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
+    UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
 
     final String tickerFB = "FB";
     final String tradingClearingAccountFB = "TKCBM_TCAB";
+    UUID positionIdFB = UUID.fromString("fce134ae-bb91-498c-aa5d-4f49ad2e5392");
 
     String tickerABBV = "ABBV";
     String tradingClearingAccountABBV = "TKCBM_TCAB";
+    UUID positionIdABBV = UUID.fromString("4800523a-8e7c-48f7-8bf1-2a9e2a84378d");
 
     String description = "description test стратегия autotest update adjust base currency";
 
@@ -204,8 +207,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple,positionIdAAPL, "5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -281,8 +285,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL, "5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -334,8 +339,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -376,8 +382,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL, "5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -520,8 +527,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -573,8 +581,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -653,11 +662,13 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL, "5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
-        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "5", tickerFB, tradingClearingAccountFB, "1", date, 3,
+        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL, "5", tickerFB,
+            tradingClearingAccountFB, positionIdFB,"1", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1461.9", masterPosTwo);
         //создаем подписку для slave c заблокированной подпиской
@@ -674,8 +685,8 @@ public class HandleUnblockContractCommandTest {
         int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         //создаем портфель для ведомого
         String baseMoneySlave = "1221";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(tickerApple, tradingClearingAccountApple,
-            "5", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 2, 2,
             baseMoneySlave, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -745,11 +756,13 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
-        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "5", tickerFB, tradingClearingAccountFB, "1", date, 3,
+        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", tickerFB, tradingClearingAccountFB,
+            positionIdFB,"1", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1461.9", masterPosTwo);
         //создаем подписку для slave c заблокированной подпиской
@@ -826,8 +839,9 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -843,8 +857,8 @@ public class HandleUnblockContractCommandTest {
         int versionMiddle = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         //создаем портфель для ведомого
         String baseMoneySlave = "6221";
-        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(tickerApple, tradingClearingAccountApple,
-            "5", date);
+        List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(
+            tickerApple, tradingClearingAccountApple, positionIdAAPL,"5", date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 2, 2,
             baseMoneySlave, date, createListSlaveOnePos);
         //вычитываем из топика кафка tracking.delay.command все offset
@@ -913,11 +927,13 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
-        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "5", tickerFB, tradingClearingAccountFB, "1", date, 3,
+        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", tickerFB, tradingClearingAccountFB,
+            positionIdFB,"1", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1461.9", masterPosTwo);
         //создаем подписку для slave c заблокированной подпиской
@@ -944,8 +960,9 @@ public class HandleUnblockContractCommandTest {
         String baseMoneySlave = "656.23";
 //        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple, tradingClearingAccountApple,
 //            "5", tickerFB, tradingClearingAccountFB, "1", date);
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple, tradingClearingAccountApple,
-            "5", true, true, tickerABBV, tradingClearingAccountABBV, "1", true, true, date);
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", true, true,
+            tickerABBV, tradingClearingAccountABBV,  positionIdABBV,"1", true, true, date);
                 steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 2, 3,
             baseMoneySlave, date, createListSlavePos);
         //Вычитываем из топика kafka: tracking.master.command все offset
@@ -1012,11 +1029,13 @@ public class HandleUnblockContractCommandTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
-        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple, tradingClearingAccountApple,
-            "5", tickerFB, tradingClearingAccountFB, "1", date, 3,
+        List<MasterPortfolio.Position> masterPosTwo = steps.createListMasterPositionWithTwoPos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", tickerFB, tradingClearingAccountFB,
+            positionIdFB, "1", date, 3,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "1461.9", masterPosTwo);
         //создаем подписку для slave c заблокированной подпиской
@@ -1043,8 +1062,9 @@ public class HandleUnblockContractCommandTest {
         String baseMoneySlave = "656.23";
 //        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple, tradingClearingAccountApple,
 //            "5", tickerABBV, tradingClearingAccountABBV, "3", date);
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple, tradingClearingAccountApple,
-            "5", true, true, tickerABBV, tradingClearingAccountABBV, "3", true, true, date);
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", true, true,
+            tickerABBV, tradingClearingAccountABBV, positionIdABBV, "3", true, true, date);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddle - 2, 3,
             baseMoneySlave, date, createListSlavePos);
         //Вычитываем из топика kafka: tracking.master.command все offset

@@ -115,7 +115,7 @@ public class handleSynchronizeCommandErrorTest {
 
     final String tickerApple = "AAPL";
     final String tradingClearingAccountApple = "TKCBM_TCAB";
-
+    final  UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
     String description = "description test стратегия autotest update adjust base currency";
 
     @AfterEach
@@ -193,8 +193,9 @@ public class handleSynchronizeCommandErrorTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple, tradingClearingAccountApple,
-            "5", date, 1, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
+            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -295,7 +296,8 @@ public class handleSynchronizeCommandErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         // создаем портфель для master в cassandra
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave

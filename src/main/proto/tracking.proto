@@ -45,7 +45,6 @@ message ExchangePosition {
    // Признак применения динамических лимитов для инструмента при выставлении сигнала
   bool dynamic_limits = 9;
 
-
   message OrderQuantityLimit {
 
     // Идентификатор периода

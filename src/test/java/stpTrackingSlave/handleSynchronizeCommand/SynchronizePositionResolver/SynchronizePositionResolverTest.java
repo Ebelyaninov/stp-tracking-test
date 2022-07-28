@@ -224,9 +224,10 @@ public class SynchronizePositionResolverTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB, instrument.tradingClearingAccountFB,
-            "5", instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, "10", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"5",
+            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,"10",
+            date, 2,steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
         //создаем подписку для  slave
@@ -241,8 +242,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "3", true, true,
-            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, "20", true, true, date);
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"3", true, true,
+            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,
+            "20", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -289,8 +291,8 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerQCOM,
-            instrument.tradingClearingAccountQCOM, "10", instrument.tickerALFAperp,
-            instrument.tradingClearingAccountALFAperp, "40", date, 2,
+            instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM, "10", instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp,"40", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
@@ -306,8 +308,8 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerQCOM,
-            instrument.tradingClearingAccountQCOM, "20", true, true,
-            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp,
+            instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM, "20", true, true,
+            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp,
             "60", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
@@ -355,7 +357,7 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "10", date, 2,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"10", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "12259.17", masterPos);
@@ -371,8 +373,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "13657.23";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerUSDRUB,
-            instrument.tradingClearingAccountUSDRUB, "39", true, true,
-            instrument.tickerEURRUB, instrument.tradingClearingAccountEURRUB, "117", true, true, date);
+            instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB,"39", true,
+            true,  instrument.tickerEURRUB, instrument.tradingClearingAccountEURRUB,
+            instrument.positionIdEURRUB,"117", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
@@ -431,7 +434,7 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "10", date, 2,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER, "10", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.MONEY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "12259.17", masterPos);
@@ -447,8 +450,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "13657.23";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerUSDRUB,
-            instrument.tradingClearingAccountUSDRUB, "275", true, true,
-            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "50", true, true, date);
+            instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB,"275", true, true,
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionIdSBER,
+            "50", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
@@ -502,7 +506,7 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "10", date, 2,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"10", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.MONEY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "12259.17", masterPos);
@@ -518,8 +522,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "13657.23";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerGBP,
-            instrument.tradingClearingAccountGBP, "275", true, true,
-            instrument.tickerSBER, instrument.tradingClearingAccountSBER, "100", true, true, date);
+            instrument.tradingClearingAccountGBP, instrument.positionIdGBP,"275", true, true,
+            instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"100",
+            true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlavePos);
@@ -565,8 +570,9 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "4", instrument.tickerQCOM, instrument.tradingClearingAccountQCOM,
-            "10", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"4", instrument.tickerQCOM,
+            instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,"10", date,
+            2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
         //создаем подписку для  slave
@@ -581,8 +587,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "6", true, true,
-            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, "20", true, true, date);
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"6", true, true,
+            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM,instrument.positionIdQCOM, "20",
+            true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -667,9 +674,9 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729,
-            "10", instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "5", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729,"10",
+            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp, "5",
+            date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
         //создаем подписку для slave
@@ -680,8 +687,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "20", true, true,
-            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "10", true, true, date);
+            instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729,"20",
+            true, true, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp,
+            instrument.positionIdALFAperp,"10", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -763,7 +771,8 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerVTBM,
-            instrument.tradingClearingAccountVTBM, "2", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            instrument.tradingClearingAccountVTBM, instrument.positionIdVTBM, "2",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,
             "6", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "16259.17", masterPos);
@@ -775,8 +784,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "29259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerVTBM,
-            instrument.tradingClearingAccountVTBM, "1", true, true,
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "4", true, true, date);
+            instrument.tradingClearingAccountVTBM, instrument.positionIdVTBM, "1", true,
+            true, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            instrument.positionIdSU29009RMFS6,"4", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -834,9 +844,9 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "20", instrument.tickerALFAperp,
-            instrument.tradingClearingAccountALFAperp, "40", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+            instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729,"20",
+            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp,
+            "40", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
         //создаем подписку для slave
@@ -846,8 +856,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerXS0191754729,
-            instrument.tradingClearingAccountXS0191754729, "2", true, true,
-            instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, "4", true, true, date);
+            instrument.tradingClearingAccountXS0191754729, instrument.positionIdXS0191754729,"2",
+            true, true, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp,
+            instrument.positionIdALFAperp,"4", true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -948,8 +959,8 @@ public class SynchronizePositionResolverTest {
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "20", instrument.tickerQCOM,
-            instrument.tradingClearingAccountQCOM, "12", date, 2,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"20", instrument.tickerQCOM,
+            instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,"12", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6259.17", masterPos);
@@ -961,8 +972,9 @@ public class SynchronizePositionResolverTest {
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
         List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "10", true, true,
-            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, "4", true, true, date);
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"10", true, true,
+            instrument.tickerQCOM, instrument.tradingClearingAccountQCOM,instrument.positionIdQCOM, "4",
+            true, true, date);
         //создаем запись в кассандре
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
             baseMoneySlave, date, createListSlavePos);
@@ -1056,7 +1068,8 @@ public class SynchronizePositionResolverTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, "35", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"35",
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "35", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "900.5", masterPos);
@@ -1154,9 +1167,10 @@ public class SynchronizePositionResolverTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB, instrument.tradingClearingAccountFB,
-            "15", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "35", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"15",
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"35", date,
+            2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.1", masterPos);
         //создаем подписку для slave
@@ -1264,9 +1278,10 @@ public class SynchronizePositionResolverTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB, instrument.tradingClearingAccountFB,
-            "4500", instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, "700", date, 2,
-            steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
+            instrument.tradingClearingAccountFB, instrument.positionIdFB,"4500",
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "700",
+            date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "351.1", masterPos);
         //создаем подписку для slave

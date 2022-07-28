@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StpInstrument {
 
-    public String tickerAEE1 = "AAPL";
+    public String tickerAEE1 = "AEE1";
     public String tradingClearingAccountAEE1 = "L01+00000BLP";
     public String classCodeAEE1 = "SPBXM";
     public String instrumentAEE1 = tickerAEE1 + "_" + classCodeAEE1;
@@ -105,6 +105,7 @@ public class StpInstrument {
     public String instrumentSU29009RMFS6 = tickerSU29009RMFS6 + "_" + classCodeSU29009RMFS6;
     public String briefNameSU29009RMFS6 = "ОФЗ 29009";
     public String imageSU29009RMFS6 = "minfin.png";
+    public UUID positionIdSU29009RMFS6 = UUID.fromString("bcf000c7-03c4-4cb7-b79d-892a881b1d29");
 
     public String tickerLKOH = "LKOH";
     public String tradingClearingAccountLKOH = "L01+00000F00";
@@ -175,7 +176,7 @@ public class StpInstrument {
     public String tickerEURRUB = "EURRUB";
     public String tradingClearingAccountEURRUB = "MB9885503216";
     public String classCodeEURRUB = "EES_CETS";
-
+    public UUID positionIdEURRUB = UUID.fromString("d209272f-1236-4c20-93c7-e37b9db34b3e");
 
     public String tickerXS0587031096 = "XS0587031096";
     public String classCodeXS0587031096 = "RPEU";
@@ -222,17 +223,19 @@ public class StpInstrument {
     public String tickerTBIO = "TBIO";
     public String tradingClearingAccountTBIO = "NDS000000001";
     public String classCodeTBIO = "TQTF";
+    public UUID positionIdTBIO = UUID.fromString("9d0a68fe-c472-4951-ac87-62f3353c982d");
 
     public String tickerUSDRUB = "USDRUB";
     public String tradingClearingAccountUSDRUB = "MB9885503216";
     public String classCodeUSDRUB = "EES_CETS";
     public String instrumentUSDRUB = tickerUSDRUB + "_" + classCodeUSDRUB;
-
+    public UUID positionIdUSDRUB = UUID.fromString("6e97aa9b-50b6-4738-bce7-17313f2b2cc2");
 
     public String tickerGBP = "GBPRUB";
     public String tradingClearingAccountGBP = "MB9885503216";
     public String classCodeGBP = "EES_CETS";
     public String instrumentGBP = tickerGBP + "_" + classCodeGBP;
+    public UUID positionIdGBP = UUID.fromString("f1ecc477-ec8b-40e9-ab47-7706ac56a935");
 
     public String tickerJPY = "JPYRUB";
     public String tradingClearingAccountJPY = "MB9885503216";
@@ -244,11 +247,13 @@ public class StpInstrument {
     public String tickerCHF = "CHFRUB";
     public String tradingClearingAccountCHF = "MB9885503216";
     public String classCodeCHF = "EES_CETS";
+    public UUID positionIdCHF = UUID.fromString("282725e9-69f5-4bc9-a300-f02ccedbafb2");
 
     public String tickerHKD = "HKDRUB";
     public String tradingClearingAccountHKD = "MB9885503216";
     public String classCodeHKD = "EES_CETS";
     public String instrumentHKD = tickerHKD + "_" + classCodeHKD;
+    public UUID positionIdHKD = UUID.fromString("de34b358-b063-4558-88ab-b573dff8841f");
 
     //нет в кеше exchangePositionCache
     public String tickerTEST = "TEST";
@@ -275,23 +280,25 @@ public class StpInstrument {
 
     public String tickerBCR = "BCR";
     public String classCodeBCR = "SPBXM";
-    public String tradingClearingAccountBCR = "L01+00000SPB";
+    public String tradingClearingAccountBCR = "TKCBM_TCAB";
+    public UUID positionIdBCR = UUID.fromString("10fab6fa-8ad2-4c42-97d6-e7a1c02036fb");
 
     public String tickerBRJ1 = "BRJ1";
     public String classCodeBRJ1 = "SPBFUT";
-    public String tradingClearingAccountBRJ1 = "U800";
+    public String tradingClearingAccountBRJ1 = "TB00";
 
 
     public String tickerQCOM = "QCOM";
     //public String tradingClearingAccountQCOM = "L01+00000SPB";
     public String tradingClearingAccountQCOM = "TKCBM_TCAB";
     public String classCodeQCOM = "SPBXM";
-
+    public UUID positionIdQCOM = UUID.fromString("4e614863-4656-4e4d-be0b-cb66d76e80d1");
 
     public String tickerTUSD = "TUSD";
     public String tradingClearingAccountTUSD = "L01+00000F00";
     public String classCodeTUSD = "TQTD";
     public String instrumentTUSD = tickerTUSD + "_" + classCodeTUSD;
+    public UUID positionIdTUSD = UUID.fromString("8ccf8aee-3cdf-47e3-b8ad-737900ea64c0");
 
     public String tickerTECH = "TECH";
     public String tradingClearingAccountTECH = "L01+00000SPB";
@@ -306,22 +313,27 @@ public class StpInstrument {
     public String classCodeGLDRUB = "CETS";
     public String tradingClearingAccountGLDRUB = "MB9885503216";
     public String instrumentGLDRUB = tickerGLDRUB + "_" + classCodeGLDRUB;
+    public UUID positionIdGLDRUB = UUID.fromString("cf4fde41-c553-415c-82a6-cd2cdffd5e27");
 
     public String tickerKZT = "KZTRUB_TOM";
     public String tradingClearingAccountKZT = "MB9885503216";
     public String classCodeKZT = "CETS";
+    public UUID positionIdKZT = UUID.fromString("6a6c93fc-a954-475f-96ed-2d8128aaaf56");
 
     public String tickerBYN = "BYNRUB_TOM";
     public String tradingClearingAccountBYN = "MB9885503216";
     public String classCodeBYN = "CETS";
+    public UUID positionIdBYN = UUID.fromString("558a8c0b-9d68-4da5-a375-9be773ea32b0");
 
     public String tickerXAU = "GLDRUB_TOM";
     public String tradingClearingAccountXAU = "MB9885503216";
     public String classCodeXAU = "CETS";
+    public UUID positionIdXAU = UUID.fromString("cf4fde41-c553-415c-82a6-cd2cdffd5e27");
 
     public String tickerXAG = "SLVRUB_TOM";
     public String tradingClearingAccountXAG = "MB9885503216";
     public String classCodeXAG = "CETS";
+    public UUID positionIdXAG = UUID.fromString("9a68d2b1-0967-4ec2-808c-fa9071fe654e");
 
     public String tickerMTS0620 = "MTS0620";
     public String tradingClearingAccountMTS0620 = "L01+00000SPB";
@@ -330,6 +342,7 @@ public class StpInstrument {
     public String tickerCCL = "CCL";
     public String tradingClearingAccountCCL = "TKCBM_TCAB";
     public String classCodeCCL = "SPBXM";
+    public UUID positionIdCCL = UUID.fromString("3deba42b-4abd-4eaf-bc42-077981a26821");
 
     public String tickerSTM = "STM";
     public String classCodeSTM = "STM";
@@ -346,34 +359,42 @@ public class StpInstrument {
     public String tradingClearingAccountVTBM = "L01+00002F00";
     public String classCodeVTBM = "TQTF";
     public String instrumentVTBM = tickerVTBM + "_" + classCodeVTBM;
+    public UUID positionIdVTBM = UUID.fromString("eee36ccf-5f28-4419-9c29-c6465f39581a");
 
     public String tickerDAL = "DAL";
     public String tradingClearingAccountDAL = "TKCBM_TCAB";
     public String classCodeDAl = "SPBXM";
+    public UUID positionIdDAL = UUID.fromString("2ce6103e-54b1-4178-a4ba-b36fdcf300cd");
 
     public String tickerDD = "DD";
     public String tradingClearingAccountDD = "TKCBM_TCAB";
     public String classCodeDD = "SPBXM";
+    public UUID positionIdDD = UUID.fromString("041de167-4a78-4327-92ae-49e73c7d97c2");
 
     public String tickerDOW = "DOW";
     public String tradingClearingAccountDOW = "TKCBM_TCAB";
     public String classCodeDOW = "SPBXM";
+    public UUID positionIdDOW = UUID.fromString("4f284479-72eb-4338-b1ae-6c5d471ad354");
 
     public String tickerINTC = "INTC";
     public String tradingClearingAccountINTC = "TKCBM_TCAB";
     public String classCodeINTC = "SPBXM";
+    public UUID positionIdINTC = UUID.fromString("cb6b0d66-181b-4462-ade8-486754b3afe7");
 
     public String tickerGE = "GE";
     public String tradingClearingAccountGE = "TKCBM_TCAB";
     public String classCodeGE = "SPBXM";
+    public UUID positionIdGE = UUID.fromString("1db3eaba-57ae-4e87-877f-b9f368651525");
 
     public String tickerF = "F";
     public String tradingClearingAccountF= "TKCBM_TCAB";
     public String classCodeF = "SPBXM";
+    public UUID positionIdF = UUID.fromString("78f759ed-65ce-4611-80c4-0afb5d92cbbd");
 
     public String tickerGILD = "GILD";
     public String tradingClearingAccountGILD = "TKCBM_TCAB";
     public String classCodeGILD = "SPBXM";
+    public UUID positionIdGILD = UUID.fromString("ec562b29-899f-4c8f-b289-a14144f81935");
 
     public String tickerIBM = "IBM";
     public String tradingClearingAccountIBM= "TKCBM_TCAB";
@@ -382,14 +403,17 @@ public class StpInstrument {
     public String tickerILMN = "ILMN";
     public String tradingClearingAccountILMN= "TKCBM_TCAB";
     public String classCodeILMN = "SPBXM";
+    public UUID positionIdILMN = UUID.fromString("25b1bb14-db79-44a2-b32f-620ce7bac850");
 
     public String tickerEBAY = "EBAY";
     public String tradingClearingAccountEBAY= "TKCBM_TCAB";
     public String classCodeEBAY = "SPBXM";
+    public UUID positionIdEBAY = UUID.fromString("f9083350-b9e5-400f-879e-e44a6b439547");
 
     public String tickerINTU = "INTU";
     public String tradingClearingAccountINTU= "TKCBM_TCAB";
     public String classCodeINTU = "SPBXM";
+    public UUID positionIdINTU = UUID.fromString("2b8a30d5-15db-494f-a8f4-64048197f77d");
 
     public String tickerIP = "IP";
     public String tradingClearingAccountIP = "TKCBM_TCAB";
@@ -406,6 +430,16 @@ public class StpInstrument {
     public String tickerRUB000UTSTOM= "RUB000UTSTOM";
     public String tradingClearingAccountRUB000UTSTOM = "MB9885503216";
     public UUID positionIdRUB000UTSTOM = UUID.fromString("33e24a92-aab0-409c-88b8-f2d57415b920");
+
+    public String tickerTEUR= "TEUR";
+    public String tradingClearingAccountTEUR = "L01+00002F00";
+    public UUID positionIdTEUR = UUID.fromString("a9a9d608-c77f-4a9b-8b1c-ef791cd9926f");
+
+    public String tickerSKX = "SKX";
+    public String classCodeSKX = "SPBXM";
+    public String tradingClearingAccountSKX = "TKCBM_TCAB";
+    public UUID positionIdSKX = UUID.fromString("98d32a7a-0e9a-4ecd-860e-ebbb850e42d2");
+
 
     public List<String> tradingStatusesFalse = Arrays.asList(
         "not_available_for_trading",

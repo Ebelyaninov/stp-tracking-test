@@ -179,7 +179,7 @@ public class StpTrackingSlaveSteps {
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader(headerNameApiKey, apiKey))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
-            .reqSpec(r -> r.addHeader("magic-number", "3"))
+            .reqSpec(r -> r.addHeader("magic-number", "4"))
             .cacheNamePath("exchangePositionPriceCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -432,6 +432,7 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем позицию в портфель мастера: ")
     public List<MasterPortfolio.Position> createListMasterPositionWithOnePos(String ticker, String tradingClearingAccount,
+                                                                             UUID positionId,
                                                                              String quantityPos, Date date,
                                                                              int lastChangeDetectedVersion,
                                                                              Tracking.Portfolio.Position position) {
@@ -439,6 +440,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantityPos))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -449,8 +451,8 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем две позиции в портфель мастера: ")
     public List<MasterPortfolio.Position> createListMasterPositionWithTwoPos(String ticker1, String tradingClearingAccount1,
-                                                                             String quantityPos1, String ticker2,
-                                                                             String tradingClearingAccount2,
+                                                                             UUID positionId1, String quantityPos1, String ticker2,
+                                                                             String tradingClearingAccount2,  UUID positionId2,
                                                                              String quantityPos2, Date date,
                                                                              int lastChangeDetectedVersion,
                                                                              Tracking.Portfolio.Position position) {
@@ -458,6 +460,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantityPos1))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -466,6 +469,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantityPos2))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -476,10 +480,10 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем три позиции в портфель мастера: ")
     public List<MasterPortfolio.Position> createListMasterPositionWithThreePos(String ticker1, String tradingClearingAccount1,
-                                                                               String quantityPos1, String ticker2,
-                                                                               String tradingClearingAccount2,
+                                                                               UUID positionId1, String quantityPos1, String ticker2,
+                                                                               String tradingClearingAccount2, UUID positionId2,
                                                                                String quantityPos2, String ticker3,
-                                                                               String tradingClearingAccount3,
+                                                                               String tradingClearingAccount3, UUID positionId3,
                                                                                String quantityPos3, Date date,
                                                                                int lastChangeDetectedVersion,
                                                                                Tracking.Portfolio.Position position) {
@@ -487,6 +491,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantityPos1))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -495,6 +500,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantityPos2))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -503,6 +509,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker3)
             .tradingClearingAccount(tradingClearingAccount3)
+            .positionId(positionId3)
             .quantity(new BigDecimal(quantityPos3))
             .changedAt(date)
             .lastChangeDetectedVersion(lastChangeDetectedVersion)
@@ -529,7 +536,7 @@ public class StpTrackingSlaveSteps {
 
 
     @Step("Добавляем позицию в портфель slave: ")
-    public List<SlavePortfolio.Position> createListSlavePositionWithOnePos(String ticker, String tradingClearingAccount,
+    public List<SlavePortfolio.Position> createListSlavePositionWithOnePos(String ticker, String tradingClearingAccount, UUID positionId,
                                                                            String quantityPos, Date date, Integer synchronizedToMasterVersion,
                                                                            BigDecimal price, BigDecimal rate,
                                                                            BigDecimal rateDiff, BigDecimal quantityDiff) {
@@ -537,6 +544,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantityPos))
             .synchronizedToMasterVersion(synchronizedToMasterVersion)
             .price(price)
@@ -551,7 +559,7 @@ public class StpTrackingSlaveSteps {
 
 
     @Step("Добавляем позицию в портфель slave: ")
-    public List<SlavePortfolio.Position> createListSlavePositionOnePosWithEnable(String ticker, String tradingClearingAccount,
+    public List<SlavePortfolio.Position> createListSlavePositionOnePosWithEnable(String ticker, String tradingClearingAccount, UUID positionId,
                                                                                  String quantityPos, Date date, Integer synchronizedToMasterVersion,
                                                                                  BigDecimal price, BigDecimal rate,
                                                                                  BigDecimal rateDiff, BigDecimal quantityDiff,
@@ -560,6 +568,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantityPos))
             .synchronizedToMasterVersion(synchronizedToMasterVersion)
             .price(price)
@@ -577,17 +586,18 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем две позиции в портфель slave: ")
     public List<SlavePortfolio.Position> createListSlavePositionWithTwoPos(String ticker1, String tradingClearingAccount1,
-                                                                           String quantityPos1,
+                                                                           UUID positionId1, String quantityPos1,
                                                                            BigDecimal price1, BigDecimal rate1,
                                                                            BigDecimal rateDiff1, BigDecimal quantityDiff1,
                                                                            String ticker2, String tradingClearingAccount2,
-                                                                           String quantityPos2, BigDecimal price2, BigDecimal rate2,
-                                                                           BigDecimal rateDiff2, BigDecimal quantityDiff2,
+                                                                           UUID positionId2,String quantityPos2, BigDecimal price2,
+                                                                           BigDecimal rate2, BigDecimal rateDiff2, BigDecimal quantityDiff2,
                                                                            Date date, int synchronizedToMasterVersion) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantityPos1))
             .synchronizedToMasterVersion(synchronizedToMasterVersion)
             .price(price1)
@@ -600,6 +610,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantityPos2))
             .synchronizedToMasterVersion(synchronizedToMasterVersion)
             .price(price2)
@@ -614,11 +625,12 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем позицию в портфель slave: ")
     public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLight(String ticker, String tradingClearingAccount,
-                                                                                String quantityPos, Date date) {
+                                                                                UUID positionId, String quantityPos, Date date) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantityPos))
             .changedAt(date)
             .lastChangeAction(null)
@@ -628,11 +640,13 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем позицию в портфель slave: ")
     public List<SlavePortfolio.Position> createListSlavePositionWithOnePosLightAndWithSellAndBuy(String ticker, String tradingClearingAccount,
-                                                                                                 String quantityPos, Date date, Boolean buyEnabled, Boolean sellEnabled) {
+                                                                                                 UUID positionId, String quantityPos, Date date,
+                                                                                                 Boolean buyEnabled, Boolean sellEnabled) {
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
+            .positionId(positionId)
             .quantity(new BigDecimal(quantityPos))
             .changedAt(date)
             .lastChangeAction(null)
@@ -645,9 +659,9 @@ public class StpTrackingSlaveSteps {
 
     @Step("Добавляем две позиции в портфель slave: ")
     public List<SlavePortfolio.Position> createListSlavePositionWithTwoPosLight(String ticker1, String tradingClearingAccount1,
-                                                                                String quantityPos1, Boolean buyEnableFirst,
+                                                                                UUID positionId1, String quantityPos1, Boolean buyEnableFirst,
                                                                                 Boolean sellEnableFirst, String ticker2,
-                                                                                String tradingClearingAccount2, String quantityPos2,
+                                                                                String tradingClearingAccount2, UUID positionId2, String quantityPos2,
                                                                                 Boolean buyEnabledSecond, Boolean sellEnableSecond,
                                                                                 Date date) {
 
@@ -655,6 +669,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker1)
             .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
             .quantity(new BigDecimal(quantityPos1))
             .changedAt(date)
             .lastChangeAction(null)
@@ -664,6 +679,7 @@ public class StpTrackingSlaveSteps {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(ticker2)
             .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
             .quantity(new BigDecimal(quantityPos2))
             .changedAt(date)
             .lastChangeAction(null)
@@ -882,6 +898,20 @@ public class StpTrackingSlaveSteps {
     }
 
     public Tracking.Portfolio.Position createPosInCommand(String ticker, String tradingClearingAccount,
+                                                          UUID positionId, int unscaled, Tracking.Portfolio.Action action) {
+        Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
+            .setTicker(ticker)
+            .setTradingClearingAccount(tradingClearingAccount)
+            .setPositionId(byteString(positionId))
+            .setQuantity(Tracking.Decimal.newBuilder()
+                .setUnscaled(unscaled).build())
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(action).build())
+            .build();
+        return position;
+    }
+
+    public Tracking.Portfolio.Position createPosInCommandWithOutPositionId(String ticker, String tradingClearingAccount,
                                                           int unscaled, Tracking.Portfolio.Action action) {
         Tracking.Portfolio.Position position = Tracking.Portfolio.Position.newBuilder()
             .setTicker(ticker)
@@ -1058,7 +1088,7 @@ public class StpTrackingSlaveSteps {
 
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
-            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
+//            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
             .cacheNamePath("exchangePositionCache")
             .xAppNameHeader("tracking")
             .xAppVersionHeader("4.5.6")
@@ -1153,5 +1183,8 @@ public class StpTrackingSlaveSteps {
         status = values.get(0).get("status");
         return status;
     }
+
+
+
 
 }
