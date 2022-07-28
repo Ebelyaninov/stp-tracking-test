@@ -390,7 +390,8 @@ public class GetTimelineTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //Создаем сигнал
@@ -465,7 +466,8 @@ public class GetTimelineTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //Создаем сигнал
@@ -585,7 +587,8 @@ public class GetTimelineTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
 
         for (int i = 1; i < 4; i++){
@@ -655,7 +658,8 @@ public class GetTimelineTest {
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "5", date, 3, stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.1", masterPos);
         //создаем подписку на стратегию
@@ -718,7 +722,8 @@ public class GetTimelineTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "25", date, 2, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "12259.17", masterPos);
         //создаем подписку на стратегию
@@ -731,7 +736,7 @@ public class GetTimelineTest {
 //        List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
 //            "1", date);
         List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionOnePosWithEnable(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "1", date, null, new BigDecimal("108.53"),
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"1", date, null, new BigDecimal("108.53"),
             new BigDecimal("0.0235"), new BigDecimal("0.025500"), new BigDecimal("2.1656"), true, false);
         slaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 2, 2,
             baseMoneySl, date, createListSlaveOnePos);
@@ -895,7 +900,8 @@ public class GetTimelineTest {
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
-        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
+        List<MasterPortfolio.Position> masterPos = slaveSteps.createListMasterPositionWithOnePos(
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "25", date, 2, positionAction);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "12259.17", masterPos);
         //создаем body post запроса

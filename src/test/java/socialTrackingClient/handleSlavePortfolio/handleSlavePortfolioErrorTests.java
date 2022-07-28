@@ -229,7 +229,7 @@ public class handleSlavePortfolioErrorTests {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"2.0", date, 2,
             stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         stpTrackingSlaveSteps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //добавляем запись MasterPortfolioValue
@@ -247,7 +247,7 @@ public class handleSlavePortfolioErrorTests {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "3", date);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"3", date);
         String baseMoneySl = "8893.36";
         stpTrackingSlaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
             baseMoneySl, date, createListSlaveOnePos);
@@ -289,7 +289,7 @@ public class handleSlavePortfolioErrorTests {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"2.0", date, 2,
             stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         stpTrackingSlaveSteps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //добавляем запись MasterPortfolioValue
@@ -304,7 +304,7 @@ public class handleSlavePortfolioErrorTests {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.MINIMUM_VALUE, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "3", date);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"3", date);
         String baseMoneySl = "8893.36";
         stpTrackingSlaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
             baseMoneySl, date, createListSlaveOnePos);
@@ -345,7 +345,7 @@ public class handleSlavePortfolioErrorTests {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"2.0", date, 2,
             stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         stpTrackingSlaveSteps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //добавляем запись MasterPortfolioValue
@@ -360,7 +360,7 @@ public class handleSlavePortfolioErrorTests {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "3", date);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"3", date);
         String baseMoneySl = "8893.36";
         stpTrackingSlaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
             baseMoneySl, date, createListSlaveOnePos);
@@ -401,7 +401,7 @@ public class handleSlavePortfolioErrorTests {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = stpTrackingSlaveSteps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,"2.0", date, 2,
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"2.0", date, 2,
             stpTrackingSlaveSteps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         stpTrackingSlaveSteps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //добавляем запись MasterPortfolioValue
@@ -417,7 +417,7 @@ public class handleSlavePortfolioErrorTests {
         subscriptionBlockService.saveSubscriptionBlock(subscriptionId, SubscriptionBlockReason.PORTFOLIO_INITIALIZATION, periodDefoult, null);
         // создаем портфель slave с позицией в кассандре
         List<SlavePortfolio.Position> createListSlaveOnePos = stpTrackingSlaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "3", date);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"3", date);
         String baseMoneySl = "8893.36";
         stpTrackingSlaveSteps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 3, 3,
             baseMoneySl, date, createListSlaveOnePos);

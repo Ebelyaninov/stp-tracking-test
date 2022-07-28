@@ -57,6 +57,8 @@ public class SlavePortfolio {
         private Boolean buyEnabled;
         @Field(name = "sell_enabled")
         private Boolean sellEnabled;
+        @Field(name = "position_id")
+        private UUID positionId;
     }
 
     @UDT(name = "slave_portfolio_base_money_position")
