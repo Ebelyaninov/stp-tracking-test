@@ -436,7 +436,12 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не 2 события в топике", messages.size(), is(2));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", "L01+00000SPB");
+        if (portfolioCommand.getDividend().getExchangePositionId().getTicker().equals(instrument.tickerNOK)) {
+            checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.assetUidNOK);
+        }
+        else {
+            checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.assetUidAAPL);
+        }
         //Получаем факт обработки дивиденда
         //Обработка в мастере
 //        List<ru.qa.tinkoff.investTracking.entities.Dividend> getListOfDividends = dividentDao.findAllDividend(contractIdMaster, strategyId);
@@ -451,7 +456,12 @@ public class HandleCorpActionCommandTest {
 //        //Проверяем выгрузку дивиденда
 //        BigDecimal dividendAmountAAPL = calculateAmount("30", dividendNetAAPL);
 //        BigDecimal dividendAmountNok = calculateAmount("35", dividendNetNOK);
-//        checkDividend(portfolioCommand, getDividendNoK, dividendAmountNok);
+//        if (portfolioCommand.getDividend().getExchangePositionId().getTicker().equals(instrument.tickerNOK)) {
+//            checkDividend(portfolioCommand, getDividendNoK, dividendAmountNok);
+//        }
+//        else {
+//            checkDividend(portfolioCommand, getDividendAAPL, dividendAmountAAPL);
+//        }
 //        //checkDividend(portfolioCommand, getDividendAAPL, dividendAmountAAPL);
 //        //Увеличиваем baseMoney на величену дивиденда
 //        BigDecimal newBasemoneyPositionForNOK;
@@ -569,7 +579,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не 1 событие в топике", messages.size(), is(1));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK, instrument.assetUidNOK);
     }
 
 
@@ -653,10 +663,10 @@ public class HandleCorpActionCommandTest {
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
         if (portfolioCommand.getDividend().getExchangePositionId().getTicker().equals(instrument.tickerNOK)) {
-            checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK);
+            checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.assetUidNOK);
         }
         else {
-            checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountNOK);
+            checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.assetUidAAPL);
         }
     }
 
@@ -819,7 +829,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не одно событие в топике", messages.size(), is(1));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command
-        checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, "AAPL", "TKCBM_TCAB");
+        checkPortfolioCommand(portfolioCommand, key, "30", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.assetUidAAPL);
     }
 
 
@@ -1041,7 +1051,7 @@ public class HandleCorpActionCommandTest {
         //Проверяем тело события
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.assetUidNOK);
     }
 
 
@@ -1111,7 +1121,7 @@ public class HandleCorpActionCommandTest {
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
         //нашли AAPL из-за lastBuyDay -14d, должны получить ошибку по инструменту NMR
-        checkPortfolioCommand(portfolioCommand, key, "100", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+        checkPortfolioCommand(portfolioCommand, key, "100", dividendNetAAPL, dividendIdAAPL, Tracking.Currency.USD, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.assetUidAAPL);
     }
 
 
@@ -1175,7 +1185,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли события в топике", messages.size(), is(1));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
-        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, "NOK", instrument.tradingClearingAccountNOK);
+        checkPortfolioCommand(portfolioCommand, key, "35", dividendNetNOK, dividendIdNOK, Tracking.Currency.USD, instrument.tickerNOK, instrument.tradingClearingAccountNOK, instrument.assetUidNOK);
     }
 
 
@@ -1321,7 +1331,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли не одно событие в топике", messages.size(), is(1));
         String key = message.getKey();
         //Проверяем событие с stp-tracking-master-command (В БД не обновляем тикер, а отправляем актуальный в событии)
-        checkPortfolioCommand(portfolioCommand, key, "70", dividendNetSBER, dividendIdSBER, Tracking.Currency.RUB, instrument.tickerSBER, instrument.tradingClearingAccountSBER);
+        checkPortfolioCommand(portfolioCommand, key, "70", dividendNetSBER, dividendIdSBER, Tracking.Currency.RUB, instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.assetUidSBER);
     }
 
 
@@ -1489,7 +1499,7 @@ public class HandleCorpActionCommandTest {
         assertThat("Нашли больще 1го события в топике", messages.size(), is(1));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(0).getValue());
         String key = messages.get(0).getKey();
-        checkPortfolioCommand(portfolioCommand, key, "200000", dividendNetABBV, dividendIdABBV, Tracking.Currency.USD, instrument.tickerABBV, instrument.tradingClearingAccountABBV);
+        checkPortfolioCommand(portfolioCommand, key, "200000", dividendNetABBV, dividendIdABBV, Tracking.Currency.USD, instrument.tickerABBV, instrument.tradingClearingAccountABBV, instrument.assetUidABBV);
 
     }
 
@@ -1645,7 +1655,7 @@ public class HandleCorpActionCommandTest {
         assertThat("cut != now() + 00:00:00", corpActionOpt.get().getCut(), is(cut.toLocalDateTime().plusHours(3)));
     }
 
-    void checkPortfolioCommand (Tracking.PortfolioCommand portfolioCommand, String key, String qtyFromPosition, String dividendNet, String dividendId, Tracking.Currency currency, String ticker, String tradingClearingAcoount){
+    void checkPortfolioCommand (Tracking.PortfolioCommand portfolioCommand, String key, String qtyFromPosition, String dividendNet, String dividendId, Tracking.Currency currency, String ticker, String tradingClearingAcoount, UUID assetId){
         BigDecimal amountFromMessage = BigDecimal.valueOf(portfolioCommand.getDividend().getAmount().getUnscaled(), portfolioCommand.getDividend().getAmount().getScale());
         BigDecimal amountAfterCalculated = calculateAmount(qtyFromPosition, dividendNet);
         LocalDateTime getDateFromMessage = LocalDateTime.ofEpochSecond(portfolioCommand.getCreatedAt().getSeconds(), portfolioCommand.getCreatedAt().getNanos(), ZoneOffset.of("+03:00"));
@@ -1659,6 +1669,7 @@ public class HandleCorpActionCommandTest {
         assertThat("dividend.exchange_position_id.trading_clearing_account != exchangePosition.trading_clearing_account", portfolioCommand.getDividend().getExchangePositionId().getTradingClearingAccount(), is(tradingClearingAcoount));
         assertThat("dividend.amount != amount", amountFromMessage, is(amountAfterCalculated));
         assertThat("dividend.currency != dividend.dividend_currency", portfolioCommand.getDividend().getCurrency(), is(currency));
+        assertThat("asset_id != exchangePosition.asset_id", getUuidFromByteString(portfolioCommand.getDividend().getAssetId().getValue()) , is(assetId));
     }
 
     public BigDecimal calculateAmount (String qty, String dividendNet){
@@ -1707,5 +1718,10 @@ public class HandleCorpActionCommandTest {
         //GetBrockerAccountBySiebelId
         mockInvestmentAccountSteps.clearMocks("/account/public/v1/broker-account/siebel/" + siebelIdMaster);
         mockInvestmentAccountSteps.createRestMock(mockInvestmentAccountSteps.createBodyForGetBrokerAccountBySiebel(investIdMaster, siebelIdMaster, contractIdMaster));
+    }
+
+    public UUID getUuidFromByteString (ByteString bytes) {
+        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
+        return new UUID(buff.getLong(), buff.getLong());
     }
 }

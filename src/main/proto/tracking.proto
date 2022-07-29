@@ -221,6 +221,9 @@ message PortfolioCommand {
 
         // Валюта выплаты
         Currency currency = 4;
+
+        // Идентификатор актива, за который начисляется дивиденд
+        google.protobuf.BytesValue asset_id = 5;
     }
 
     // Операция для выполнения над портфелем
