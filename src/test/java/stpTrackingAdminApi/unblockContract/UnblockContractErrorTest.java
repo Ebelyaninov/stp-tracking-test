@@ -15,25 +15,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
-import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.tracking.services.grpc.MiddleGrpcService;
 import ru.qa.tinkoff.tracking.services.grpc.utils.GrpcServicesAutoConfiguration;
 
 import java.time.LocalDateTime;
@@ -64,21 +57,9 @@ import static org.hamcrest.Matchers.is;
 })
 public class UnblockContractErrorTest {
     @Autowired
-    MiddleGrpcService middleGrpcService;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
-    @Autowired
-    MasterPortfolioDao masterPortfolioDao;
-    @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -89,8 +70,6 @@ public class UnblockContractErrorTest {
     StpSiebel siebel;
     @Autowired
     ContractApiAdminCreator contractApiAdminCreator;
-
-    ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
     String xApiKey = "x-api-key";
     String key= "tracking";
     String keyRead = "tcrm";
@@ -192,7 +171,6 @@ public class UnblockContractErrorTest {
             contract = new Contract()
                 .setId(contractIdSlave)
                 .setClientId(clientSlave.getId())
-//                .setRole(null)
                 .setState(contractState)
                 .setBlocked(blocked);
 

@@ -1,7 +1,7 @@
 package socialTrackingClient.handleRiskProfileEvent;
 
 
-import com.google.protobuf.Timestamp;;
+import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -22,7 +22,6 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
@@ -32,19 +31,14 @@ import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
-import ru.qa.tinkoff.swagger.Tariff.api.TariffApi;
-import ru.qa.tinkoff.swagger.Tariff.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tariff.configuration.TariffDataBaseAutoConfiguration;
-import ru.qa.tinkoff.tariff.services.ContractTariffService;
-import ru.qa.tinkoff.tariff.services.TariffService;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.SubscriptionBlock;
 import ru.qa.tinkoff.tracking.entities.enums.*;
-import ru.qa.tinkoff.tracking.repositories.SubscriptionBlockRepository;
 import ru.qa.tinkoff.tracking.services.database.*;
 import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.testing.risk.notification.event.TestingRiskNotification;
@@ -95,11 +89,7 @@ public class HandleRiskProfileEventTest {
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
-    TrackingService trackingService;
-    @Autowired
     ContractService contractService;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
@@ -114,10 +104,6 @@ public class HandleRiskProfileEventTest {
     StpTrackingSlaveSteps stpTrackingSlaveSteps;
     @Autowired
     SubscriptionBlockService subscriptionBlockService;
-    @Autowired
-    TariffService tariffService;
-    @Autowired
-    ContractTariffService contractTariffService;
     @Autowired
     StpSiebel stpSiebel;
 
@@ -710,7 +696,6 @@ public class HandleRiskProfileEventTest {
         contractSlave = new Contract()
             .setId(contractIdConservative)
             .setClientId(clientSlave.getId())
-//            .setRole(null)
             .setState(ContractState.tracked)
             .setStrategyId(strategyId)
             .setBlocked(false);

@@ -7,7 +7,6 @@ import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,7 +61,6 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -204,7 +202,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofSeconds(1));
-//        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -268,7 +265,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
-//        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -330,7 +326,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
         await().pollDelay(Duration.ofMillis(500));
-//        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());
@@ -425,7 +420,6 @@ public class CalculateMasterPortfolioTopPositionsTest {
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
         //получаем из табл. master_portfolio_top_positions рассчитанные топовые позиции
-//        checkMasterPortfolioTopPositions(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             masterPortfolioTopPositions = masterPortfolioTopPositionsDao
                 .getMasterPortfolioTopPositions(strategyId), notNullValue());

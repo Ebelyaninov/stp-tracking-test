@@ -51,7 +51,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -80,8 +79,6 @@ public class СalculateSignalFrequencyTest {
     @Autowired
     MasterSignalDao masterSignalDao;
     @Autowired
-    SignalsCountDao signalsCountDao;
-    @Autowired
     SignalFrequencyDao signalFrequencyDao;
     @Autowired
     StpTrackingAnalyticsSteps steps;
@@ -102,13 +99,7 @@ public class СalculateSignalFrequencyTest {
     @Autowired
     SlaveOrderDao slaveOrderDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
 
@@ -231,7 +222,6 @@ public class СalculateSignalFrequencyTest {
         Date start = Date.from(cutTime.minusDays(30).toInstant());
         Date end = Date.from(cutTime.toInstant());
         int count = countUniqueMasterSignalDays(strategyId, start, end);
-//        checkMasterSignalFrequency(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
@@ -269,7 +259,6 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkMasterSignalFrequency(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
@@ -310,7 +299,6 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkMasterSignalFrequency(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
@@ -330,7 +318,6 @@ public class СalculateSignalFrequencyTest {
             "107.81", "1", 12);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        Thread.sleep(5000);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
         signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId);
@@ -378,7 +365,6 @@ public class СalculateSignalFrequencyTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkMasterSignalFrequency(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cut = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),
@@ -408,7 +394,6 @@ public class СalculateSignalFrequencyTest {
         byteToByteSenderService.send(TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytesNew);
         long countRecord = signalFrequencyDao.count(strategyId);
         assertThat("время cut не равно", countRecord, is(1L));
-//        checkMasterSignalFrequency(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             signalFrequency = signalFrequencyDao.getSignalFrequencyByStrategyId(strategyId), notNullValue());
         LocalDateTime cutNew = LocalDateTime.ofInstant(signalFrequency.getCut().toInstant(),

@@ -42,7 +42,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +51,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -83,21 +81,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    MasterPortfolioDao masterPortfolioDao;
-    @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAnalyticsSteps steps;
     @Autowired

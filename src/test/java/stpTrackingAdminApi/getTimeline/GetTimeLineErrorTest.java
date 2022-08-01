@@ -1,6 +1,5 @@
 package stpTrackingAdminApi.getTimeline;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -15,36 +14,21 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.TimeLineApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
-import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
-import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
-import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
-import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
-import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
-import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
-import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.TimelineApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;
-import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.services.database.*;
 
-import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
@@ -73,8 +57,6 @@ import static org.hamcrest.Matchers.is;
 
 public class GetTimeLineErrorTest {
 
-    //TimelineApi timelineApi = ApiClient.api(ApiClient.Config.apiConfig()).timeline();
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -84,15 +66,9 @@ public class GetTimeLineErrorTest {
     @Autowired
     StpTrackingAdminSteps steps;
     @Autowired
-    StpTrackingSlaveSteps slaveSteps;
-    @Autowired
     StrategyService strategyService;
     @Autowired
     SubscriptionService subscriptionService;
-    @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    MasterPortfolioDao masterPortfolioDao;
     @Autowired
     StpSiebel siebel;
     @Autowired

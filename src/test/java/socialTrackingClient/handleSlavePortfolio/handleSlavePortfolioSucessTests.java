@@ -41,7 +41,6 @@ import ru.tinkoff.invest.tracking.slave.portfolio.SlavePortfolioOuterClass;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -486,15 +485,11 @@ public class handleSlavePortfolioSucessTests {
 
     //проверяем блокировку подписки
     void checkSubscriptionBlock (String contractId, SubscriptionBlockReason subscriptionBlockReason, String lowerPeriod, String upperPeriod) {
-//        Date dateNowOne = new Date(System.currentTimeMillis());
-//        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-//        String dateNow = (formatter.format(dateNowOne));
         ZonedDateTime zonedDateTime = Instant.now().atZone(ZoneId.of("UTC+03:00"));
         DateTimeFormatter formatterInstance = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String formattedString = zonedDateTime.format(formatterInstance);
         SubscriptionBlock getDataFromSubscriptionBlock =  subscriptionBlockService.getSubscriptionBlockBySubscriptionId(subscriptionService.getSubscriptionByContract(contractId).getId(), subscriptionBlockReason.getAlias());
         assertThat("lower(period) !=  now()" , getDataFromSubscriptionBlock.getPeriod().lower().toString(), equalTo(lowerPeriod));
-        //assertThat("upper(period) !=  " + dateNow, getDataFromSubscriptionBlock.getPeriod().upper().toString().substring(0, 16), equalTo(dateNow));
         if (upperPeriod != null){
             assertThat("upper(period) !=  " + formattedString, getDataFromSubscriptionBlock.getPeriod().upper().toString().substring(0, 16), equalTo(formattedString));
         }

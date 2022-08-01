@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -28,8 +27,6 @@ import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.miof.api.AdminApi;
-import ru.qa.tinkoff.swagger.tracking.api.SubscriptionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -38,9 +35,7 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.tinkoff.invest.account.event.InvestAccountEvent;
 import ru.tinkoff.invest.tracking.client.TrackingClient;
-import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -49,13 +44,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_CLIENT_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SUBSCRIPTION_EVENT;
 
 @Slf4j
 @Epic("deleteSubscription - Инициация удаления всех активных подписок у торговой")
@@ -83,10 +74,6 @@ public class deleteSubscriptionsTest {
     StrategyService strategyService;
     @Autowired
     SubscriptionService subscriptionService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
-    TrackingService trackingService;
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired

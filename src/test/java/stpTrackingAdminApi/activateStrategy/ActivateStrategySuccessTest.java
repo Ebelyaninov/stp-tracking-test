@@ -27,7 +27,6 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
@@ -43,7 +42,6 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -87,10 +85,6 @@ public class ActivateStrategySuccessTest {
     ContractService contractService;
     @Autowired
     StrategyService strategyService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
-    TrackingService trackingService;
     @Autowired
     StpTrackingAdminSteps steps;
     @Autowired

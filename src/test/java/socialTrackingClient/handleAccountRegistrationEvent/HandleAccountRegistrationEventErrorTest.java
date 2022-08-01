@@ -19,21 +19,15 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.steps.trackingMasterSteps.StpTrackingMasterSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tariff.configuration.TariffDataBaseAutoConfiguration;
-import ru.qa.tinkoff.tariff.services.ContractTariffService;
-import ru.qa.tinkoff.tariff.services.TariffService;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -77,8 +71,6 @@ import static ru.qa.tinkoff.tracking.constants.InvestAccountEventData.statusOpen
     KafkaAutoConfiguration.class,
     KafkaOldConfiguration.class,
     StpTrackingApiStepsConfiguration.class,
-    StpTrackingMasterStepsConfiguration.class,
-    StpTrackingSlaveStepsConfiguration.class,
     StpTrackingSiebelConfiguration.class,
     TariffDataBaseAutoConfiguration.class,
     ApiCreatorConfiguration.class
@@ -92,29 +84,15 @@ public class HandleAccountRegistrationEventErrorTest {
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
-    TrackingService trackingService;
-    @Autowired
     ContractService contractService;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
-    StpTrackingMasterSteps stpTrackingMasterSteps;
-    @Autowired
     StrategyService strategyService;
     @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    StpTrackingSlaveSteps stpTrackingSlaveSteps;
-    @Autowired
     SubscriptionBlockService subscriptionBlockService;
-    @Autowired
-    TariffService tariffService;
-    @Autowired
-    ContractTariffService contractTariffService;
     @Autowired
     StpSiebel stpSiebel;
 
@@ -130,7 +108,6 @@ public class HandleAccountRegistrationEventErrorTest {
     OffsetDateTime time = OffsetDateTime.now();
     java.sql.Timestamp startTime = new java.sql.Timestamp(time.toInstant().toEpochMilli());
 
-    Subscription subscription;
     Contract contractSlave;
     Client clientSlave;
     Strategy strategy;

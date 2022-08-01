@@ -33,7 +33,6 @@ import ru.qa.tinkoff.kafka.model.CCYEV.CcyevEvent;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -90,8 +89,6 @@ public class GetTimelineTest {
     ClientService clientService;
     @Autowired
     ContractService contractService;
-    @Autowired
-    ProfileService profileService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -235,7 +232,7 @@ public class GetTimelineTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
@@ -272,7 +269,7 @@ public class GetTimelineTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
@@ -314,7 +311,7 @@ public class GetTimelineTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем записи в табл. management_fee
         createFeeResult(startSubTime, subscriptionId);
@@ -350,7 +347,7 @@ public class GetTimelineTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         OffsetDateTime date = OffsetDateTime.now().minusMonths(2);
         Date dateAt = Date.from(date.toInstant());
@@ -550,7 +547,7 @@ public class GetTimelineTest {
             .collect(Collectors.toList()).get(0).getContent());
         await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-//        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+
         SlavePortfolio.BaseMoneyPosition slavePortfolioBaseMoneyPosition = slavePortfolio.getBaseMoneyPosition();
         List<SlavePortfolio.Position> slavePortfolioPosition = slavePortfolio.getPositions().stream()
                 .filter(position1 -> position1.getTicker().equals(instrument.tickerYNDX))
@@ -733,8 +730,6 @@ public class GetTimelineTest {
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         // создаем портфель slave с позицией в кассандре
         String baseMoneySl = "13657.23";
-//        List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionWithOnePosLight(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-//            "1", date);
         List<SlavePortfolio.Position> createListSlaveOnePos = slaveSteps.createListSlavePositionOnePosWithEnable(instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"1", date, null, new BigDecimal("108.53"),
             new BigDecimal("0.0235"), new BigDecimal("0.025500"), new BigDecimal("2.1656"), true, false);
@@ -750,7 +745,6 @@ public class GetTimelineTest {
         //получаем портфель slave
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
-//        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //проверяем данные в ответе
         assertThat("domain не равен", responseExep.getItems().get(index).getContent().getDomain().toString(), is("slave-portfolio"));
         assertThat("version не равен", ((SlavePortfolioItem) responseExep.getItems().get(index).getContent()).getVersion(), is(slavePortfolio.getVersion()));
@@ -795,7 +789,6 @@ public class GetTimelineTest {
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
 
-//        slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //создаем body post запроса
         GetTimelineRequest request = new GetTimelineRequest();
         request.setStrategyId(strategyId);
@@ -810,7 +803,6 @@ public class GetTimelineTest {
         String action;
         assertThat("ticker не равен", ((SlaveOrderItem) responseExep.getItems().get(0).getContent()).getExchangePositionId().getTicker(), is(slaveOrder2.getTicker()));
         assertThat("tradingClearingAccount не равен", ((SlaveOrderItem) responseExep.getItems().get(0).getContent()).getExchangePositionId().getTradingClearingAccount(), is(slaveOrder2.getTradingClearingAccount()));
-        //if (((SlaveOrderItem) responseExep.getItems().get(0).getContent()).getAction().toString().equals("buy"))
         if (slaveOrder2.getAction().intValue() == 0){
             action = "buy";
         }
@@ -913,7 +905,6 @@ public class GetTimelineTest {
         //получаем портфель мастера
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster,strategyId), notNullValue());
-//        masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster,strategyId);
         //проверяем ответ метода
         assertThat("domain не равен", responseExep.getItems().get(0).getContent().getDomain().toString(), is("master-portfolio"));
         assertThat("version не равен", ((MasterPortfolioItem) responseExep.getItems().get(0).getContent()).getVersion().toString(), is(masterPortfolio.getVersion().toString()));

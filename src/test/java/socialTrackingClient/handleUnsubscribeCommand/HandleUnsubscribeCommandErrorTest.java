@@ -15,12 +15,10 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.*;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -76,11 +74,7 @@ public class HandleUnsubscribeCommandErrorTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
     StringToByteSenderService kafkaSender;
-    @Autowired
-    StringToByteSenderService stringToByteSenderService;
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
@@ -89,8 +83,6 @@ public class HandleUnsubscribeCommandErrorTest {
     SubscriptionBlockService subscriptionBlockService;
     @Autowired
     StpSiebel stpSiebel;
-    @Autowired
-    StpInstrument instrument;
 
     Contract contractSlave;
     Strategy strategyMaster;

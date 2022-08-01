@@ -20,12 +20,10 @@ import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ExchangePositionApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteToByteReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
-import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.CreateExchangePositionRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
@@ -76,10 +74,6 @@ public class GetExchangePositionsTest {
     @Autowired
     ExchangePositionApiAdminCreator exchangePositionApiAdminCreator;
     ru.qa.tinkoff.tracking.entities.ExchangePosition exchangePosition;
-    @Autowired
-    ByteToByteReceiverService kafkaReceiver;
-    @Autowired
-    StpInstrument instrument;
 
 
     @AfterEach
@@ -221,7 +215,7 @@ public class GetExchangePositionsTest {
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetExchangePositionsResponse.class));
-//        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
+        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
         assertThat("ticker не равно", exchangePosition.get(0).getTicker(), is(responseExep.getItems().get(0).getTicker()));
         assertThat("tradingClearingAccount не равно", exchangePosition.get(0).getTradingClearingAccount(),
             is(responseExep.getItems().get(0).getTradingClearingAccount()));
@@ -256,7 +250,7 @@ public class GetExchangePositionsTest {
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetExchangePositionsResponse.class));
-//        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
+        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
         assertThat("NextCursor не равно", exchangePositions.get(exchangePositions.size() - 2).getPosition().toString(),
             is(responseExep.getNextCursor().toString()));
         assertThat("hasNext не равно", true, is(responseExep.getHasNext()));
@@ -292,7 +286,7 @@ public class GetExchangePositionsTest {
             .xTcsLoginHeader("tracking_admin")
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetExchangePositionsResponse.class));
-//        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
+        //проверяем, данные в ответе метода и найденную биржевую позицию по условию из БД
         assertThat("NextCursor не равно", responseExep.getNextCursor(), is(nullValue()));
         assertThat("hasNext не равно", false, is(responseExep.getHasNext()));
     }

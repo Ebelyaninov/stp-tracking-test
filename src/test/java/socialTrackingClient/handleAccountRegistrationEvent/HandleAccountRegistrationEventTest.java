@@ -21,7 +21,6 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
@@ -96,11 +95,7 @@ public class HandleAccountRegistrationEventTest {
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
-    TrackingService trackingService;
-    @Autowired
     ContractService contractService;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
@@ -308,7 +303,6 @@ public class HandleAccountRegistrationEventTest {
         //Проверяем, что добавили активную подписку
         Date dateNowOne = new Date(System.currentTimeMillis());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd' 'HH");
-        String dateNow = (formatter.format(dateNowOne));
 
         checkSubscription(contractIdConservative, strategyId, SubscriptionStatus.active, true, false);
         //Проверить актуализируем кол-во подписчиков на стратегию
@@ -322,7 +316,6 @@ public class HandleAccountRegistrationEventTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event registrationMessage = Tracking.Event.parseFrom(message.getValue());
-        String key = message.getKey();
         log.info("Команда в tracking.slave.command:  {}", registrationMessage);
         Instant createAt = Instant.ofEpochSecond(registrationMessage.getCreatedAt().getSeconds(), registrationMessage.getCreatedAt().getNanos());
         //проверяем событие
@@ -358,7 +351,6 @@ public class HandleAccountRegistrationEventTest {
         //Проверяем, что добавили  подписку в статусе draft
         String dateNowOnePatern =  "YYYY-MM-dd HH";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
-        String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true, false);
         checkSubscriptionBlockWithReasone(contractIdMedium, SubscriptionBlockReason.MINIMUM_VALUE.getAlias());
@@ -399,7 +391,6 @@ public class HandleAccountRegistrationEventTest {
         //Проверяем, что добавили  подписку в статусе draft
         String dateNowOnePatern =  "YYYY-MM-dd HH";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateNowOnePatern);
-        String dateNow = formatter.format(ZonedDateTime.of(LocalDateTime.now().minusHours(3), ZoneId.of("UTC-0")));
 
         checkSubscription(contractIdMedium, strategyId, SubscriptionStatus.draft, true, false);
         //Проверить актуализируем кол-во подписчиков на стратегию
@@ -471,7 +462,6 @@ public class HandleAccountRegistrationEventTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event registrationMessage = Tracking.Event.parseFrom(message.getValue());
-        String key = message.getKey();
         log.info("Команда в tracking.slave.command:  {}", registrationMessage);
         Instant createAt = Instant.ofEpochSecond(registrationMessage.getCreatedAt().getSeconds(), registrationMessage.getCreatedAt().getNanos());
         //проверяем событие
@@ -821,9 +811,6 @@ public class HandleAccountRegistrationEventTest {
 
     //проверяем блокировку подписки
     void checkSubscriptionBlockWithReasone (String contractId, String subscriptionBlockReason) {
-//        Date dateNowOne = new Date(System.currentTimeMillis());
-//        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-//        String dateNow = (formatter.format(dateNowOne));
         ZonedDateTime zonedDateTime = Instant.now().atZone(ZoneId.of("UTC+03:00"));
         DateTimeFormatter formatterInstance = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         String dateNow = zonedDateTime.format(formatterInstance);

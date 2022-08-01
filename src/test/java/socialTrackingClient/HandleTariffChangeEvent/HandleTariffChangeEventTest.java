@@ -174,7 +174,6 @@ public class HandleTariffChangeEventTest {
         contractSlave = new Contract()
             .setId(contractIdSlave)
             .setClientId(clientSlave.getId())
-//            .setRole(null)
             .setState(ContractState.untracked)
             .setStrategyId(null)
             .setBlocked(false);

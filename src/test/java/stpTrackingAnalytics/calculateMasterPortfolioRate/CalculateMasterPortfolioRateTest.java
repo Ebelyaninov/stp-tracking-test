@@ -2,7 +2,6 @@ package stpTrackingAnalytics.calculateMasterPortfolioRate;
 
 import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
-import groovyjarjarantlr4.runtime.tree.Tree;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
 import lombok.SneakyThrows;
@@ -51,7 +50,6 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -85,19 +83,9 @@ public class CalculateMasterPortfolioRateTest {
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
     MasterPortfolioRateDao masterPortfolioRateDao;
     @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
     StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
-    TrackingService trackingService;
-    @Autowired
-    SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAnalyticsSteps steps;
     @Autowired

@@ -10,11 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -29,7 +27,6 @@ import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.invest.signature.event.SignatureEvent;
 
@@ -72,11 +69,7 @@ public class HandleSignatureEventTest {
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
-    TrackingService trackingService;
-    @Autowired
     ContractService contractService;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
@@ -125,7 +118,6 @@ public class HandleSignatureEventTest {
         //Формируем и отправляем событие событие в топик origination.signature.notification.raw
         byte[] eventBytes = createMessageForHandleSignatureEvent(TRACKING_LEADING, investId, time).toByteArray();
         byte[] keyBytes = createMessageForHandleSignatureEvent(TRACKING_LEADING, investId, time).getId().toByteArray();
-//        kafkaSender.send(ORIGINATION_SIGNATURE_NOTIFICATION, keyBytes, eventBytes);
         oldKafkaService.send(ORIGINATION_SIGNATURE_NOTIFICATION, keyBytes, eventBytes);
         await().atMost(Duration.ofSeconds(5))
             .until(() -> clientService.getClient(investId).getMasterStatus().equals(ClientStatusType.registered));

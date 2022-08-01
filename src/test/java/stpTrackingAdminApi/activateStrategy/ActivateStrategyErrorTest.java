@@ -10,7 +10,6 @@ import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,17 +28,13 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
-import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Strategy;
@@ -47,11 +42,8 @@ import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
-import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -64,7 +56,6 @@ import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -91,10 +82,6 @@ public class ActivateStrategyErrorTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    TrackingService trackingService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
     StpTrackingAdminSteps steps;
     @Autowired
     StpSiebel siebel;
@@ -104,8 +91,6 @@ public class ActivateStrategyErrorTest {
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
 
 
     String description = "Autotest  - ActivateStrategy";
