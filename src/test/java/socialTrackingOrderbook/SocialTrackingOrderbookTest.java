@@ -13,30 +13,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.AdminApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.adminCreator.StrategyApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.Orderbook;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.investTracking.services.OrderbookDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaReceiverService;
-import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
-import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.StrategyService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.time.Duration;
 import java.util.Date;
@@ -69,36 +57,11 @@ import static ru.qa.tinkoff.kafka.Topics.MD_RTS_PROTO_OB_FULL_STREAM;
 })
 public class SocialTrackingOrderbookTest {
     @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    ClientService clientService;
-    @Autowired
-    ContractService contractService;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
-    TrackingService trackingService;
-    @Autowired
     StpTrackingSlaveSteps steps;
-    @Autowired
-    MasterPortfolioDao masterPortfolioDao;
-    @Autowired
-    StpSiebel siebel;
-    @Autowired
-    StrategyApiAdminCreator strategyApiStrategyApiAdminCreator;
-    @Autowired
-    MasterPortfolioValueDao masterPortfolioValueDao;
-    @Autowired
-    OldKafkaService oldKafkaService;
     @Autowired
     OldKafkaReceiverService oldKafkaReceiverService;
     @Autowired
-    StpInstrument instrument;
-    @Autowired
     OrderbookDao orderbookDao;
-    Orderbook orderbook;
 
     List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> cache;
 

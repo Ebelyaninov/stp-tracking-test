@@ -16,8 +16,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.Context;
 import ru.qa.tinkoff.investTracking.entities.SlaveAdjust;
@@ -26,13 +24,10 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.model.CCYEV.CcyevEvent;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.steps.SptTrackingFeeStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingFeeSteps.StpTrackingFeeSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -76,8 +71,6 @@ import static ru.qa.tinkoff.kafka.Topics.CCYEV;
 })
 public class HandleAdjustEventTest {
     @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -86,17 +79,11 @@ public class HandleAdjustEventTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingFeeSteps steps;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     ManagementFeeDao managementFeeDao;
     @Autowired

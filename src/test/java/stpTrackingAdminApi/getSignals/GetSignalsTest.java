@@ -75,10 +75,6 @@ public class GetSignalsTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    ProfileService profileService;
-    @Autowired
-    TrackingService trackingService;
-    @Autowired
     StpTrackingAdminSteps stpTrackingAdminSteps;
     @Autowired
     StrategyService strategyService;

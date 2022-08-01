@@ -75,8 +75,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class BlockContractErrorTest {
     @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -173,7 +171,6 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         Response responseBlockContract = contractApiAdminCreator.get().blockContract()
@@ -203,7 +200,6 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()), null, false, false);
         //Вызываем метод blockContract
         contractApiAdminCreator.get().blockContract()
@@ -226,7 +222,6 @@ public class BlockContractErrorTest {
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //создаем подписку клиента slave на strategy клиента master
-        //steps.createSubscriptionSlave(siebelIdSlave, contractIdSlave, strategyId);
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave,
             ContractState.tracked, strategyId, SubscriptionStatus.active,
             new java.sql.Timestamp(OffsetDateTime.now().toInstant().getEpochSecond()),

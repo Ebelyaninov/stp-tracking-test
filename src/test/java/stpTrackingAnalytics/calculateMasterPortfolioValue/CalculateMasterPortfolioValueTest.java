@@ -78,19 +78,7 @@ public class CalculateMasterPortfolioValueTest {
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAnalyticsSteps steps;
     @Autowired

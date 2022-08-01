@@ -37,7 +37,6 @@ import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.model.StrategyTest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequest;
 import ru.qa.tinkoff.swagger.tracking_admin.model.UpdateStrategyRequestOwner;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -53,7 +52,6 @@ import ru.qa.tinkoff.tracking.services.database.TrackingService;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -84,8 +82,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 })
 
 public class UpdateStrategyAdminErrorTest {
-    @Autowired
-    ProfileService profileService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -885,10 +881,6 @@ public class UpdateStrategyAdminErrorTest {
         UUID investId = resAccountMaster.getInvestId();
         String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         SocialProfile socialProfile = steps.getProfile(siebel.siebelIdAdmin);
-//        steps.createClientWithContractAndStrategy(investId, socialProfile, contractId, null, ContractState.untracked,
-//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST", "OwnerTEST", true, true);
-
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",

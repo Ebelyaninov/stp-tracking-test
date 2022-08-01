@@ -18,7 +18,6 @@ import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
-import ru.qa.tinkoff.investTracking.entities.SignalFrequency;
 import ru.qa.tinkoff.investTracking.entities.SignalsCount;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
@@ -52,7 +51,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -102,13 +100,7 @@ public class CalculateSignalsCountTest {
     @Autowired
     SlaveOrderDao slaveOrderDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
 
@@ -407,7 +399,6 @@ public class CalculateSignalsCountTest {
             "3.17", "4", 12);
         createMasterSignal(0, 1, 11, strategyId, instrument.tickerNOK, instrument.tradingClearingAccountNOK,
             "3.09", "4", 12);
-//        Thread.sleep(3000);
         //отправляем событие в топик kafka tracking.analytics.command повторно
         OffsetDateTime createTimeNew = OffsetDateTime.now();
         Tracking.AnalyticsCommand reCalculateCommand = steps.createCommandAnalytics(createTimeNew, cutTime,

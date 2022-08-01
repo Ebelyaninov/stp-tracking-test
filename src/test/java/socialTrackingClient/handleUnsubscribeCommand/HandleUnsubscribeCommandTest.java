@@ -21,7 +21,6 @@ import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.*;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
-import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -85,8 +84,6 @@ public class HandleUnsubscribeCommandTest {
     @Autowired
     StringToByteSenderService kafkaSender;
     @Autowired
-    StringToByteSenderService stringToByteSenderService;
-    @Autowired
     SubscriptionService subscriptionService;
     @Autowired
     StrategyService strategyService;
@@ -94,8 +91,6 @@ public class HandleUnsubscribeCommandTest {
     SubscriptionBlockService subscriptionBlockService;
     @Autowired
     StpSiebel stpSiebel;
-    @Autowired
-    StpInstrument instrument;
 
     Contract contractSlave;
     Client clientSlave;
@@ -244,7 +239,6 @@ public class HandleUnsubscribeCommandTest {
         assertThat("статус подписки не равен", subscription.getStatus().toString(), is("active"));
         //находим запись по контракту ведомого и проверяем значения
         contractSlave = contractService.getContract(contractIdSlave);
-//        assertThat("Роль ведомого не равна null", contractSlave.getRole(), is(nullValue()));
         assertThat("статус ведомого не равен", contractSlave.getState().toString(), is("tracked"));
         assertThat("стратегия у ведомого не равна", contractSlave.getStrategyId(), is(strategyId));
         clientSlave = clientService.getClient(investIdSlave);

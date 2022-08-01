@@ -31,8 +31,6 @@ import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ContractApi;
-import ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -96,8 +94,6 @@ public class UnblockContractTest {
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
     SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
     @Autowired
     TrackingService trackingService;
     @Autowired

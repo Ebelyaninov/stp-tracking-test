@@ -15,8 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
@@ -53,7 +51,6 @@ import static ru.qa.tinkoff.kafka.Topics.SOCIAL_EVENT;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tags({@Tag("handleSocialEventTest")})
 @SpringBootTest(classes = {
-//    BillingDatabaseAutoConfiguration.class,
     TrackingDatabaseAutoConfiguration.class,
     SocialDataBaseAutoConfiguration.class,
     KafkaAutoConfiguration.class,
@@ -65,8 +62,6 @@ public class HandleSocialEventTest {
     UtilsTest utilsTest = new UtilsTest();
     Client client;
     Profile profile;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
@@ -125,7 +120,6 @@ public class HandleSocialEventTest {
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, nickName + "12345");
         client = clientService.getClient(investId);
@@ -168,13 +162,11 @@ public class HandleSocialEventTest {
                 .setImage(utilsTest.buildByteString(UUID.fromString("f651139b-6879-463a-94b1-2f45e79b701d")))
                 .build())
             .build();
-        //кодируем событие по protobuff схеме social и переводим в byteArray
 
         //кодируем событие по protobuf схеме social и переводим в byteArray
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что image изменился
         getClientByImage(investId, "f651139b-6879-463a-94b1-2f45e79b701d");
@@ -221,7 +213,6 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, nickName + "12345");
@@ -266,7 +257,6 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, "");
@@ -317,8 +307,6 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName  не изменился
         getClientByNickName(investId, nickName + "12345");
@@ -367,7 +355,6 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, nickName + "12345");
@@ -416,7 +403,6 @@ public class HandleSocialEventTest {
         byte[] eventBytes = event.toByteArray();
         byte[] keyBytes = event.getProfile().getId().toByteArray();
         //отправляем событие в топик kafka social.event
-//        kafkaSender.send(SOCIAL_EVENT, keyBytes, eventBytes);
         oldKafkaService.send(SOCIAL_EVENT, keyBytes, eventBytes);
         //находим запись по клиенту и проверяем, что nickName изменился
         getClientByNickName(investId, nickName + "12345");

@@ -26,9 +26,7 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.util.UUID;
 
@@ -53,13 +51,8 @@ import static io.qameta.allure.Allure.step;
 
 public class EnableContractSynchronizationErrorTest {
 
-
-    @Autowired
-    ClientService clientService;
     @Autowired
     ContractService contractService;
-    @Autowired
-    TrackingService trackingService;
     @Autowired
     StpTrackingAdminSteps steps;
     @Autowired

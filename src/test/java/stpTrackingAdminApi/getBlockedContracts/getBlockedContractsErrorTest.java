@@ -19,7 +19,6 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.adminCreator.ContractApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -61,8 +60,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 })
 
 public class getBlockedContractsErrorTest {
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     ClientService clientService;
     @Autowired

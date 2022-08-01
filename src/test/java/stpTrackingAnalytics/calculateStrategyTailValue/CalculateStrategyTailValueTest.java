@@ -56,7 +56,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -89,21 +88,13 @@ public class CalculateStrategyTailValueTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
     SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingAnalyticsSteps steps;
-    @Autowired
-    MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
@@ -273,7 +264,6 @@ public class CalculateStrategyTailValueTest {
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3)
             .add(new BigDecimal("4193.13"));
         log.info("valuePortfolio:  {}", valuePortfolio);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -344,7 +334,6 @@ public class CalculateStrategyTailValueTest {
         }
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(new BigDecimal("27806.13"));
         log.info("valuePortfolio:  {}", valuePortfolio);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -420,7 +409,6 @@ public class CalculateStrategyTailValueTest {
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
         assertThat("value стоимости портфеля не равно", strategyTailValue.getValue(), is(valuePortfolio));
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -460,7 +448,6 @@ public class CalculateStrategyTailValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -493,7 +480,6 @@ public class CalculateStrategyTailValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -532,7 +518,6 @@ public class CalculateStrategyTailValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkStrategyTailValue(strategyId);
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
         assertThat("value стоимости портфеля не равно", strategyTailValue.getValue(), is(new BigDecimal("71815.72")));
     }
@@ -581,7 +566,6 @@ public class CalculateStrategyTailValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -632,7 +616,6 @@ public class CalculateStrategyTailValueTest {
         byte[] keyBytes = strategyIdByte.toByteArray();
         //отправляем событие в топик kafka tracking.analytics.command
         byteToByteSenderService.send(Topics.TRACKING_ANALYTICS_COMMAND, keyBytes, eventBytes);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
@@ -709,7 +692,6 @@ public class CalculateStrategyTailValueTest {
         BigDecimal valuePortfolio = valuePos1.add(valuePos2).add(valuePos3)
             .add(new BigDecimal("3993.13"));
         log.info("valuePortfolio:  {}", valuePortfolio);
-//        checkStrategyTailValue(strategyId);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId), notNullValue());
         strategyTailValue = strategyTailValueDao.getStrategyTailValueByStrategyId(strategyId);
