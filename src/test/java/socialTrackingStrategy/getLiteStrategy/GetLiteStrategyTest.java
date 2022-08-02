@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
@@ -29,7 +28,6 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.services.database.ProfileService;
@@ -92,13 +90,9 @@ public class GetLiteStrategyTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    SubscriptionService subscriptionService;
-    @Autowired
     ProfileService profileService;
     @Autowired
     TrackingService trackingService;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
@@ -106,21 +100,9 @@ public class GetLiteStrategyTest {
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
-    MasterPortfolioMaxDrawdownDao masterPortfolioMaxDrawdownDao;
-    @Autowired
-    MasterPortfolioPositionRetentionDao masterPortfolioPositionRetentionDao;
-    @Autowired
-    MasterPortfolioRateDao masterPortfolioRateDao;
-    @Autowired
     MasterPortfolioTopPositionsDao masterPortfolioTopPositionsDao;
     @Autowired
     MasterSignalDao masterSignalDao;
-    @Autowired
-    SignalFrequencyDao signalFrequencyDao;
-    @Autowired
-    SignalsCountDao signalsCountDao;
-    @Autowired
-    StrategyTailValueDao strategyTailValueDao;
     @Autowired
     StpInstrument instrument;
     @Autowired
@@ -226,7 +208,8 @@ public class GetLiteStrategyTest {
         assertThat("идентификатор стратегии не равно", getLiteStrategy.getId(), is(strategyId));
         assertThat("relativeYield стратегии не равно", getLiteStrategy.getRelativeYield(), is(relativeYield));
         assertThat("Isoverloaded стратегии не равно" + overloadedFalse, getLiteStrategy.getIsOverloaded(), is(overloadedFalse));
-
+        assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
+            is(strategy.getActivationTime().toString().substring(0, 23)));
     }
 
 
@@ -285,6 +268,9 @@ public class GetLiteStrategyTest {
         assertThat("expected-relative-yield не равен", getLiteStrategy.getCharacteristics().get(1).getValue(), is("10% в год"));
         assertThat("short-description не равно", getLiteStrategy.getCharacteristics().get(3).getValue(), is("TEST"));
         assertThat("owner-description не равно", getLiteStrategy.getCharacteristics().get(4).getValue(), is("TEST11"));
+        strategy = strategyService.getStrategy(strategyId);
+        assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
+            is(strategy.getActivationTime().toString().substring(0, 23)));
     }
 
 
@@ -342,6 +328,8 @@ public class GetLiteStrategyTest {
         assertThat("master-portfolio-top-positions.value не равно", getLiteStrategy.getCharacteristics().get(5).getValue(),is("sber.png,minfin.png"));
         assertThat("master-portfolio-top-positions.subtitle не равно", getLiteStrategy.getCharacteristics().get(5).getSubtitle(),is("Топ торгуемых бумаг"));
         assertThat("status стратегии не равен", getLiteStrategy.getStatus().toString(), is("frozen"));
+        assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
+            is(strategy.getActivationTime().toString().substring(0, 23)));
     }
 
 
@@ -463,6 +451,8 @@ public class GetLiteStrategyTest {
         assertThat("score стратегии не равно", getLiteStrategy.getScore(), is(1));
         assertThat("owner id стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getId(), is(profile.getId()));
         assertThat("owner nickname стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getNickname(), is(profile.getNickname()));
+        assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
+            is(strategy.getActivationTime().toString().substring(0, 23)));
     }
 
 

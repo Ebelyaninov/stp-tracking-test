@@ -9,6 +9,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.ResponseBodyData;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,10 +26,8 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -53,8 +52,8 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.text.DecimalFormatSymbols;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,13 +86,7 @@ public class GetLiteStrategiesTest {
     @Autowired
     ContractService contractService;
     @Autowired
-    SubscriptionService subscriptionService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
@@ -101,21 +94,9 @@ public class GetLiteStrategiesTest {
     @Autowired
     MasterPortfolioValueDao masterPortfolioValueDao;
     @Autowired
-    MasterPortfolioMaxDrawdownDao masterPortfolioMaxDrawdownDao;
-    @Autowired
-    MasterPortfolioPositionRetentionDao masterPortfolioPositionRetentionDao;
-    @Autowired
-    MasterPortfolioRateDao masterPortfolioRateDao;
-    @Autowired
     MasterPortfolioTopPositionsDao masterPortfolioTopPositionsDao;
     @Autowired
     MasterSignalDao masterSignalDao;
-    @Autowired
-    SignalFrequencyDao signalFrequencyDao;
-    @Autowired
-    SignalsCountDao signalsCountDao;
-    @Autowired
-    StrategyTailValueDao strategyTailValueDao;
     @Autowired
     StpInstrument instrument;
     @Autowired
@@ -183,6 +164,7 @@ public class GetLiteStrategiesTest {
     @AllureId("1135430")
     @DisplayName("C1135430.GetLiteStrategies.Получение облегченных данных списка стратегий.Данные по стратегии")
     @Subfeature("Успешные сценарии")
+    @SneakyThrows
     @Description("Метод для получения облегченных данных по торговой стратегии.")
     void C1135430() throws JsonProcessingException, InterruptedException {
         //вызываем метод getLiteStrategy
@@ -201,6 +183,9 @@ public class GetLiteStrategiesTest {
         Set<Integer> listStrategyScoreFromApi = new HashSet<>();
         Set<Boolean> listStrategyIsOverloadedFromApi = new HashSet<>();
         Set<String> listStrategyPortfolioValues = new HashSet<>();
+        Set<LocalDateTime> listStrategyActivationTimeFromApi = new HashSet<>();
+        Set<String> listStrategyActivationTimeFromApiString = new HashSet<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
             listStrategyIdsFromApi.add(getLiteStrategies.getItems().get(i).getId());
             listStrategyTitleFromApi.add(getLiteStrategies.getItems().get(i).getTitle());
@@ -210,6 +195,8 @@ public class GetLiteStrategiesTest {
             listStrategyScoreFromApi.add(getLiteStrategies.getItems().get(i).getScore());
             listStrategyIsOverloadedFromApi.add(getLiteStrategies.getItems().get(i).getIsOverloaded());
             listStrategyPortfolioValues.add(getLiteStrategies.getItems().get(i).getPortfolioValues().toString());
+            listStrategyActivationTimeFromApi.add(getLiteStrategies.getItems().get(i).getActivationTime().toLocalDateTime());
+            listStrategyActivationTimeFromApiString.add(formatter.format(getLiteStrategies.getItems().get(i).getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime()));
         }
         Set<String> listStrategyTitleFromDB = new HashSet<>();
         Set<UUID> listStrategyIdsFromDB = new HashSet<>();
@@ -218,6 +205,9 @@ public class GetLiteStrategiesTest {
         Set<Integer> listStrategyScoreFromDB = new HashSet<>();
         Set<Boolean> listIsOverloaded = new HashSet<>();
         Set<String> listStrategyStatusFromDB = new HashSet<>();
+        Set<LocalDateTime> listStrategyActivationTimeFromDB = new HashSet<>();
+        Set<String> listStrategyActivationTimeFromDBString = new HashSet<>();
+
 
         for (int i = 0; i < strategysFromDB.size(); i++) {
             listStrategyIdsFromDB.add(strategysFromDB.get(i).getId());
@@ -227,6 +217,8 @@ public class GetLiteStrategiesTest {
             listStrategyScoreFromDB.add(strategysFromDB.get(i).getScore());
             listIsOverloaded.add(strategysFromDB.get(i).getOverloaded());
             listStrategyStatusFromDB.add(strategysFromDB.get(i).getStatus().toString());
+            listStrategyActivationTimeFromDB.add(strategysFromDB.get(i).getActivationTime());
+            listStrategyActivationTimeFromDBString.add(formatter.format(strategysFromDB.get(i).getActivationTime()));
         }
         assertAll(
             () -> assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded)),
@@ -236,7 +228,8 @@ public class GetLiteStrategiesTest {
             () -> assertThat("riskProfile стратегий не совпадают", listStrategyRiskProfileFromApi, is(listStrategyRiskProfileFromDB)),
             () -> assertThat("score стратегий не совпадают", listStrategyScoreFromApi, is(listStrategyScoreFromDB)),
             () -> assertThat("status стратегий не совпадает", listStrategyStatusFromApi, is(listStrategyStatusFromDB)),
-            () -> assertThat("PortfolioValues != []", listStrategyPortfolioValues.toString(), is("[[]]"))
+            () -> assertThat("PortfolioValues != []", listStrategyPortfolioValues.toString(), is("[[]]")),
+            () -> assertThat("activationTime стратегии не равно", listStrategyActivationTimeFromApiString, is(listStrategyActivationTimeFromDBString))
         );
         log.info("listOfCount from method == " + listStrategyIdsFromApi + "\n listOfCountFromDB == " + listStrategyIdsFromDB);
     }
