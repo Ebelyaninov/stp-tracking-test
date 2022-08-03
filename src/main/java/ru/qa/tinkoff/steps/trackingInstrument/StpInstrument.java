@@ -245,7 +245,7 @@ public class StpInstrument {
     public String tickerJPY = "JPYRUB";
     public String tradingClearingAccountJPY = "MB9885503216";
 
-    public String tickerRUB = "RUB";
+    public String tickerRUB = "RUB000UTSTOM";
     public String tradingClearingAccountRUB = "MB9885503216";
 
 
@@ -446,6 +446,12 @@ public class StpInstrument {
     public String classCodeSKX = "SPBXM";
     public String tradingClearingAccountSKX = "TKCBM_TCAB";
     public UUID positionIdSKX = UUID.fromString("98d32a7a-0e9a-4ecd-860e-ebbb850e42d2");
+
+    public String tickerAMDRUB = "AMDRUB_TOM";
+    public String tradingClearingAccountAMDRUB = "MB9885503216";
+    public String classCodeAMDRUB = "CETS";
+    public String instrumentAMDRUB = tickerAMDRUB + "_" + classCodeAMDRUB;
+    public UUID positionIdAMDRUB = UUID.fromString("4515b482-71f0-4193-aa0a-b91efdab7062");
 
 
     public List<String> tradingStatusesFalse = Arrays.asList(

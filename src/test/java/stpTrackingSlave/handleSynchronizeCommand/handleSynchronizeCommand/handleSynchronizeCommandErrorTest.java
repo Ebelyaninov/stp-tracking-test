@@ -1,6 +1,5 @@
 package stpTrackingSlave.handleSynchronizeCommand.handleSynchronizeCommand;
 
-import com.google.protobuf.Timestamp;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -15,21 +14,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -38,7 +36,6 @@ import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Subscription;
 import ru.qa.tinkoff.tracking.entities.enums.*;
 import ru.qa.tinkoff.tracking.services.database.*;
-import ru.qa.tinkoff.tracking.services.grpc.CapturedResponse;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.time.Duration;
@@ -56,7 +53,8 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static ru.qa.tinkoff.kafka.Topics.*;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONSUMER_COMMAND;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 
 @Slf4j
 @Epic("handleSynchronizeCommand-Обработка команд на синхронизацию")
@@ -70,6 +68,7 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     InvestTrackingAutoConfiguration.class,
     KafkaAutoConfiguration.class,
     StpTrackingSlaveStepsConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
     StpInstrument.class
 })
 public class handleSynchronizeCommandErrorTest {
@@ -101,7 +100,12 @@ public class handleSynchronizeCommandErrorTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
-
+    @Autowired
+    StpSiebel stpSiebel;
+    String slave;
+    String master;
+    UUID investIdMaster;
+    UUID investIdSlave;
     SlavePortfolio slavePortfolio;
     Client clientSlave;
     String contractIdMaster;
@@ -109,14 +113,27 @@ public class handleSynchronizeCommandErrorTest {
     Contract contractSlave;
     Subscription subscription;
     UUID strategyId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
-    //String SIEBEL_ID_SLAVE = "4-1TG13CMA";
-    String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
+//    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
+//    //String SIEBEL_ID_SLAVE = "4-1TG13CMA";
+//    String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
 
-    final String tickerApple = "AAPL";
-    final String tradingClearingAccountApple = "TKCBM_TCAB";
-    final  UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
-    String description = "description test стратегия autotest update adjust base currency";
+    //    final String tickerApple = "AAPL";
+//    final String tradingClearingAccountApple = "TKCBM_TCAB";
+//    final  UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
+    String description = "description test стратегия autotest handleSynchronizeCommandErrorTest";
+
+    @BeforeAll
+    void getdataFromInvestmentAccount() {
+        slave = stpSiebel.siebelIdSlaveSynch;
+        master = stpSiebel.siebelIdMasterSynch;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(slave);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(master);
+        investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+    }
 
     @AfterEach
     void deleteClient() {
@@ -176,13 +193,6 @@ public class handleSynchronizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C1249454() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
 //      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -193,8 +203,8 @@ public class handleSynchronizeCommandErrorTest {
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionListMaster = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 1, "7000", positionListMaster);
-        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(tickerApple,
-            tradingClearingAccountApple, positionIdAAPL,"5", date, 1,
+        List<MasterPortfolio.Position> masterPosOne = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "5", date, 1,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6461.9", masterPosOne);
         //создаем подписку для slave c заблокированной подпиской
@@ -223,13 +233,6 @@ public class handleSynchronizeCommandErrorTest {
     @Subfeature("Альтернативные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
     void C672205() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -272,7 +275,6 @@ public class handleSynchronizeCommandErrorTest {
     }
 
 
-
     @SneakyThrows
     @Test
     @AllureId("668636")
@@ -280,13 +282,6 @@ public class handleSynchronizeCommandErrorTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на синхронизацию slave-портфеля.")
     void C668636() {
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID_MASTER);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
-        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
-        UUID investIdSlave = resAccountSlave.getInvestId();
-        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -323,6 +318,4 @@ public class handleSynchronizeCommandErrorTest {
         assertThat("ComparedToMasterVersion в портфеле slave не равно", slavePortfolio.getComparedToMasterVersion(), is(comparedToMasterVersion));
         assertThat("базовая валюта в портфеле slave не равно", slavePortfolio.getBaseMoneyPosition().getQuantity().toString(), is(baseMoney));
     }
-
-
 }

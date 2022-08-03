@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
@@ -35,10 +34,11 @@ import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
+import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingConsumerSteps.StpTrackingConsumerSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
+import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.api.ClientApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -79,7 +79,8 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     GrpcServicesAutoConfiguration.class,
     KafkaOldConfiguration.class,
     StpTrackingInstrumentConfiguration.class,
-    ApiCreatorConfiguration.class
+    ApiCreatorConfiguration.class,
+    StpTrackingSiebelConfiguration.class,
 })
 
 public class HandleLimitEventTest {
@@ -115,24 +116,32 @@ public class HandleLimitEventTest {
     ManagementFeeDao managementFeeDao;
     @Autowired
     StpInstrument instrument;
-
+    @Autowired
+    StpSiebel stpSiebel;
 
     Client clientSlave;
     String contractIdMaster;
     String contractIdSlave;
     List<String> contractIdSlaves = new ArrayList<>();
     UUID strategyId;
-    String siebelIdMaster = "1-51Q76AT";
+    String siebelIdMaster;
+    UUID investIdMaster;
     String quantitySBER = "20";
     String quantitySU29009RMFS6 = "5";
     List<Pair<String, byte[]>> messages;
+    String description = "description test стратегия autotest consumer HandleLimitEventTest";
 
-    String description = "description test стратегия autotest consumer";
 
     @BeforeAll
-    void clearData() {
+    void createDataForTests() {
+        siebelIdMaster = stpSiebel.siebelMasterFee;
+        //получаем данные по клиенту master в api сервиса счетов
+        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
+        investIdMaster = resAccountMaster.getInvestId();
+        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         steps.deleteDataFromDb(siebelIdMaster);
     }
+
 
     @AfterEach
     void deleteClient() {
@@ -173,7 +182,6 @@ public class HandleLimitEventTest {
                 slavePortfolioDao.deleteSlavePortfolio(contractIdSlave, strategyId);
             } catch (Exception e) {
             }
-
             try {
                 steps.createEventInTrackingEvent(contractIdSlave);
             } catch (Exception e) {
@@ -189,12 +197,8 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1084018() {
-        String siebelIdSlave = "4-1O7I15NA";
+        String siebelIdSlave = "4-MSD266B";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -208,7 +212,6 @@ public class HandleLimitEventTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-//        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, ticker1, tradingClearingAccount1, quantity1, ticker2, tradingClearingAccount2, quantity2);
         List<MasterPortfolio.Position> positionMasterList = new ArrayList<>();
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //смотрим версию и базовую валюту в GRPC middle
@@ -267,10 +270,6 @@ public class HandleLimitEventTest {
     void C1084044() {
         String siebelIdSlave = "1-6J4U1TZ";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -352,10 +351,6 @@ public class HandleLimitEventTest {
     void C1084158() {
         String siebelIdSlave = "5-9QFVT85D";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -405,9 +400,6 @@ public class HandleLimitEventTest {
         //Смотрим, сообщение, которое поймали в топике kafka
         await().atMost(TWO_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).until(
             () -> waitMessage(TRACKING_SLAVE_COMMAND, contractIdSlave), is(notNullValue()));
-//        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20)).stream()
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .collect(Collectors.toList());
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -448,13 +440,8 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1507329() {
-//        String siebelIdSlave = "1-51P8KN5";
         String siebelIdSlave = "1-40X673G";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -538,16 +525,104 @@ public class HandleLimitEventTest {
 
     @SneakyThrows
     @Test
+    @AllureId("2027366")
+    @DisplayName("C2027366.HandleLimitEvent.Обработка события от Miof и создание команды по изменению позиции - валюты AMD")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
+    void C2027366() {
+        String siebelIdSlave = "5-DNAV8OBL";
+        strategyId = UUID.randomUUID();
+        //получаем данные по клиенту slave в api сервиса счетов
+        GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
+        UUID investIdSlave = resAccountSlave.getInvestId();
+        contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
+        contractIdSlaves.add(contractIdSlave);
+        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositionsBefore = grpcMiofRequest(contractIdSlave);
+        int versionMiddleBefore = clientPositionsBefore.getResponse().getClientPositions().getVersion().getValue();
+        double middleQuantityBaseMoney = steps.getBaseMoneyFromMiddle(clientPositionsBefore, "AMD");
+        String baseMoney = Double.toString(middleQuantityBaseMoney);
+        //сохраняем данные по бумаге из ответа miof в список
+        List<ru.tinkoff.invest.miof.Client.MoneyPosition> listMoney = clientPositionsBefore.getResponse().getClientPositions().getMoneyList().stream()
+            .filter(ls -> ls.getCurrency().equals("AMD"))
+            .filter(ls -> ls.getKind().name().equals("T365"))
+            .collect(Collectors.toList());
+        //рассчитываем значение количество бумаг
+        double quantityMiof = listMoney.get(0).getBalance().getUnscaled()
+            * Math.pow(10, -1 * listMoney.get(0).getBalance().getScale());
+        int valueMaster = (int) quantityMiof + 1;
+        String quantityMaster = Integer.toString(valueMaster);
+        String quantitySlave = Double.toString(quantityMiof);
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "10");
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            null, false);
+        //создаем список позиций в портфеле slave
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerAMDRUB, instrument.tradingClearingAccountAMDRUB,
+            quantitySlave, date);
+        //создаем запись в кассандре
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, versionMiddleBefore, 2,
+            baseMoney, date, createListSlavePos);
+        evictContractCacheAndWait(contractIdSlave);
+        //вычитываем все события из топика tracking.slave.command
+        steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
+        //изменяем позицию по бумаге в miof
+        steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "AMD", 1);
+        //Смотрим, сообщение, которое поймали в топике kafka
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        Pair<String, byte[]> message = messages.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
+        log.info("Команда в tracking.slave.command:  {}", portfolioCommand);
+        String key = message.getKey();
+        double quantitySecurityCommand = portfolioCommand.getPortfolio().getPosition(0).getQuantity().getUnscaled()
+            * Math.pow(10, -1 * portfolioCommand.getPortfolio().getPosition(0).getQuantity().getScale());
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
+        int versionMiddleAfter = clientPositions.getResponse().getClientPositions().getVersion().getValue();
+        //сохраняем данные по позиции рубли
+        List<ru.tinkoff.invest.miof.Client.MoneyPosition> listMoneyList = clientPositions.getResponse().getClientPositions().getMoneyList().stream()
+            .filter(ls -> ls.getCurrency().equals("AMD"))
+            .filter(ls -> ls.getKind().name().equals("T365"))
+            .collect(Collectors.toList());
+        double quantityCurrencyMiof = listMoneyList.get(0).getBalance().getUnscaled()
+            * Math.pow(10, -1 * listMoneyList.get(0).getBalance().getScale());
+        //проверяем, данные в команде
+        assertThat("key не равен", key, is(contractIdSlave));
+        assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
+        assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
+        assertThat("Version не равен", portfolioCommand.getPortfolio().getVersion(), is(versionMiddleAfter));
+        assertThat("ticker не равен", portfolioCommand.getPortfolio().getPosition(0).getTicker(), is(instrument.tickerAMDRUB));
+        assertThat("trading_clearing_account не равен", portfolioCommand.getPortfolio().getPosition(0).getTradingClearingAccount(),
+            is(listMoney.get(0).getAccountId()));
+        assertThat("trading_clearing_account не равен", uuid(portfolioCommand.getPortfolio().getPosition(0).getPositionId()),
+            is(instrument.positionIdAMDRUB));
+        assertThat("quantity по бумагам  не равен", (quantityCurrencyMiof), is(quantitySecurityCommand));
+        assertThat("action  не равен", portfolioCommand.getPortfolio().getPosition(0).getAction().getAction().name(), is("ADJUST_CURRENCY"));
+        assertThat("BaseMoneyPosition не равен", portfolioCommand.getPortfolio().getBaseMoneyPosition().hasQuantity(), is(false));
+        assertThat("delayed_correction не равен", portfolioCommand.getPortfolio().getDelayedCorrection(), is(false));
+    }
+
+
+    @SneakyThrows
+    @Test
     @AllureId("580020")
     @DisplayName("C580020.HandleLimitEvent.У contractId, state != 'tracked'")
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C580020() {
         String SIEBEL_ID_SLAVE = "1-CPTNTIF";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -590,12 +665,11 @@ public class HandleLimitEventTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C912915() {
-        String SIEBEL_ID_SLAVE = "4-1O7I15NA";
+        String SIEBEL_ID_SLAVE = "4-MSD266B";
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
         strategyId = UUID.randomUUID();
         //смотрим версию и базовую валюту в GRPC middle
@@ -613,15 +687,11 @@ public class HandleLimitEventTest {
         steps.resetOffsetToEnd(TRACKING_CONTRACT_EVENT);
         //evictContractCache
         steps.createEventInTrackingEvent(contractIdSlave);
-        //изменяем позицию по валюте в miof (Убрал, триггерит блокировку evictContract)
-        //steps.getClientAdjustCurrencyMiof(clientCodeSlave, contractIdSlave, "RUB", 1);
         //Смотрим, сообщение, которое поймали в топике kafka
-//        List<Pair<String, byte[]>> messages;
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() ->
             waitMessage(TRACKING_CONTRACT_EVENT, contractIdSlave).stream()
                 .filter(key -> key.getKey().equals(contractIdSlave))
                 .collect(Collectors.toList()).size(), greaterThanOrEqualTo(1));
-        //messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(20));
         Tracking.Event eventBlock = null;
         for (int i = 0; i < messages.size(); i++) {
             Tracking.Event event = Tracking.Event.parseFrom(messages.get(i).getValue());
@@ -629,12 +699,6 @@ public class HandleLimitEventTest {
                 eventBlock = event;
             }
         }
-//        Pair<String, byte[]> message = messages.stream()
-//            .sorted(Comparator.reverseOrder())
-//            .filter(key -> key.getKey().equals(contractIdSlave))
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-//        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         log.info("Событие  в tracking.contract.event:  {}", eventBlock);
         //проверяем, данные в сообщении
         assertThat("action события не равен", eventBlock.getAction().toString(), is("UPDATED"));
@@ -650,12 +714,7 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1481355() {
-//        String SIEBEL_ID_SLAVE = "1-FRT3HXX";
         String SIEBEL_ID_SLAVE = "1-56Q5JQH";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -716,10 +775,6 @@ public class HandleLimitEventTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1034763() {
         String SIEBEL_ID_SLAVE = "5-234WH5E6W";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -751,9 +806,6 @@ public class HandleLimitEventTest {
         log.info("start to wait");
         await().atMost(TWO_SECONDS).ignoreExceptions().pollInterval(TWO_HUNDRED_MILLISECONDS).until(
             () -> waitMessage(TRACKING_CONTRACT_EVENT, contractIdSlave), notNullValue());
-//        Pair<String, byte[]> message = messages.stream()
-//            .findFirst()
-//            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event eventBlock = null;
         for (int i = 0; i < messages.size(); i++) {
             Tracking.Event event = Tracking.Event.parseFrom(messages.get(i).getValue());
@@ -777,18 +829,13 @@ public class HandleLimitEventTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1346552() {
-//        String siebelIdSlave = "4-1L32TQUJ";
         String siebelIdSlave = "4-1KRIRCZ1";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
         contractIdSlave = resAccountSlave.getBrokerAccounts().get(0).getId();
-        contractIdSlaves.add(contractIdSlave);
+//        contractIdSlaves.add(contractIdSlave);
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -803,9 +850,25 @@ public class HandleLimitEventTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
+        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
+        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
+        int versionMiddleAfter = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
-        steps.createEventInTrackingEvent(contractIdSlave);
+        //создаем событие
+        OffsetDateTime now = OffsetDateTime.now();
+        Limit.Event eventLimit = Limit.Event.newBuilder()
+            .setAction(limit.Limit.Event.Action.TRACKING_STATE_UPDATE)
+            .setVersion(Int32Value.newBuilder().setValue(versionMiddleAfter).build())
+            .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
+            .setCreatedAt(com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(now.toEpochSecond())
+                .setNanos(now.getNano())
+                .build())
+            .build();
+        log.info("Команда в tracking.slave.command:  {}", eventLimit);
+        byte[] eventBytes = eventLimit.toByteArray();
+        oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20)).stream()
             .sorted(Comparator.naturalOrder())
@@ -815,9 +878,6 @@ public class HandleLimitEventTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
-        //вызываем метод middle getClientPosition по GRPC, который возвращает список позиций клиента и версию портфеля
-        CapturedResponse<ru.tinkoff.invest.miof.Client.GetClientPositionsResp> clientPositions = grpcMiofRequest(contractIdSlave);
-        int versionMiddleAfter = clientPositions.getResponse().getClientPositions().getVersion().getValue();
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -836,10 +896,6 @@ public class HandleLimitEventTest {
     void C1510531() {
         String siebelIdSlave = "5-2IE9J8C1S";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -863,7 +919,6 @@ public class HandleLimitEventTest {
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         OffsetDateTime now = OffsetDateTime.now();
         Limit.Event eventLimit = Limit.Event.newBuilder()
-            //.addAllMoneyLimit(moneyLimits)
             .setAction(limit.Limit.Event.Action.TRACKING_STATE_UPDATE)
             .setVersion(Int32Value.newBuilder().setValue(1).build())
             .setId(com.google.protobuf.ByteString.copyFromUtf8(UUID.randomUUID().toString()))
@@ -895,10 +950,6 @@ public class HandleLimitEventTest {
     void C1481233() {
         String siebelIdSlave = "1-3L0X4M1";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -919,7 +970,6 @@ public class HandleLimitEventTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
-        //evictContractCacheAndWait(contractIdSlave);
         //вычитываем все события из топика tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         OffsetDateTime now = OffsetDateTime.now();
@@ -967,7 +1017,6 @@ public class HandleLimitEventTest {
         oldKafkaService.send(MIOF_POSITIONS_RAW, contractIdSlave, eventBytes);
         //Смотрим, сообщение, которое поймали в топике kafka
         Tracking.PortfolioCommand portfolioCommand = getMessageFromKafka(TRACKING_SLAVE_COMMAND, contractIdSlave);
-
         //проверяем, данные в команде
         assertThat("ID договора не равен", portfolioCommand.getContractId(), is(contractIdSlave));
         assertThat("тип операции не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
@@ -990,10 +1039,6 @@ public class HandleLimitEventTest {
     void C1481201() {
         String siebelIdSlave = "5-2LODDYVDX";
         strategyId = UUID.randomUUID();
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(siebelIdSlave);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -1064,10 +1109,6 @@ public class HandleLimitEventTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1507503() {
         String SIEBEL_ID_SLAVE = "5-1DNCKYI7B";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -1123,10 +1164,6 @@ public class HandleLimitEventTest {
     @Description("Операция для обработки изменений позиций договоров, участвующих в автоследовании.")
     void C1481444() {
         String SIEBEL_ID_SLAVE = "1-1XHHA7S";
-        //получаем данные по клиенту master в api сервиса счетов
-        GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
-        UUID investIdMaster = resAccountMaster.getInvestId();
-        contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slave в api сервиса счетов
         GetBrokerAccountsResponse resAccountSlave = steps.getBrokerAccounts(SIEBEL_ID_SLAVE);
         UUID investIdSlave = resAccountSlave.getInvestId();
@@ -1193,17 +1230,14 @@ public class HandleLimitEventTest {
         checkEvent(event, contractIdSlave, "UPDATED", "TRACKED", true);
         //Проверяем contractSlave
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
-
     }
 
     //общие методы для тестов
-
     void checkEvent(Tracking.Event event, String contractId, String action, String state, boolean blocked) {
         assertThat("ID contract не равен", event.getContract().getId(), is(contractId));
         assertThat("Action не равен", event.getAction().toString(), is(action));
         assertThat("State не равен", event.getContract().getState().toString(), is(state));
         assertThat("Blocked не равен", (event.getContract().getBlocked()), is(blocked));
-
     }
 
 

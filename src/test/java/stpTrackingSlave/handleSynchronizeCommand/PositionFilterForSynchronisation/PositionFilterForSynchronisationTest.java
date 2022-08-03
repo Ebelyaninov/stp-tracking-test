@@ -824,6 +824,68 @@ public class PositionFilterForSynchronisationTest {
     }
 
 
+
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("1891547")
+    @Tags({@Tag("qa")})
+    @DisplayName("1891547.PositionFilterForSynchronisation.Не найден статус торгов по позиции в кеш exchangePositionTradingStatusCache")
+    @Subfeature("Успешные сценарии")
+    @Description("Алгоритм предназначен для выбора одной позиции для синхронизации портфеля slave'а на основе текущего виртуального master-портфеля")
+    void C1891547() {
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        BigDecimal lot = new BigDecimal("1");
+        Date date = Date.from(utc.toInstant());
+        strategyId = UUID.randomUUID();
+//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now());
+        // создаем портфель ведущего с позицией в кассандре
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"3", instrument.tickerNOK,
+            instrument.tradingClearingAccountNOK,  instrument.positionIdNOK,"5", date,
+            2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
+        //создаем запись в кассандре
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "9000.5", masterPos);
+        //создаем подписку для slave
+        OffsetDateTime startSubTime = OffsetDateTime.now();
+        steps.createSubcription(investIdSlave, contractIdSlave, null, ContractState.tracked,
+            null, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        //создаем портфель для ведомого
+        List<SlavePortfolio.Position> createListSlavePos = new ArrayList<>();
+        String baseMoneySlave = "16000";
+        steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 2,
+            baseMoneySlave, date, createListSlavePos);
+        //отправляем команду на синхронизацию
+        steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
+        checkComparedToMasterVersion();
+        //получаем портфель slave
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
+        //сохраняем в списки значения по позициям в портфеле
+        List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
+            .collect(Collectors.toList());
+        List<SlavePortfolio.Position> positionNOK = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerNOK))
+            .collect(Collectors.toList());
+        BigDecimal quantityDiff = positionAAPL.get(0).getQuantityDiff();
+        // рассчитываем значение lots
+        BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        await().atMost(FIVE_SECONDS).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        //проверяем параметры заявки
+        assertThat("позиция с ненайденным торговым статусом не равна", positionNOK.size(), is(1));
+        //проверяем значения в slaveOrder2
+        await().atMost(TEN_SECONDS).until(() ->
+            slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
+        checkParamSlaveOrder("0", lots, lot, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+    }
+
+
+
     @Step("Проверяем выставленной заявки: ")
     void checkParamSlaveOrder(String action, BigDecimal lots, BigDecimal lot, String ticker, String tradingClearingAccount) {
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));

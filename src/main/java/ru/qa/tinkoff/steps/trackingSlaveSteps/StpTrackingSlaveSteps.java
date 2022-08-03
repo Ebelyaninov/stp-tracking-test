@@ -230,7 +230,6 @@ public class StpTrackingSlaveSteps {
             )
             .collect(Collectors.toList());
         //достаем значение price
-//        @SuppressWarnings("unchecked")
         if (prices.size() > 0) {
             var values = (Map<Double, Object>) prices.get(0).getValue();
             price = values.get("price").toString();
