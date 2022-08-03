@@ -42,7 +42,7 @@ message ExchangePosition {
   // Код класса инструмента вне биржи (например, сплитованные валюты)
   google.protobuf.StringValue otc_class_code = 8;
 
-   // Признак применения динамических лимитов для инструмента при выставлении сигнала
+  // Признак применения динамических лимитов для инструмента при выставлении сигнала
   bool dynamic_limits = 9;
 
   message OrderQuantityLimit {
@@ -115,6 +115,10 @@ message Strategy {
   // Статус
   Status status = 3;
 
+  // Информация о ведущем стратегии
+  Client owner = 4;
+
+
     enum Status {
         // Черновик
         DRAFT = 0;
@@ -125,8 +129,11 @@ message Strategy {
         //Закрытая
         CLOSED = 3;
     }
+}
 
-
+message Client {
+  // Единый идентификатор клиента
+  bytes invest_id = 1;
 }
 
 // Подписка на стратегию
@@ -189,60 +196,61 @@ message TimestampPeriod {
 // Команда для выполнения над портфелем
 message PortfolioCommand {
 
-    // Номер договора владельца портфеля
-    string contract_id = 1;
+  // Номер договора владельца портфеля
+  string contract_id = 1;
 
-    // Операция для выполнения над портфелем
-    Operation operation = 2;
+  // Операция для выполнения над портфелем
+  Operation operation = 2;
 
-    // Метка времени события, инициировавшего создание команды
-    google.protobuf.Timestamp created_at = 3;
+  // Метка времени события, инициировавшего создание команды
+  google.protobuf.Timestamp created_at = 3;
 
-    // Фрагмент портфеля
-    Portfolio portfolio = 4;
+  // Фрагмент портфеля
+  Portfolio portfolio = 4;
 
-    // Действие, направленное на изменение портфеля
-    oneof action {
-        Signal signal = 5;
-        Dividend dividend = 6;
+  // Действие, направленное на изменение портфеля
+  oneof action {
+    Signal signal = 5;
+    Dividend dividend = 6;
+  }
+
+  // Начисление дивиденда
+  message Dividend {
+
+    // Идентификатор дивиденда
+    int64 id = 1;
+
+    // Идентификатор биржевой позиции, за которую начисляются дивиденды
+    ExchangePositionId exchange_position_id = 2;
+
+    // Сумма выплаты
+    Decimal amount = 3;
+
+     // Валюта выплаты
+     Currency currency = 4;
+
+     // Идентификатор актива, за который начисляется дивиденд
+     google.protobuf.BytesValue asset_id = 5;
     }
 
-    // Начисление дивиденда
-    message Dividend {
+  // Операция для выполнения над портфелем
+  enum Operation {
+    // Зарезервированные значения под неиспользованные операции (WITHDRAW_MONEY = 3; RESERVE = 4; RETRY_SYNCHRONIZATION = 5)
+    reserved 3, 4, 5;
 
-        // Идентификатор дивиденда
-        int64 id = 1;
-
-        // Идентификатор биржевой позиции, за которую начисляются дивиденды
-        ExchangePositionId exchange_position_id = 2;
-
-        // Сумма выплаты
-        Decimal amount = 3;
-
-        // Валюта выплаты
-        Currency currency = 4;
-
-        // Идентификатор актива, за который начисляется дивиденд
-        google.protobuf.BytesValue asset_id = 5;
-    }
-
-    // Операция для выполнения над портфелем
-    enum Operation {
-        // Зарезервированные значения под неиспользованные операции (WITHDRAW_MONEY = 3; RESERVE = 4; RETRY_SYNCHRONIZATION = 5)
-        reserved 3, 4, 5;
-
-        // Инициализировать (первично заполнить) портфель
-        INITIALIZE = 0;
-        // Актуализировать портфель согласно полученным изменениям
-        ACTUALIZE = 1;
-        // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
-        SYNCHRONIZE = 2;
-        // Включить синхронизацию позиций в slave-портфеле в обе стороны
-        ENABLE_SYNCHRONIZATION = 6;
-        // Снять техническую блокировку с договора
-        UNBLOCK_CONTRACT = 7;
-    }
+    // Инициализировать (первично заполнить) портфель
+    INITIALIZE = 0;
+    // Актуализировать портфель согласно полученным изменениям
+    ACTUALIZE = 1;
+    // Синхронизировать slave-портфель согласно полученным изменениям master-портфеля
+    SYNCHRONIZE = 2;
+    // Включить синхронизацию позиций в slave-портфеле в обе стороны
+    ENABLE_SYNCHRONIZATION = 6;
+    // Снять техническую блокировку с договора
+    UNBLOCK_CONTRACT = 7;
+  }
 }
+
 // Фрагмент портфеля
 message Portfolio {
 
@@ -395,8 +403,6 @@ message Signal {
     google.protobuf.DoubleValue dynamic_limit_quantity = 4;
 }
 
-
-
 // Команда для расчета аналитических показателей
 message AnalyticsCommand {
 
@@ -441,6 +447,7 @@ message AnalyticsCommand {
     MASTER_PORTFOLIO_POSITION_RETENTION = 6;
     // Топ-позиций master-портфеля владельца стратегии
     MASTER_PORTFOLIO_TOP_POSITIONS = 7;
+    // Кривизна "хвоста" стратегии
     STRATEGY_TAIL_DIFF_RATE = 8;
   }
 }
