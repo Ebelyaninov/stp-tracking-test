@@ -35,6 +35,7 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -42,6 +43,7 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
+import ru.tinkoff.invest.tracking.master.TrackingMaster;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
@@ -54,8 +56,12 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TWO_HUNDRED_MILLISECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
@@ -107,6 +113,10 @@ public class ActivateStrategySuccessTest {
     Integer score = 5;
     String siebelId;
     MasterPortfolioValue masterPortfolioValue;
+    Contract contract;
+    //Из настройки currency
+    UUID positionIdRUB = UUID.fromString("33e24a92-aab0-409c-88b8-f2d57415b920");
+    UUID positionIdUSD = UUID.fromString("6e97aa9b-50b6-4738-bce7-17313f2b2cc2");
 
     @AfterEach
     void deleteClient() {
@@ -174,6 +184,9 @@ public class ActivateStrategySuccessTest {
             .strategyIdPath(strategyId.toString())
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
+        await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).until(() ->
+            strategyService.getStrategy(strategyId).getStatus().equals(StrategyStatus.active));
+        contract = contractService.getContract(contractId);
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
@@ -184,7 +197,7 @@ public class ActivateStrategySuccessTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         //Проверяем, данные в сообщении
-        checkEventParam(event, "UPDATED", strategyId, title);
+        checkStrategyEventParam(event, "UPDATED", strategyId, title, contract.getClientId());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -231,8 +244,9 @@ public class ActivateStrategySuccessTest {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        contract = contractService.getContract(contractId);
         //Проверяем, данные в сообщении
-        checkEventParam(event, "UPDATED", strategyId, title);
+        checkStrategyEventParam(event, "UPDATED", strategyId, title, contract.getClientId());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -259,11 +273,20 @@ public class ActivateStrategySuccessTest {
     }
 
     //Проверяем параметры события
-    void checkEventParam(Tracking.Event event, String action, UUID strategyId, String title) {
+    void checkStrategyEventParam(Tracking.Event event, String action, UUID strategyId, String title, UUID clientId) {
         assertThat("Action события не равен", event.getAction().toString(), is(action));
         assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId));
         assertThat("ID стратегии не равен", (event.getStrategy().getTitle()), is(title));
         assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.ACTIVE.toString()));
+        assertThat("strategy.owner.invest_id записи после обновления != ", uuid(event.getStrategy().getOwner().getInvestId()), is(clientId));
+    }
+
+    void checkFirstAdjustEventParam(TrackingMaster.MasterPortfolioOperation masterPortfolioOperation, String action) {
+        assertThat("strategy_id не равен", masterPortfolioOperation.getStrategyId().toString(), is(action));
+        assertThat("changed_at не равен", masterPortfolioOperation.getChangedAt(), is("now"));
+        assertThat("portfolio.version не равен", masterPortfolioOperation.getPortfolio().getVersion(), is(1));
+        assertThat("adjust.position_id не равен ", masterPortfolioOperation.getAdjust().getPositionId(), is(positionIdUSD));
+        assertThat("adjust.quantity базовой валюты != ", masterPortfolioOperation.getAdjust().getQuantity(), is(""));
     }
 
     //Проверяем параметры стратегии
