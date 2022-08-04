@@ -48,8 +48,8 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,13 +57,13 @@ import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
-import static org.awaitility.Durations.TWO_HUNDRED_MILLISECONDS;
+import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @ExtendWith({AllureJunit5.class, RestAssuredExtension.class})
@@ -172,8 +172,11 @@ public class ActivateStrategySuccessTest {
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
        //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
+        await().atMost(Duration.ofSeconds(12)).pollDelay(TEN_SECONDS).until(() ->
+            strategyService.getStrategy(strategyId).getStatus().equals(StrategyStatus.draft));
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
+        steps.resetOffsetToLate(MASTER_PORTFOLIO_OPERATION);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -184,6 +187,7 @@ public class ActivateStrategySuccessTest {
             .strategyIdPath(strategyId.toString())
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
+        OffsetDateTime now = OffsetDateTime.now();
         await().atMost(FIVE_SECONDS).pollDelay(TWO_HUNDRED_MILLISECONDS).until(() ->
             strategyService.getStrategy(strategyId).getStatus().equals(StrategyStatus.active));
         contract = contractService.getContract(contractId);
@@ -191,13 +195,19 @@ public class ActivateStrategySuccessTest {
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
         //Смотрим, сообщение, которое поймали в топике kafka
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
-        Pair<String, byte[]> message = messages.stream()
+        List<Pair<String, byte[]>> messagesFromTrackingStrategy = kafkaReceiver.receiveBatch(TRACKING_STRATEGY_EVENT, Duration.ofSeconds(20));
+        Pair<String, byte[]> messageFromStrackingStrategy = messagesFromTrackingStrategy.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
-        Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
+        Tracking.Event eventFromTrackingStrategy = Tracking.Event.parseFrom(messageFromStrackingStrategy.getValue());
         //Проверяем, данные в сообщении
-        checkStrategyEventParam(event, "UPDATED", strategyId, title, contract.getClientId());
+        checkStrategyEventParam(eventFromTrackingStrategy, "UPDATED", strategyId, title, contract.getClientId());
+        List<Pair<String, byte[]>> messagesFromMasterPortfolioOperation = kafkaReceiver.receiveBatch(MASTER_PORTFOLIO_OPERATION, Duration.ofSeconds(20));
+        Pair<String, byte[]> messageFromMasterPortfolioOperation = messagesFromMasterPortfolioOperation.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        TrackingMaster.MasterPortfolioOperation eventFromMasterPortfolioOperation = TrackingMaster.MasterPortfolioOperation.parseFrom(messageFromMasterPortfolioOperation.getValue());
+        checkFirstAdjustEventParam(eventFromMasterPortfolioOperation,strategyId, now,1, positionIdRUB, new BigDecimal("6551.10"));
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
@@ -214,17 +224,21 @@ public class ActivateStrategySuccessTest {
         strategyId = UUID.randomUUID();
         //Создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
-            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
             "OwnerTEST", true, true, false, "0.2", "0.04", null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
+        steps.createMasterPortfolio(contractId, strategyId, 2, "18551.10", masterPos);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "525.12", "6551.10");
         createDateMasterPortfolioValue(strategyId, 0, 2, "723.62", "6551.10");
+        await().atMost(Duration.ofSeconds(12)).pollDelay(TEN_SECONDS).until(() ->
+            strategyService.getStrategy(strategyId).getStatus().equals(StrategyStatus.draft));
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
+        steps.resetOffsetToLate(MASTER_PORTFOLIO_OPERATION);
         //Вызываем метод activateStrategy
         Response responseActiveStrategy = strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -235,6 +249,7 @@ public class ActivateStrategySuccessTest {
             .strategyIdPath(strategyId.toString())
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response);
+        OffsetDateTime now = OffsetDateTime.now();
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseActiveStrategy.getHeaders().getValue("x-server-time").isEmpty());
@@ -249,8 +264,15 @@ public class ActivateStrategySuccessTest {
         checkStrategyEventParam(event, "UPDATED", strategyId, title, contract.getClientId());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
+        checkStrategyParam(strategyId, contractId, title, Currency.USD, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
+        //Проверяем событие из топика tracking.master.portfolio.operation
+        List<Pair<String, byte[]>> messagesFromMasterPortfolioOperation = kafkaReceiver.receiveBatch(MASTER_PORTFOLIO_OPERATION, Duration.ofSeconds(20));
+        Pair<String, byte[]> messageFromMasterPortfolioOperation = messagesFromMasterPortfolioOperation.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        TrackingMaster.MasterPortfolioOperation eventFromMasterPortfolioOperation = TrackingMaster.MasterPortfolioOperation.parseFrom(messageFromMasterPortfolioOperation.getValue());
+        checkFirstAdjustEventParam(eventFromMasterPortfolioOperation,strategyId, now,1, positionIdUSD, new BigDecimal("6551.10"));
         strategyApiStrategyApiAdminCreator.get().activateStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "tracking"))
             .xAppNameHeader("invest")
@@ -262,7 +284,7 @@ public class ActivateStrategySuccessTest {
             .execute(response -> response.asString());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkStrategyParam(strategyId, contractId, title, Currency.RUB, description, "active",
+        checkStrategyParam(strategyId, contractId, title, Currency.USD, description, "active",
             StrategyRiskProfile.CONSERVATIVE, score);
     }
 
@@ -274,19 +296,32 @@ public class ActivateStrategySuccessTest {
 
     //Проверяем параметры события
     void checkStrategyEventParam(Tracking.Event event, String action, UUID strategyId, String title, UUID clientId) {
-        assertThat("Action события не равен", event.getAction().toString(), is(action));
-        assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId));
-        assertThat("ID стратегии не равен", (event.getStrategy().getTitle()), is(title));
-        assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.ACTIVE.toString()));
-        assertThat("strategy.owner.invest_id записи после обновления != ", uuid(event.getStrategy().getOwner().getInvestId()), is(clientId));
+        assertAll(
+            () -> assertThat("Action события не равен", event.getAction().toString(), is(action)),
+            () -> assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId)),
+            () -> assertThat("title стратегии не равен", (event.getStrategy().getTitle()), is(title)),
+            () -> assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.ACTIVE.toString())),
+            () -> assertThat("strategy.owner.invest_id записи после обновления != ", uuid(event.getStrategy().getOwner().getInvestId()), is(clientId))
+        );
     }
 
-    void checkFirstAdjustEventParam(TrackingMaster.MasterPortfolioOperation masterPortfolioOperation, String action) {
-        assertThat("strategy_id не равен", masterPortfolioOperation.getStrategyId().toString(), is(action));
-        assertThat("changed_at не равен", masterPortfolioOperation.getChangedAt(), is("now"));
-        assertThat("portfolio.version не равен", masterPortfolioOperation.getPortfolio().getVersion(), is(1));
-        assertThat("adjust.position_id не равен ", masterPortfolioOperation.getAdjust().getPositionId(), is(positionIdUSD));
-        assertThat("adjust.quantity базовой валюты != ", masterPortfolioOperation.getAdjust().getQuantity(), is(""));
+    void checkFirstAdjustEventParam(TrackingMaster.MasterPortfolioOperation masterPortfolioOperation, UUID strategyId, OffsetDateTime changedAt, int firstMasterPortfolioVersion, UUID positionId, BigDecimal quantity) {
+        BigDecimal adjustQuantity = BigDecimal.valueOf(masterPortfolioOperation.getAdjust().getQuantity().getUnscaled(),
+            masterPortfolioOperation.getAdjust().getQuantity().getScale());
+        Instant changedAtFromEventToInstance = Instant.ofEpochSecond(masterPortfolioOperation.getChangedAt().getSeconds(), masterPortfolioOperation.getChangedAt().getNanos());
+        //Сравниваем, что полученая дата > now не больше чем на 6 с
+        Long changedAtFromEvent = masterPortfolioOperation.getChangedAt().getSeconds() + masterPortfolioOperation.getChangedAt().getNanos();
+        if (changedAtFromEvent.compareTo(changedAt.toEpochSecond()) >= 0 ){
+            log.info("Получили дату больше чем changedAt из masterPortfolio");
+        }
+        assertAll(
+            () -> assertThat("strategy_id не равен",  uuid(masterPortfolioOperation.getStrategyId()), is(strategyId)),
+            () -> assertThat("portfolio.version не равен " + firstMasterPortfolioVersion, masterPortfolioOperation.getPortfolio().getVersion(), is(firstMasterPortfolioVersion)),
+            () -> assertThat("adjust.position_id не равен " + positionId, uuid(masterPortfolioOperation.getAdjust().getPositionId()), is(positionId)),
+            () -> assertThat("adjust.quantity базовой валюты != " + quantity, adjustQuantity, is(quantity)),
+            () -> assertThat("Время changed_at не равно", changedAtFromEventToInstance.toString().substring(0, 18),
+                is(changedAt.toInstant().toString().substring(0, 18)))
+        );
     }
 
     //Проверяем параметры стратегии
@@ -312,5 +347,9 @@ public class ActivateStrategySuccessTest {
             .value(new BigDecimal(value))
             .build();
         masterPortfolioValueDao.insertIntoMasterPortfolioValue(masterPortfolioValue);
+    }
+
+    void confirmChangetAt(){
+
     }
 }

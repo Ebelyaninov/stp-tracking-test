@@ -6,7 +6,6 @@ import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
-import io.qameta.allure.Owner;
 import io.qameta.allure.junit5.AllureJunit5;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBodyData;
@@ -46,6 +45,7 @@ import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.api.StrategyApi;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -69,6 +69,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
@@ -219,8 +220,9 @@ public class CloseStrategyTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.Event event = Tracking.Event.parseFrom(message.getValue());
         log.info("Получен запрос на вычитывание всех сообщений из Kafka топика {} ", event);
+        Contract contract = contractService.getContract(contractIdMaster);
         //Проверяем, данные в сообщении
-        checkEventParam(event, "UPDATED", strategyId, title);
+        checkEventParam(event, "UPDATED", strategyId, title, contract.getClientId());
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
         checkStrategyParam(strategyId, contractIdMaster, title, Currency.RUB, description, "closed",
@@ -474,11 +476,14 @@ public class CloseStrategyTest {
 
 
     //Проверяем параметры события
-    void checkEventParam(Tracking.Event event, String action, UUID strategyId, String title) {
-        assertThat("Action события не равен", event.getAction().toString(), is(action));
-        assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId));
-        assertThat("ID стратегии не равен", (event.getStrategy().getTitle()), is(title));
-        assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.CLOSED.toString()));
+    void checkEventParam(Tracking.Event event, String action, UUID strategyId, String title, UUID clientId) {
+        assertAll(
+            () -> assertThat("Action события не равен", event.getAction().toString(), is(action)),
+            () -> assertThat("ID договора не равен", uuid(event.getStrategy().getId()), is(strategyId)),
+            () -> assertThat("ID стратегии не равен", (event.getStrategy().getTitle()), is(title)),
+            () -> assertThat("strategy.status записи после обновления != ", event.getStrategy().getStatus().toString(), is(Tracking.Strategy.Status.CLOSED.toString())),
+            () -> assertThat("strategy.owner.invest_id записи после обновления != ", uuid(event.getStrategy().getOwner().getInvestId()), is(clientId))
+        );
     }
 
     //Проверяем параметры стратегии

@@ -7,7 +7,6 @@ import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.junit5.AllureJunit5;
-import jnr.ffi.annotations.In;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -40,6 +39,7 @@ import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.swagger.tracking.model.StrategyRiskProfile;
 import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -66,6 +66,7 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_STRATEGY_EVENT;
 
 @Slf4j
@@ -211,7 +212,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -271,7 +273,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -327,7 +330,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, title, descriptionUpdate, score, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -382,7 +386,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, description, scoreUpdate, Currency.RUB, "draft", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -435,7 +440,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, title, description, scoreUpdate, Currency.RUB, "active", StrategyRiskProfile.CONSERVATIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -495,7 +501,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "active", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -553,7 +560,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -608,7 +616,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, strategy.getTitle(), strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, title, descriptionUpdate, scoreUpdate, Currency.USD, "draft", StrategyRiskProfile.AGGRESSIVE, shortDescriptionUpdate, ownerDescription, expectedRelativeYield);
     }
 
@@ -673,7 +682,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         Strategy getDataFromStategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, getDataFromStategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, getDataFromStategy, contract.getClientId());
         for (int i = 0; i < tests.size(); i++) {
             assertThat("test != " + tests.get(i).getId(), getDataFromStategy.getTestsStrategy().get(i).getId(), is(tests.get(i).getId()));
         }
@@ -722,7 +732,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         Strategy getDataFromStategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, getDataFromStategy.getTitle(), getDataFromStategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, getDataFromStategy.getTitle(), getDataFromStategy, contract.getClientId());
         //Проверяем обновление массива tests
         assertThat("test != []", getDataFromStategy.getTestsStrategy().toString(), is("[]"));
     }
@@ -890,7 +901,8 @@ public class UpdateStrategyAdminSuccessTest {
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля
         strategy = strategyService.getStrategy(strategyId);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        Contract contract = contractService.getContract(contractId);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, titleUpdate, descriptionUpdate, scoreUpdate, Currency.RUB, StrategyStatus.frozen.toString(), StrategyRiskProfile.CONSERVATIVE, strategy.getShortDescription(), strategy.getOwnerDescription(), expectedRelativeYield);
 
         //Формируем новый body
@@ -912,7 +924,7 @@ public class UpdateStrategyAdminSuccessTest {
         event = Tracking.Event.parseFrom(messageFromNewRequset.getValue());
         log.info("Команда в tracking.event:  {}", event);
         //Находим в БД автоследования стратегию и проверяем ее поля);
-        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy);
+        checkParamEvent(event, "UPDATED", strategyId, titleUpdate, strategy, contract.getClientId());
         checkParamDB(strategyId, contractId, strategy.getTitle(), strategy.getDescription(), strategy.getScore(), Currency.RUB, StrategyStatus.active.toString(), StrategyRiskProfile.CONSERVATIVE, strategy.getShortDescription(), strategy.getOwnerDescription(), expectedRelativeYield);
     }
 
@@ -956,11 +968,14 @@ public class UpdateStrategyAdminSuccessTest {
         assertThat("slavesCount не равен", strategy.getSlavesCount(), is(0));
     }
 
-    void checkParamEvent(Tracking.Event event, String action, UUID strategyId, String title, Strategy strategy) {
-        assertThat("action события не равен", event.getAction().toString(), is("UPDATED"));
-        assertThat("ID стратегии не равен", uuid(event.getStrategy().getId()), is(strategyId));
-        assertThat("название стратегии не равен", (event.getStrategy().getTitle()), is(title));
-        assertThat("status не равен strategy.status записи после обновления", event.getStrategy().getStatus().toString().toLowerCase(), is(strategy.getStatus().toString()));
+    void checkParamEvent(Tracking.Event event, String action, UUID strategyId, String title, Strategy strategy, UUID clientId) {
+        assertAll(
+            () -> assertThat("action события не равен", event.getAction().toString(), is("UPDATED")),
+            () -> assertThat("ID стратегии не равен", uuid(event.getStrategy().getId()), is(strategyId)),
+            () -> assertThat("название стратегии не равен", (event.getStrategy().getTitle()), is(title)),
+            () -> assertThat("status не равен strategy.status записи после обновления", event.getStrategy().getStatus().toString().toLowerCase(), is(strategy.getStatus().toString())),
+            () -> assertThat("strategy.owner.invest_id записи после обновления != ", uuid(event.getStrategy().getOwner().getInvestId()), is(clientId))
+        );
     }
 
     UpdateStrategyResponse updateStrategy (UpdateStrategyRequest updateStrategyRequest, UUID strategyId) {
