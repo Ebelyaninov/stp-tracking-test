@@ -119,8 +119,6 @@ public class HandleActualizeCommandErrorTest {
     Client clientSlave;
     String contractIdMaster;
     int version;
-//    String ticker = "XS0587031096";
-//    String tradingClearingAccount = "TKCBM_TCAB";
     UUID strategyId;
     String contractIdSlave;
     UUID investIdMaster;
@@ -376,8 +374,6 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //вычитываем все события из tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //формируем команду на актуализацию по ведущему
@@ -418,8 +414,6 @@ public class HandleActualizeCommandErrorTest {
                 .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
             .build();
         // создаем   портфель ведущего  в кассандре c позицией
-//        String tickerPos = "MTS0620";
-//        String tradingClearingAccountPos = "L01+00000SPB";
         String quantityPos = "1";
         int versionPos = version - 1;
         int versionPortfolio = version - 1;
@@ -438,8 +432,6 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -509,8 +501,6 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -564,8 +554,6 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active,  false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),null);
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //вычитываем все события из tracking.slave.command
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //формируем команду на актуализацию по ведущему формируем Signal, но не формируем Portfolio

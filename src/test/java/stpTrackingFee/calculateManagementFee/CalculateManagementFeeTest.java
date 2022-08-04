@@ -245,7 +245,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolio("25000.0", "18700.02", "18171.04");
@@ -489,7 +489,7 @@ public class CalculateManagementFeeTest {
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
             instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
-//        //создаем подписку на стратегию
+        //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
@@ -564,7 +564,6 @@ public class CalculateManagementFeeTest {
             Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(UTC)),
             Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)), contextWithPosTwo, Date.from(LocalDate.now().atStartOfDay().toInstant(UTC)));
         //вычитываем все события из топика tracking.fee.calculate.command
-//        steps.resetOffsetToLate(TRACKING_FEE_CALCULATE_COMMAND);
         kafkaReceiver.resetOffsetToEnd(TRACKING_FEE_CALCULATE_COMMAND);
         //формируем и отправляем команду на расчет комисии
         OffsetDateTime createTime = OffsetDateTime.now();
@@ -609,7 +608,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -662,7 +661,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         List<SlavePortfolio.Position> positionList = new ArrayList<>();
@@ -718,7 +717,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolio("25000.0", "18700.02", "-18171.04");
@@ -762,7 +761,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolio("25000.0", "-18700.02", "18171.04");
@@ -853,7 +852,7 @@ public class CalculateManagementFeeTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, true, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolio("25000.0", "18700.02", "18171.04");
@@ -1383,7 +1382,6 @@ public class CalculateManagementFeeTest {
         //проверяем запись в таблице management_fee
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofSeconds(3)).until(() ->
             managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3), notNullValue());
-//        managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 3);
         assertThat("contractID не равен", managementFee.getContractId(), is(contractIdSlave));
         assertThat("strategyID не равен", managementFee.getStrategyId(), is(strategyId));
         assertThat("Version не равен", managementFee.getVersion(), is(3));

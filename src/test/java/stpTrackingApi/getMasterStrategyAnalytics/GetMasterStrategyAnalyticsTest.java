@@ -26,9 +26,7 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -78,29 +76,13 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 })
 public class GetMasterStrategyAnalyticsTest {
     @Autowired
-    ByteToByteSenderService byteToByteSenderService;
-    @Autowired
     ClientService clientService;
-    @Autowired
-    ProfileService profileService;
     @Autowired
     ContractService contractService;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    SubscriptionService subscriptionService;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
@@ -699,8 +681,6 @@ public class GetMasterStrategyAnalyticsTest {
             instrument.tradingClearingAccountXS0191754729, "last", SIEBEL_ID_MASTER, instrument.instrumentXS0191754729);
         String price3 = steps.getPriceFromPriceCacheOrMD(instrument.tickerFB, instrument.tradingClearingAccountFB,
             "last", SIEBEL_ID_MASTER, instrument.instrumentFB);
-//        String price2 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerXS1589324075, instrument.tradingClearingAccountXS1589324075, "last", SIEBEL_ID_MASTER);
-//        String price3 = steps.getPriceFromExchangePositionPriceCache(instrument.tickerFB, instrument.tradingClearingAccountFB, "last", SIEBEL_ID_MASTER);
         //Пересчет цены облигаций в абсолютное значение
         BigDecimal priceNominal2 = steps.valuePosBonds(price2, nominal, minPriceIncrement, aciValue);
         //Рассчитываем positionValue position

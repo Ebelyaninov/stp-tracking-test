@@ -352,8 +352,6 @@ public class CreateSignalErrorTest {
         BigDecimal quantityRequest = new BigDecimal("4.0");
         int version = 1;
         //находим данные ведущего в БД сервиса счетов
-//        List<BrokerAccount> findValidAccountWithSiebleId = billingService.getFindValidAccountWithSiebelId(SIEBEL_ID);
-//        contractId = findValidAccountWithSiebleId.get(0).getId();
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
         strategyId = UUID.randomUUID();
@@ -879,8 +877,6 @@ public class CreateSignalErrorTest {
         BigDecimal price = new BigDecimal("10.0");
         BigDecimal quantityRequest = new BigDecimal("3");
         int version = 4;
-//        String ticker = "XS0424860947";
-//        String tradingClearingAccount = "L01+00002F00";
 
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Z"));
         log.info("Получаем локальное время: {}", now);
@@ -1071,8 +1067,6 @@ public class CreateSignalErrorTest {
         BigDecimal price = new BigDecimal("6.3825");
         BigDecimal quantityRequest = new BigDecimal("3");
         int version = 2;
-//        String instrument.tickerTRUR = "TRUR";
-//        String tradingClearingAccount = "L01+00002F00";
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdMaster = resAccountMaster.getInvestId();
@@ -1408,7 +1402,7 @@ public class CreateSignalErrorTest {
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
             instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL,"12");
         steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, version, "3556.78", date);
-//        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
+        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
 //        getExchangePosition(ticker, tradingClearingAccount, ExchangePosition.ExchangeEnum.SPB, true, 1000);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.BUY,
@@ -1608,8 +1602,6 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "0");*/
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "10000", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "15000");
@@ -1660,8 +1652,6 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "0");*/
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "1000000", date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "3510000");
@@ -1714,8 +1704,6 @@ public class CreateSignalErrorTest {
             "WOW", "TestMan",true,true);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
-/*        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker, tradingClearingAccount,
-            "0");*/
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
         OffsetDateTime cutTime = OffsetDateTime.now();
         steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), tailValue);

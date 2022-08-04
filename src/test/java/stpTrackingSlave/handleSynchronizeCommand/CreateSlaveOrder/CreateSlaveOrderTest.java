@@ -15,15 +15,11 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
-import ru.qa.tinkoff.mocks.steps.middle.MockMiddleSteps;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -81,11 +77,6 @@ import static org.hamcrest.Matchers.notNullValue;
     StpTrackingSiebelConfiguration.class
 })
 public class CreateSlaveOrderTest {
-
-    @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
-    StringSenderService stringSenderService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -95,13 +86,7 @@ public class CreateSlaveOrderTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired

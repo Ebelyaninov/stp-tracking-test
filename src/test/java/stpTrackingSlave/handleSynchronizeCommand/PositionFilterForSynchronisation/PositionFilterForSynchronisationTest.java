@@ -18,16 +18,12 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -72,10 +68,6 @@ import static org.hamcrest.Matchers.notNullValue;
 })
 public class PositionFilterForSynchronisationTest {
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
-    StringSenderService stringSenderService;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -86,10 +78,6 @@ public class PositionFilterForSynchronisationTest {
     @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
@@ -99,10 +87,6 @@ public class PositionFilterForSynchronisationTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
-    @Autowired
-    MocksBasicSteps mocksBasicSteps;
-    @Autowired
-    StpMockSlaveDate stpMockSlaveDate;
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder2;
     Client clientSlave;

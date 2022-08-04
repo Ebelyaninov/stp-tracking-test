@@ -21,18 +21,13 @@ import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
-import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.GetStrategiesCatalogTabsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.services.database.ClientService;
-import ru.qa.tinkoff.tracking.services.database.ContractService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.util.stream.Stream;
 
@@ -56,17 +51,6 @@ import static org.hamcrest.Matchers.is;
 })
 
 public class getStrategiesCatalogTabsTest {
-
-    @Autowired
-    ClientService clientService;
-    @Autowired
-    ContractService contractService;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    TrackingService trackingService;
-    @Autowired
-    StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
     @Autowired

@@ -19,29 +19,22 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
-import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
-import ru.qa.tinkoff.swagger.tracking_admin.model.Exchange;
-import ru.qa.tinkoff.swagger.tracking_admin.model.ExchangePosition;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -83,11 +76,6 @@ import static ru.qa.tinkoff.kafka.Topics.*;
     StpTrackingInstrumentConfiguration.class,
 })
 public class HandleActualizeCommandTest {
-
-    UtilsTest utilsTest = new UtilsTest();
-
-    @Autowired
-    ProfileService profileService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -96,10 +84,6 @@ public class HandleActualizeCommandTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     MasterSignalDao masterSignalDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -315,8 +299,6 @@ public class HandleActualizeCommandTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal price = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -395,8 +377,6 @@ public class HandleActualizeCommandTest {
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -563,8 +543,6 @@ public class HandleActualizeCommandTest {
         Date date = Date.from(utc.toInstant());
         createMasterPortfolioWithPosition(instrument.tickerMTS0620, instrument.tradingClearingAccountMTS0620, instrument.classCodeMTS0620, quantityPos, positionAction, versionPos, versionPortfolio,
             baseMoneyPortfolio, date);
-        //проверяем бумагу по которой будем делать вызов CreateSignal, если бумаги нет создаем ее
-//        steps.getExchangePosition(instrument.tickerXS0587031096, instrument.tradingClearingAccountXS0587031096, Exchange.SPB, true, 1000);
         //формируем команду на актуализацию по ведущему
         Tracking.Decimal priceS = Tracking.Decimal.newBuilder()
             .setUnscaled(256).build();
@@ -581,7 +559,7 @@ public class HandleActualizeCommandTest {
         String keyMaster = contractIdMaster;
         //отправляем команду в топик kafka tracking.master.command
         kafkaSender.send(TRACKING_MASTER_COMMAND, keyMaster, eventBytes);
-//        проверяем портфель мастера
+        //проверяем портфель мастера
         await().atMost(TEN_SECONDS).pollDelay(Duration.ofNanos(500)).until(() ->
             masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId), notNullValue());
         List<MasterPortfolio.Position> positionXS0587031096 = masterPortfolio.getPositions().stream()

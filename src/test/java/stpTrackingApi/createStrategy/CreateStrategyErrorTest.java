@@ -82,8 +82,6 @@ public class CreateStrategyErrorTest {
     @Autowired
     StrategyService strategyService;
     @Autowired
-    ProfileService profileService;
-    @Autowired
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
@@ -174,7 +172,6 @@ public class CreateStrategyErrorTest {
         String errorMessage = jsonObject.getString("errorMessage");
         assertThat("код ошибки не равно", errorCode, is("Error"));
         assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
-//        assertThat("Сообщение об ошибке не равно", errorMessage, is("Сервис временно недоступен"));
         Optional<Contract> contractOpt = contractService.findContract(contractId);
         assertThat("запись по договору не равно", contractOpt.isPresent(), is(false));
         Optional<Strategy> strategyOpt = strategyService.findStrategyByContractId(contractId);
@@ -577,12 +574,6 @@ public class CreateStrategyErrorTest {
         String contractId = "2002694087";
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(SIEBEL_ID);
         UUID investIdNotBroker = resAccountMaster.getInvestId();
-//        String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-
-//        List<BrokerAccount> findValidAccountWithSiebelId = billingService.getFindNotBrokerAccountBySiebelId(siebelIdNotBroker);
-//        UUID investIdNotBroker = findValidAccountWithSiebelId.get(0).getInvestAccount().getId();
-//        String contractId = findValidAccountWithSiebelId.get(0).getId();
-
         title = "CreateStrategy Autotest 011";
         String description = "New test стратегия Autotest 011";
         //ToDo feeRate was disabled
@@ -678,8 +669,6 @@ public class CreateStrategyErrorTest {
 //        StrategyFeeRate feeRate = new StrategyFeeRate();
 //        feeRate.setManagement(0.04);
 //        feeRate.setResult(0.2);
-//        //Находим 2 клиента в сервисе счетов и Создаем запись o БД автоследование(db-tracking.trading.local) в табл. client Для 1 клиента
-//        List<BrokerAccount> brokerAccounts = billingService.getFindTwoValidContract();
         GetBrokerAccountsResponse resAccountMaster1 = steps.getBrokerAccounts(SIEBEL_ID1);
         UUID investIdMaster1 = resAccountMaster1.getInvestId();
         String contractIdMaster1 = resAccountMaster1.getBrokerAccounts().get(0).getId();

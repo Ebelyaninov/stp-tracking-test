@@ -32,7 +32,6 @@ import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingConsumerSteps.StpTrackingConsumerSteps;
@@ -89,8 +88,6 @@ public class HandleLimitEventTest {
     @Autowired
     OldKafkaService oldKafkaService;
     @Autowired
-    StringToByteSenderService kafkaSenderString;
-    @Autowired
     MiddleGrpcService middleGrpcService;
     @Autowired
     ClientService clientService;
@@ -101,19 +98,11 @@ public class HandleLimitEventTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
     @Autowired
     StpTrackingConsumerSteps steps;
-    @Autowired
-    ByteToByteSenderService kafkaSender;
-    @Autowired
-    ManagementFeeDao managementFeeDao;
     @Autowired
     StpInstrument instrument;
     @Autowired
@@ -300,7 +289,7 @@ public class HandleLimitEventTest {
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositionsOne(date, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, quantityMaster);
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
-//        //создаем подписку на стратегию
+        //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
@@ -722,7 +711,7 @@ public class HandleLimitEventTest {
         String clientCodeSlave = resAccountSlave.getBrokerAccounts().get(0).getClientCodes().get(0).getId();
         contractIdSlaves.add(contractIdSlave);
         strategyId = UUID.randomUUID();
-//      создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
+        //создаем в БД tracking данные по Мастеру: client, contract, strategy в статусе active
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,

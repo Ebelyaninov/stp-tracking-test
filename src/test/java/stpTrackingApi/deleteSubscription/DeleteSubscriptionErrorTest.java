@@ -359,9 +359,6 @@ public class DeleteSubscriptionErrorTest {
     void C535368(String contractNew) {
 //        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-//        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
-//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now());
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,
@@ -404,9 +401,6 @@ public class DeleteSubscriptionErrorTest {
     void C535370() {
 //        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-//        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
-//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now());
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
@@ -448,9 +442,6 @@ public class DeleteSubscriptionErrorTest {
     void C535371() {
 //        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-//        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
-//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now());
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,
@@ -493,9 +484,6 @@ public class DeleteSubscriptionErrorTest {
 //        strategyId = UUID.randomUUID();
         String contractIdOther = "2020038119";
         //создаем в БД tracking данные: client, contract, strategy в статусе active
-//        steps.createClientWintContractAndStrategy(siebelIdMaster, investIdMaster, contractIdMaster, null, ContractState.untracked,
-//            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now());
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,

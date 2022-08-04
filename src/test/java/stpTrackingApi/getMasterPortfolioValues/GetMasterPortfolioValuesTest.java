@@ -24,9 +24,7 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioValue;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
@@ -78,13 +76,7 @@ public class GetMasterPortfolioValuesTest {
     @Autowired
     StrategyService strategyService;
     @Autowired
-    SubscriptionService subscriptionService;
-    @Autowired
-    ProfileService profileService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    ByteArrayReceiverService kafkaReceiver;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
@@ -211,7 +203,7 @@ public class GetMasterPortfolioValuesTest {
         strategyService.saveStrategy(strategy);
         //создаем записи о стоимости портфеля
         createDateMasterPortfolioValue();
-//        //преобразовываем дату from
+        //преобразовываем дату from
         LocalDateTime fromTime = LocalDateTime.now().minusDays(13);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String dateTs = formatter.format(fromTime);
@@ -220,8 +212,6 @@ public class GetMasterPortfolioValuesTest {
         //рассчитываем относительную доходность но основе выбранных точек Values
         BigDecimal relativeYield = (expecResponse.getValues().get(expecResponse.getValues().size() - 1))
             .divide(expecResponse.getValues().get(0), 4, RoundingMode.HALF_UP)
-//        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
-//            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
@@ -286,8 +276,6 @@ public class GetMasterPortfolioValuesTest {
         GetMasterPortfolioValuesResponse expecResponse = getMasterPortfolioValuesLimitFrom(dateTs, 2);
         BigDecimal relativeYield = (expecResponse.getValues().get(expecResponse.getValues().size() - 1))
             .divide(expecResponse.getValues().get(0), 4, RoundingMode.HALF_UP)
-//        BigDecimal relativeYield = (BigDecimal.valueOf(expecResponse.getValues().get(expecResponse.getValues().size() - 1))
-//            .divide(BigDecimal.valueOf(expecResponse.getValues().get(0)), 4, RoundingMode.HALF_UP))
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_EVEN);
@@ -386,7 +374,6 @@ public class GetMasterPortfolioValuesTest {
     @Description("Метод для получения стоимостей портфеля ведущего за выбранный временной интервал.")
     void C996561(String xTcsSiebelId, StrategyStatus status) {
         strategyId = UUID.randomUUID();
-        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
 
         //создаем в БД tracking данные: client, contract, strategy в статусе draft
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -404,9 +391,6 @@ public class GetMasterPortfolioValuesTest {
             getMasterPortfolioValues = getMasterPortfolioValues.xTcsSiebelIdHeader(xTcsSiebelId);
         }
         getMasterPortfolioValues.execute(ResponseBodyData::asString);
-
-
-
     }
 
 
