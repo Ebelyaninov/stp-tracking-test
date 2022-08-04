@@ -120,7 +120,6 @@ public class CloseStrategyTest {
     @Autowired
     MasterPortfolioPositionRetentionDao masterPortfolioPositionRetentionDao;
 
-
     Strategy strategy;
     String xApiKey = "x-api-key";
     String key = "tracking";
@@ -133,8 +132,6 @@ public class CloseStrategyTest {
     UUID investIdMaster;
     String contractIdMaster;
     UUID strategyId;
-
-
 
     @BeforeAll
     void createTestData() {
@@ -356,6 +353,7 @@ public class CloseStrategyTest {
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("frozen"));
     }
 
+
     @Test
     @AllureId("1915140")
     @DisplayName("C1915140.CloseStrategy.Авторизация: Неверное значение X-API-KEY")
@@ -468,10 +466,6 @@ public class CloseStrategyTest {
         strategy = strategyService.getStrategy(strategyId);
         assertThat("статус стратегии не равно", strategy.getStatus().toString(), is("frozen"));
     }
-
-
-
-
 
 
 

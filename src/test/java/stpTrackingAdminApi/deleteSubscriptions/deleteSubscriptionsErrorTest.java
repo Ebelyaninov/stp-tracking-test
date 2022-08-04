@@ -58,7 +58,6 @@ import static org.hamcrest.Matchers.is;
 
 
 public class deleteSubscriptionsErrorTest {
-
     @Autowired
     ClientService clientService;
     @Autowired
@@ -257,7 +256,6 @@ public class deleteSubscriptionsErrorTest {
             null, false, false);
         // Отправляем команду на отписку
         subscriptionAdminCreator.get().deleteSubscriptions()
-
             .xAppNameHeader("invest")
             .xTcsLoginHeader(siebelIdSlave)
             .strategyIdPath(strategyId)

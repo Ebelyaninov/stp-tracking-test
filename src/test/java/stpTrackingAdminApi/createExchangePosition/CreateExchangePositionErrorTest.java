@@ -58,7 +58,6 @@ import static org.hamcrest.Matchers.is;
 })
 public class CreateExchangePositionErrorTest {
 
-
     @Autowired
     ExchangePositionService exchangePositionService;
     @Autowired

@@ -77,9 +77,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 })
 
 public class EnableContractSynchronizationTest {
-
-    //ContractApi contractApi = ru.qa.tinkoff.swagger.tracking_admin.invoker.ApiClient.api(ApiClient.Config.apiConfig()).contract();
-
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired

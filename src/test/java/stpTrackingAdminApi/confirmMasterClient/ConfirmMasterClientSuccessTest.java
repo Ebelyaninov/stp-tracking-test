@@ -140,9 +140,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-//            .setImage(profile.getImage().toString())
-            ;
+            .setNickname(profile.getNickname());
         createClient(investId, ClientStatusType.registered, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
@@ -174,9 +172,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-//            .setImage(profile.getImage().toString())
-            ;
+            .setNickname(profile.getNickname());
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient
         Response responseConfirmMaster = clientApiAdminCreator.get().confirmMasterClient()
@@ -206,9 +202,7 @@ public class ConfirmMasterClientSuccessTest {
         Profile profile = profileService.getProfileBySiebelId(siebel.siebelIdAdmin);
         SocialProfile socialProfile = new SocialProfile()
             .setId(profile.getId().toString())
-            .setNickname(profile.getNickname())
-//            .setImage(profile.getImage().toString())
-            ;
+            .setNickname(profile.getNickname());
         //добавляем запись в tracking.client со статусом confirmed
         createClient(investId, ClientStatusType.confirmed, socialProfile);
         //вызываем метод confirmMasterClient

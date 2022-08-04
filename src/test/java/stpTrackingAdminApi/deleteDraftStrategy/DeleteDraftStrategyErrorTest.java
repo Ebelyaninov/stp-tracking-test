@@ -100,9 +100,7 @@ public class DeleteDraftStrategyErrorTest {
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
     MasterPortfolioPositionRetentionDao masterPortfolioPositionRetentionDao;
-
     MasterPortfolioPositionRetention masterPortfolioPositionRetention;
-
     String xApiKey = "x-api-key";
     BigDecimal expectedRelativeYield = new BigDecimal(10.00);
     String title;
