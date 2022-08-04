@@ -80,11 +80,8 @@ public class getBlockedContractsTest {
     StpSiebel siebel;
     @Autowired
     ContractApiAdminCreator contractApiAdminCreator;
-
-
     String contractIdSlave;
     String contractIdMaster;
-
     UUID investIdSlave;
     UUID investIdMaster;
     UUID strategyId;
