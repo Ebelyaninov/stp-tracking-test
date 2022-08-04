@@ -51,6 +51,7 @@ public enum Topics {
     MD_RTS_PROTO_OB_FULL_STREAM("md.rts.proto.ob.full.stream"),
     TRACKING_ORDERBOOK("tracking.orderbook"),
     TEST_TOPIC_TO_DELETE("test.topic.to.delete"),
+    MASTER_PORTFOLIO_OPERATION("tracking.master.portfolio.operation")
     ;
     private final String name;
 }
