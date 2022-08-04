@@ -657,7 +657,6 @@ public class GetSignalsTest {
         checkInstrumentParam(signalEtfDB, signalEtfReq, instrument.briefNameFXDE, instrument.imageFXDE, instrument.typeFXDE, 2);
         //Проверка новым методом
         checkGetSignalsResponse("2",false, masterSignal, getSignals,false, null, null, siebelIdSlave);
-        //        checkInstrumentParam(signalMoneyDB, signalMoneyReq, briefNameMoney, imageMoney, typeMoney, 4);
     }
 
 

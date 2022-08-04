@@ -271,7 +271,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -690,7 +690,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             new java.sql.Timestamp(endSubTime.toInstant().toEpochMilli()), false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
@@ -1494,7 +1494,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -1574,7 +1574,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -1649,7 +1649,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -1732,7 +1732,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();
@@ -1818,7 +1818,7 @@ public class CalculateResultFeeTest {
             strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
-//        //получаем идентификатор подписки
+        //получаем идентификатор подписки
         long subscriptionId = subscription.getId();
         //создаем портфели slave
         createSlaveportfolio();

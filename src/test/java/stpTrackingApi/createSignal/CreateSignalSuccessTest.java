@@ -23,31 +23,24 @@ import ru.qa.tinkoff.creator.adminCreator.ApiAdminCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
-import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
-import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.Topics;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.*;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.SignalApi;
 import ru.qa.tinkoff.swagger.tracking.model.CreateSignalRequest;
-import ru.qa.tinkoff.swagger.tracking.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.api.ExchangePositionApi;
 import ru.qa.tinkoff.swagger.tracking_admin.model.*;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
@@ -58,7 +51,6 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Timestamp;
 import java.time.*;
 import java.util.*;
 
@@ -97,11 +89,7 @@ public class CreateSignalSuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
-    StringSenderService kafkaSender;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    ProfileService profileService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -114,8 +102,6 @@ public class CreateSignalSuccessTest {
     ExchangePositionService exchangePositionService;
     @Autowired
     MasterSignalDao masterSignalDao;
-    @Autowired
-    SlavePortfolioDao slavePortfolioDao;
     @Autowired
     StrategyTailValueDao strategyTailValueDao;
     @Autowired
@@ -130,10 +116,6 @@ public class CreateSignalSuccessTest {
     ApiCreator<SignalApi> signalApiCreator;
     @Autowired
     ApiAdminCreator<ExchangePositionApi> exchangePositionApiAdminCreator;
-    @Autowired
-    MocksBasicSteps mocksBasicSteps;
-    @Autowired
-    StpMockSlaveDate mockSlaveDate;
     @Autowired
     StringToByteSenderService stringToByteSenderService;
 

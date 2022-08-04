@@ -25,8 +25,6 @@ import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
@@ -80,10 +78,6 @@ import static org.hamcrest.Matchers.notNullValue;
 public class handleSynchronizeCommandTest {
     public String value;
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
-    StringSenderService kafkaStringSender;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -93,10 +87,6 @@ public class handleSynchronizeCommandTest {
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -120,7 +110,6 @@ public class handleSynchronizeCommandTest {
     String contractIdSlave = "2050306204";
     UUID strategyId;
     long subscriptionId;
-    String SIEBEL_ID_MASTER = "5-4LCY1YEB";
     String SIEBEL_ID_SLAVE = "5-TJLPVJAJ";
     String slaveOrder;
     String masterOrder;

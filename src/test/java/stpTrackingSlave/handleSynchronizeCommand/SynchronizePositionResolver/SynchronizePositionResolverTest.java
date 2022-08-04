@@ -20,18 +20,12 @@ import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.configuration.KafkaOldConfiguration;
-import ru.qa.tinkoff.kafka.oldkafkaservice.OldKafkaService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
-import ru.qa.tinkoff.mocks.steps.fireg.TradingShedulesExchangeSteps;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -51,11 +45,9 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Comparators.emptiesLast;
 import static com.google.common.collect.Comparators.min;
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.awaitility.Durations.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -81,10 +73,6 @@ import static org.hamcrest.Matchers.*;
 
 public class SynchronizePositionResolverTest {
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
-    StringSenderService stringSenderService;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -95,10 +83,6 @@ public class SynchronizePositionResolverTest {
     @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
@@ -108,12 +92,6 @@ public class SynchronizePositionResolverTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
-    @Autowired
-    MocksBasicSteps mocksBasicSteps;
-    @Autowired
-    StpMockSlaveDate stpMockSlaveDate;
-    @Autowired
-    TradingShedulesExchangeSteps tradingShedulesExchangeSteps;
 
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder2;

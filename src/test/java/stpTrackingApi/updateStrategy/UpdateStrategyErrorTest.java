@@ -20,7 +20,6 @@ import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
 import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
@@ -30,8 +29,6 @@ import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.Currency;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.tracking.entities.Client;
-import ru.qa.tinkoff.tracking.entities.Contract;
 import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
@@ -67,8 +64,6 @@ import static org.hamcrest.Matchers.is;
     StpTrackingApiStepsConfiguration.class,
 })
 public class UpdateStrategyErrorTest {
-    @Autowired
-    ProfileService profileService;
     @Autowired
     TrackingService trackingService;
     @Autowired
@@ -147,9 +142,6 @@ public class UpdateStrategyErrorTest {
         String titleNew = "Тест стратегия автотестов 01";
         String descriptionNew = "Тестовая стратегия для работы автотестов 01";
         //создаем клиента со стратегией в статусе неактивная
-//        createClientWintContractAndStrategyMulti(investId, ClientStatusType.registered, null, contractId, strategyId, null, ContractState.untracked,
-//            StrategyCurrency.rub, StrategyRiskProfile.conservative, StrategyStatus.draft, null);
-
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,

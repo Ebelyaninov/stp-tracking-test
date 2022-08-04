@@ -25,8 +25,6 @@ import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
@@ -75,11 +73,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 public class HandleEnableSynchronizationCommandErrorTest {
 
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    StringSenderService stringSenderService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -92,8 +86,6 @@ public class HandleEnableSynchronizationCommandErrorTest {
     SlaveOrder2Dao slaveOrderDao;
     @Autowired
     StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired

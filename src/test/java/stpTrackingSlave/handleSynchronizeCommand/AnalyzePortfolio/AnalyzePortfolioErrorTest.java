@@ -15,31 +15,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
-import ru.qa.tinkoff.billing.configuration.BillingDatabaseAutoConfiguration;
-import ru.qa.tinkoff.billing.services.BillingService;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
-import ru.qa.tinkoff.investTracking.services.SlaveOrderDao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
@@ -68,8 +60,7 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("handleSynchronizeCommand -Анализ портфеля и фиксация результата")
@@ -91,13 +82,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_EVENT;
 public class AnalyzePortfolioErrorTest {
 
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    StringSenderService stringSenderService;
-    @Autowired
-    ProfileService profileService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -108,10 +93,6 @@ public class AnalyzePortfolioErrorTest {
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired

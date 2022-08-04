@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
 import ru.qa.tinkoff.creator.ApiCreator;
 import ru.qa.tinkoff.creator.ApiCreatorConfiguration;
-import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguration;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolioPositionRetention;
@@ -30,12 +29,10 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
-import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking.model.CreateStrategyRequest;
@@ -97,8 +94,6 @@ public class CreateStrategySuccessTest {
     @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
-    ProfileService profileService;
-    @Autowired
     ClientService clientService;
     @Autowired
     ContractService contractService;
@@ -112,8 +107,6 @@ public class CreateStrategySuccessTest {
     StpTrackingApiSteps steps;
     @Autowired
     StpSiebel stpSiebel;
-    @Autowired
-    InvestAccountCreator<BrokerAccountApi> brokerAccountApiCreator;
     @Autowired
     ApiCreator<StrategyApi> strategyApiCreator;
 

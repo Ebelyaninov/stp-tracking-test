@@ -26,9 +26,7 @@ import ru.qa.tinkoff.investTracking.configuration.InvestTrackingAutoConfiguratio
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
-import ru.qa.tinkoff.kafka.services.ByteToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -80,29 +78,13 @@ import static org.hamcrest.Matchers.is;
 })
 public class GetMasterPortfolioTest {
     @Autowired
-    ByteToByteSenderService byteToByteSenderService;
-    @Autowired
     ClientService clientService;
-    @Autowired
-    ProfileService profileService;
     @Autowired
     ContractService contractService;
     @Autowired
     MasterPortfolioDao masterPortfolioDao;
     @Autowired
-    SlavePortfolioDao slavePortfolioDao;
-    @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
-    SlaveOrderDao slaveOrderDao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
-    @Autowired
-    SubscriptionService subscriptionService;
     @Autowired
     StpTrackingApiSteps steps;
     @Autowired
@@ -420,7 +402,7 @@ public class GetMasterPortfolioTest {
         BigDecimal baseMoneyPositionRate = new BigDecimal("100").subtract(positionRate2.add(positionRate3));
         assertThat("master_portfolio.version текущего портфеля не равно", getMasterPortfolioResponse.getVersion(), is(4));
         assertThat("данные по нулевой позиции не равно", MasterPortfolio1.size(), is(0));
-//        //проверяем данные по позициям
+        //проверяем данные по позициям
         checkParamPosition(MasterPortfolio2, instrument.tickerXS0191754729, instrument.briefNameXS0191754729,
             instrument.imageXS0191754729, instrument.typeXS0191754729, quantityXS0191754729, priceNominal2.toString(), instrument.currencyXS0191754729,
             positionValue2, positionRate2);

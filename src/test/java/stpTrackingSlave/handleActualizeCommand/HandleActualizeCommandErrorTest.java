@@ -103,10 +103,6 @@ public class HandleActualizeCommandErrorTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;

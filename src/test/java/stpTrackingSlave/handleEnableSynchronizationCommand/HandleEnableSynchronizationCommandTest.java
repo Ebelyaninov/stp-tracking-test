@@ -25,16 +25,12 @@ import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
-import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingMockSlaveDateConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSlaveStepsConfiguration;
 import ru.qa.tinkoff.steps.trackingInstrument.StpInstrument;
-import ru.qa.tinkoff.steps.trackingMockSlave.StpMockSlaveDate;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
@@ -80,11 +76,7 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 
 public class HandleEnableSynchronizationCommandTest {
     @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
     ByteArrayReceiverService kafkaReceiver;
-    @Autowired
-    StringSenderService stringSenderService;
     @Autowired
     ClientService clientService;
     @Autowired
@@ -98,8 +90,6 @@ public class HandleEnableSynchronizationCommandTest {
     @Autowired
     StrategyService strategyService;
     @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
@@ -107,10 +97,6 @@ public class HandleEnableSynchronizationCommandTest {
     StpTrackingSlaveSteps steps;
     @Autowired
     StpInstrument instrument;
-    @Autowired
-    MocksBasicSteps mocksBasicSteps;
-    @Autowired
-    StpMockSlaveDate mockSlaveDate;
     @Autowired
     StpSiebel stpSiebel;
 

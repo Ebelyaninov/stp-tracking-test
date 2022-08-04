@@ -18,7 +18,6 @@ import ru.qa.tinkoff.creator.InvestAccountCreator;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
-import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingApiSteps.StpTrackingApiSteps;
@@ -37,7 +36,6 @@ import ru.qa.tinkoff.tracking.entities.enums.ClientStatusType;
 import ru.qa.tinkoff.tracking.services.database.ClientService;
 import ru.qa.tinkoff.tracking.services.database.ContractService;
 import ru.qa.tinkoff.tracking.services.database.StrategyService;
-import ru.qa.tinkoff.tracking.services.database.TrackingService;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -64,10 +62,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
     ApiCreatorConfiguration.class
 })
 public class CreateStrategyErrorValidDataTest {
-    @Autowired
-    ProfileService profileService;
-    @Autowired
-    TrackingService trackingService;
     @Autowired
     ClientService clientService;
     @Autowired

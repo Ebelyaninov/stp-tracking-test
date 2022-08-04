@@ -16,13 +16,10 @@ import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.SlaveOrder2;
 import ru.qa.tinkoff.investTracking.entities.SlavePortfolio;
 import ru.qa.tinkoff.investTracking.services.MasterPortfolioDao;
-import ru.qa.tinkoff.investTracking.services.MasterSignalDao;
 import ru.qa.tinkoff.investTracking.services.SlaveOrder2Dao;
 import ru.qa.tinkoff.investTracking.services.SlavePortfolioDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
-import ru.qa.tinkoff.kafka.services.StringSenderService;
-import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.mocks.steps.MocksBasicSteps;
 import ru.qa.tinkoff.mocks.steps.MocksBasicStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
@@ -83,12 +80,6 @@ import static ru.qa.tinkoff.kafka.Topics.TRACKING_DELAY_COMMAND;
 public class CreateSlaveOrderErrorTest {
 
     @Autowired
-    StringSenderService stringSenderService;
-    @Autowired
-    StringToByteSenderService kafkaSender;
-    @Autowired
-    ByteArrayReceiverService receiverBytes;
-    @Autowired
     ByteArrayReceiverService kafkaReceiver;
     @Autowired
     ClientService clientService;
@@ -99,13 +90,7 @@ public class CreateSlaveOrderErrorTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    MasterSignalDao masterSignalDao;
-    @Autowired
     SlaveOrder2Dao slaveOrder2Dao;
-    @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
     @Autowired
     TrackingService trackingService;
     @Autowired
