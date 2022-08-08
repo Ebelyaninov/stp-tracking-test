@@ -1,7 +1,7 @@
 package stpTrackingMaster.handleActualizeCommand.saveDividend;
 
 
-
+import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.*;
 import io.qameta.allure.junit5.AllureJunit5;
@@ -40,9 +40,12 @@ import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.entities.enums.SubscriptionStatus;
 import ru.qa.tinkoff.tracking.services.allure.AllureMasterStepsConfiguration;
 import ru.qa.tinkoff.tracking.services.database.*;
+import ru.qa.tinkoff.utils.UtilsTest;
+import ru.tinkoff.invest.tracking.master.TrackingMaster;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,8 +59,8 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_MASTER_COMMAND;
-import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static ru.qa.tinkoff.kafka.Topics.*;
 
 @Slf4j
 @Epic("saveDividend Начисление дивидендов в виртуальный портфель")
@@ -104,6 +107,8 @@ public class SaveDividentTest {
     @Autowired
     StpInstrument instrument;
 
+    UtilsTest utilsTest = new UtilsTest();
+
 
     MasterPortfolio masterPortfolio;
     String contractIdMaster;
@@ -121,12 +126,16 @@ public class SaveDividentTest {
     UUID investIdMaster;
     UUID investIdSlave;
 
+
+
     @BeforeAll
     void getdataFromInvestmentAccount() {
+
         ticker = instrument.tickerXS0587031096;
         tradingClearingAccount = instrument.tradingClearingAccountXS0587031096;
         siebelIdMaster = stpSiebel.siebelIdMasterStpTrackingMaster;
         siebelIdSlave = stpSiebel.siebelIdSlaveStpTrackingMaster;
+
         int randomNumber = 0 + (int) (Math.random() * 1000);
         title = "Autotest " + String.valueOf(randomNumber);
         description = "new test стратегия autotest";
@@ -135,7 +144,7 @@ public class SaveDividentTest {
         investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
         //получаем данные по клиенту slaveActiveSubscription в api сервиса счетов
-        GetBrokerAccountsResponse resAccountSlaveActive =steps.getBrokerAccounts(siebelIdSlave);
+        GetBrokerAccountsResponse resAccountSlaveActive = steps.getBrokerAccounts(siebelIdSlave);
         investIdSlave = resAccountSlaveActive.getInvestId();
         contractIdSlave = resAccountSlaveActive.getBrokerAccounts().get(0).getId();
         steps.deleteDataFromDb(siebelIdSlave);
@@ -176,7 +185,7 @@ public class SaveDividentTest {
             }
             try {
                 dividentDao.deleteAllDividendByContractAndStrategyId(contractIdMaster, strategyId);
-            } catch (Exception e){
+            } catch (Exception e) {
             }
         });
     }
@@ -218,7 +227,7 @@ public class SaveDividentTest {
         Date dateMinus10Minutes = Date.from(utc.minusMinutes(10).toInstant());
 
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
-        List<MasterPortfolio.Position> emptyList =  new ArrayList<>();
+        List<MasterPortfolio.Position> emptyList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
@@ -226,9 +235,9 @@ public class SaveDividentTest {
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
             .quantity(new BigDecimal("1"))
-                .positionId(instrumentUID)
+            .positionId(instrumentUID)
             .build());
-        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version -1);
+        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version - 1);
         createMasterPortfolioWithPosition(positionList, baseMoneyPortfolio.toString(), date, version);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -236,7 +245,7 @@ public class SaveDividentTest {
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
 
         //формируем команду на актуализацию по ведущему по дивидентам
-        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 1002, 2,  ticker, tradingClearingAccount, 1L, Tracking.Currency.USD);
+        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 1002, 2, ticker, tradingClearingAccount, 1L, Tracking.Currency.USD,  utilsTest.byteValue(instrument.assetUidXS0587031096));
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -285,18 +294,18 @@ public class SaveDividentTest {
         Date date = Date.from(utc.toInstant());
         Date dateMinus10Minutes = Date.from(utc.minusMinutes(10).toInstant());
 
-        List<MasterPortfolio.Position> emptyList =  new ArrayList<>();
+        List<MasterPortfolio.Position> emptyList = new ArrayList<>();
         List<MasterPortfolio.Position> positionList = createPosition(ticker, tradingClearingAccount, date, versionPos, "1");
-        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version -1);
+        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version - 1);
         createMasterPortfolioWithPosition(positionList, baseMoneyPortfolio.toString(), date, version);
-        Dividend.Context context = createContext(ticker, tradingClearingAccount,  4, new BigDecimal("10.02"), now);
+        Dividend.Context context = createContext(ticker, tradingClearingAccount, 4, new BigDecimal("10.02"), now);
         dividentDao.insertIntoDividend(contractIdMaster, strategyId, 1L, context);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //формируем команду на актуализацию по ведущему по дивидентам
-        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2,  ticker, tradingClearingAccount, 1L, Tracking.Currency.USD);
+        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2, ticker, tradingClearingAccount, 1L, Tracking.Currency.USD,  utilsTest.byteValue(instrument.assetUidXS0587031096));
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -340,12 +349,12 @@ public class SaveDividentTest {
         Date date = Date.from(utc.toInstant());
         Date dateMinus10Minutes = Date.from(utc.minusMinutes(10).toInstant());
 
-        List<MasterPortfolio.Position> emptyList =  new ArrayList<>();
+        List<MasterPortfolio.Position> emptyList = new ArrayList<>();
         List<MasterPortfolio.Position> positionList = createPosition(ticker, tradingClearingAccount, date, versionPos, quantityPos);
-        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version -1);
+        createMasterPortfolioWithPosition(emptyList, "2000", dateMinus10Minutes, version - 1);
         createMasterPortfolioWithPosition(positionList, baseMoneyPortfolio.toString(), date, version);
-        Dividend.Context secondContext = createContext(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,  4, new BigDecimal("10.02"), now);
-        Dividend.Context thirdContext = createContext(instrument.tickerFB, instrument.tradingClearingAccountFB,  4, new BigDecimal("10.02"), now);
+        Dividend.Context secondContext = createContext(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 4, new BigDecimal("10.02"), now);
+        Dividend.Context thirdContext = createContext(instrument.tickerFB, instrument.tradingClearingAccountFB, 4, new BigDecimal("10.02"), now);
         dividentDao.insertIntoDividend(contractIdMaster, strategyId, 21L, secondContext);
         dividentDao.insertIntoDividend(contractIdMaster, strategyId, 32L, thirdContext);
         //создаем подписку на стратегию
@@ -353,7 +362,7 @@ public class SaveDividentTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //формируем команду на актуализацию по ведущему по дивидентам
-        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2,  ticker, tradingClearingAccount, 1L, Tracking.Currency.RUB);
+        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2, ticker, tradingClearingAccount, 1L, Tracking.Currency.RUB,  utilsTest.byteValue(instrument.assetUidXS0587031096));
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -372,6 +381,16 @@ public class SaveDividentTest {
         Dividend getDividend = dividentDao.findAllDividend(contractIdMaster, strategyId).stream()
             .filter(context -> context.getContext().getExchangePositionId().getTicker().equals(ticker))
             .collect(Collectors.toList()).get(0);
+
+        //Проверяем событие из топика tracking.master.portfolio.operation
+        List<Pair<String, byte[]>> messagesFromMasterPortfolioOperation = kafkaReceiver.receiveBatch(MASTER_PORTFOLIO_OPERATION, Duration.ofSeconds(20));
+        Pair<String, byte[]> messageFromMasterPortfolioOperation = messagesFromMasterPortfolioOperation.stream()
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
+        TrackingMaster.MasterPortfolioOperation eventFromMasterPortfolioOperation = TrackingMaster.MasterPortfolioOperation.parseFrom(messageFromMasterPortfolioOperation.getValue());
+
+        checkFirstDividendEventParam(eventFromMasterPortfolioOperation, strategyId, 4,instrument.assetUidXS0587031096, new BigDecimal("100.02"), "rub");
+
         masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractIdMaster, strategyId);
         BigDecimal amount = BigDecimal.valueOf(command.getDividend().getAmount().getUnscaled(), command.getDividend().getAmount().getScale());
         BigDecimal newBasemoneyPosition = baseMoneyPortfolio.add(amount);
@@ -403,7 +422,7 @@ public class SaveDividentTest {
         steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
             strategyId, SubscriptionStatus.active, false, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null);
         //формируем команду на актуализацию по ведущему по дивидентам
-        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2,  ticker, tradingClearingAccount, 1L, Tracking.Currency.USD);
+        Tracking.PortfolioCommand command = steps.createSaveDividendMasterCommand(contractIdMaster, now, 10002, 2, ticker, tradingClearingAccount, 1L, Tracking.Currency.USD, utilsTest.byteValue(instrument.assetUidXS0587031096));
         log.info("Команда в tracking.master.command:  {}", command);
         //кодируем событие по protobuf схеме  tracking.proto и переводим в byteArray
         byte[] eventBytes = command.toByteArray();
@@ -422,7 +441,7 @@ public class SaveDividentTest {
 
     //создаем портфель master в cassandra с позицией
     @Step("Создаем портфель мастеру")
-    void createMasterPortfolioWithPosition( List<MasterPortfolio.Position> positionList, String money, Date date, int portfolioVersion) {
+    void createMasterPortfolioWithPosition(List<MasterPortfolio.Position> positionList, String money, Date date, int portfolioVersion) {
         //базовая валюта
         MasterPortfolio.BaseMoneyPosition baseMoneyPosition = MasterPortfolio.BaseMoneyPosition.builder()
             .quantity(new BigDecimal(money))
@@ -433,11 +452,11 @@ public class SaveDividentTest {
     }
 
     @Step("Проверяем запись в таблице devidend: \n {dividend}")
-    void checkDividend(Tracking.PortfolioCommand dividendCommand, Dividend dividend, OffsetDateTime now, BigDecimal amount){
+    void checkDividend(Tracking.PortfolioCommand dividendCommand, Dividend dividend, OffsetDateTime now, BigDecimal amount) {
         assertThat("contract_id != " + contractIdMaster, dividend.getContractId(), is(contractIdMaster));
         assertThat("strategy_id != " + strategyId, dividend.getStrategyId(), is(strategyId));
         assertThat("id != dividend.id из входных параметров" + dividendCommand.getDividend().getId(), dividend.getId(), is(dividendCommand.getDividend().getId()));
-        assertThat("context.version != master_portfolio.version + 1" + version + 1, dividend.getContext().getVersion(), is(version +1));
+        assertThat("context.version != master_portfolio.version + 1" + version + 1, dividend.getContext().getVersion(), is(version + 1));
         assertThat("context.amount  != dividend.amount из входных параметров", dividend.getContext().getAmount(), is(amount));
         assertThat("context.createdAt != created_at из входных параметров", dividend.getContext().getCreatedAt().toInstant().toString().substring(0, 22), is(now.toInstant().toString().substring(0, 22)));
         assertThat("context.exchangePositionId.ticker != ticker из входных параметров", dividend.getContext().getExchangePositionId().getTicker(), is(dividendCommand.getDividend().getExchangePositionId().getTicker()));
@@ -445,16 +464,16 @@ public class SaveDividentTest {
     }
 
     @Step("Проверяем запись в таблице masterPortfolio: \n {masterPortfolio}")
-    void checkMasterPortfolio(MasterPortfolio masterPortfolio, List<MasterPortfolio.Position> positionList, int version, BigDecimal baseMoneyPosition){
+    void checkMasterPortfolio(MasterPortfolio masterPortfolio, List<MasterPortfolio.Position> positionList, int version, BigDecimal baseMoneyPosition) {
         assertThat("Версия != " + version, masterPortfolio.getVersion(), is(version));
         assertThat("Не увеличили базовую валюту на значение дивидента", masterPortfolio.getBaseMoneyPosition().getQuantity(), is(baseMoneyPosition));
         assertThat("Не перенесли позицию", masterPortfolio.getPositions().toString(), is(positionList.toString()));
         assertThat("BaseMoneyPosition != ", masterPortfolio.getBaseMoneyPosition().getQuantity(), is(baseMoneyPosition));
     }
 
-    public Dividend.Context createContext(String ticker, String tradingClearingAccount, int version, BigDecimal amount, OffsetDateTime date){
+    public Dividend.Context createContext(String ticker, String tradingClearingAccount, int version, BigDecimal amount, OffsetDateTime date) {
         //Создаем завод
-         Dividend.ExchangePositionId exchangePositionId = new Dividend.ExchangePositionId().builder()
+        Dividend.ExchangePositionId exchangePositionId = new Dividend.ExchangePositionId().builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
             .build();
@@ -467,12 +486,12 @@ public class SaveDividentTest {
         return context;
     }
 
-    public List<MasterPortfolio.Position> createPosition(String ticker, String tradingClearingAccount, Date date, int versionPos, String quantityPos){
+    public List<MasterPortfolio.Position> createPosition(String ticker, String tradingClearingAccount, Date date, int versionPos, String quantityPos) {
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(ticker)
             .tradingClearingAccount(tradingClearingAccount)
-            .lastChangeAction((byte)  Tracking.Portfolio.Action.SECURITY_BUY_TRADE_VALUE)
+            .lastChangeAction((byte) Tracking.Portfolio.Action.SECURITY_BUY_TRADE_VALUE)
             .lastChangeDetectedVersion(versionPos)
             .changedAt(date)
             .quantity(new BigDecimal(quantityPos))
@@ -480,11 +499,30 @@ public class SaveDividentTest {
         return positionList;
     }
 
-    void ckeckIfMessageWasSent (String contractIdSlave){
+    void ckeckIfMessageWasSent(String contractIdSlave) {
         //Смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5)).stream()
             .filter(key -> key.getKey().equals(contractIdSlave))
             .collect(Collectors.toList());
         assertThat("Отправили событие в топик", messages.size(), is(0));
+    }
+
+    void checkFirstDividendEventParam(TrackingMaster.MasterPortfolioOperation masterPortfolioOperation, UUID strategyId, int MasterPortfolioVersion, UUID assetId, BigDecimal amount,String currency) {
+        BigDecimal amountValue = BigDecimal.valueOf(masterPortfolioOperation.getDividend().getAmount().getUnscaled(),
+            masterPortfolioOperation.getDividend().getAmount().getScale());
+        assertAll(
+            () -> assertThat("strategy_id не равен", uuid(masterPortfolioOperation.getStrategyId()), is(strategyId)),
+            () -> assertThat("portfolio.version не равен " + MasterPortfolioVersion, masterPortfolioOperation.getPortfolio().getVersion(), is(MasterPortfolioVersion)),
+            () -> assertThat("dividend.currency != " + currency,masterPortfolioOperation.getDividend().getCurrency(), is(currency)),
+            () -> assertThat("dividend.amount != " + amount, amountValue, is(amount)),
+            () -> assertThat("dividend.asset_id не равен " + assetId,uuid(masterPortfolioOperation.getDividend().getAssetId()), is(assetId))
+
+
+        );
+    }
+
+    public UUID uuid(ByteString bytes) {
+        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
+        return new UUID(buff.getLong(), buff.getLong());
     }
 }

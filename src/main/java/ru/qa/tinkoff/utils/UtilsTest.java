@@ -1,6 +1,7 @@
 package ru.qa.tinkoff.utils;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
 import com.sun.istack.Nullable;
 import ru.tinkoff.invest.tracking.slave.portfolio.SlavePortfolioOuterClass;
 
@@ -66,6 +67,19 @@ public class UtilsTest {
             return Optional.empty();
         }
         return Optional.of(new BigDecimal(new BigInteger(String.valueOf(decimal.getUnscaled())), decimal.getScale()));
+    }
+
+    public byte[] bytes(UUID uuid) {
+        return ByteBuffer.allocate(16)
+            .putLong(uuid.getMostSignificantBits())
+            .putLong(uuid.getLeastSignificantBits())
+            .array();
+    }
+    public ByteString byteString(UUID uuid) {
+        return ByteString.copyFrom(bytes(uuid));
+    }
+    public BytesValue byteValue(UUID uuid) {
+        return uuid == null ? BytesValue.getDefaultInstance() : BytesValue.of(byteString(uuid));
     }
 
 }

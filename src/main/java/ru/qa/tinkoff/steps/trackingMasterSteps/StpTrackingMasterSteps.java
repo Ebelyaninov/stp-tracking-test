@@ -2,6 +2,7 @@ package ru.qa.tinkoff.steps.trackingMasterSteps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
 import com.google.protobuf.Timestamp;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.qameta.allure.Step;
@@ -262,7 +263,7 @@ public class StpTrackingMasterSteps {
     public Tracking.PortfolioCommand createActualizeCommandToTrackingMasterCommandWithOutTailOrderQuantity(String contractId, OffsetDateTime time, int version,
                                                                                    long unscaled, int scale, long unscaledBaseMoney, int scaleBaseMoney,
                                                                                    Tracking.Portfolio.Action action, Tracking.Decimal price,
-                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount, String classCode){
+                                                                                   Tracking.Decimal quantityS, String ticker, String tradingClearingAccount, String classCode, ByteString instrumentId){
         UUID positionId = getInstrumentUID(ticker, classCode);
         Tracking.Decimal quantity = Tracking.Decimal.newBuilder()
             .setUnscaled(unscaled)
@@ -292,6 +293,7 @@ public class StpTrackingMasterSteps {
         Tracking.Signal signal = Tracking.Signal.newBuilder()
             .setPrice(price)
             .setQuantity(quantityS)
+            .setInstrumentId(instrumentId)
             .build();
         command = Tracking.PortfolioCommand.newBuilder()
             .setContractId(contractId)
@@ -414,7 +416,7 @@ public class StpTrackingMasterSteps {
     //Создаем команду в топик кафка tracking.master.command
     @Step("Создаем событие saveDevidend, для contractId: {contractId}")
     public Tracking.PortfolioCommand createSaveDividendMasterCommand (String contractId, OffsetDateTime time, long unscaled,
-                                                                      int scale, String ticker, String tradingClearingAccount, Long dividendId, Tracking.Currency currency) {
+                                                                      int scale, String ticker, String tradingClearingAccount, Long dividendId, Tracking.Currency currency, BytesValue assetId) {
         int currencyValue;
         if (currency.equals(Tracking.Currency.USD)) {
             currencyValue = Tracking.Currency.USD_VALUE;
@@ -434,6 +436,7 @@ public class StpTrackingMasterSteps {
             .setId(dividendId)
             .setExchangePositionId(exchangePositionId)
             .setAmount(amount)
+            .setAssetId(assetId)
             .setCurrency(Tracking.Currency.valueOf(currencyValue))
             .build();
        Tracking.PortfolioCommand command = Tracking.PortfolioCommand.newBuilder()
