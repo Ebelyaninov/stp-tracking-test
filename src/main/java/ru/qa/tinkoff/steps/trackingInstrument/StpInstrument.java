@@ -1,5 +1,6 @@
 package ru.qa.tinkoff.steps.trackingInstrument;
 
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -186,6 +187,9 @@ public class StpInstrument {
     public String tickerXS0587031096 = "XS0587031096";
     public String classCodeXS0587031096 = "RPEU";
     public String tradingClearingAccountXS0587031096 = "L01+00000SPB";
+    public UUID assetUidXS0587031096 = UUID.fromString("3b3dea9b-fb02-44c4-bf2a-2750ae4147d9");
+    public UUID instrumentId2XS0587031096 = UUID.fromString("0df2c5c3-b30c-4777-b666-ed70b64bd714");
+
 
     public String tickerTRUR = "TRUR";
     public String classCodeTRUR = "TQTF";
