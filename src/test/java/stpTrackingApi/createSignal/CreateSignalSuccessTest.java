@@ -1,5 +1,6 @@
 package stpTrackingApi.createSignal;
 
+import com.google.protobuf.ByteString;
 import extenstions.RestAssuredExtension;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.Description;
@@ -51,6 +52,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
 import java.time.*;
 import java.util.*;
 
@@ -299,7 +301,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerSBER, instrument.tradingClearingAccountSBER);
+            quantityRequest, instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionUIDSBER);
     }
 
 
@@ -365,7 +367,7 @@ public class CreateSignalSuccessTest {
         // проверяем значения в полученной команде
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionUIDAAPL);
     }
 
 
@@ -432,7 +434,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionUIDAAPL);
     }
 
 
@@ -507,7 +509,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommandBond(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, priceBond,
-            quantityRequest, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp);
+            quantityRequest, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionUIDALFAperp);
     }
 
 
@@ -788,7 +790,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 11, "SECURITY_SELL_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionUIDAAPL);
     }
 
 
@@ -853,7 +855,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition + 2, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionUIDAAPL);
     }
 
 
@@ -917,7 +919,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition + 1, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            quantityRequest, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionUIDAAPL);
     }
 
 
@@ -1672,7 +1674,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX);
+            quantityRequest, instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionUIDYNDX);
     }
 
 
@@ -1680,7 +1682,7 @@ public class CreateSignalSuccessTest {
     @Test
     @Tags({@Tag("qa2")})
     @AllureId("1889522")
-    @DisplayName("1889522 У позиции status IN (список из настройки trading-statuses со значением true), не найдена последняя приостановка торгов")
+    @DisplayName("C1889522 У позиции status IN (список из настройки trading-statuses со значением true), не найдена последняя приостановка торгов")
     @Subfeature("Альтернативные сценарии")
     @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
     void C1889522() {
@@ -1743,7 +1745,7 @@ public class CreateSignalSuccessTest {
         versionNew = version + 1;
         assertCommand(commandKafka, contractIdMaster, version, quantityPositionCommand, quantityCommandBaseMoney,
             quantityPosition, 12, "SECURITY_BUY_TRADE", quantityReqBaseMoney, price,
-            quantityRequest, instrument.tickerVTBM, instrument.tradingClearingAccountVTBM);
+            quantityRequest, instrument.tickerVTBM, instrument.tradingClearingAccountVTBM, instrument.positionUIDBTBM);
     }
 
 
@@ -1795,7 +1797,7 @@ public class CreateSignalSuccessTest {
 
     void assertCommand(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
                        double quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, double quantityReqBaseMoney, BigDecimal price,
-                       BigDecimal quantityRequest, String ticker, String tradingClearingAccount) {
+                       BigDecimal quantityRequest, String ticker, String tradingClearingAccount, UUID positionId) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -1820,12 +1822,13 @@ public class CreateSignalSuccessTest {
         double quaSignalPositionCommand = BigDecimal.valueOf(portfolioCommand.getSignal().getQuantity().getUnscaled(),
             portfolioCommand.getSignal().getQuantity().getScale()).doubleValue();
         assertThat("значение quantity  не равен", quaSignalPositionCommand, is(quantityRequest.doubleValue()));
+        assertThat("значение signal.instrument_id не равен", byteStringToUUID(portfolioCommand.getSignal().getInstrumentId()), is(positionId));
     }
 
 
     void assertCommandBond(Tracking.PortfolioCommand portfolioCommand, String key, int version, double quantityPositionCommand,
                            BigDecimal quantityCommandBaseMoney, double quantityPosition, int actionValue, String action, BigDecimal quantityReqBaseMoney, BigDecimal price,
-                           BigDecimal quantityRequest, String ticker, String tradingClearingAccount) {
+                           BigDecimal quantityRequest, String ticker, String tradingClearingAccount, UUID positionId) {
         assertThat("ID договора мастера не равен", portfolioCommand.getContractId(), is(contractIdMaster));
         assertThat("operation команды по актуализации мастера не равен", portfolioCommand.getOperation().toString(), is("ACTUALIZE"));
 //        assertThat("дата команды по инициализации мастера не равен", dateFromCommandWithMinut, is(dateNow));
@@ -1849,6 +1852,7 @@ public class CreateSignalSuccessTest {
         double quaSignalPositionCommand = portfolioCommand.getSignal().getQuantity().getUnscaled()
             * Math.pow(10, -1 * portfolioCommand.getSignal().getQuantity().getScale());
         assertThat("значение quantity  не равен", quaSignalPositionCommand, is(quantityRequest.doubleValue()));
+        assertThat("значение signal.instrument_id не равен", byteStringToUUID(portfolioCommand.getSignal().getInstrumentId()), is(positionId));
     }
 
 
@@ -2083,6 +2087,11 @@ public class CreateSignalSuccessTest {
             .xDeviceIdHeader("test")
             .xTcsLoginHeader("tracking_admin")
             .body(updateExchangePosition);
+    }
+
+    public UUID byteStringToUUID (ByteString bytes) {
+        ByteBuffer buff = bytes.asReadOnlyByteBuffer();
+        return new UUID(buff.getLong(), buff.getLong());
     }
 
 }

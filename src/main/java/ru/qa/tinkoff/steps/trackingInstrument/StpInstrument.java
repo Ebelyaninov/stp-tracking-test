@@ -24,6 +24,7 @@ public class StpInstrument {
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";
     public UUID positionIdAAPL = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
     public UUID assetUidAAPL = UUID.fromString("df2480ba-ddc0-4bea-b1be-2a42f9617b6e");
+    public UUID positionUIDAAPL = UUID.fromString("a9eb4238-eba9-488c-b102-b6140fd08e38");
 //    public String tradingClearingAccountAAPL1 = "L01+00000SPB";
     public String typeAAPL = "share";
     public String classCodeAAPL = "SPBXM";
@@ -45,6 +46,7 @@ public class StpInstrument {
     public String tradingClearingAccountSBER1 = "L01+00000F00";
     public UUID positionIdSBER = UUID.fromString("41eb2102-5333-4713-bf15-72b204c4bf7b");
     public UUID assetUidSBER = UUID.fromString("40d89385-a03a-4659-bf4e-d3ecba011782");
+    public UUID positionUIDSBER = UUID.fromString("e6123145-9665-43e0-8413-cd61b8aa9b13");
     public String sectorSBER = "financial";
     public String typeSBER = "share";
     public String companySBER = "Сбер Банк";
@@ -152,6 +154,7 @@ public class StpInstrument {
     public String tickerYNDX = "YNDX";
     public String tradingClearingAccountYNDX = "L01+00002F00";
     public UUID positionIdYNDX = UUID.fromString("cb51e157-1f73-4c62-baac-93f11755056a");
+    public UUID positionUIDYNDX = UUID.fromString("10e17a87-3bce-4a1f-9dfc-720396f98a3c");
 //    public String tradingClearingAccountYNDX = "Y02+00001F00";
     public String classCodeYNDX = "TQBR";
     public String sectorYNDX = "telecom";
@@ -206,6 +209,7 @@ public class StpInstrument {
     public String tickerALFAperp = "ALFAperp";
     public String tradingClearingAccountALFAperp = "TKCBM_TCAB";
     public UUID positionIdALFAperp = UUID.fromString("bfa1b011-c9a0-4126-92f8-0d7a80aebbf1");
+    public UUID positionUIDALFAperp = UUID.fromString("f179f0f0-ec6e-4f9f-9980-3c033ee248d1");
     public String classCodeALFAperp = "SPBBND";
     public String instrumentALFAperp = tickerALFAperp + "_" + classCodeALFAperp;
 
@@ -375,6 +379,7 @@ public class StpInstrument {
     public String classCodeVTBM = "TQTF";
     public String instrumentVTBM = tickerVTBM + "_" + classCodeVTBM;
     public UUID positionIdVTBM = UUID.fromString("eee36ccf-5f28-4419-9c29-c6465f39581a");
+    public UUID positionUIDBTBM = UUID.fromString("ade12bc5-07d9-44fe-b27a-1543e05bacfd");
 
     public String tickerDAL = "DAL";
     public String tradingClearingAccountDAL = "TKCBM_TCAB";
