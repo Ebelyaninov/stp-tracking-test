@@ -422,7 +422,7 @@ public class GetTimelineTest {
         //Добавляем запись в slave_order
         slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
             0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
         //создаем body post запроса
@@ -515,7 +515,7 @@ public class GetTimelineTest {
         //Добавляем запись в slave_order
         slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
             0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
         createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
@@ -671,7 +671,7 @@ public class GetTimelineTest {
         for (int i = 1; i < limit; i++) {
             slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, i,
                 0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
             Thread.sleep(500);
         }
         //создаем body post запроса
@@ -785,7 +785,8 @@ public class GetTimelineTest {
             null, strategyId, SubscriptionStatus.active,  new java.sql.Timestamp(time.toInstant().toEpochMilli()),  null, false);
         subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 2, 1, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 2, 1, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
 
@@ -918,12 +919,14 @@ public class GetTimelineTest {
 
     //метод создает записи по заявкам в рамках одной стратегии
     @SneakyThrows
-    void createTestDataSlaveOrder2 (int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount, UUID positionId) {
+    void createTestDataSlaveOrder2 (int version, int count, int attemptsCounts, int action, String classCode,
+                                    String ticker, String tradingClearingAccount, UUID positionId) {
         idempotencyKey = UUID.randomUUID();
         for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
-            createSlaveOrder2(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode,
-                new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("1"), (byte) 0, ticker, tradingClearingAccount, positionId);
+            createSlaveOrder2(43, 9, contractIdSlave, strategyId, version, attemptsCounts,
+                action, classCode, new BigDecimal("0"), idempotencyKey, new BigDecimal("173"),
+                new BigDecimal("1"), (byte) 0, ticker, tradingClearingAccount, positionId);
             Thread.sleep(500);
         }
     }
@@ -936,8 +939,7 @@ public class GetTimelineTest {
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
             action, classCode, 3, filledQuantity, idempotencyKey,
-            UUID.randomUUID(), price, quantity, state,
-            ticker, tradingClearingAccount, positionId);
+            UUID.randomUUID(), price, quantity, state,  ticker, tradingClearingAccount, positionId);
     }
 
     void checkParamManagementFee(GetTimelineResponse responseExep, List<ManagementFee> managemenstFee) {

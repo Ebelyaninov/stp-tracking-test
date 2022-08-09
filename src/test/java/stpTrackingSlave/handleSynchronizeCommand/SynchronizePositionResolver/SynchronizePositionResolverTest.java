@@ -92,7 +92,6 @@ public class SynchronizePositionResolverTest {
     StpInstrument instrument;
     @Autowired
     StpSiebel stpSiebel;
-
     SlavePortfolio slavePortfolio;
     SlaveOrder2 slaveOrder2;
     Client clientSlave;
@@ -244,7 +243,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM);
+        checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM);
     }
 
 
@@ -310,7 +309,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM);
+        checkParamSlaveOrder("1", lots, lot, instrument.tickerQCOM, instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM);
     }
 
 
@@ -377,7 +376,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
+        checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
     }
 
 
@@ -451,7 +450,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
+        checkParamSlaveOrder("1", lots, lot, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
     }
 
 
@@ -523,7 +522,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, instrument.tickerGBP, instrument.tradingClearingAccountGBP);
+        checkParamSlaveOrder("1", lots, lot, instrument.tickerGBP, instrument.tradingClearingAccountGBP, instrument.positionIdGBP);
     }
 
 
@@ -547,8 +546,8 @@ public class SynchronizePositionResolverTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"4", instrument.tickerQCOM,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"4", instrument.tickerQCOM,
             instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,"10", date,
             2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -564,8 +563,8 @@ public class SynchronizePositionResolverTest {
         //создаем портфель для slave
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"6", true, true,
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"6", true, true,
             instrument.tickerQCOM, instrument.tradingClearingAccountQCOM,instrument.positionIdQCOM, "20",
             true, true, date);
         //создаем запись в кассандре
@@ -582,6 +581,7 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = BigDecimal.ZERO;
         String tickerPos = "";
         String tradingClearingAccountPos = "";
+        UUID positionId = null;
         ArrayList<BigDecimal> rateList = new ArrayList<>();
         ArrayList<BigDecimal> priceList = new ArrayList<>();
         for (int i = 0; i < slavePortfolio.getPositions().size(); i++) {
@@ -593,12 +593,14 @@ public class SynchronizePositionResolverTest {
             quantityDiff = slavePortfolio.getPositions().get(0).getQuantityDiff();
             tickerPos = slavePortfolio.getPositions().get(0).getTicker();
             tradingClearingAccountPos = slavePortfolio.getPositions().get(0).getTradingClearingAccount();
+            positionId = slavePortfolio.getPositions().get(0).getPositionId();
         }
 
         if (rateList.get(1).compareTo(rateList.get(0)) < 0) {
             quantityDiff = slavePortfolio.getPositions().get(1).getQuantityDiff();
             tickerPos = slavePortfolio.getPositions().get(1).getTicker();
             tradingClearingAccountPos = slavePortfolio.getPositions().get(1).getTradingClearingAccount();
+            positionId = slavePortfolio.getPositions().get(1).getPositionId();
         }
 
         if (rateList.get(0).compareTo(rateList.get(1)) == 0) {
@@ -606,11 +608,14 @@ public class SynchronizePositionResolverTest {
                 quantityDiff = slavePortfolio.getPositions().get(0).getQuantityDiff();
                 tickerPos = slavePortfolio.getPositions().get(0).getTicker();
                 tradingClearingAccountPos = slavePortfolio.getPositions().get(0).getTradingClearingAccount();
+                positionId = slavePortfolio.getPositions().get(0).getPositionId();
+
             }
             if (priceList.get(1).compareTo(priceList.get(0)) < 0) {
                 quantityDiff = slavePortfolio.getPositions().get(1).getQuantityDiff();
                 tickerPos = slavePortfolio.getPositions().get(1).getTicker();
                 tradingClearingAccountPos = slavePortfolio.getPositions().get(1).getTradingClearingAccount();
+                positionId = slavePortfolio.getPositions().get(1).getPositionId();
             }
         }
         // рассчитываем значение lots
@@ -619,7 +624,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("1", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
 
@@ -690,17 +695,20 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = BigDecimal.ZERO;
         String tickerPos = "";
         String tradingClearingAccountPos = "";
+        UUID positionId = null;
         BigDecimal quantity = BigDecimal.ZERO;
         if (positionXS0191754729.get(0).getRate().compareTo(positionALFAperp.get(0).getRate()) < 0) {
             quantityDiff = positionXS0191754729.get(0).getQuantityDiff();
             tickerPos = positionXS0191754729.get(0).getTicker();
             tradingClearingAccountPos = positionXS0191754729.get(0).getTradingClearingAccount();
             quantity = positionXS0191754729.get(0).getQuantity();
+            positionId = positionXS0191754729.get(0).getPositionId();
         } else {
             quantityDiff = positionALFAperp.get(0).getQuantityDiff();
             tickerPos = positionALFAperp.get(0).getTicker();
             tradingClearingAccountPos = positionALFAperp.get(0).getTradingClearingAccount();
             quantity = positionALFAperp.get(0).getQuantity();
+            positionId = positionALFAperp.get(0).getPositionId();
         }
         if (positionXS0191754729.get(0).getRate().compareTo(positionALFAperp.get(0).getRate()) == 0) {
             if (positionXS0191754729.get(0).getPrice().compareTo(positionALFAperp.get(0).getPrice()) < 0) {
@@ -708,11 +716,13 @@ public class SynchronizePositionResolverTest {
                 tickerPos = positionXS0191754729.get(0).getTicker();
                 tradingClearingAccountPos = positionXS0191754729.get(0).getTradingClearingAccount();
                 quantity = positionXS0191754729.get(0).getQuantity();
+                positionId = positionXS0191754729.get(0).getPositionId();
             } else {
                 quantityDiff = positionALFAperp.get(0).getQuantityDiff();
                 tickerPos = positionALFAperp.get(0).getTicker();
                 tradingClearingAccountPos = positionALFAperp.get(0).getTradingClearingAccount();
                 quantity = positionALFAperp.get(0).getQuantity();
+                positionId = positionALFAperp.get(0).getPositionId();
             }
         }
         // рассчитываем значение lots
@@ -723,7 +733,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("1", lotsMax, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("1", lotsMax, lot, tickerPos, tradingClearingAccountPos,positionId);
     }
 
 
@@ -788,7 +798,8 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lotsMax, lot, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6);
+        checkParamSlaveOrder("0", lotsMax, lot, instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6,
+            instrument.positionIdSU29009RMFS6);
     }
 
 
@@ -868,25 +879,30 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = BigDecimal.ZERO;
         String tickerPos = "";
         String tradingClearingAccountPos = "";
+        UUID positionId = null;
         BigDecimal quantity = BigDecimal.ZERO;
         if (positionXS0191754729.get(0).getRate().compareTo(positionALFAperp.get(0).getRate()) > 0) {
             quantityDiff = positionXS0191754729.get(0).getQuantityDiff();
             tickerPos = positionXS0191754729.get(0).getTicker();
             tradingClearingAccountPos = positionXS0191754729.get(0).getTradingClearingAccount();
+            positionId = positionXS0191754729.get(0).getPositionId();
         } else {
             quantityDiff = positionALFAperp.get(0).getQuantityDiff();
             tickerPos = positionALFAperp.get(0).getTicker();
             tradingClearingAccountPos = positionALFAperp.get(0).getTradingClearingAccount();
+            positionId = positionALFAperp.get(0).getPositionId();
         }
         if (positionXS0191754729.get(0).getRate().compareTo(positionALFAperp.get(0).getRate()) == 0) {
             if (positionXS0191754729.get(0).getPrice().compareTo(positionALFAperp.get(0).getPrice()) > 0) {
                 quantityDiff = positionXS0191754729.get(0).getQuantityDiff();
                 tickerPos = positionXS0191754729.get(0).getTicker();
                 tradingClearingAccountPos = positionXS0191754729.get(0).getTradingClearingAccount();
+                positionId = positionXS0191754729.get(0).getPositionId();
             } else {
                 quantityDiff = positionALFAperp.get(0).getQuantityDiff();
                 tickerPos = positionALFAperp.get(0).getTicker();
                 tradingClearingAccountPos = positionALFAperp.get(0).getTradingClearingAccount();
+                positionId = positionALFAperp.get(0).getPositionId();
             }
         }
         // рассчитываем значение lots
@@ -904,7 +920,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
 
@@ -936,8 +952,8 @@ public class SynchronizePositionResolverTest {
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
         //создаем список позиций в портфеле мастера
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"20", instrument.tickerQCOM,
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"20", instrument.tickerQCOM,
             instrument.tradingClearingAccountQCOM, instrument.positionIdQCOM,"12", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -949,8 +965,8 @@ public class SynchronizePositionResolverTest {
             null, false);
         String baseMoneySlave = "6259.17";
         //создаем список позиций в портфеле slave
-        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"10", true, true,
+        List<SlavePortfolio.Position> createListSlavePos = steps.createListSlavePositionWithTwoPosLight(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"10", true, true,
             instrument.tickerQCOM, instrument.tradingClearingAccountQCOM,instrument.positionIdQCOM, "4",
             true, true, date);
         //создаем запись в кассандре
@@ -965,8 +981,8 @@ public class SynchronizePositionResolverTest {
         //получаем портфель slave
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //сохраняем в списки значения по позициям в портфеле
-        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
+        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
             .collect(Collectors.toList());
         List<SlavePortfolio.Position> positionQCOM = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerQCOM))
@@ -975,8 +991,8 @@ public class SynchronizePositionResolverTest {
         BigDecimal moneyReservePortfolio = slavePortfolio.getBaseMoneyPosition().getQuantity()
             .subtract(slavePortfolio.getActualFeeReserveQuantity());
         //проверяем, хватает ли денег на покупку позиций ABBV:
-        BigDecimal moneyToBuyFB = lot.multiply(positionFB.get(0).getPrice()
-            .add(positionFB.get(0).getPrice().multiply(askPriceAdditionalRate)));
+        BigDecimal moneyToBuyABBV = lot.multiply(positionABBV.get(0).getPrice()
+            .add(positionABBV.get(0).getPrice().multiply(askPriceAdditionalRate)));
         //проверяем, хватает ли денег на покупку позиций QCOM:
         BigDecimal moneyToBuyQCOM = lot.multiply(positionQCOM.get(0).getPrice()
             .add(positionQCOM.get(0).getPrice().multiply(askPriceAdditionalRate)));
@@ -984,25 +1000,30 @@ public class SynchronizePositionResolverTest {
         BigDecimal quantityDiff = BigDecimal.ZERO;
         String tickerPos = "";
         String tradingClearingAccountPos = "";
+        UUID positionId = null;
         BigDecimal quantity = BigDecimal.ZERO;
-        if (positionFB.get(0).getRate().compareTo(positionQCOM.get(0).getRate()) > 0) {
-            quantityDiff = positionFB.get(0).getQuantityDiff();
-            tickerPos = positionFB.get(0).getTicker();
-            tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+        if (positionABBV.get(0).getRate().compareTo(positionQCOM.get(0).getRate()) > 0) {
+            quantityDiff = positionABBV.get(0).getQuantityDiff();
+            tickerPos = positionABBV.get(0).getTicker();
+            tradingClearingAccountPos = positionABBV.get(0).getTradingClearingAccount();
+            positionId = positionABBV.get(0).getPositionId();
         } else {
             quantityDiff = positionQCOM.get(0).getQuantityDiff();
             tickerPos = positionQCOM.get(0).getTicker();
             tradingClearingAccountPos = positionQCOM.get(0).getTradingClearingAccount();
+            positionId = positionQCOM.get(0).getPositionId();
         }
-        if (positionFB.get(0).getRate().compareTo(positionQCOM.get(0).getRate()) == 0) {
-            if (positionFB.get(0).getPrice().compareTo(positionQCOM.get(0).getPrice()) > 0) {
-                quantityDiff = positionFB.get(0).getQuantityDiff();
-                tickerPos = positionFB.get(0).getTicker();
-                tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+        if (positionABBV.get(0).getRate().compareTo(positionQCOM.get(0).getRate()) == 0) {
+            if (positionABBV.get(0).getPrice().compareTo(positionQCOM.get(0).getPrice()) > 0) {
+                quantityDiff = positionABBV.get(0).getQuantityDiff();
+                tickerPos = positionABBV.get(0).getTicker();
+                tradingClearingAccountPos = positionABBV.get(0).getTradingClearingAccount();
+                positionId = positionABBV.get(0).getPositionId();
             } else {
                 quantityDiff = positionQCOM.get(0).getQuantityDiff();
                 tickerPos = positionQCOM.get(0).getTicker();
                 tradingClearingAccountPos = positionQCOM.get(0).getTradingClearingAccount();
+                positionId = positionQCOM.get(0).getPositionId();
             }
         }
 
@@ -1010,8 +1031,8 @@ public class SynchronizePositionResolverTest {
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = BigDecimal.ZERO;
         //рассчитываем максимальное число лотов, доступных для покупки
-        if (tickerPos.equals(instrument.tickerFB)) {
-            lotsMax = moneyReservePortfolio.divide(moneyToBuyFB, 0, RoundingMode.DOWN);
+        if (tickerPos.equals(instrument.tickerABBV)) {
+            lotsMax = moneyReservePortfolio.divide(moneyToBuyABBV, 0, RoundingMode.DOWN);
         }
         if (tickerPos.equals(instrument.tickerQCOM)) {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyQCOM, 0, RoundingMode.DOWN);
@@ -1021,7 +1042,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
 
@@ -1045,8 +1066,8 @@ public class SynchronizePositionResolverTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"35",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"35",
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
             "35", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -1068,8 +1089,8 @@ public class SynchronizePositionResolverTest {
         //получаем портфель slave
         slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId);
         //сохраняем в списки значения по позициям в портфеле
-        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
+        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
             .collect(Collectors.toList());
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
@@ -1077,33 +1098,36 @@ public class SynchronizePositionResolverTest {
         //считаем сколько денег в резерве
         BigDecimal moneyReservePortfolio = slavePortfolio.getBaseMoneyPosition().getQuantity()
             .subtract(slavePortfolio.getActualFeeReserveQuantity());
-        //проверяем, хватает ли денег на покупку позиций FB:
-        BigDecimal moneyToBuyFB = lot.multiply(positionFB.get(0).getPrice()
-            .add(positionFB.get(0).getPrice().multiply(askPriceAdditionalRate)));
+        //проверяем, хватает ли денег на покупку позиций ABBV:
+        BigDecimal moneyToBuyABBV = lot.multiply(positionABBV.get(0).getPrice()
+            .add(positionABBV.get(0).getPrice().multiply(askPriceAdditionalRate)));
         //проверяем, хватает ли денег на покупку позиций AAPL:
         BigDecimal moneyToBuyAAPL = lot.multiply(positionAAPL.get(0).getPrice()
             .add(positionAAPL.get(0).getPrice().multiply(askPriceAdditionalRate)));
         //рассчитываем число лотов, позиции
-        BigDecimal lotsFB = positionFB.get(0).getQuantityDiff().abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
+        BigDecimal lotsFB = positionABBV.get(0).getQuantityDiff().abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         //выбираем позицию для выставления заявки
         BigDecimal quantityDiff = BigDecimal.ZERO;
         String tickerPos = "";
         String tradingClearingAccountPos = "";
-        if ((lotsFB.multiply(positionFB.get(0).getPrice().add(askPriceAdditionalRate))).compareTo(moneyReservePortfolio) < 0) {
-            quantityDiff = positionFB.get(0).getQuantityDiff();
-            tickerPos = positionFB.get(0).getTicker();
-            tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+        UUID positionId = null;
+        if ((lotsFB.multiply(positionABBV.get(0).getPrice().add(askPriceAdditionalRate))).compareTo(moneyReservePortfolio) < 0) {
+            quantityDiff = positionABBV.get(0).getQuantityDiff();
+            tickerPos = positionABBV.get(0).getTicker();
+            tradingClearingAccountPos = positionABBV.get(0).getTradingClearingAccount();
+            positionId = positionABBV.get(0).getPositionId();
         } else {
             quantityDiff = positionAAPL.get(0).getQuantityDiff();
             tickerPos = positionAAPL.get(0).getTicker();
             tradingClearingAccountPos = positionAAPL.get(0).getTradingClearingAccount();
+            positionId = positionAAPL.get(0).getPositionId();
         }
         // рассчитываем значение lots
         BigDecimal lots = quantityDiff.abs().divide(lot, 0, BigDecimal.ROUND_HALF_UP);
         BigDecimal lotsMax = BigDecimal.ZERO;
         //рассчитываем максимальное число лотов, доступных для покупки
         if (tickerPos.equals(instrument.tickerFB)) {
-            lotsMax = moneyReservePortfolio.divide(moneyToBuyFB, 0, RoundingMode.DOWN);
+            lotsMax = moneyReservePortfolio.divide(moneyToBuyABBV, 0, RoundingMode.DOWN);
         }
         if (tickerPos.equals(instrument.tickerAAPL)) {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyAAPL, 0, RoundingMode.DOWN);
@@ -1113,7 +1137,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
 
@@ -1195,14 +1219,17 @@ public class SynchronizePositionResolverTest {
         String tickerPos = "";
         String tradingClearingAccountPos = "";
         BigDecimal quantityDiff = BigDecimal.ZERO;
+        UUID positionId = null;
         if (positionAAPL.get(0).getRateDiff().compareTo(positionFB.get(0).getRateDiff()) > 0) {
             quantityDiff = positionAAPL.get(0).getQuantityDiff();
             tickerPos = positionAAPL.get(0).getTicker();
             tradingClearingAccountPos = positionAAPL.get(0).getTradingClearingAccount();
+            positionId = positionAAPL.get(0).getPositionId();
         } else {
             quantityDiff = positionFB.get(0).getQuantityDiff();
             tickerPos = positionFB.get(0).getTicker();
             tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+            positionId = positionFB.get(0).getPositionId();
         }
 
         if (positionAAPL.get(0).getRateDiff().compareTo(positionFB.get(0).getRateDiff()) == 0) {
@@ -1210,10 +1237,12 @@ public class SynchronizePositionResolverTest {
                 quantityDiff = positionAAPL.get(0).getQuantityDiff();
                 tickerPos = positionAAPL.get(0).getTicker();
                 tradingClearingAccountPos = positionAAPL.get(0).getTradingClearingAccount();
+                positionId = positionAAPL.get(0).getPositionId();
             } else {
                 quantityDiff = positionFB.get(0).getQuantityDiff();
                 tickerPos = positionFB.get(0).getTicker();
                 tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+                positionId = positionFB.get(0).getPositionId();
             }
         }
         // рассчитываем значение lots
@@ -1232,7 +1261,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
 
@@ -1256,8 +1285,8 @@ public class SynchronizePositionResolverTest {
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now());
         // создаем портфель ведущего с позицией в кассандре
-        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerFB,
-            instrument.tradingClearingAccountFB, instrument.positionIdFB,"4500",
+        List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithTwoPos(instrument.tickerABBV,
+            instrument.tradingClearingAccountABBV, instrument.positionIdABBV,"4500",
             instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "700",
             date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         //создаем запись в кассандре
@@ -1283,8 +1312,8 @@ public class SynchronizePositionResolverTest {
         List<SlavePortfolio.Position> positionAAPL = slavePortfolio.getPositions().stream()
             .filter(ps -> ps.getTicker().equals(instrument.tickerAAPL))
             .collect(Collectors.toList());
-        List<SlavePortfolio.Position> positionFB = slavePortfolio.getPositions().stream()
-            .filter(ps -> ps.getTicker().equals(instrument.tickerFB))
+        List<SlavePortfolio.Position> positionABBV = slavePortfolio.getPositions().stream()
+            .filter(ps -> ps.getTicker().equals(instrument.tickerABBV))
             .collect(Collectors.toList());
         //считаем сколько денег в резерве
         BigDecimal moneyReservePortfolio = slavePortfolio.getBaseMoneyPosition().getQuantity()
@@ -1293,36 +1322,40 @@ public class SynchronizePositionResolverTest {
         BigDecimal moneyToBuyAAPL = lot.multiply(positionAAPL.get(0).getPrice()
             .add(positionAAPL.get(0).getPrice().multiply(askPriceAdditionalRate)));
         //проверяем, хватает ли денег на покупку позиций ABBV:
-        BigDecimal moneyToBuyFB = lot.multiply(positionFB.get(0).getPrice()
-            .add(positionFB.get(0).getPrice().multiply(askPriceAdditionalRate)));
+        BigDecimal moneyToBuyABBV = lot.multiply(positionABBV.get(0).getPrice()
+            .add(positionABBV.get(0).getPrice().multiply(askPriceAdditionalRate)));
         if (moneyReservePortfolio.compareTo(moneyToBuyAAPL) >= 0) {
             log.info("в портфеле есть достаточное количество базовой валюты на покупку хотя бы одного лота  {}", moneyToBuyAAPL);
         }
-        if (moneyReservePortfolio.compareTo(moneyToBuyFB) >= 0) {
-            log.info("в портфеле есть достаточное количество базовой валюты на покупку хотя бы одного лота  {}", moneyToBuyFB);
+        if (moneyReservePortfolio.compareTo(moneyToBuyABBV) >= 0) {
+            log.info("в портфеле есть достаточное количество базовой валюты на покупку хотя бы одного лота  {}", moneyToBuyABBV);
         }
         //получаем позицию для покупки с приоритизацией по rate  или price
         String tickerPos = "";
         String tradingClearingAccountPos = "";
         BigDecimal quantityDiff = BigDecimal.ZERO;
-        if (positionAAPL.get(0).getRateDiff().compareTo(positionFB.get(0).getRateDiff()) > 0) {
+        UUID positionId = null;
+        if (positionAAPL.get(0).getRateDiff().compareTo(positionABBV.get(0).getRateDiff()) > 0) {
             quantityDiff = positionAAPL.get(0).getQuantityDiff();
             tickerPos = positionAAPL.get(0).getTicker();
             tradingClearingAccountPos = positionAAPL.get(0).getTradingClearingAccount();
         } else {
-            quantityDiff = positionFB.get(0).getQuantityDiff();
-            tickerPos = positionFB.get(0).getTicker();
-            tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+            quantityDiff = positionABBV.get(0).getQuantityDiff();
+            tickerPos = positionABBV.get(0).getTicker();
+            tradingClearingAccountPos = positionABBV.get(0).getTradingClearingAccount();
+            positionId = positionABBV.get(0).getPositionId();
         }
-        if (positionAAPL.get(0).getRateDiff().compareTo(positionFB.get(0).getRateDiff()) == 0) {
-            if (positionAAPL.get(0).getPrice().compareTo(positionFB.get(0).getPrice()) > 0) {
+        if (positionAAPL.get(0).getRateDiff().compareTo(positionABBV.get(0).getRateDiff()) == 0) {
+            if (positionAAPL.get(0).getPrice().compareTo(positionABBV.get(0).getPrice()) > 0) {
                 quantityDiff = positionAAPL.get(0).getQuantityDiff();
                 tickerPos = positionAAPL.get(0).getTicker();
                 tradingClearingAccountPos = positionAAPL.get(0).getTradingClearingAccount();
+                positionId = positionAAPL.get(0).getPositionId();
             } else {
-                quantityDiff = positionFB.get(0).getQuantityDiff();
-                tickerPos = positionFB.get(0).getTicker();
-                tradingClearingAccountPos = positionFB.get(0).getTradingClearingAccount();
+                quantityDiff = positionABBV.get(0).getQuantityDiff();
+                tickerPos = positionABBV.get(0).getTicker();
+                tradingClearingAccountPos = positionABBV.get(0).getTradingClearingAccount();
+                positionId = positionABBV.get(0).getPositionId();
             }
         }
         // рассчитываем значение lots
@@ -1332,8 +1365,8 @@ public class SynchronizePositionResolverTest {
         if (tickerPos.equals(instrument.tickerAAPL)) {
             lotsMax = moneyReservePortfolio.divide(moneyToBuyAAPL, 0, RoundingMode.DOWN);
         }
-        if (tickerPos.equals(instrument.tickerFB)) {
-            lotsMax = moneyReservePortfolio.divide(moneyToBuyFB, 0, RoundingMode.DOWN);
+        if (tickerPos.equals(instrument.tickerABBV)) {
+            lotsMax = moneyReservePortfolio.divide(moneyToBuyABBV, 0, RoundingMode.DOWN);
         }
         lots = min(lots, lotsMax);
         //проверяем, что выставили заявку по выбранной позиции и правильным числом лотов
@@ -1341,7 +1374,7 @@ public class SynchronizePositionResolverTest {
             slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры заявки
-        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos);
+        checkParamSlaveOrder("0", lots, lot, tickerPos, tradingClearingAccountPos, positionId);
     }
 
     // методы для работы тестов*************************************************************************
@@ -1362,11 +1395,13 @@ public class SynchronizePositionResolverTest {
     }
 
     @Step("Проверяем выставленной заявки: ")
-    void checkParamSlaveOrder(String action, BigDecimal lots, BigDecimal lot, String ticker, String tradingClearingAccount) {
+    void checkParamSlaveOrder(String action, BigDecimal lots, BigDecimal lot, String ticker,
+                              String tradingClearingAccount, UUID positionId) {
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
         assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.getQuantity(), is(lots.multiply(lot)));
         assertThat("ticker бумаги не равен", slaveOrder2.getTicker(), is(ticker));
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
+        assertThat("PositionId бумаги не равен", slaveOrder2.getPositionId(), is(positionId));
     }
 
 

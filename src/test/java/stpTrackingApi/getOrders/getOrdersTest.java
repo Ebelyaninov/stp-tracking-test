@@ -193,8 +193,10 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 16, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
-        createTestDataSlaveOrder2(1, 16, 16, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 16, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,  instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 16, 16, 0, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getOrdersResponse = getOrders();
         List<SlaveOrder2> getListFromSlaveOrder = slaveOrder2Dao.findSlaveOrder2Limit(contractIdSlave, 30);
@@ -258,7 +260,8 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 102, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 102, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         GetOrdersResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
@@ -322,8 +325,10 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeSBERT, instrument.tickerSBERT, instrument.tradingClearingAccountSBERT, instrument.positionIdSBERT);
-        createTestDataSlaveOrder2(1, 1, 2, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeSBERT,
+            instrument.tickerSBERT, instrument.tradingClearingAccountSBERT,  null);
+        createTestDataSlaveOrder2(1, 1, 2, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         //для значения курсора используется результат до фильтрации позиций, по которым не были найдены данные, хотя в сам ответ они не попадают
@@ -374,7 +379,8 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 10, 1, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 10, 1, 0, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //Получаем курсор 8'ой записи
         Optional<SlaveOrder2> getSlaveOrderNumberEight = getOrderByAttemptsCount(contractIdSlave, 8);
         String cursoreForOrderEight = String.valueOf(getNextCursore(getSlaveOrderNumberEight));
@@ -417,7 +423,8 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 10, 1, 0, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 10, 1, 0, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         Optional<SlaveOrder2> getSlaveOrders = slaveOrder2Dao.getAllSlaveOrder2ByContract(contractIdSlave).stream()
@@ -449,8 +456,10 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 10, 0, 1, instrument.classCodeAFX, instrument.tickerAFX, instrument.tradingClearingAccountAFX, instrument.positionIdAFX);
-        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 10, 0, 1, instrument.classCodeAFX,
+            instrument.tickerAFX, instrument.tradingClearingAccountAFX, instrument.positionIdAFX);
+        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         String nextCursore = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
@@ -480,8 +489,10 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
-        createTestDataSlaveOrder2(2, 1, 1, 3, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 1, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(2, 1, 1, 3, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         String nextCursor = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
@@ -511,9 +522,12 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder2(1, 1, 0, 1, instrument.classCodeTCSG, instrument.tickerTCSG, instrument.tradingClearingAccountTCSG, instrument.positionIdTCSG);
-        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeTBIO, instrument.tickerTBIO, instrument.tradingClearingAccountTBIO, instrument.positionIdTBIO);
-        createTestDataSlaveOrder2(3, 1, 2, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder2(1, 1, 0, 1, instrument.classCodeTCSG, instrument.tickerTCSG,
+            instrument.tradingClearingAccountTCSG, instrument.positionIdTCSG);
+        createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeTBIO, instrument.tickerTBIO,
+            instrument.tradingClearingAccountTBIO, instrument.positionIdTBIO);
+        createTestDataSlaveOrder2(3, 1, 2, 1, instrument.classCodeAAPL, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         String nextCursore = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
@@ -537,7 +551,8 @@ public class getOrdersTest {
     //метод для создания вставки заявки
     void createSlaveOrder2(int minusDays, int minusHours, String contractId, UUID strategyId, int version, Integer attemptsCount,
                            int action, String classCode, BigDecimal filledQuantity,
-                           UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId) {
+                           UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker,
+                           String tradingClearingAccount, UUID positionId) {
 
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
@@ -548,12 +563,14 @@ public class getOrdersTest {
 
     //метод создает записи по заявкам в рамках одной стратегии
     @SneakyThrows
-    void createTestDataSlaveOrder2(int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount, UUID positionId) {
+    void createTestDataSlaveOrder2(int version, int count, int attemptsCounts, int action, String classCode,
+                                   String ticker, String tradingClearingAccount, UUID positionId) {
         idempotencyKey = UUID.randomUUID();
         for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
             createSlaveOrder2(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode,
-                new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("1"), (byte) 0, ticker, tradingClearingAccount, positionId);
+                new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("1"),
+                (byte) 0, ticker, tradingClearingAccount, positionId);
             Thread.sleep(500);
         }
     }

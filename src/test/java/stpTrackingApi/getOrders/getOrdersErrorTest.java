@@ -185,7 +185,8 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         ContractApi.GetOrdersOper getOrdersResponse = contractApiCreator.get().getOrders()
             .xTcsSiebelIdHeader(siebelIdSlave)
@@ -228,7 +229,8 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
@@ -264,7 +266,8 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
@@ -293,7 +296,8 @@ public class getOrdersErrorTest {
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
             false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL,
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
@@ -327,7 +331,8 @@ public class getOrdersErrorTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
-        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        createTestDataSlaveOrder(1, 1, 0, 1, instrument.classCodeAAPL, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //вызываем метод getOrders
         ErrorResponse getOrdersResponse = contractApiCreator.get().getOrders()
             .xAppNameHeader("invest")
@@ -354,20 +359,23 @@ public class getOrdersErrorTest {
     //метод для создания вставки заявки
     void createSlaveOrder(int minusDays, int minusHours, String contractId, UUID strategyId, int version, int attemptsCount,
                           int action, String classCode, BigDecimal filledQuantity,
-                          UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId) {
+                          UUID idempotencyKey, BigDecimal price, BigDecimal quantity, Byte state, String ticker,
+                          String tradingClearingAccount, UUID positionId) {
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
             action, classCode, 3, filledQuantity, idempotencyKey,
-            UUID.randomUUID(), price, quantity, state,
-            ticker, tradingClearingAccount, positionId);
+            UUID.randomUUID(), price, quantity, state, ticker, tradingClearingAccount, positionId) ;
     }
 
     //метод создает записи по заявкам в рамках одной стратегии
-    void createTestDataSlaveOrder(int version, int count, int attemptsCounts, int action, String classCode, String ticker, String tradingClearingAccount, UUID positionId) {
+    void createTestDataSlaveOrder(int version, int count, int attemptsCounts, int action, String classCode,
+                                  String ticker, String tradingClearingAccount, UUID positionId) {
         idempotencyKey = UUID.randomUUID();
         for (int i = 0; i < count; i++) {
             attemptsCounts = attemptsCounts + 1;
-            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts, action, classCode, new BigDecimal("0"), idempotencyKey, new BigDecimal("173"), new BigDecimal("10"), (byte) 0, ticker, tradingClearingAccount, positionId);
+            createSlaveOrder(43, 9, contractIdSlave, strategyId, version, attemptsCounts,
+                action, classCode, new BigDecimal("0"), idempotencyKey, new BigDecimal("173"),
+                new BigDecimal("10"), (byte) 0, ticker, tradingClearingAccount, positionId);
         }
     }
 }

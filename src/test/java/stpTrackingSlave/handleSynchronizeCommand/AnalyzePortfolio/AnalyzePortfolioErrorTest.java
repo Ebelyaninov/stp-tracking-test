@@ -927,8 +927,6 @@ public class AnalyzePortfolioErrorTest {
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
     }
 
-
-
     @SneakyThrows
     @Test
     @AllureId("2020449")
@@ -945,7 +943,7 @@ public class AnalyzePortfolioErrorTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerYNDX,
-            instrument.tradingClearingAccountYNDX, null,
+            instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,
             "5", date, 2, steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 2, "6551.1", masterPos);
         OffsetDateTime startSubTime = OffsetDateTime.now();
@@ -958,7 +956,7 @@ public class AnalyzePortfolioErrorTest {
         //создаем портфель для ведомого
         String baseMoneySlave = "6576.23";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePos(instrument.tickerUSD,
-            instrument.tradingClearingAccountUSD, null,"1000", date, 1, new BigDecimal("626.6"),
+            instrument.tradingClearingAccountUSD, UUID.randomUUID(),"1000", date, 1, new BigDecimal("626.6"),
             new BigDecimal("0"),new BigDecimal("0.0487"), new BigDecimal("2"));
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
             baseMoneySlave, date, createListSlaveOnePos);
@@ -985,6 +983,7 @@ public class AnalyzePortfolioErrorTest {
         //Проверяем contractSlave
         assertThat("blocked не равен", contractService.getContract(contractIdSlave).getBlocked(), is(true));
     }
+
 
 
 

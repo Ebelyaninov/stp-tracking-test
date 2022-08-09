@@ -182,7 +182,7 @@ public class StpInstrument {
     public String tickerEURRUB = "EURRUB";
     public String tradingClearingAccountEURRUB = "MB9885503216";
     public String classCodeEURRUB = "EES_CETS";
-    public UUID positionIdEURRUB = UUID.fromString("d209272f-1236-4c20-93c7-e37b9db34b3e");
+    public UUID positionIdEURRUB = UUID.fromString("2415fb51-2ebe-4669-8ea4-9ba09e765366");
 
     public String tickerXS0587031096 = "XS0587031096";
     public String classCodeXS0587031096 = "RPEU";

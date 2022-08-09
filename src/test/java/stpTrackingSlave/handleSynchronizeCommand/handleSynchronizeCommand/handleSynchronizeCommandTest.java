@@ -686,9 +686,9 @@ public class handleSynchronizeCommandTest {
     private Stream<Arguments> provideActionTickerTradingClearingAccountAndAttemptsCount() {
         return Stream.of(
             //Логика с Портфель синхронизируется - выставляем ту же заявку,
-            Arguments.of(1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1, "0", 3),
-            Arguments.of(0, instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1, "1", 3),
-            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1, "1", 3)
+            Arguments.of(1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, 1, "0", 3, UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e")),
+            Arguments.of(0, instrument.tickerABBV, instrument.tradingClearingAccountABBV, 1, "1", 3,UUID.fromString("4800523a-8e7c-48f7-8bf1-2a9e2a84378d")),
+            Arguments.of(0, instrument.tickerAAPL, instrument.tradingClearingAccountNOK, 1, "1", 3,UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e"))
         );
     }
 
@@ -701,7 +701,8 @@ public class handleSynchronizeCommandTest {
         "найденной неисполненной заявки в slave_order_2 совпали/не совпали с ticker,trading_clearing_account и action найденной позиции на этапе Выбора позиции для синхронизации")
     @Subfeature("Успешные сценарии")
     @Description("handleSynchronizeCommand - Обработка команд на синхронизацию SYNCHRONIZE")
-    void C1656925(int actionSlave, String tickerSlave, String tradingClearingAccountSlave, int attemptsCount, Byte state, Integer comparedToMasterVersion) {
+    void C1656925(int actionSlave, String tickerSlave, String tradingClearingAccountSlave, int attemptsCount,
+                  Byte state, Integer comparedToMasterVersion, UUID positionId) {
         Tracking.PortfolioCommand.Operation command = Tracking.PortfolioCommand.Operation.SYNCHRONIZE;
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
