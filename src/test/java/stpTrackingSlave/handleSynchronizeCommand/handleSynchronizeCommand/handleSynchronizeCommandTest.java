@@ -57,6 +57,7 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @Slf4j
 @Epic("handleSynchronizeCommand - Обработка команд на повторную синхронизацию")
@@ -241,12 +242,15 @@ public class handleSynchronizeCommandTest {
                 .collect(Collectors.toList()).size(), is(1));
         //проверяем, что  выставилась новая заявка
         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
-        assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0"));
-        assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("1"));
-        assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
-        assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
-        assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
-        assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
+        assertAll(
+            () -> assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0")),
+            () -> assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("1")),
+            () -> assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2)),
+            () -> assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL)),
+            () -> assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("position_id  не равен", getSlaveOrder.get().getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
     @SneakyThrows
@@ -296,7 +300,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 1, 1,
             0, instrument.classCodeAAPL, 3, null, orderKey, orderKey, priceOrder, orderQty,
-            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -305,13 +309,16 @@ public class handleSynchronizeCommandTest {
                 .collect(Collectors.toList()).size(), is(1));
         //проверяем, что  выставилась новая заявка
         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
-        assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0"));
-        assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("1"));
-        assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
-        assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
-        assertThat("getIdempotencyKey получили старый", getSlaveOrder.get().getIdempotencyKey().equals(orderKey), is(false));
-        assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
-        assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
+        assertAll(
+            () -> assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0")),
+            () -> assertThat("getAttemptsCount != 1", getSlaveOrder.get().getAttemptsCount().toString(), is("1")),
+            () -> assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2)),
+            () -> assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL)),
+            () -> assertThat("getIdempotencyKey получили старый", getSlaveOrder.get().getIdempotencyKey().equals(orderKey), is(false)),
+            () -> assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("position_id  не равен", getSlaveOrder.get().getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
     @SneakyThrows
@@ -361,7 +368,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), orderKey, priceOrder, orderQty,
-            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -370,14 +377,17 @@ public class handleSynchronizeCommandTest {
                 .collect(Collectors.toList()).size(), is(1));
         //проверяем, что  выставилась новая заявка
         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
-        assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0"));
-        assertThat("getQuantity != 2", getSlaveOrder.get().getQuantity().toString(), is("2"));
-        assertThat("getAttemptsCount != 2", getSlaveOrder.get().getAttemptsCount().toString(), is("2"));
-        assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
-        assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
-        assertThat("getIdempotencyKey получили старый", getSlaveOrder.get().getIdempotencyKey().equals(orderKey), is(false));
-        assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
-        assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
+        assertAll(
+            () -> assertThat("action != 0", getSlaveOrder.get().getAction().toString(), is("0")),
+            () -> assertThat("getQuantity != 2", getSlaveOrder.get().getQuantity().toString(), is("2")),
+            () -> assertThat("getAttemptsCount != 2", getSlaveOrder.get().getAttemptsCount().toString(), is("2")),
+            () -> assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2)),
+            () ->  assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL)),
+            () -> assertThat("getIdempotencyKey получили старый", getSlaveOrder.get().getIdempotencyKey().equals(orderKey), is(false)),
+            () -> assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("position_id  не равен", getSlaveOrder.get().getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
     @SneakyThrows
@@ -429,7 +439,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             action, instrument.classCodeAAPL, 33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdABBV);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -438,16 +448,19 @@ public class handleSynchronizeCommandTest {
                 .collect(Collectors.toList()).size(), is(1));
         //проверяем, что  выставилась новая заявка
         Optional<SlaveOrder2> getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
-        assertThat("action != " + action, getSlaveOrder.get().getAction().toString(), is(String.valueOf(action)));
-        assertThat("getQuantity != " + orderQty, getSlaveOrder.get().getQuantity().toString(), is(orderQty.toString()));
-        assertThat("getPrice != " + priceOrder, getSlaveOrder.get().getPrice().toString(), is(priceOrder.toString()));
-        assertThat("compared_to_master_version  != выставленой заявке 33", getSlaveOrder.get().getComparedToMasterVersion().toString(), is("33"));
-        assertThat("getAttemptsCount != 2", getSlaveOrder.get().getAttemptsCount().toString(), is("2"));
-        assertThat("getIdempotencyKey != " + orderKey, getSlaveOrder.get().getIdempotencyKey(), is(orderKey));
-        assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2));
-        assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL));
-        assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL));
-        assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
+        assertAll(
+            () -> assertThat("action != " + action, getSlaveOrder.get().getAction().toString(), is(String.valueOf(action))),
+            () -> assertThat("getQuantity != " + orderQty, getSlaveOrder.get().getQuantity().toString(), is(orderQty.toString())),
+            () -> assertThat("getPrice != " + priceOrder, getSlaveOrder.get().getPrice().toString(), is(priceOrder.toString())),
+            () -> assertThat("compared_to_master_version  != выставленой заявке 33", getSlaveOrder.get().getComparedToMasterVersion().toString(), is("33")),
+            () -> assertThat("getAttemptsCount != 2", getSlaveOrder.get().getAttemptsCount().toString(), is("2")),
+            () -> assertThat("getIdempotencyKey != " + orderKey, getSlaveOrder.get().getIdempotencyKey(), is(orderKey)),
+            () -> assertThat("getVersion != 2", getSlaveOrder.get().getVersion(), is(2)),
+            () -> assertThat("getClassCode != " + instrument.classCodeAAPL, getSlaveOrder.get().getClassCode(), is(instrument.classCodeAAPL)),
+            () -> assertThat("getTicker != " + instrument.tickerAAPL, getSlaveOrder.get().getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("getTradingClearingAccount != " + instrument.tradingClearingAccountAAPL, getSlaveOrder.get().getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("position_id  не равен", getSlaveOrder.get().getPositionId(), is(instrument.positionIdABBV))
+        );
     }
 
 
@@ -499,7 +512,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             1, instrument.classCodeAAPL, 33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().pollDelay(Duration.ofSeconds(2)).atMost(FIVE_SECONDS).until(() ->
@@ -562,7 +575,7 @@ public class handleSynchronizeCommandTest {
             OffsetDateTime dateOfSlaveOrder = OffsetDateTime.ofInstant(getSlaveOrder.get().getCreateAt().toInstant(), ZoneId.of("UTC")).plusSeconds(2);
             slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, dateOfSlaveOrder, strategyId, 2, 123,
                 0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), getSlaveOrder.get().getPrice(), getSlaveOrder.get().getQuantity(),
-                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
             getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
             Thread.sleep(30000);
         }
@@ -632,13 +645,13 @@ public class handleSynchronizeCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(90), strategyId, 2, 124,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(60), strategyId, 2, 125,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(30), strategyId, 2, 126,
             1, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель мастера
@@ -666,7 +679,7 @@ public class handleSynchronizeCommandTest {
         slaveOrder2 = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
         //Проверяем добавление новой заявки с attemptsCount = 1
         checkOrderParameters(2, "1", "1", lot, lots, priceOrder, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL,
-            instrument.classCodeAAPL);
+            instrument.classCodeAAPL, instrument.positionIdAAPL);
     }
 
     @NullAndEmptySource
@@ -724,7 +737,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             actionSlave, instrument.classCodeAAPL, 3, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            state, tickerSlave, tradingClearingAccountSlave);
+            state, tickerSlave, tradingClearingAccountSlave, instrument.positionIdAAPL);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -778,15 +791,18 @@ public class handleSynchronizeCommandTest {
 
     public void checkOrderParameters(int version, String action, String attemptsCount, BigDecimal lot, BigDecimal lots,
                                      BigDecimal priceOrder, String ticker, String tradingClearingAccount,
-                                     String classCode) {
-        assertThat("Version заявки не равно", slaveOrder2.get().getVersion(), is(version));
-        assertThat("Направление заявки Action не равно", slaveOrder2.get().getAction().toString(), is(action));
-        assertThat("attemptsCount не равно", slaveOrder2.get().getAttemptsCount().toString(), is(attemptsCount));
-        assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.get().getQuantity(), is(lots.multiply(lot)));
-        assertThat("price бумаги не равен", slaveOrder2.get().getPrice(), is(priceOrder));
-        assertThat("ticker бумаги не равен", slaveOrder2.get().getTicker(), is(ticker));
-        assertThat("classCode бумаги не равен", slaveOrder2.get().getClassCode(), is(classCode));
-        assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.get().getTradingClearingAccount(), is(tradingClearingAccount));
+                                     String classCode, UUID positionId) {
+        assertAll(
+            () -> assertThat("Version заявки не равно", slaveOrder2.get().getVersion(), is(version)),
+            () -> assertThat("Направление заявки Action не равно", slaveOrder2.get().getAction().toString(), is(action)),
+            () -> assertThat("attemptsCount не равно", slaveOrder2.get().getAttemptsCount().toString(), is(attemptsCount)),
+            () -> assertThat("Количество бумаг в заявке Quantity не равно", slaveOrder2.get().getQuantity(), is(lots.multiply(lot))),
+            () -> assertThat("price бумаги не равен", slaveOrder2.get().getPrice(), is(priceOrder)),
+            () -> assertThat("ticker бумаги не равен", slaveOrder2.get().getTicker(), is(ticker)),
+            () -> assertThat("classCode бумаги не равен", slaveOrder2.get().getClassCode(), is(classCode)),
+            () -> assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.get().getTradingClearingAccount(), is(tradingClearingAccount)),
+            () -> assertThat("position_id  не равен", slaveOrder2.get().getPositionId(), is(positionId))
+        );
     }
 
 }

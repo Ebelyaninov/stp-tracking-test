@@ -74,7 +74,7 @@ public class SlaveOrder2Dao {
     @Step("Создаем запись о выставленной заявке в slave_order_2")
     public void insertIntoSlaveOrder2(String contractId, OffsetDateTime createAt, UUID strategyId, int version, int attemptsCount,
                                                        int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
-                                                       BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount) {
+                                                       BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId) {
         Statement insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
             .value("created_at", Date.from(createAt.toInstant()))
@@ -92,6 +92,7 @@ public class SlaveOrder2Dao {
             .value("state", state)
             .value("ticker", ticker)
             .value("trading_clearing_account",tradingClearingAccount)
+            .value("position_id", positionId)
             .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }

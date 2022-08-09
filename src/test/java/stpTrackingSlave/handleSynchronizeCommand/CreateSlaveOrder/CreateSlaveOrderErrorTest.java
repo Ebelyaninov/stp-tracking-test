@@ -369,7 +369,7 @@ public class CreateSlaveOrderErrorTest {
         //отправляем команду на синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).ignoreExceptions().until(() ->
-            slaveOrder2Dao.getSlaveOrder2(contractIdSlave).getState(), notNullValue());
+            slaveOrder2Dao.getSlaveOrder2(contractIdSlave).getState().equals((byte) 0));
         slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave);
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
@@ -586,7 +586,7 @@ public class CreateSlaveOrderErrorTest {
     @Test
     @AllureId("867332")
     @Tags({@Tag("qa"), @Tag("qa2")})
-    @DisplayName("867332 Выставление заявки. Вернулся успех, но executionReportStatus неизвестное значение")
+    @DisplayName("C867332 Выставление заявки. Вернулся успех, но executionReportStatus неизвестное значение")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C867332() {
@@ -663,7 +663,7 @@ public class CreateSlaveOrderErrorTest {
     @Test
     @AllureId("867312")
     @Tags({@Tag("qa"), @Tag("qa2")})
-    @DisplayName("867312 Выставление заявки. Незнакомый payload.code")
+    @DisplayName("C867312 Выставление заявки. Незнакомый payload.code")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C867312() {
@@ -728,7 +728,7 @@ public class CreateSlaveOrderErrorTest {
     @Test
     @AllureId("705844")
     @Tags({@Tag("qa2")})
-    @DisplayName("705844 Выставление заявки. Ошибка из списка настройки retry-error-codes")
+    @DisplayName("C705844 Выставление заявки. Ошибка из списка настройки retry-error-codes")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C705844() {
@@ -799,7 +799,7 @@ public class CreateSlaveOrderErrorTest {
     @Test
     @AllureId("867018")
     @Tags({@Tag("qa2")})
-    @DisplayName("867018 Выставление заявки. Ошибка из списка настройки wait-error-codes")
+    @DisplayName("C867018 Выставление заявки. Ошибка из списка настройки wait-error-codes")
     @Subfeature("Успешные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C867018() {
@@ -845,7 +845,7 @@ public class CreateSlaveOrderErrorTest {
             slaveOrder2 = slaveOrder2Dao.getAllSlaveOrder2ByContractAndOrderCreatedAtAsc(contractIdSlave).get(0), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL,
-            new BigDecimal(3), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            new BigDecimal(3), instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
     }
 
 
@@ -966,7 +966,7 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeINTC,
-            lot, instrument.tickerINTC, instrument.tradingClearingAccountINTC);
+            lot, instrument.tickerINTC, instrument.tradingClearingAccountINTC, instrument.positionIdINTC);
     }
 
 
@@ -974,7 +974,7 @@ public class CreateSlaveOrderErrorTest {
     @Test
     @AllureId("851506")
     @Tags({@Tag("qa2")})
-    @DisplayName("851506 Обработки частичного исполнения,executionReportStatus ='Cancelled' И lotsExecuted != 0")
+    @DisplayName("C851506 Обработки частичного исполнения,executionReportStatus ='Cancelled' И lotsExecuted != 0")
     @Subfeature("Альтернативные сценарии")
     @Description("Алгоритм предназначен для выставления заявки по выбранной для синхронизации позиции через вызов Middle.")
     void C851506() {
@@ -1021,7 +1021,7 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         BigDecimal lot = new BigDecimal(2);
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeGILD,
-            lot, instrument.tickerGILD, instrument.tradingClearingAccountGILD);
+            lot, instrument.tickerGILD, instrument.tradingClearingAccountGILD, instrument.positionIdGILD);
     }
 
 
@@ -1044,7 +1044,7 @@ public class CreateSlaveOrderErrorTest {
 
     @Step("Проверяем параметры заявки в slave_order_2")
     void checkParamSlaveOrder(int version, String attemptsCount, String action, String classCode,
-                              BigDecimal lots, String ticker, String tradingClearingAccount) {
+                              BigDecimal lots, String ticker, String tradingClearingAccount, UUID positionId) {
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(version));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is(attemptsCount));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
@@ -1055,6 +1055,7 @@ public class CreateSlaveOrderErrorTest {
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
         assertThat("createAt  не равен", slaveOrder2.getCreateAt(), is(notNullValue()));
+        assertThat("position_id  не равен", slaveOrder2.getPositionId(), is(positionId));
     }
 
 

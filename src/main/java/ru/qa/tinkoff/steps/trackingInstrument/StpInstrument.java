@@ -218,16 +218,20 @@ public class StpInstrument {
     public String tickerSBERT = "SBERT";
     public String tradingClearingAccountSBERT = "L01+00002F00";
     public String classCodeSBERT = "TQBR";
+    //Не нахожу инструмент
+    public UUID positionIdSBERT = UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e");
 
 
     public String tickerAFX = "AFX@DE";
     public String tradingClearingAccountAFX = "L01+00000SPB";
     public String classCodeAFX = "SPBDE";
+    public UUID positionIdAFX = UUID.fromString("94676acd-3c13-4e24-8ad1-c8795561b471");
 
 
     public String tickerTCSG = "TCSG";
     public String tradingClearingAccountTCSG = "L01+00000F00";
     public String classCodeTCSG = "TQBR";
+    public UUID positionIdTCSG = UUID.fromString("4a1946eb-5ffb-4ebf-ac8c-44221c9f7a2f");
 
     public String tickerTBIO = "TBIO";
     public String tradingClearingAccountTBIO = "NDS000000001";

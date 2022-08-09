@@ -259,7 +259,7 @@ public class CreateSlaveOrderTest {
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "0", instrument.classCodeAAPL, priceOrder,
-            lots, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            lots, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
     }
 
 
@@ -338,7 +338,7 @@ public class CreateSlaveOrderTest {
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", instrument.classCodeAAPL, priceOrder, lots, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
     }
 
 
@@ -409,7 +409,7 @@ public class CreateSlaveOrderTest {
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(1, "1", "0", instrument.classCodeUSDRUB,
-            priceAsk, lots, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
+            priceAsk, lots, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
     }
 
 
@@ -478,7 +478,7 @@ public class CreateSlaveOrderTest {
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", instrument.classCodeUSDRUB,
-            priceBid, lots, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB);
+            priceBid, lots, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
     }
 
 
@@ -547,7 +547,7 @@ public class CreateSlaveOrderTest {
             slaveOrder2 = slaveOrder2Dao.getSlaveOrder2(contractIdSlave), notNullValue());
         //проверяем параметры SlaveOrder
         checkParamSlaveOrder(2, "1", "1", instrument.classCodeTUSD, priceBid, lots, instrument.tickerTUSD,
-            instrument.tradingClearingAccountTUSD);
+            instrument.tradingClearingAccountTUSD, instrument.positionIdTUSD);
     }
 
 
@@ -556,7 +556,7 @@ public class CreateSlaveOrderTest {
     /////////***методы для работы тестов**************************************************************************
     @Step("Проверяем параметры заявки в slave_order_2")
     void checkParamSlaveOrder(int version, String attemptsCount, String action, String classCode,
-                              BigDecimal price, BigDecimal lots, String ticker, String tradingClearingAccount) {
+                              BigDecimal price, BigDecimal lots, String ticker, String tradingClearingAccount, UUID positionId) {
         assertThat("Version портфеля slave не равно", slaveOrder2.getVersion(), is(version));
         assertThat("AttemptsCount не равно", slaveOrder2.getAttemptsCount().toString(), is(attemptsCount));
         assertThat("Направление заявки Action не равно", slaveOrder2.getAction().toString(), is(action));
@@ -568,5 +568,6 @@ public class CreateSlaveOrderTest {
         assertThat("TradingClearingAccount бумаги не равен", slaveOrder2.getTradingClearingAccount(), is(tradingClearingAccount));
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
         assertThat("createAt  не равен", slaveOrder2.getCreateAt(), is(notNullValue()));
+        assertThat("position_id  не равен", slaveOrder2.getPositionId(), is(positionId));
     }
 }
