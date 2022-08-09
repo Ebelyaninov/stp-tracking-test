@@ -968,26 +968,18 @@ public class HandleLimitEventTest {
             .setClientCode(clientCodeSlave)
             .setCurrency("RUB")
             .setFirmId("MC0253200000")
-            .setOpenBalance(-3)
-            .setOpenLimit(-3)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
                 .setUnscaled(-3)
                 .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
-                .setUnscaled(-3)
-                .setScale(0))
+
             .setAccountId("MB9885503216").build());
         moneyLimits.add(Limit.MoneyLimit.newBuilder()
             .setLoadDate(18949)
             .setClientCode(clientCodeSlave)
             .setCurrency("USD")
             .setFirmId("MC0253200000")
-            .setOpenBalance(50.17)
-            .setOpenLimit(50.15)
+
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(5017)
-                .setScale(2))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(5017)
                 .setScale(2))
             .setAccountId("MB9885503216").build());
@@ -1057,12 +1049,7 @@ public class HandleLimitEventTest {
             .setClientCode(clientCodeSlave)
             .setCurrency("RUB")
             .setFirmId("MC0253200000")
-            .setOpenBalance(-3)
-            .setOpenLimit(-3)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(-3)
-                .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(-3)
                 .setScale(0))
             .setAccountId("MB9885503216").build());
@@ -1184,12 +1171,7 @@ public class HandleLimitEventTest {
             .setClientCode(clientCodeSlave)
             .setCurrency("CHF")
             .setFirmId("MC0253200000")
-            .setOpenBalance(-100)
-            .setOpenLimit(-100)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(-100)
-                .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(-100)
                 .setScale(0))
             .setAccountId("MB9885503216").build());
@@ -1308,12 +1290,7 @@ public class HandleLimitEventTest {
             .setSecCode(instrument.tickerAAPL)
             .setAccountId(instrument.tradingClearingAccountAAPL)
             .setFirmId("MC0253200000")
-            .setOpenBalance(2.0)
-            .setOpenLimit(2.0)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(2)
-                .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(2)
                 .setScale(0))
             .build();
@@ -1323,12 +1300,7 @@ public class HandleLimitEventTest {
             .setClientCode(clientCodeSlave)
             .setCurrency("RUB")
             .setFirmId("MC0253200000")
-            .setOpenBalance(0.0)
-            .setOpenLimit(0.0)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(0)
-                .setScale(0))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(0)
                 .setScale(0))
             .setAccountId("MB9885503216").build());
@@ -1337,12 +1309,7 @@ public class HandleLimitEventTest {
             .setClientCode(clientCodeSlave)
             .setCurrency("USD")
             .setFirmId("MC0253200000")
-            .setOpenBalance(50.17)
-            .setOpenLimit(50.17)
             .setOpenBalanceValue(Limit.Decimal.newBuilder()
-                .setUnscaled(5017)
-                .setScale(2))
-            .setOpenLimitValue(Limit.Decimal.newBuilder()
                 .setUnscaled(5017)
                 .setScale(2))
             .setAccountId("MB9885503216").build());
@@ -1383,4 +1350,5 @@ public class HandleLimitEventTest {
         ByteBuffer buff = bytes.asReadOnlyByteBuffer();
         return new UUID(buff.getLong(), buff.getLong());
     }
+
 }

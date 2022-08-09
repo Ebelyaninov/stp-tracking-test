@@ -7,71 +7,125 @@ import "google/protobuf/wrappers.proto";
 message Event {
     bytes id = 1;
     google.protobuf.Timestamp created_at = 2;
-
     repeated MoneyLimit money_limit = 3;
     repeated DepoLimit depo_limit = 4;
-    repeated FutureLimit future_limit = 5;
-
+    repeated FuturesLimit futures_limit = 5;
     Action action = 6;
+
     google.protobuf.Int32Value version = 7;
+    bool delayed_correction = 8;
+    google.protobuf.Int32Value global_version = 9;
+
+    repeated OptionLimit option_limit = 10;
+
+    TrackingState trackingState = 11;
+
+    enum TrackingState {
+        UNTRACKED = 0;
+        TRACKED = 1;
+    }
 
     enum Action {
         UNKNOWN = 0;
-        MARGIN_FEE = 1; // Взимание комиссии за непокрытую позицию
-        SERVICE_FEE = 2; // Удержание сервисной комиссии
-        BROKER_FEE = 3; // Удержание фактической комиссии за сделку
-        ADJUST = 4; // Завод денежных средств
-        WITHDRAW = 5; // Вывод денежных средств
-        CANCEL_WITHDRAW = 6; // Отмена вывода
-        ADJUST_CURRENCY = 7; // Увеличение денежной позиции методом client/adjust_currency
-        ADJUST_SECURITY = 8; // Увеличение ценно-бумажной позиции методом client/adjust_security
-        MONEY_BUY_TRADE = 9; // Совершение сделки по покупке валюты
-        MONEY_SELL_TRADE = 10; // Совершение сделки по продаже валюты
-        SECURITY_SELL_TRADE = 11; // Совершение сделки по продаже ценной бумаги
-        SECURITY_BUY_TRADE = 12; // Совершение сделки по покупке ценной бумаги
-        REPO_RPS_TRADE = 13; // Совершение сделки РЕПО РПС
-        REPO_CK_TRADE = 14; // Совершение сделки РЕПО с ЦК
-        REPO_NO_CK_TRADE = 15; // Совершение сделки РЕПО без ЦК
-        TAX_DEBT = 16; // Удержание задолженности по налогу с клиента
-        COUPON = 17; // Выплата купонов
-        DIVIDEND = 18; // Выплата дивидендов
-        COUPON_TAX = 19; // Купонный налог
-        DIVIDEND_TAX = 20; // Налог на дивиденды
-        PARTIAL_REPAYMENT = 21; // Частичное погашение
-        REPAYMENT = 22; // Полное погашение
-        TAX_CORRECTION = 23; // Корректировка налога
-        TAX_ACI_CORRECTION = 24; // Корректировка налога на НКД
-        TAX_LUCRE_CORRECTION = 25; // Корректировка налога на материальную выгоду
-        TAX_YEAR_CORRECTION = 26; // Корректировка налога по итогам года
-        ADMIN_UPDATE = 27; // Изменение позиций через админку
-        ADMIN_MULTI_UPDATE = 28; // Изменение нескольких позиций через админку
-        MORNING_UPDATE = 29; // Событие со слепком позиций после выгрузки утренних лимитов
-        OTC_CONFIRM = 30; // Подтверждение исполнения внебиржевой заявки
-        CURRENCY_SWAP_SELL = 31; // Валютный своп (продажа валюты)
-        FUTURES_BUY_TRADE = 32; // Совершение сделки по покупке фьючерсов
-        FUTURES_SELL_TRADE = 33; // Совершение сделки по продаже фьючерсов
-        FUTURES_CLEARING = 34; // Фиксация вар. маржи по промежуточному или основному клирингу
-        OTC_EXECUTION_SELL_TRADE = 35; // Совершение внебиржевой сделки продажи через OTC-Execution
-        OTC_EXECUTION_BUY_TRADE = 36; // Совершение внебиржевой сделки покупки через OTC-Execution
-        OTC_EXECUTION_FEE = 37; // Удержание комиссии за сделку выставленную через OTC-Execution
-        // Корректировка отложенных изменений позиций
+        // Взимание комиссии за непокрытую позицию
+        MARGIN_FEE = 1;
+        // Удержание сервисной комиссии
+        SERVICE_FEE = 2;
+        // Удержание фактической комиссии за сделку
+        BROKER_FEE = 3;
+        // Завод денежных средств
+        ADJUST = 4;
+        // Вывод денежных средств
+        WITHDRAW = 5;
+        // Отмена вывода
+        CANCEL_WITHDRAW = 6;
+        // Увеличение денежной позиции методом client/adjust_currency
+        ADJUST_CURRENCY = 7;
+        // Увеличение ценно-бумажной позиции методом client/adjust_security
+        ADJUST_SECURITY = 8;
+        // Совершение сделки по покупке валюты
+        MONEY_BUY_TRADE = 9;
+        // Совершение сделки по продаже валюты
+        MONEY_SELL_TRADE = 10;
+        // Совершение сделки по продаже ценной бумаги
+        SECURITY_SELL_TRADE = 11;
+        // Совершение сделки по покупке ценной бумаги
+        SECURITY_BUY_TRADE = 12;
+        // Совершение сделки РЕПО РПС
+        REPO_RPS_TRADE = 13;
+        // Совершение сделки РЕПО с ЦК
+        REPO_CK_TRADE = 14;
+        // Совершение сделки РЕПО без ЦК
+        REPO_NO_CK_TRADE = 15;
+        // Удержание задолженности по налогу с клиента
+        TAX_DEBT = 16;
+        // Выплата купонов
+        COUPON = 17;
+        // Выплата дивидендов
+        DIVIDEND = 18;
+        // Купонный налог
+        COUPON_TAX = 19;
+        // Налог на дивиденды
+        DIVIDEND_TAX = 20;
+        // Частичное погашение
+        PARTIAL_REPAYMENT = 21;
+        // Полное погашение
+        REPAYMENT = 22;
+        // Корректировка налога
+        TAX_CORRECTION = 23;
+        // Корректировка налога на НКД
+        TAX_ACI_CORRECTION = 24;
+        // Корректировка налога на материальную выгоду
+        TAX_LUCRE_CORRECTION = 25;
+        // Корректировка налога по итогам года
+        TAX_YEAR_CORRECTION = 26;
+        // Изменение позиций через админку
+        ADMIN_UPDATE = 27;
+        // Изменение нескольких позиций через админку
+        ADMIN_MULTI_UPDATE = 28;
+        // Событие со слепком позиций после выгрузки утренних лимитов
+        MORNING_UPDATE = 29;
+        // Подтверждение исполнения внебиржевой заявки
+        OTC_CONFIRM = 30;
+        // Валютный своп (продажа валюты)
+        CURRENCY_SWAP_SELL = 31;
+        // Совершение сделки по покупке фьючерсов
+        FUTURES_BUY_TRADE = 32;
+        // Совершение сделки по продаже фьючерсов
+        FUTURES_SELL_TRADE = 33;
+        // Фиксация вар. маржи по промежуточному или основному клирингу
+        FUTURES_CLEARING = 34;
+        // Совершение внебиржевой сделки продажи через OTC-Execution
+        OTC_EXECUTION_SELL_TRADE = 35;
+        // Совершение внебиржевой сделки покупки через OTC-Execution
+        OTC_EXECUTION_BUY_TRADE = 36;
+        // Удержание комиссии за сделку выставленную через OTC-Execution
+        OTC_EXECUTION_FEE = 37;
+        //Корректировка отложенных изменений позиций
         DELAYED_CORRECTION = 38;
-        // Изменения состояния отслеживания договора в автоследовании
+        // Изменения состояния отслеживания договора в автследовании
         TRACKING_STATE_UPDATE = 39;
-
+        // Комиссия за управление на тарифе Автоследование
+        TRACKING_MANAGEMENT_FEE = 40;
+        //  Комиссия за результат на тарифе Автоследование
+        TRACKING_SERVICE_FEE = 41;
+        // Перевод денежных средств клиента между счетами
+        MONEY_TRANSFER = 42;
+        // Перевод ценных бумаг клиента между счетами
+        SECURITY_TRANSFER = 43;
+        // Удержание комиссии за Советы
+        WEALTH_FEE = 44;
+        // Удержание комиссии за Премиум
+        ADV_FEE = 45;
+        // Операция блокировки позиции
+        LOCKING = 46;
+        // Операция разблокировки позиции
+        UNLOCKING = 47;
+        // Совершение сделки по покупке опциона
+        OPTION_BUY_TRADE = 48;
+        // Совершение сделки по продаже опциона
+        OPTION_SELL_TRADE = 49;
     }
-}
-
-message FutureLimit {
-    int32 load_date = 1;
-    string client_code = 2;
-    string sec_code = 3;
-    string account_id = 4;
-    string firm_id = 5;
-    double open_balance = 6;
-    double locked = 7;
-    Decimal open_balance_value = 8;
-    Decimal locked_value = 9;
 }
 
 message DepoLimit {
@@ -80,12 +134,24 @@ message DepoLimit {
     string sec_code = 3;
     string account_id = 4;
     string firm_id = 5;
-    double open_balance = 6;
-    double open_limit = 7;
-    double locked = 8;
     Decimal open_balance_value = 9;
-    Decimal open_limit_value = 10;
     Decimal locked_value = 11;
+    Decimal open_balance_value_t0 = 12;
+    Decimal locked_value_t0 = 13;
+    Decimal open_balance_value_t1 = 14;
+    Decimal locked_value_t1 = 15;
+    Decimal open_balance_value_t2 = 16;
+    Decimal locked_value_t2 = 17;
+}
+
+message FuturesLimit {
+    int32 load_date = 1;
+    string client_code = 2;
+    string sec_code = 3;
+    string account_id = 4;
+    string firm_id = 5;
+    Decimal open_balance_value = 8;
+    Decimal locked_value = 9;
 }
 
 message MoneyLimit {
@@ -93,13 +159,24 @@ message MoneyLimit {
     string client_code = 2;
     string currency = 3;
     string firm_id = 4;
-    double open_balance = 5;
-    double open_limit = 6;
-    double locked = 7;
     Decimal open_balance_value = 8;
-    Decimal open_limit_value = 9;
     Decimal locked_value = 10;
     string account_id = 11;
+    Decimal open_balance_value_t0 = 12;
+    Decimal locked_value_t0 = 13;
+    Decimal open_balance_value_t1 = 14;
+    Decimal locked_value_t1 = 15;
+    Decimal open_balance_value_t2 = 16;
+    Decimal locked_value_t2 = 17;
+}
+
+message OptionLimit {
+    int32 load_date = 1;
+    string client_code = 2;
+    string ticker = 3;
+    string position_uid = 4;
+    Decimal open_balance_value = 5;
+    Decimal locked_value = 6;
 }
 
 message Decimal {
