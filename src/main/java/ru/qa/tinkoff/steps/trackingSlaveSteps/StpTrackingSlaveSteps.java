@@ -1084,7 +1084,6 @@ public class StpTrackingSlaveSteps {
         List<String> dateBond = new ArrayList<>();
         //получаем содержимое кеша exchangePositionCache
         String price = "";
-
         List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
             .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
 //            .reqSpec(r -> r.addHeader("x-tcs-siebel-id", siebelId))
@@ -1115,6 +1114,45 @@ public class StpTrackingSlaveSteps {
         dateBond.add(minPriceIncrement);
         return dateBond;
     }
+
+
+
+    public List<String> getPriceFromPositionIdCache(String positionId) {
+        String aciValue = "";
+        String nominal = "";
+        String minPriceIncrement = "";
+        List<String> dateBond = new ArrayList<>();
+        //получаем содержимое кеша exchangePositionCache
+        String price = "";
+
+        List<ru.qa.tinkoff.swagger.trackingSlaveCache.model.Entity> resCachePrice = cacheApiCacheSlaveCreator.get().getAllEntities()
+            .reqSpec(r -> r.addHeader("x-api-key", "tracking"))
+            .cacheNamePath("positionCache")
+            .xAppNameHeader("tracking")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .executeAs(validatedWith(shouldBeCode(SC_OK)));
+        //отбираем данные по ticker+tradingClearingAccount+type
+        List<Entity> position = resCachePrice.stream()
+            .filter(pr -> {
+                    @SuppressWarnings("unchecked")
+                    var keys = (String) pr.getKey();
+                    return keys.equals(positionId);
+                }
+            )
+            .collect(Collectors.toList());
+        //достаем значение price
+        @SuppressWarnings("unchecked")
+        var values = (Map<String, Object>) position.get(0).getValue();
+        aciValue = values.get("aciValue").toString();
+        nominal = values.get("currentNominal").toString();
+        minPriceIncrement = values.get("minPriceIncrement").toString();
+        dateBond.add(aciValue);
+        dateBond.add(nominal);
+        dateBond.add(minPriceIncrement);
+        return dateBond;
+    }
+
 
 
     public byte[] bytes(UUID uuid) {

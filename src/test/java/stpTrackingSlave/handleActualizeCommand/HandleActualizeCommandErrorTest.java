@@ -611,8 +611,9 @@ public class HandleActualizeCommandErrorTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         // создаем запись на выставленную заявку state= null
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
-            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
-            new BigDecimal("107.79"), new BigDecimal("5"), state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(),
+            UUID.randomUUID(),  new BigDecimal("107.79"), new BigDecimal("5"), state, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //создаем команду с несколькими позициями
         OffsetDateTime time = OffsetDateTime.now();
         ru.tinkoff.trading.tracking.Tracking.Decimal quantityBaseMoney = Tracking.Decimal.newBuilder()
