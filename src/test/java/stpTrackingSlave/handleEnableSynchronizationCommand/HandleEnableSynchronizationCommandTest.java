@@ -54,6 +54,7 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 
 
@@ -201,7 +202,7 @@ public class HandleEnableSynchronizationCommandTest {
     @Test
     @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1388423")
-    @DisplayName("1388423. Успешная обработка команды на включение синхронизации в обе стороны для share.Sell")
+    @DisplayName("C1388423. Успешная обработка команды на включение синхронизации в обе стороны для share.Sell")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1388423() {
@@ -243,10 +244,13 @@ public class HandleEnableSynchronizationCommandTest {
         await().atMost(FIVE_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).ignoreExceptions().until(() ->
             slaveOrder = slaveOrderDao.getSlaveOrder2(contractIdSlave), notNullValue());
         //Проверяем данные заявки
-        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL));
-        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
-        assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
+        assertAll(
+            () -> assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("version не равна", slaveOrder.getVersion(), is(2)),
+            () -> assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue())),
+            () -> assertThat("position_id  не равен", slaveOrder.getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
 
@@ -254,7 +258,7 @@ public class HandleEnableSynchronizationCommandTest {
     @Test
     @Tags({@Tag("qa"), @Tag("qa2")})
     @AllureId("1378785")
-    @DisplayName("1378785. Успешная обработка команды на включение синхронизации в обе стороны для share.Buy")
+    @DisplayName("C1378785. Успешная обработка команды на включение синхронизации в обе стороны для share.Buy")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1378785() {
@@ -297,10 +301,13 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
         //Проверяем данные заявки
-        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL));
-        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
-        assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(quantity));
+        assertAll(
+            () -> assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("version не равна", slaveOrder.getVersion(), is(2)),
+            () -> assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(quantity)),
+            () -> assertThat("position_id  не равен", slaveOrder.getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
 
@@ -308,7 +315,7 @@ public class HandleEnableSynchronizationCommandTest {
     @Test
     @AllureId("1578651")
     @Tags({@Tag("qa"), @Tag("qa2")})
-    @DisplayName("1578651 Определяем, находится ли портфель slave'а в процессе синхронизации. order.state = 0")
+    @DisplayName("C1578651 Определяем, находится ли портфель slave'а в процессе синхронизации. order.state = 0")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
     void C1578651() {
@@ -340,7 +347,7 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(109), new BigDecimal(3), (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL);
+            id, new BigDecimal(109), new BigDecimal(3), (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -354,13 +361,15 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
         //Проверяем данные заявки
-        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL));
-        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL));
-        assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("state не равен", slaveOrder.getState().intValue(), is(2));
-        assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(2));
-        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
-
+        assertAll(
+            () -> assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerAAPL)),
+            () -> assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountAAPL)),
+            () -> assertThat("version не равна", slaveOrder.getVersion(), is(2)),
+            () -> assertThat("state не равен", slaveOrder.getState().intValue(), is(2)),
+            () -> assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), is(2)),
+            () -> assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue())),
+            () -> assertThat("position_id  не равен", slaveOrder.getPositionId(), is(instrument.positionIdAAPL))
+        );
     }
 
 
@@ -408,7 +417,7 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, attempts_count, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(2), (byte) 0, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp);
+            id, new BigDecimal(500), new BigDecimal(2), (byte) 0, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -431,11 +440,14 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("sell_enabled не равен", slavePortfolio.getPositions().get(0).getSellEnabled(), is(true));
         assertThat("buy_enabled не равен", slavePortfolio.getPositions().get(0).getBuyEnabled(), is(true));
         //Проверяем данные заявки
-        assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerALFAperp));
-        assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountALFAperp));
-        assertThat("action не равен", slaveOrder.getAction().intValue(), is(1));
-        assertThat("version не равна", slaveOrder.getVersion(), is(2));
-        assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue()));
+        assertAll(
+            () -> assertThat("ticker не равен", slaveOrder.getTicker(), is(instrument.tickerALFAperp)),
+            () -> assertThat("tradingClearingAccount не равен", slaveOrder.getTradingClearingAccount(), is(instrument.tradingClearingAccountALFAperp)),
+            () -> assertThat("action не равен", slaveOrder.getAction().intValue(), is(1)),
+            () -> assertThat("version не равна", slaveOrder.getVersion(), is(2)),
+            () -> assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(createListSlaveOnePos.get(0).getQuantity().intValue())),
+            () -> assertThat("position_id  не равен", slaveOrder.getPositionId(), is(instrument.positionIdALFAperp))
+        );
         switch (attempts_count) {
             case 1:
                 assertThat("attempts_count не равен", slaveOrder.getAttemptsCount().intValue(), not(1));
@@ -456,8 +468,8 @@ public class HandleEnableSynchronizationCommandTest {
 
     private static Stream<Arguments> Params() {
         return Stream.of(
-            Arguments.of("ALFAperp", "TKCBM_TCAB", 0),
-            Arguments.of("AAPL", "TKCBM_TCAB", 1)
+            Arguments.of("ALFAperp", "TKCBM_TCAB", 0, UUID.fromString("bfa1b011-c9a0-4126-92f8-0d7a80aebbf1")),
+            Arguments.of("AAPL", "TKCBM_TCAB", 1, UUID.fromString("5c5e6656-c4d3-4391-a7ee-e81a76f1804e"))
         );
     }
 
@@ -466,11 +478,11 @@ public class HandleEnableSynchronizationCommandTest {
     @ParameterizedTest
     @MethodSource("Params")
     @Tags({@Tag("qa"), @Tag("qa2")})
-    @AllureId("1654361")
+    @AllureId("C1654361")
     @DisplayName("1654361 handleEnableSynchronizationCommand. state = 0. ticker + trading_clearing_account + action из slave_order != значению ticker + trading_clearing_account + action выставляемой заявки")
     @Subfeature("Успешные сценарии")
     @Description("Обработка команды на включение синхронизации в обе стороны")
-    void C1654361(String tickerA, String tradingClearingAccountA, int action) {
+    void C1654361(String tickerA, String tradingClearingAccountA, int action, UUID positionIdA) {
 //        mocksBasicSteps.createDataForMockCreateSlaveOrders(masterEnable, slaveEnable,
 //            mockSlaveDate.investIdMasterEnable, mockSlaveDate.investIdSlaveEnable, mockSlaveDate.contractIdMasterOrder, mockSlaveDate.contractIdSlaveEnable,
 //            mockSlaveDate.clientCodeSlaveEnable,  "Fill", instrument.tickerAAPL, instrument.classCodeAAPL, "Buy","3", "3");
@@ -502,7 +514,7 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 100, action, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA);
+            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA, positionIdA);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -527,6 +539,7 @@ public class HandleEnableSynchronizationCommandTest {
         assertThat("state не равен", slaveOrder.getState().intValue(), is(2));
         assertThat("quantity не равно", slaveOrder.getQuantity().intValue(), is(quantity));
         assertThat("attempts_count не равно", slaveOrder.getAttemptsCount().intValue(), is(number));
+        assertThat("position_id  не равен", slaveOrder.getPositionId(), is(instrument.positionIdAAPL));
     }
 
 
