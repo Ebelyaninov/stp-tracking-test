@@ -50,6 +50,7 @@ import java.util.UUID;
 
 import static io.qameta.allure.Allure.step;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -214,10 +215,10 @@ public class EnableContractSynchronizationTest {
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
         Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(message.getValue());
         //получаем портфель slave
-        await().atMost(TEN_SECONDS).until(() ->
+        await().atMost(FIVE_SECONDS).until(() ->
             slavePortfolio = slavePortfolioDao.getLatestSlavePortfolio(contractIdSlave, strategyId), notNullValue());
         //Проверяем, данные в сообщении
-        checkEventParams(portfolioCommand, contractIdSlave, "ENABLE_SYNCHRONIZATION");
+        checkEventParams(portfolioCommand, contractIdSlave, "ACTUALIZE");
     }
 
 

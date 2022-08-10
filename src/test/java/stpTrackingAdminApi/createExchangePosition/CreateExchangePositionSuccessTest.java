@@ -269,6 +269,10 @@ public class CreateExchangePositionSuccessTest {
         Integer dailyQuantityLimit = 1000;
         String otcTicker = "EUR_RUB_tt";
         String otcClassCode = "CETS";
+        try {
+            exchangePositionService.deleteExchangePositionsByKey(ticker, tradingClearingAccount);
+        } catch (Exception e) {
+        }
         //вычитываем все события из tracking.exchange-position
         resetOffsetToLate(EXCHANGE_POSITION);
         //формируем тело запроса
