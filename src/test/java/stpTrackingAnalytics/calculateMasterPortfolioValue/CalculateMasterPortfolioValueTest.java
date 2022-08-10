@@ -124,7 +124,6 @@ public class CalculateMasterPortfolioValueTest {
 
     @BeforeAll
     void getDataClients() {
-        strategyId = UUID.randomUUID();
         //получаем данные по клиенту master в api сервиса счетов
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebel.siebelIdMasterAnalytics);
         investIdMaster = resAccountMaster.getInvestId();
@@ -170,6 +169,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C836966(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
@@ -215,6 +215,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C842614(Tracking.AnalyticsCommand.Operation operation) {
+        strategyId = UUID.randomUUID();
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "73445.55";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -298,6 +299,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C842615(Tracking.AnalyticsCommand.Operation operation, StrategyStatus status, LocalDateTime time) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -389,6 +391,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C838564() {
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -421,6 +424,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C848110() {
+        strategyId = UUID.randomUUID();
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -528,7 +532,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1889974(String baseMoney, String minValue, StrategyCurrency currency) {
-        UUID strategyId = UUID.randomUUID();
+        strategyId = UUID.randomUUID();
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, currency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
@@ -568,6 +572,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C986488() {
+        strategyId = UUID.randomUUID();
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -656,6 +661,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C884062() {
+        strategyId = UUID.randomUUID();
         String ticker1 = "TEST";
         String tradingClearingAccount1 = "L01+00000F00";
         String quantity1 = "50";
@@ -707,6 +713,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Альтернативные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C884361() {
+        strategyId = UUID.randomUUID();
         String ticker1 = "FXITTEST";
         String tradingClearingAccount1 = "L01+00002F00";
         String quantity1 = "500";
@@ -755,6 +762,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1762482() {
+        strategyId = UUID.randomUUID();
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -829,6 +837,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1764406() {
+        strategyId = UUID.randomUUID();
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         String baseMoney = "119335.55";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -870,6 +879,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1779559(Tracking.AnalyticsCommand.Operation operation) {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         BigDecimal minPriceIncrement = new BigDecimal("0.001");
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
@@ -930,6 +940,7 @@ public class CalculateMasterPortfolioValueTest {
     @Subfeature("Успешные сценарии")
     @Description("Операция запускается по команде и пересчитывает стоимость виртуального портфеля на заданную метку времени.")
     void C1886707() {
+        strategyId = UUID.randomUUID();
         String baseMoney = "16551.10";
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
