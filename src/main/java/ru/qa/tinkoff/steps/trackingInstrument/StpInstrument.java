@@ -116,7 +116,7 @@ public class StpInstrument {
     public UUID positionIdSU29009RMFS6 = UUID.fromString("bcf000c7-03c4-4cb7-b79d-892a881b1d29");
 
     public String tickerLKOH = "LKOH";
-    public String tradingClearingAccountLKOH = "L01+00000F00";
+    public String tradingClearingAccountLKOH = "L01+00002F00";
     public String classCodeLKOH = "TQBR";
     public String sectorLKOH = "energy";
     public String typeLKOH = "share";
@@ -125,7 +125,7 @@ public class StpInstrument {
 
 
     public String tickerSNGSP = "SNGSP";
-    public String tradingClearingAccountSNGSP = "L01+00000F00";
+    public String tradingClearingAccountSNGSP = "L01+00002F00";
     public String classCodeSNGSP = "TQBR";
     public String sectorSNGSP = "energy";
     public String typeSNGSP = "share";
@@ -134,7 +134,7 @@ public class StpInstrument {
 
 
     public String tickerTRNFP = "TRNFP";
-    public String tradingClearingAccountTRNFP = "L01+00000F00";
+    public String tradingClearingAccountTRNFP = "L01+00002F00";
     public String classCodeTRNFP = "TQBR";
     public String sectorTRNFP = "energy";
     public String typeTRNFP = "share";
@@ -143,7 +143,7 @@ public class StpInstrument {
 
 
     public String tickerESGR = "ESGR";
-    public String tradingClearingAccountESGR = "L01+00000F00";
+    public String tradingClearingAccountESGR = "L01+00002F00";
     public String classCodeESGR = "TQTF";
     public String sectorESGR = "other";
     public String typeESGR = "etf";

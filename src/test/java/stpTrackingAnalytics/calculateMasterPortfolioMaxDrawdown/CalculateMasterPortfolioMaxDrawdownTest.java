@@ -208,7 +208,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(3)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(3)).ignoreExceptions().until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -274,7 +274,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).ignoreExceptions().until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -321,7 +321,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             .collect(Collectors.toList());
         BigDecimal maxDrawdown = BigDecimal.ZERO;
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(1)).ignoreExceptions().until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
@@ -381,7 +381,7 @@ public class CalculateMasterPortfolioMaxDrawdownTest {
             }
         }
         log.info("Mакс. просадка master-портфеля:  {}", maxDrawdown);
-        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500)).until(() ->
+        await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(500)).ignoreExceptions().until(() ->
             masterPortfolioMaxDrawdown = masterPortfolioMaxDrawdownDao.getMasterPortfolioMaxDrawdownByStrategyId(strategyId), notNullValue());
         //проверяем параметры
         checkParam(maxDrawdown, cutTime);
