@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @Slf4j
 @Epic("getStrategiesCatalogTabs - Получение вкладок для фильтрации в каталоге стратегий")
@@ -163,25 +164,69 @@ public class getStrategiesCatalogTabsTest {
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogTabsResponse.class));
         //Проверяем ответ
-        assertThat("Первый tabId не равен", getStrategiesCatalogTabs.getItems().get(0).getTabId(),
-            is("rub-currency"));
-        assertThat("Первый title не равен", getStrategiesCatalogTabs.getItems().get(0).getTitle(),
-            is("Рублевые"));
-        assertThat("Первый type не cloud", getStrategiesCatalogTabs.getItems().get(0).getType().toString(),
-            is("cloud"));
-        assertThat("Второй tabId не равен", getStrategiesCatalogTabs.getItems().get(1).getTabId(),
-            is("usd-currency"));
-        assertThat("Второй title не равен", getStrategiesCatalogTabs.getItems().get(1).getTitle(),
-            is("Долларовые"));
-        assertThat("Второй type не cloud", getStrategiesCatalogTabs.getItems().get(1).getType().toString(),
-            is("cloud"));
-        assertThat("Третий tabId не равен", getStrategiesCatalogTabs.getItems().get(2).getTabId(),
-            is("max-slaves-count"));
-        assertThat("Третий title не равен", getStrategiesCatalogTabs.getItems().get(2).getTitle(),
-            is("Популярные"));
-        assertThat("Третий type не cloud", getStrategiesCatalogTabs.getItems().get(2).getType().toString(),
-            is("square"));
-        assertThat("количество табов не равно", getStrategiesCatalogTabs.getItems().size(),
-            is(3));
+        assertAll(
+            () -> assertThat("Первый tabId не равен", getStrategiesCatalogTabs.getItems().get(0).getTabId(),
+                is("rub-currency")),
+            () ->  assertThat("Первый title не равен", getStrategiesCatalogTabs.getItems().get(0).getTitle(),
+                is("Рублевые")),
+            () ->  assertThat("Первый type не cloud", getStrategiesCatalogTabs.getItems().get(0).getType().toString(),
+                is("cloud")),
+            () -> assertThat("Второй tabId не равен", getStrategiesCatalogTabs.getItems().get(1).getTabId(),
+                is("usd-currency")),
+            () ->  assertThat("Второй title не равен", getStrategiesCatalogTabs.getItems().get(1).getTitle(),
+                 is("Долларовые")),
+            () ->  assertThat("Второй type не cloud", getStrategiesCatalogTabs.getItems().get(1).getType().toString(),
+                is("cloud")),
+            () -> assertThat("Третий tabId не равен", getStrategiesCatalogTabs.getItems().get(2).getTabId(),
+                is("min-activation-time")),
+            () ->  assertThat("Третий title не равен", getStrategiesCatalogTabs.getItems().get(2).getTitle(),
+                 is("Недавно запустились")),
+            () -> assertThat("Третий type не collection", getStrategiesCatalogTabs.getItems().get(2).getType().toString(),
+                 is("collection")),
+            () -> assertThat("Третий description не !=", getStrategiesCatalogTabs.getItems().get(2).getDescription(),
+                is("Отличный момент, чтобы следовать за автором наиболее точно")),
+            () ->  assertThat("Третий image != min-activation-time", getStrategiesCatalogTabs.getItems().get(2).getImage(),
+                 is("min-activation-time")),
+            () -> assertThat("Четвертый tabId не равен", getStrategiesCatalogTabs.getItems().get(3).getTabId(),
+                is("high-score")),
+            () -> assertThat("Четвертый title не равен", getStrategiesCatalogTabs.getItems().get(3).getTitle(),
+                is("Выбор Тинькофф")),
+            () -> assertThat("Четвертый image !=", getStrategiesCatalogTabs.getItems().get(3).getImage(),
+                 is("high-score")),
+            () -> assertThat("Четвертый description !=", getStrategiesCatalogTabs.getItems().get(3).getDescription(),
+                is("Стратегии, которые отобрали наши аналитики")),
+            () -> assertThat("Четвертый type != collection", getStrategiesCatalogTabs.getItems().get(3).getType().toString(),
+                is("collection")),
+            () -> assertThat("Пятый tabId не равен", getStrategiesCatalogTabs.getItems().get(4).getTabId(),
+                is("min-recommended-money-quantity")),
+            () -> assertThat("Пятый title не равен", getStrategiesCatalogTabs.getItems().get(4).getTitle(),
+                is("Легкий старт")),
+            () -> assertThat("Пятый type не collection", getStrategiesCatalogTabs.getItems().get(4).getType().toString(),
+                is("collection")),
+            () -> assertThat("Пятый description != ", getStrategiesCatalogTabs.getItems().get(4).getDescription(),
+                is("Достаточно до 20 тысяч рублей на счете, чтобы начать")),
+            () ->  assertThat("Пятый image != ", getStrategiesCatalogTabs.getItems().get(4).getImage(),
+                is("min-recommended-money-quantity")),
+            () -> assertThat("Шестой tabId не равен", getStrategiesCatalogTabs.getItems().get(5).getTabId(),
+                is("max-relative-yield")),
+            () -> assertThat("Шестой title не равен", getStrategiesCatalogTabs.getItems().get(5).getTitle(),
+                is("Топ доходности")),
+            () -> assertThat("Шестой type не list", getStrategiesCatalogTabs.getItems().get(5).getType().toString(),
+                is("list")),
+            () -> assertThat("Седьмой tabId не равен", getStrategiesCatalogTabs.getItems().get(6).getTabId(),
+                is("max-slaves-count")),
+            () -> assertThat("Седьмой title не равен", getStrategiesCatalogTabs.getItems().get(6).getTitle(),
+                is("Популярные")),
+            () -> assertThat("Седьмой type не square", getStrategiesCatalogTabs.getItems().get(6).getType().toString(),
+                is("square")),
+            () -> assertThat("Восьмой tabId не равен", getStrategiesCatalogTabs.getItems().get(7).getTabId(),
+                is("max-tail-value")),
+            () -> assertThat("Восьмой title не равен", getStrategiesCatalogTabs.getItems().get(7).getTitle(),
+                is("Лидеры по деньгам в управлении")),
+            () -> assertThat("Восьмой type не list", getStrategiesCatalogTabs.getItems().get(7).getType().toString(),
+                is("list")),
+            () -> assertThat("количество табов не равно", getStrategiesCatalogTabs.getItems().size(),
+                is(8))
+        );
     }
 }
