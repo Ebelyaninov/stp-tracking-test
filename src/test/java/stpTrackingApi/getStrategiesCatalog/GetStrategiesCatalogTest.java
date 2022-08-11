@@ -362,10 +362,6 @@ public class GetStrategiesCatalogTest {
     @Description("Метод для получения каталога торговых стратегий.")
     void C1105873(String currencyFilter, Currency currency, StrategyCurrency strategyCurrency) throws InterruptedException {
         strategyId = UUID.randomUUID();
-//        //создаем в БД tracking данные: client, contract, strategy в статусе active
-//        steps.createClientWithContractAndStrategy(siebelIdMaster1, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
-//            strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
         //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
         GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
             .xAppNameHeader("invest")
@@ -408,47 +404,6 @@ public class GetStrategiesCatalogTest {
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий")
     void C1109332() throws InterruptedException {
-//        List<UUID> strategyIds = new ArrayList<>();
-//        List<String> contractIds = new ArrayList<>();
-//        List<UUID> clientIds = new ArrayList<>();
-//        List<String> siebelIds = new ArrayList<>();
-//        siebelIds.add(siebelIdMaster1);
-//        siebelIds.add(siebelIdMaster2);
-//        siebelIds.add(siebelIdMaster3);
-//        int slaveCount = 8;
-//        try {
-//            for (String siebelId : siebelIds) {
-//                UUID strategyId = UUID.randomUUID();
-//                //randomValue
-//                //String title = "Стратегия Autotest - Заголовок";
-//                String description = "Стратегия Autotest - Описание";
-//                //получаем данные по договор из сервиса счетов
-//                GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelId);
-//                UUID investId = resAccountMaster.getInvestId();
-//                String contractId = resAccountMaster.getBrokerAccounts().get(0).getId();
-//                try {
-//                    //создаем стратегию
-//                    steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, null, ContractState.untracked,
-//                        strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-//                        StrategyStatus.active, slaveCount, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11");
-//                    //создаем данные по стоимости портфеля в диапозоне от 10 тыс. до 26 тыс. за месяц для стратегии
-//                    createDateMasterPortfolioValue(strategyId, 31, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 25, 2, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 15, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 13, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 12, 4, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 10, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 7, 1, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                    createDateMasterPortfolioValue(strategyId, 5, 3, BigDecimal.valueOf(getRandomDouble(10000, 26000)).toString());
-//                } catch (Exception e) {
-//                    log.error("завис на создании");
-//                }
-//                slaveCount = slaveCount + 1;
-//                strategyIds.add(strategyId);
-//                contractIds.add(contractId);
-//                clientIds.add(investId);
-//            }
-
             //вызываем метод для получения каталога торговых стратегий getStrategiesCatalog
             GetStrategiesCatalogResponse getStrategiesCatalog = strategyApiCreator.get().getStrategiesCatalog()
                 .xAppNameHeader("invest")
@@ -504,12 +459,6 @@ public class GetStrategiesCatalogTest {
                 listStrategyIdsFromSocialApi.add(liteStrategiesNew.get(i).getId());
             }
             assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
-//        } finally {
-//            strategyService.deleteStrategyByIds(strategyIds);
-//            contractService.deleteStrategyByIds(contractIds);
-//            clientService.deleteStrategyByIds(clientIds);
-//            masterPortfolioValueDao.deleteMasterPortfolioValueByStrategyIds(strategyIds);
-//        }
     }
 
 
@@ -539,7 +488,7 @@ public class GetStrategiesCatalogTest {
             .cursorQuery(cursor)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-//            проверяем, данные в сообщении
+        //проверяем, данные в сообщении
         assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
             is(liteStrategies.get(liteStrategies.size() - 1).getId()));
         assertThat("HasNext не равно", getStrategiesCatalog.getHasNext(),
@@ -557,7 +506,7 @@ public class GetStrategiesCatalogTest {
             .limitQuery(1)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-//            проверяем, данные в сообщении
+        //проверяем, данные в сообщении
         assertThat("HasNext не равно", getStrategiesCatalogNew.getHasNext(),
             is(true));
         assertThat("Идентификатор сдедующей стратегии не равно", getStrategiesCatalogNew.getNextCursor(),
@@ -591,7 +540,7 @@ public class GetStrategiesCatalogTest {
             .cursorQuery(cursor)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-//            проверяем, данные в сообщении
+        //проверяем, данные в сообщении
         assertThat("Идентификатор стратегии не равно", getStrategiesCatalog.getItems().get(0).getId(),
             is(liteStrategies.get(liteStrategies.size() - 1).getId()));
     }
@@ -683,7 +632,7 @@ public class GetStrategiesCatalogTest {
             .cursorQuery(cursor)
             .respSpec(spec -> spec.expectStatusCode(200))
             .execute(response -> response.as(GetStrategiesCatalogResponse.class));
-//            проверяем, данные в сообщении
+        //проверяем, данные в сообщении
         assertThat("Идентификатор следующей стратегии не равно", getStrategiesCatalog.getNextCursor(),
             is(nullValue()));
     }
