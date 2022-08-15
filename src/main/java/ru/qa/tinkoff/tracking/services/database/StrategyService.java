@@ -139,6 +139,15 @@ public class StrategyService {
         return strategy;
     }
 
+    @Step("Поиск  стратегии по статусу")
+    @SneakyThrows
+    public Strategy findOneStrategyByStatus(StrategyStatus status) {
+        Strategy strategy = strategyRepository.selectOneStrategyByStatus(status);
+        log.info("Successfully find exchangePosition {}", strategy);
+        Allure.addAttachment("Найденная стратегия", "application/json", objectMapper.writeValueAsString(strategy));
+        return strategy;
+    }
+
 
     @Step("Поиск стратегий меньше Cursor и с ограничением по лимиту")
     @SneakyThrows

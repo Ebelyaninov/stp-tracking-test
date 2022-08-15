@@ -248,6 +248,9 @@ message PortfolioCommand {
     ENABLE_SYNCHRONIZATION = 6;
     // Снять техническую блокировку с договора
     UNBLOCK_CONTRACT = 7;
+    // Отменить застрявшую в синхронизации заявку на договоре
+    CANCEL_LAST_ORDER = 8;
+
   }
 }
 
