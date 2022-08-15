@@ -177,8 +177,7 @@ public class CancelLastOrderTest {
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-server-time").isEmpty());
-        Instant nowCreated = Instant.ofEpochSecond(OffsetDateTime.now().toInstant().getEpochSecond());
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(10));
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -186,7 +185,7 @@ public class CancelLastOrderTest {
         String key = message.getKey();
         log.info("Команда в tracking.slave.command:  {}", portfolioCommand);
         //Проверяем, данные в сообщении
-        checkParam(portfolioCommand, "CANCEL_LAST_ORDER", contractIdSlave, nowCreated);
+        checkParam(portfolioCommand, "CANCEL_LAST_ORDER", contractIdSlave);
     }
 
 
@@ -230,7 +229,7 @@ public class CancelLastOrderTest {
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-server-time").isEmpty());
         assertThat("код ошибки не равно", errorResponse.getErrorCode(), is("0344-21-B20"));
         assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Не найдена заявка в процессе синхронизации"));
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(20));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5));
         assertThat("Отправили команду на отмену заявки", messages.size(), is(0));
     }
 
@@ -297,7 +296,7 @@ public class CancelLastOrderTest {
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-server-time").isEmpty());
         assertThat("код ошибки не равно", errorResponse.getErrorCode(), is("0344-21-B13"));
         assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Не найден договор в contract, который подключен к автоследованию"));
-        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(5));
+        List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(3));
         assertThat("Отправили команду на отмену заявки", messages.size(), is(0));
     }
 
@@ -323,7 +322,7 @@ public class CancelLastOrderTest {
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-server-time").isEmpty());
         assertThat("код ошибки не равно", errorResponse.getErrorCode(), is("0344-21-B12"));
-        assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Не найден договор в contract, который подключен к автоследованию"));
+        assertThat("Сообщение об ошибке не равно", errorResponse.getErrorMessage(), is("Не найден договор в contract"));
     }
 
 
@@ -408,12 +407,9 @@ public class CancelLastOrderTest {
 
 
     //Проверяем параметры события
-    void checkParam(Tracking.PortfolioCommand command, String operation, String ContractIdSlave, Instant time) {
+    void checkParam(Tracking.PortfolioCommand command, String operation, String ContractIdSlave) {
         assertThat("Operation события не равен", command.getOperation().toString(), is(operation));
         assertThat("ID договора не равен", (command.getContractId()), is(ContractIdSlave));
-//        assertThat("CreatedAt не равен", (Instant.ofEpochSecond(command.getCreatedAt().getSeconds())), is(time));
-
-
     }
 
 }

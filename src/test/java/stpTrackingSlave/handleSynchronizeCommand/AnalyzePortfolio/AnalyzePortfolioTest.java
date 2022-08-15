@@ -766,7 +766,7 @@ public class AnalyzePortfolioTest {
         //создаем портфель для slave
         String baseMoneySlave = "5364.78";
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionOnePosWithEnable(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, null,"2", date, null,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"2", date, null,
             new BigDecimal("108.53"), new BigDecimal("0.0235"), new BigDecimal("0.025500"),
             new BigDecimal("2.1656"), buy, sell);
         steps.createSlavePortfolioWithPosition(contractIdSlave, strategyId, 1, 3,
@@ -1161,7 +1161,7 @@ public class AnalyzePortfolioTest {
         Date date = Date.from(utc.toInstant());
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = steps.createListMasterPositionWithOnePos(instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, null,"5", date, 2,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"5", date, 2,
             steps.createPosAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE));
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "6551.10", masterPos);
         //создаем подписку на стратегию для slave
