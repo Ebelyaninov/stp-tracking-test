@@ -32,6 +32,7 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.steps.trackingSlaveSteps.StpTrackingSlaveSteps;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking.api.ContractApi;
+import ru.qa.tinkoff.swagger.tracking.model.ExchangePosition;
 import ru.qa.tinkoff.swagger.tracking.model.GetOrdersResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -309,7 +310,7 @@ public class getOrdersTest {
     @SneakyThrows
     @Test
     @AllureId("1416252")
-    @DisplayName("1416252.getOrders. Получение списка заявок. В exchangePositionCache не найдены значения позиции из заявки")
+    @DisplayName("1416252.getOrders. Получение списка заявок. В positionCache не найдены значения позиции из заявки")
     @Subfeature("Успешные сценарии")
     @Description("Получение списка заявок, выставляемых от лица ведомого в рамках стратегии.")
     void C1416252() {
@@ -325,6 +326,10 @@ public class getOrdersTest {
             ContractState.tracked, strategyId, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
             null, false, false);
         //вставляем запись о заявке в таблицу slave_order
+        //Не нашли запись в кэше position
+        createTestDataSlaveOrder2(3, 1, 10, 1, instrument.classCodeFB,
+            instrument.tickerFB, instrument.tradingClearingAccountFB,  UUID.fromString("7cd172f4-1c67-11ed-8fa9-0209e4aece77"));
+       //не найден position_id
         createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeSBERT,
             instrument.tickerSBERT, instrument.tradingClearingAccountSBERT,  null);
         createTestDataSlaveOrder2(1, 1, 2, 1, instrument.classCodeAAPL,
@@ -332,7 +337,7 @@ public class getOrdersTest {
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         //для значения курсора используется результат до фильтрации позиций, по которым не были найдены данные, хотя в сам ответ они не попадают
-        long nextCursor = getNextCursore(getOrderByAttemptsCount(contractIdSlave, 2));
+        long nextCursor = getNextCursore(getOrderByAttemptsCount(contractIdSlave, 11));
         //Игнорируем записи с ticker1
         assertThat("items не равно", getDataOrders.getItems().size(), is(1));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
@@ -459,14 +464,19 @@ public class getOrdersTest {
         createTestDataSlaveOrder2(1, 10, 0, 1, instrument.classCodeAFX,
             instrument.tickerAFX, instrument.tradingClearingAccountAFX, instrument.positionIdAFX);
         createTestDataSlaveOrder2(2, 1, 1, 1, instrument.classCodeAAPL,
-            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tickerNOK, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+        //Получаем данные из кэша
         //вызываем метод getOrders, получаем ответ и проверяем
         GetOrdersResponse getDataOrders = getOrders();
         String nextCursore = String.valueOf(getNextCursore(getOrderByAttemptsCount(contractIdSlave, 1)));
         assertThat("cursor не равен", getDataOrders.getNextCursor(), is(nextCursore));
         assertThat("items не равен", getDataOrders.getItems().size(), is(1));
-        assertThat("ticker не равен", getDataOrders.getItems().get(0).getExchangePosition().getTicker(), is(instrument.tickerAAPL));
+        //Получаем из БД, а не из кэша
+        assertThat("ticker не равен", getDataOrders.getItems().get(0).getExchangePosition().getTicker(), is(instrument.tickerNOK));
         assertThat("hasNext не равен", getDataOrders.getHasNext(), is(false));
+        assertThat("briefName не равен", getDataOrders.getItems().get(0).getExchangePosition().getBriefName(), is("Apple"));
+        assertThat("image не равен", getDataOrders.getItems().get(0).getExchangePosition().getImage(), is("US0378331005.png"));
+        assertThat("type не равен", getDataOrders.getItems().get(0).getExchangePosition().getType(), is(ExchangePosition.TypeEnum.SHARE));
     }
 
 
