@@ -240,7 +240,7 @@ public class StpInstrument {
     public String tickerTBIO = "TBIO";
     public String tradingClearingAccountTBIO = "NDS000000001";
     public String classCodeTBIO = "TQTF";
-    public UUID positionIdTBIO = UUID.fromString("9d0a68fe-c472-4951-ac87-62f3353c982d");
+    public UUID positionIdTBIO = UUID.fromString("a1182dcf-b59a-4175-bfed-ab6e11a6e00b");
 
     public String tickerUSDRUB = "USDRUB";
     public String tradingClearingAccountUSDRUB = "MB9885503216";
