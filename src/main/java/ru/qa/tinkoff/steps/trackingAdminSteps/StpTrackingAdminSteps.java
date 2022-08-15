@@ -293,6 +293,7 @@ public class StpTrackingAdminSteps {
         strategy = strategyService.getStrategy(strategyId);
     }
 
+
     public void checkHeaders(Response response, String traceId, String serverTime){
         assertFalse(response.getHeaders().getValue(traceId).isEmpty());
         assertFalse(response.getHeaders().getValue(serverTime).isEmpty());
@@ -340,6 +341,23 @@ public class StpTrackingAdminSteps {
         subscription = subscriptionService.saveSubscription(subscription);
 
     }
+
+
+    //метод создает клиента c договором
+    public void createClientWithContract(UUID investId, ClientStatusType clientStatusType, ClientRiskProfile riskProfile,
+                                         String contractId,  ContractState contractState,  UUID strategyId) {
+        //создаем запись о клиенте в tracking.client
+        clientSlave = clientService.createClient(investId, clientStatusType, null, riskProfile);
+        // создаем запись о договоре клиента в tracking.contract
+        contractSlave = new Contract()
+            .setId(contractId)
+            .setClientId(clientSlave.getId())
+            .setState(contractState)
+            .setStrategyId(strategyId)
+            .setBlocked(false);
+        contractSlave = contractService.saveContract(contractSlave);
+    }
+
 
     @Step("Вызываем метод getimeline")
     public GetTimelineResponse getimeline( GetTimelineRequest request) {

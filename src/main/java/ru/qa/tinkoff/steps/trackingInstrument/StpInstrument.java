@@ -19,6 +19,7 @@ public class StpInstrument {
     public String tradingClearingAccountAEE1 = "L01+00000BLP";
     public String classCodeAEE1 = "SPBXM";
     public String instrumentAEE1 = tickerAEE1 + "_" + classCodeAEE1;
+    public UUID positionIdEE1 = UUID.fromString("a4c8d79a-a119-4740-9f02-7c42a282098c");
 
     public String tickerAAPL = "AAPL";
     public String tradingClearingAccountAAPL = "TKCBM_TCAB";

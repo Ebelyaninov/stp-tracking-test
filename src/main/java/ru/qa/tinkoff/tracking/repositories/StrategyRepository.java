@@ -55,13 +55,17 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     @Query(nativeQuery = true, value = "select * from tracking.strategy limit 1")
     Optional<Strategy> selectOneStrategy();
 
+    // находим 1 запись по стратегии с нужным статусом
+    @Query(nativeQuery = true, value = "select s from strategy s where s.description is not null and s.status = :status limit 1")
+    Strategy selectOneStrategyByStatus(@Param("status") StrategyStatus status);
+
+
     // находим 1 запись по стратегии
     @Query(nativeQuery = true, value = "select * from tracking.strategy limit 101")
     List<Strategy> selectStrategiesLimit();
-
-
     @Query(nativeQuery = true, value = "select * from strategy where status in ('active', 'draft', 'frozen') " +
         "and position < :position order by position desc limit :limit")
+
     List<Strategy> findListStrategysByPositionAndLimit(
         @Param(value = "position") Integer position,
         @Param(value = "limit") Integer limit);

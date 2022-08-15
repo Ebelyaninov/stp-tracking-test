@@ -587,12 +587,54 @@ paths:
       description: Запустить снятие технической блокировки с договора {contractId} клиента
       operationId: unblockContract
       security:
-        - apiKey: []
+        - apiKey: [ ]
       parameters:
         - $ref: '#/components/parameters/ContractId'
       responses:
         202:
           description: OK
+          headers:
+            x-trace-id:
+              $ref: '#/components/headers/XTraceId'
+            x-server-time:
+              $ref: '#/components/headers/XServerTime'
+        400:
+          $ref: '#/components/responses/Error'
+        401:
+          description: Unauthorized
+        422:
+          $ref: '#/components/responses/Error'
+        500:
+          $ref: '#/components/responses/Error'
+
+
+
+  /contract/{contractId}/order:
+
+    parameters:
+      - $ref: '#/components/parameters/ApplicationName'
+      - $ref: '#/components/parameters/ApplicationVersion'
+      - $ref: '#/components/parameters/Platform'
+      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/Login'
+      - $ref: '#/components/parameters/B3TraceId'
+      - $ref: '#/components/parameters/B3SpanId'
+      - $ref: '#/components/parameters/B3ParentSpanId'
+      - $ref: '#/components/parameters/B3Sampled'
+
+    delete:
+      tags:
+        - contract
+      summary: cancelLastOrder
+      description: Отменить последнюю заявку, застрявшую в процессе синхронизации на договоре {contractId} клиента
+      operationId: cancelLastOrder
+      security:
+        - apiKey: [ ]
+      parameters:
+        - $ref: '#/components/parameters/ContractId'
+      responses:
+        202:
+          description: Accepted
           headers:
             x-trace-id:
               $ref: '#/components/headers/XTraceId'
