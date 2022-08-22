@@ -212,6 +212,62 @@ public class CreateSignalErrorTest {
         );
     }
 
+
+    private static Stream<Arguments> provideStringsForActionCreateSignal() {
+        return Stream.of(
+            Arguments.of(CreateSignalRequest.ActionEnum.BUY),
+           Arguments.of(CreateSignalRequest.ActionEnum.SELL));
+    }
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("provideStringsForActionCreateSignal")
+    @AllureId("2064186")
+    @DisplayName("2064186.createSignal.Предварительная проверка сигнала.Корректность цены позиции в сигнале (продажа)")
+    @Subfeature("Альтернативные сценарии")
+    @Description("Метод для создания торгового сигнала ведущим на увеличение/уменьшение соответствующей позиции в портфелях его ведомых.")
+    void C2064186(CreateSignalRequest.ActionEnum action) {
+        strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+        double money = 17500.0;
+        // создаем портфель ведущего с позицией в кассандре
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        Date date = Date.from(utc.toInstant());
+        double quantityPosMasterPortfolio = 15.0;
+        List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER, Double.toString(quantityPosMasterPortfolio));
+        steps.createMasterPortfolio(contractIdMaster, strategyId, positionMasterList, 1, Double.toString(money), date);
+        OffsetDateTime cutTime = OffsetDateTime.now();
+        steps.createDateStrategyTailValue(strategyId, Date.from(cutTime.toInstant()), "16259.17");
+        BigDecimal price = new BigDecimal("300");
+        BigDecimal quantityRequest = new BigDecimal("10");
+        int version = 1;
+        //устанавливаем значения limit для проверяемого инструмента
+        adminSteps.updateExchangePosition(instrument.tickerSBER, instrument.tradingClearingAccountSBER, Exchange.MOEX,
+            true, 22845, orderQuantityList(100, "default"), false);
+        //формируем тело запроса метода CreateSignal
+        CreateSignalRequest request = createSignalRequest(action,
+            price, quantityRequest, strategyId, instrument.tickerSBER, instrument.tradingClearingAccountSBER, version);
+        // вызываем метод CreateSignal
+        SignalApi.CreateSignalOper createSignal = signalApiCreator.get().createSignal()
+            .xAppNameHeader("invest")
+            .xAppVersionHeader("4.5.6")
+            .xPlatformHeader("ios")
+            .xDeviceIdHeader("new")
+            .xTcsSiebelIdHeader(SIEBEL_ID)
+            .body(request)
+            .respSpec(spec -> spec.expectStatusCode(422));
+        createSignal.execute(ResponseBodyData::asString);
+        JSONObject jsonObject = new JSONObject(createSignal.execute(ResponseBodyData::asString));
+        String errorCode = jsonObject.getString("errorCode");
+        String errorMessage = jsonObject.getString("errorMessage");
+        assertThat("код ошибки не равно", errorCode, is("Error"));
+        assertThat("Сообщение об ошибке не равно", errorMessage, is("Цена больше не актуальна, обновите, пожалуйста, страницу"));
+    }
+
+
+
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("provideStringsForHeadersCreateSignal")
@@ -2084,7 +2140,7 @@ public class CreateSignalErrorTest {
         BigDecimal quantityRequest = new BigDecimal("3");
         int version = 1;
         strategyId = UUID.randomUUID();
-//        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
+ //       mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);

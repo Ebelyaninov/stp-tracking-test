@@ -57,6 +57,12 @@ public class StpInstrument {
     public String imageSBER ="sber.png";
 
 
+    public String tickerSBER2 = "RIU2";
+    public String classCodeSBER2 = "SPBFUT";
+    public String tradingClearingAccountSBER2 = "U800";
+
+
+
     public String tickerFB = "META";
     public String tradingClearingAccountFB = "TKCBM_TCAB";
     public UUID positionIdFB = UUID.fromString("fce134ae-bb91-498c-aa5d-4f49ad2e5392");
@@ -70,8 +76,8 @@ public class StpInstrument {
 
     public String tickerNOK = "NOK";
     public String classCodeNOK = "SPBXM";
-    //public String tradingClearingAccountNOK = "L01+00000SPB";
-    public String tradingClearingAccountNOK = "TKCBM_TCAB";
+  //  public String tradingClearingAccountNOK = "L01+00000SPB";
+  public String tradingClearingAccountNOK = "TKCBM_TCAB";
     public String briefNameNOK = "Nokia";
     public String imageNOK = "US6549022043.png";
     public String typeNOK = "share";
@@ -123,6 +129,7 @@ public class StpInstrument {
     public String typeLKOH = "share";
     public String companyLKOH = "Лукойл";
     public String instrumentLKOH = tickerLKOH + "_" + classCodeLKOH;
+    public UUID positionIdLKOH = UUID.fromString("02cfdf61-6298-4c0f-a9ca-9cabc82afaf3");
 
 
     public String tickerSNGSP = "SNGSP";

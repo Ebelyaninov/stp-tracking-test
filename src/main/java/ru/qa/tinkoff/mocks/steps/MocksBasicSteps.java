@@ -635,6 +635,21 @@ public class MocksBasicSteps {
 
     }
 
+
+
+
+
+
+        //Очищаем мок rest мок middle
+//        mockMiddleSteps.clearMocksForRestOrder();
+        //Создать ответ от middle
+//        mockMiddleSteps.createRestOrder(
+//            mockMiddleSteps.createBodyForRestOrder(ticker, action, contractIdSlave, classCode,
+//                "FillAndKill", "Fill", lotsRequested, lotsExecuted, clientCode));
+
+
+
+
     public void createDataForMockSynchronizationCommand(String siebelIdSlave, String investIdSlave,  String contractIdSlave,
                                                         String tradingClearAccount, String rubQuantity, String usdQuantity,
                                                         String usdScaledQty, String quantityForGRPCInstrument, String clientCode,
