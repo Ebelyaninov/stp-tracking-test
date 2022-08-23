@@ -54,6 +54,7 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
@@ -93,10 +94,6 @@ public class CalculateManagementFeeTest {
     @Autowired
     SlavePortfolioDao slavePortfolioDao;
     @Autowired
-    StrategyService strategyService;
-    @Autowired
-    ExchangePositionService exchangePositionService;
-    @Autowired
     TrackingService trackingService;
     @Autowired
     SubscriptionService subscriptionService;
@@ -112,9 +109,6 @@ public class CalculateManagementFeeTest {
     StpSiebel stpSiebel;
     @Autowired
     ApiCreator<SubscriptionApi> subscriptionApiCreator;
-
-    BrokerAccountApi brokerAccountApi = ru.qa.tinkoff.swagger.investAccountPublic.invoker
-        .ApiClient.api(ru.qa.tinkoff.swagger.investAccountPublic.invoker.ApiClient.Config.apiConfig()).brokerAccount();
 
     InstrumentsApi instrumentsApi = ru.qa.tinkoff.swagger.fireg.invoker.ApiClient
         .api(ApiClient.Config.apiConfig()).instruments();
@@ -238,7 +232,7 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -281,8 +275,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -326,8 +320,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(3);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -367,8 +361,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -410,8 +404,8 @@ public class CalculateManagementFeeTest {
         OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
-        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER, instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -487,7 +481,7 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -529,7 +523,7 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -601,7 +595,7 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40", instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -653,8 +647,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -709,8 +703,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -753,8 +747,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -798,8 +792,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -844,8 +838,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -888,8 +882,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -967,8 +961,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX, "4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1013,8 +1007,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, "10");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerSU29009RMFS6, instrument.tradingClearingAccountSU29009RMFS6, instrument.positionIdSU29009RMFS6,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1093,8 +1087,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1169,8 +1163,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "40",
-            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB, "10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1226,8 +1220,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "40",
-            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1283,8 +1277,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "40",
-            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1342,8 +1336,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, "40",
-            instrument.tickerFB, instrument.tradingClearingAccountFB, "10");
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,"40",
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB,"10");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1407,8 +1401,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1486,8 +1480,8 @@ public class CalculateManagementFeeTest {
         Date date = Date.from(utc.toInstant());
         //создаем портфель мастера
         List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
-            instrument.tradingClearingAccountSBER, "40",
-            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, "4");
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,"40",
+            instrument.tickerYNDX, instrument.tradingClearingAccountYNDX, instrument.positionIdYNDX,"4");
         steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
         //создаем подписку на стратегию
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
@@ -1523,11 +1517,114 @@ public class CalculateManagementFeeTest {
     }
 
 
+    @SneakyThrows
+    @Test
+    @AllureId("2079822")
+    @DisplayName("C2079822. CalculateManagementFee.Расчет комиссии за управление. Рассчитываем комиссию, для валюты в rub стратегии")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция запускается по команде и инициирует расчет комиссии за управление ведомого " +
+        "посредством отправки обогащенной данными команды в Тарифный модуль.")
+    void C2079822() {
+        strategyId = UUID.randomUUID();
+        String quantityUSDRUB = "10";
+        String quantitySBER = "40";
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(investIdMaster, null, contractIdMaster, null, ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(30));
+        OffsetDateTime utc = OffsetDateTime.now().minusDays(5);
+        Date date = Date.from(utc.toInstant());
+        //создаем портфель мастера
+        List<MasterPortfolio.Position> positionMasterList = masterPositions(date, instrument.tickerSBER,
+            instrument.tradingClearingAccountSBER, instrument.positionIdSBER,quantitySBER,
+            instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB,quantityUSDRUB);
+        steps.createMasterPortfolio(contractIdMaster, strategyId, 3, "9107.04", positionMasterList, date);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
+        OffsetDateTime endSubTime = OffsetDateTime.now().minusDays(1).plusHours(2);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.inactive, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()),
+            new Timestamp(endSubTime.toInstant().toEpochMilli()), false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        long subscriptionId = subscription.getId();
+        //создаем портфели slave
+//        createSlavePOrtfolioNoBond("25000.0", "18700.02", "8974.42");
+        List<SlavePortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(instrument.tickerSBER)
+            .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .positionId(instrument.positionIdSBER)
+            .quantity(new BigDecimal(quantitySBER))
+            .synchronizedToMasterVersion(2)
+            .price(new BigDecimal("313"))
+            .rate(new BigDecimal("0.0"))
+            .rateDiff(new BigDecimal("0.407"))
+            .quantityDiff(new BigDecimal("0.0"))
+            .changedAt(date)
+            .build());
+        positionList.add(SlavePortfolio.Position.builder()
+            .ticker(instrument.tickerUSDRUB)
+            .tradingClearingAccount(instrument.tradingClearingAccountUSDRUB)
+            .positionId(instrument.positionIdUSDRUB)
+            .quantity(new BigDecimal(quantityUSDRUB))
+            .synchronizedToMasterVersion(3)
+            .price(new BigDecimal("108.8"))
+            .rate(new BigDecimal("0.0"))
+            .rateDiff(new BigDecimal("0.107"))
+            .quantityDiff(new BigDecimal("0.0"))
+            .changedAt(date)
+            .build());
+
+        steps.createSlavePortfolio(contractIdSlave, strategyId, 1, 3, "8974.42",
+            positionList, Date.from(OffsetDateTime.now().minusDays(1).toInstant()));
+        //формируем и отправляем команду на расчет комисии
+        OffsetDateTime createTime = OffsetDateTime.now();
+        Tracking.ActivateFeeCommand command = steps.createTrackingFeeCommand(subscriptionId, createTime);
+        log.info("Команда в tracking.fee.command:  {}", command);
+        byte[] eventBytes = command.toByteArray();
+        //отправляем команду в топик kafka tracking.fee.command
+        kafkaSender.send(TRACKING_FEE_COMMAND, contractIdSlave.getBytes(), eventBytes);
+        log.info("Команда в tracking.fee.command:  {}", command);
+
+        //checkManagementFeeLastNoBond(subscriptionId, Date.from(endSubTime.toInstant()));
+
+        slavePortfolio = slavePortfolioDao.getLatestSlavePortfolioBefore(contractIdSlave, strategyId, Date.from(endSubTime.toInstant()));
+        BigDecimal baseMoney = slavePortfolio.getBaseMoneyPosition().getQuantity();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String dateTs = formatter.format(Date.from(endSubTime.toInstant()));
+        String ListInst = instrument.instrumentSBER + "," + instrument.instrumentUSDRUB;
+        //вызываем метод MD и сохраняем prices в Mapinst
+        Map<String, BigDecimal> pricesPos = steps.getPriceFromMarketAllDataWithDate(ListInst, "last", dateTs, 2);
+        BigDecimal valuePortfolio = steps.getPorfolioValueTwoInstruments(instrument.instrumentSBER, instrument.instrumentUSDRUB, dateTs,
+            quantitySBER, quantityUSDRUB, baseMoney);
+        BigDecimal price1 = steps.getPrice(pricesPos, instrument.instrumentSBER);
+        BigDecimal price3 = steps.getPrice(pricesPos, instrument.instrumentUSDRUB);
+        checkComparedToMasterFeeVersion(1, subscriptionId);
+        await().atMost(TEN_SECONDS).ignoreExceptions().pollDelay(Duration.ofNanos(600)).until(() ->
+            managementFee = managementFeeDao.getManagementFee(contractIdSlave, strategyId, subscriptionId, 1), notNullValue());
+        assertThat("value стоимости портфеля не равно", managementFee.getContext().getPortfolioValue(), is(valuePortfolio));
+        //Проверяем данные в management_fee
+        assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodStartedAt().toInstant().toString(),
+            is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
+        assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
+            is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(UTC).toString()));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(instrument.tickerUSDRUB));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountUSDRUB));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantityUSDRUB));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price3));
+        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
+        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantitySBER));
+        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
+    }
+
+
     // методы для работы тестов*****************************************************************
 
     @Step("Создаем позиции для портфеля master: ")
-    List<MasterPortfolio.Position> masterPositions(Date date, String tickerOne, String tradingClearingAccountOne,
-                                                   String quantityOne, String tickerTwo, String tradingClearingAccountTwo,
+    List<MasterPortfolio.Position> masterPositions(Date date, String tickerOne, String tradingClearingAccountOne, UUID positionIdOne,
+                                                   String quantityOne, String tickerTwo, String tradingClearingAccountTwo, UUID positionIdTwo,
                                                    String quantityTwo) {
         Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
             .setAction(Tracking.Portfolio.ActionValue.newBuilder()
@@ -1537,6 +1634,7 @@ public class CalculateManagementFeeTest {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(tickerOne)
             .tradingClearingAccount(tradingClearingAccountOne)
+            .positionId(positionIdOne)
             .quantity(new BigDecimal(quantityOne))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
@@ -1545,6 +1643,7 @@ public class CalculateManagementFeeTest {
         positionList.add(MasterPortfolio.Position.builder()
             .ticker(tickerTwo)
             .tradingClearingAccount(tradingClearingAccountTwo)
+            .positionId(positionIdTwo)
             .quantity(new BigDecimal(quantityTwo))
             .changedAt(date)
             .lastChangeDetectedVersion(3)
@@ -1559,6 +1658,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerSBER)
             .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .positionId(instrument.positionIdSBER)
             .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -1570,6 +1670,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerSU29009RMFS6)
             .tradingClearingAccount(instrument.tradingClearingAccountSU29009RMFS6)
+            .positionId(instrument.positionIdSU29009RMFS6)
             .quantity(new BigDecimal(quantitySU29009RMFS6))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("105.796"))
@@ -1587,6 +1688,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerSBER)
             .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .positionId(instrument.positionIdSBER)
             .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -1598,6 +1700,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerYNDX)
             .tradingClearingAccount(instrument.tradingClearingAccountYNDX)
+            .positionId(instrument.positionIdYNDX)
             .quantity(new BigDecimal(quantityYNDX))
             .synchronizedToMasterVersion(3)
             .price(new BigDecimal("4862.8"))
@@ -1615,6 +1718,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerSBER)
             .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .positionId(instrument.positionIdSBER)
             .quantity(new BigDecimal(quantitySBER))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -1644,6 +1748,7 @@ public class CalculateManagementFeeTest {
         positionList.add(SlavePortfolio.Position.builder()
             .ticker(instrument.tickerSBER)
             .tradingClearingAccount(instrument.tradingClearingAccountSBER)
+            .positionId(instrument.positionIdSBER)
             .quantity(new BigDecimal("20"))
             .synchronizedToMasterVersion(2)
             .price(new BigDecimal("313"))
@@ -1848,14 +1953,20 @@ public class CalculateManagementFeeTest {
             is(LocalDate.now().minusDays(1).atStartOfDay().minusHours(3).toInstant(UTC).toString()));
         assertThat("value стоимости портфеля не равно", managementFee.getSettlementPeriodEndedAt().toInstant().toString(),
             is(LocalDate.now().atStartOfDay().minusHours(3).toInstant(UTC).toString()));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(0).getTicker(), is(instrument.tickerSU29009RMFS6));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(0).getTradingClearingAccount(), is(instrument.tradingClearingAccountSU29009RMFS6));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(0).getQuantity().toString(), is(quantitySU29009RMFS6));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(0).getPrice(), is(price2));
-        assertThat("ticker не равно", managementFee.getContext().getPositions().get(1).getTicker(), is(instrument.tickerSBER));
-        assertThat("tradingClearingAccount не равно", managementFee.getContext().getPositions().get(1).getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
-        assertThat("quantity не равно", managementFee.getContext().getPositions().get(1).getQuantity().toString(), is(quantitySBER));
-        assertThat("price не равно", managementFee.getContext().getPositions().get(1).getPrice(), is(price1));
+        Context.Positions positionForSU29009RMFS6 = managementFee.getContext().getPositions().stream()
+                .filter(positions -> positions.getTicker().equals(instrument.tickerSU29009RMFS6))
+            .findFirst().get();
+        Context.Positions positionForSBER = managementFee.getContext().getPositions().stream()
+            .filter(positions -> positions.getTicker().equals(instrument.tickerSBER))
+            .findFirst().get();
+        assertThat("ticker не равно", positionForSU29009RMFS6.getTicker(), is(instrument.tickerSU29009RMFS6));
+        assertThat("tradingClearingAccount не равно", positionForSU29009RMFS6.getTradingClearingAccount(), is(instrument.tradingClearingAccountSU29009RMFS6));
+        assertThat("quantity не равно", positionForSU29009RMFS6.getQuantity().toString(), is(quantitySU29009RMFS6));
+        assertThat("price не равно", positionForSU29009RMFS6.getPrice(), is(price2));
+        assertThat("ticker не равно", positionForSBER.getTicker(), is(instrument.tickerSBER));
+        assertThat("tradingClearingAccount не равно", positionForSBER.getTradingClearingAccount(), is(instrument.tradingClearingAccountSBER));
+        assertThat("quantity не равно", positionForSBER.getQuantity().toString(), is(quantitySBER));
+        assertThat("price не равно", positionForSBER.getPrice(), is(price1));
     }
 
     @Step("Проверяем записи в management_fee: ")
