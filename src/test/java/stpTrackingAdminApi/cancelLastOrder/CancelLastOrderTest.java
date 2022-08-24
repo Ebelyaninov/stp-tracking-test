@@ -50,17 +50,18 @@ import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static ru.qa.tinkoff.kafka.Topics.TRACKING_CONTRACT_EVENT;
 import static ru.qa.tinkoff.kafka.Topics.TRACKING_SLAVE_COMMAND;
 
 @Slf4j
@@ -174,10 +175,20 @@ public class CancelLastOrderTest {
             .contractIdPath(contractIdSlave)
             .respSpec(spec -> spec.expectStatusCode(202))
             .execute(response -> response);
+        //Проверяем смену state у записи в slave_order_2
+        assertThat("state записи не равен", slaveOrder2Dao.getSlaveOrder2(contractIdSlave).getState().toString(), is("0"));
         //Проверяем, что в response есть заголовки x-trace-id и x-server-time
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-trace-id").isEmpty());
         assertFalse(responseCancelLastOrder.getHeaders().getValue("x-server-time").isEmpty());
+
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_SLAVE_COMMAND, Duration.ofSeconds(10));
+        Tracking.PortfolioCommand type = null;
+        for (int i = 0; i < messages.size(); i++) {
+            Tracking.PortfolioCommand portfolioCommand = Tracking.PortfolioCommand.parseFrom(messages.get(i).getValue());
+            if(portfolioCommand.getOperation().equals(Tracking.PortfolioCommand.Operation.ENABLE_SYNCHRONIZATION)){
+                type = portfolioCommand;
+            }
+        }
         Pair<String, byte[]> message = messages.stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Сообщений не получено"));
@@ -186,6 +197,9 @@ public class CancelLastOrderTest {
         log.info("Команда в tracking.slave.command:  {}", portfolioCommand);
         //Проверяем, данные в сообщении
         checkParam(portfolioCommand, "CANCEL_LAST_ORDER", contractIdSlave);
+
+        // Проверяем отправку события с типом ENABLE_SYNCHRONIZATION в топик  tracking.slave.command
+        checkParam(type, "ENABLE_SYNCHRONIZATION", contractIdSlave);
     }
 
 
