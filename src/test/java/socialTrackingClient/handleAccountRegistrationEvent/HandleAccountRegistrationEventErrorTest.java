@@ -186,7 +186,7 @@ public class HandleAccountRegistrationEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
 
         //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(eventAction, contractIdAgressive, brokerAccountType, brokerAccountStatus, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId);
@@ -211,7 +211,7 @@ public class HandleAccountRegistrationEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
 
         //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE, strategyId);
@@ -268,7 +268,7 @@ public class HandleAccountRegistrationEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
 
         //создаем запись о клиенте в tracking.client
         clientSlave = clientService.createClient(investIdAgressive, ClientStatusType.none, null, ClientRiskProfile.aggressive);
@@ -301,7 +301,7 @@ public class HandleAccountRegistrationEventErrorTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
 
         //Форимируем и отправляем событие в OffsetDateTime топик account.registration.event
         InvestAccountEvent.Event event = createMessageForHandleAccountRegistrationEvent(actionUpdated, contractIdAgressive, typeBroker, statusOpened, investIdAgressive, SIEBEL_ID_AGRESSIVE.concat("228"), strategyId);

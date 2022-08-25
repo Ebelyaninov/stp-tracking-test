@@ -141,6 +141,7 @@ public class StpTrackingAdminSteps {
         feeRateProperties.put("management", new BigDecimal(management));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategyList = new ArrayList<>();
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)
@@ -160,7 +161,8 @@ public class StpTrackingAdminSteps {
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(buyEnabled)
             .setSellEnabled(sellEnabled)
-            .setCloseTime(dateClose);
+            .setCloseTime(dateClose)
+            .setTags(tagsStrategyList);
         if (strategyStatus.equals(StrategyStatus.draft)){
             strategy.setActivationTime(null);
         }

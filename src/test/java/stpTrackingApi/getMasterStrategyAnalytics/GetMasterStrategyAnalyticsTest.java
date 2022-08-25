@@ -189,7 +189,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            strategyStatus, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            strategyStatus, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         //создаем записи в master_portfolio_value за 10 дней
@@ -239,7 +239,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         //создаем записи в strategy_tail_value
@@ -287,7 +287,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         createMasterPortfolios();
         //создаем записи в master_portfolio_value за 10 дней
@@ -336,7 +336,7 @@ public class GetMasterStrategyAnalyticsTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //создаем портфель в кассандра без позиций
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         // вызываем метод getMasterStrategyAnalytics
@@ -365,7 +365,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
@@ -492,7 +492,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
             .xAppNameHeader("invest")
@@ -543,7 +543,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // вызываем метод getMasterStrategyAnalytics
         AnalyticsApi.GetMasterStrategyAnalyticsOper getMasterStrategyAnalytics = analyticsApiCreator.get().getMasterStrategyAnalytics()
             .strategyIdPath(strategyId)
@@ -575,7 +575,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
@@ -643,7 +643,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
@@ -710,7 +710,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime
             .now(ZoneOffset.UTC).minusDays(7).toInstant()), instrument.tickerAAPL,
@@ -766,7 +766,7 @@ public class GetMasterStrategyAnalyticsTest {
         //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now().minusDays(10), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре  за разные даты с разными бумагами
         steps.createMasterPortfolioWithOutPosition(10, 1, "2500.0", contractIdMaster, strategyId);
         List<MasterPortfolio.Position> masterOnePositions = steps.masterOnePositions(Date.from(OffsetDateTime

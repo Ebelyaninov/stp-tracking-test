@@ -28,6 +28,7 @@ import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
@@ -39,6 +40,7 @@ import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.api.StrategyApi;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.GetLiteStrategiesResponse;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.LiteStrategy;
 import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyCharacteristic;
+import ru.qa.tinkoff.swagger.tracking_socialTrackingStrategy.model.StrategyTag;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.entities.Client;
 import ru.qa.tinkoff.tracking.entities.Contract;
@@ -59,6 +61,7 @@ import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
@@ -185,6 +188,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyPortfolioValues = new HashSet<>();
         Set<LocalDateTime> listStrategyActivationTimeFromApi = new HashSet<>();
         Set<String> listStrategyActivationTimeFromApiString = new HashSet<>();
+        Set<List<StrategyTag>> listStrategyTagsTimeFromApiString = new HashSet<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
         for (int i = 0; i < getLiteStrategies.getItems().size(); i++) {
             listStrategyIdsFromApi.add(getLiteStrategies.getItems().get(i).getId());
@@ -197,6 +201,7 @@ public class GetLiteStrategiesTest {
             listStrategyPortfolioValues.add(getLiteStrategies.getItems().get(i).getPortfolioValues().toString());
             listStrategyActivationTimeFromApi.add(getLiteStrategies.getItems().get(i).getActivationTime().toLocalDateTime());
             listStrategyActivationTimeFromApiString.add(formatter.format(getLiteStrategies.getItems().get(i).getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime()));
+            listStrategyTagsTimeFromApiString.add(getLiteStrategies.getItems().get(i).getTags());
         }
         Set<String> listStrategyTitleFromDB = new HashSet<>();
         Set<UUID> listStrategyIdsFromDB = new HashSet<>();
@@ -207,7 +212,7 @@ public class GetLiteStrategiesTest {
         Set<String> listStrategyStatusFromDB = new HashSet<>();
         Set<LocalDateTime> listStrategyActivationTimeFromDB = new HashSet<>();
         Set<String> listStrategyActivationTimeFromDBString = new HashSet<>();
-
+        Set<List<StrategyTag>> listStrategyTagsTimeFromDBString = new HashSet<>();
 
         for (int i = 0; i < strategysFromDB.size(); i++) {
             listStrategyIdsFromDB.add(strategysFromDB.get(i).getId());
@@ -219,6 +224,7 @@ public class GetLiteStrategiesTest {
             listStrategyStatusFromDB.add(strategysFromDB.get(i).getStatus().toString());
             listStrategyActivationTimeFromDB.add(strategysFromDB.get(i).getActivationTime());
             listStrategyActivationTimeFromDBString.add(formatter.format(strategysFromDB.get(i).getActivationTime()));
+            listStrategyTagsTimeFromDBString.add(buildTags(strategysFromDB.get(i).getTags()));
         }
         assertAll(
             () -> assertThat("isOverloaded не совпадает", listStrategyIsOverloadedFromApi, is(listIsOverloaded)),
@@ -229,7 +235,8 @@ public class GetLiteStrategiesTest {
             () -> assertThat("score стратегий не совпадают", listStrategyScoreFromApi, is(listStrategyScoreFromDB)),
             () -> assertThat("status стратегий не совпадает", listStrategyStatusFromApi, is(listStrategyStatusFromDB)),
             () -> assertThat("PortfolioValues != []", listStrategyPortfolioValues.toString(), is("[[]]")),
-            () -> assertThat("activationTime стратегии не равно", listStrategyActivationTimeFromApiString, is(listStrategyActivationTimeFromDBString))
+            () -> assertThat("activationTime стратегии не равно", listStrategyActivationTimeFromApiString, is(listStrategyActivationTimeFromDBString)),
+            () -> assertThat("tags стратегии не равен", listStrategyTagsTimeFromApiString, is(listStrategyTagsTimeFromDBString))
         );
         log.info("listOfCount from method == " + listStrategyIdsFromApi + "\n listOfCountFromDB == " + listStrategyIdsFromDB);
     }
@@ -299,7 +306,8 @@ public class GetLiteStrategiesTest {
             .subtract(new BigDecimal("1"))
             .multiply(new BigDecimal("100"))
             .setScale(2, BigDecimal.ROUND_HALF_UP);
-        String relativeYieldValue =  "+" +  relativeYield.toString().replace(".", ",") + "%";
+        //в задаче TAP-16023 убрали + из expected-relative-yield
+        String relativeYieldValue =  relativeYield.toString().replace(".", ",").replace("-" , "−") + "%";
         //вызываем метод getLiteStrategies
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -352,10 +360,10 @@ public class GetLiteStrategiesTest {
                 () -> assertThat("slaves-count.value не равно", strategyCharacteristicsSlavesCount.getValue(), is(count.charAt(0) + "\u00A0" + count.substring(1))),
                 () -> assertThat("slaves-count.subtitle не равно", strategyCharacteristicsSlavesCount.getSubtitle(), is("подписаны")),
                 //expected-relative-yield
-                () -> assertThat("expected-relative-yield.value не равен", strategyCharacteristicsExpectrdRelativeYield.getValue(), is(expectedRelativeYieldResult + "% в год")),
+                () -> assertThat("expected-relative-yield.value не равен", strategyCharacteristicsExpectrdRelativeYield.getValue(), equalTo(expectedRelativeYieldResult + "% в год")),
                 () -> assertThat("expected-relative-yield.subtitle не равен", strategyCharacteristicsExpectrdRelativeYield.getSubtitle(), is("Прогноз автора")),
                 //relative-yield
-                () -> assertThat("relativeYield.value стратегии не равно", strategyCharacteristicsRelativeYield.getValue(), is(relativeYieldValue)),
+                () -> assertThat("relativeYield.value стратегии не равно", strategyCharacteristicsRelativeYield.getValue(), equalTo(relativeYieldValue)),
                 () -> assertThat("relativeYield.subtitle стратегии не равно", strategyCharacteristicsRelativeYield.getSubtitle(), is("за все время")),
                 //short-description
                 () -> assertThat("short-description.value не равно", strategyCharacteristicsShortDescription.getValue(), is(shortDescription)),
@@ -428,7 +436,7 @@ public class GetLiteStrategiesTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.draft, 0, null, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         Thread.sleep(15000);
         //вызываем метод getLiteStrategy
         GetLiteStrategiesResponse getLiteStrategies = strategyApi.getLiteStrategies()
@@ -639,6 +647,20 @@ public class GetLiteStrategiesTest {
                 .filter(strategyCharacteristic -> strategyCharacteristic.getId().equals(characteristicName))
                 .collect(Collectors.toList()).get(0);
         return characteristic;
+    }
+
+
+    private List<StrategyTag> buildTags(List<TestsStrategy> tags) {
+        return tags.stream()
+            .map(TestsStrategy::getId)
+            .map(this::buildTag)
+            .collect(Collectors.toList());
+    }
+
+    private StrategyTag buildTag(String id) {
+        StrategyTag strategyTag = new StrategyTag();
+        strategyTag.setId(id);
+        return strategyTag;
     }
 
 }

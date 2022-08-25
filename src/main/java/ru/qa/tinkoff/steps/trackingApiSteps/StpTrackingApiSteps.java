@@ -133,7 +133,7 @@ public class StpTrackingApiSteps {
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score,
                                                     String result, String management, Boolean overloaded, BigDecimal expectedRelativeYield,
-                                                    String shortDescription, String ownerDescription, Boolean buyEnabled, Boolean sellEnabled) {
+                                                    String shortDescription, String ownerDescription, Boolean buyEnabled, Boolean sellEnabled, List<TestsStrategy>  tagsStrategyList) {
         //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -162,6 +162,9 @@ public class StpTrackingApiSteps {
         feeRateProperties.put("management", new BigDecimal(management));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        if (tagsStrategyList == null){
+            tagsStrategyList = new ArrayList<>();
+        }
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -180,7 +183,8 @@ public class StpTrackingApiSteps {
             .setShortDescription(shortDescription)
             .setOwnerDescription(ownerDescription)
             .setBuyEnabled(buyEnabled)
-            .setSellEnabled(sellEnabled);
+            .setSellEnabled(sellEnabled)
+            .setTags(tagsStrategyList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -270,6 +274,8 @@ public class StpTrackingApiSteps {
         feeRateProperties.put("management", new BigDecimal(management));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
+        testsStrategiesList.add(new TestsStrategy());
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -285,7 +291,8 @@ public class StpTrackingApiSteps {
             .setOverloaded(overloaded)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

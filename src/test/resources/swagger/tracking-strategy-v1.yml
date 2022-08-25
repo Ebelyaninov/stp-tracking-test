@@ -6,7 +6,7 @@ info:
   contact:
     name: Asya Tsvaeva
     email: a.tsvaeva@tinkoff.ru
-  version: 1.4.0
+  version: 1.5.0
 
 servers:
   - url: http://social-tracking-strategy.invest-stp-tracking.v2.dev2.k8s.tcsbank.ru/tracking/strategy/v1/
@@ -256,6 +256,7 @@ components:
         - isOverloaded
         - status
         - activationTime
+        - tags
       properties:
         id:
           description: Идентификатор стратегии
@@ -302,6 +303,11 @@ components:
           description: Метка времени активации стратегии
           type: string
           format: date-time
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
 
     Currency:
       description: Валюта
@@ -373,6 +379,18 @@ components:
       description: Статус стратегии
       type: string
       enum: [ active, frozen ]
+
+    StrategyTag:
+      description: Метка
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор тэга
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tinkoff-choice
 
     GetLiteStrategiesResponse:
       type: object

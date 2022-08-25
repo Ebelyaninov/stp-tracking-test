@@ -30,6 +30,7 @@ import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.Profile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingInstrumentConfiguration;
@@ -63,6 +64,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 @Epic("GetLiteStrategy - Получение облегченных данных стратегии")
@@ -183,7 +185,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", overloadedFalse, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", overloadedFalse, null,"TEST","TEST11",true,true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -229,10 +231,13 @@ public class GetLiteStrategyTest {
         GetBrokerAccountsResponse resAccountMaster = steps.getBrokerAccounts(siebelIdMaster);
         UUID investIdMaster = resAccountMaster.getInvestId();
         contractIdMaster = resAccountMaster.getBrokerAccounts().get(0).getId();
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_choice"));
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_not_choice"));
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.3", "0.05", overloadedTrue, expectedRelativeYield,"TEST","TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1,"0.3", "0.05", overloadedTrue, expectedRelativeYield,"TEST","TEST11",true,true, tagsStrategiesList);
         //создаем запись  протфеле в кассандре
         List<MasterPortfolio.Position> positionList = new ArrayList<>();
         createMasterPortfolio(contractIdMaster, strategyId, 1, "6259.17", positionList);
@@ -268,6 +273,9 @@ public class GetLiteStrategyTest {
         assertThat("expected-relative-yield не равен", getLiteStrategy.getCharacteristics().get(1).getValue(), is("10% в год"));
         assertThat("short-description не равно", getLiteStrategy.getCharacteristics().get(3).getValue(), is("TEST"));
         assertThat("owner-description не равно", getLiteStrategy.getCharacteristics().get(4).getValue(), is("TEST11"));
+        assertThat("список tags не равен", getLiteStrategy.getTags().get(0).getId(), is(tagsStrategiesList.get(0).getId()));
+        assertThat("список tags не равен", getLiteStrategy.getTags().get(1).getId(), is(tagsStrategiesList.get(1).getId()));
+        assertThat("кол-во tags != 2", getLiteStrategy.getTags().size(), is(2));
         strategy = strategyService.getStrategy(strategyId);
         assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
             is(strategy.getActivationTime().toString().substring(0, 23)));
@@ -293,7 +301,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.frozen, 2, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true);
+            StrategyStatus.frozen, 2, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -362,7 +370,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -427,7 +435,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
@@ -453,6 +461,7 @@ public class GetLiteStrategyTest {
         assertThat("owner nickname стратегии не равно", getLiteStrategy.getOwner().getSocialProfile().getNickname(), is(profile.getNickname()));
         assertThat("activationTime стратегии не равно " + strategy.getActivationTime(), getLiteStrategy.getActivationTime().atZoneSameInstant(ZoneId.of("Europe/Moscow")).toLocalDateTime().toString(),
             is(strategy.getActivationTime().toString().substring(0, 23)));
+        assertThat("вернули не пустой массив tags", getLiteStrategy.getTags().toString(), is("[]"));
     }
 
 
@@ -496,7 +505,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.draft, 0, null, 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.draft, 0, null, 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
@@ -530,7 +539,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true, null);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
 //            .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("stp-tracking-api")
@@ -564,7 +573,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", false, null,"TEST","TEST11",true,true, null);
         StrategyApi.GetLiteStrategyOper getLiteStrategy = strategyApi.getLiteStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
 //            .xAppNameHeader("stp-tracking-api")
@@ -598,7 +607,7 @@ public class GetLiteStrategyTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", overloadedFalse, null,"TEST","TEST11",true,true);
+            StrategyStatus.active, 2000, LocalDateTime.now(), 1,"0.3", "0.05", overloadedFalse, null,"TEST","TEST11",true,true, null);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         final int daysAgo = 366;
