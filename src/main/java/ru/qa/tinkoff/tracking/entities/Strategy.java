@@ -103,4 +103,8 @@ public class Strategy {
 
     @Column(name = "close_time")
     LocalDateTime closeTime;
+
+    @Type( type = "jsonb" )
+    @Column(name = "tags", columnDefinition = "jsonb")
+    List<TestsStrategy> tags;
 }

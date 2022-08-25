@@ -164,7 +164,7 @@ public class deleteSubscriptionsTest {
         //создаем в БД tracking данные: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.conservative,
-            StrategyStatus.frozen, 1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11", true, true);
+            StrategyStatus.frozen, 1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11", true, true, null);
         //создаем подписку для slave
         OffsetDateTime startSubTime = OffsetDateTime.now();
         steps.createSubcription(investIdSlave, ClientRiskProfile.conservative, contractIdSlave, ContractState.tracked,

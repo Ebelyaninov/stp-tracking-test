@@ -543,7 +543,7 @@ public class CreateStrategySuccessTest {
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            strategyStatus, 0, date, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            strategyStatus, 0, date, 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         strategy = strategyService.getStrategy(strategyId);
         //Формируем body для запроса
         BigDecimal basemoney = new BigDecimal("8000.0");

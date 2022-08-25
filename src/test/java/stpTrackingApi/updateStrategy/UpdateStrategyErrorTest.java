@@ -145,7 +145,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
 
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
@@ -192,7 +192,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -233,7 +233,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -274,7 +274,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -315,7 +315,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -354,7 +354,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         // вызываем метод updateStrategy()
@@ -393,7 +393,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -436,7 +436,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -484,7 +484,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -525,7 +525,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
@@ -565,7 +565,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(title);
@@ -605,7 +605,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -647,7 +647,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);
@@ -688,7 +688,7 @@ public class UpdateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, 1, "0.3", "0.05", false, null,
-            "TEST", "TEST11",true,true);
+            "TEST", "TEST11",true,true, null);
         //формируем тело запроса
         ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest request = new ru.qa.tinkoff.swagger.tracking.model.UpdateStrategyRequest();
         request.setTitle(titleNew);

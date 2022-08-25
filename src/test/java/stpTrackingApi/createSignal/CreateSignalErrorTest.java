@@ -229,7 +229,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         double money = 17500.0;
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -662,7 +662,7 @@ public class CreateSignalErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false,
-            new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         //формируем тело запроса метода CreateSignal
         CreateSignalRequest request = createSignalRequest(CreateSignalRequest.ActionEnum.SELL,
             price, quantityRequest, strategyId, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, version);
@@ -704,7 +704,7 @@ public class CreateSignalErrorTest {
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description,
             StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04",
-            false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -749,7 +749,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -799,7 +799,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
@@ -847,7 +847,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
@@ -894,7 +894,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
@@ -944,7 +944,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerXS0424860947,
@@ -990,7 +990,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1037,7 +1037,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1084,7 +1084,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1131,7 +1131,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerTRUR,
@@ -1180,7 +1180,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1236,7 +1236,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",false,false);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",false,false, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerSBER,
@@ -1403,7 +1403,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerFB,
@@ -1452,7 +1452,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1499,7 +1499,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerAAPL,
@@ -1549,7 +1549,7 @@ public class CreateSignalErrorTest {
         //создаем в БД tracking стратегию на ведущего
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, ticker,
@@ -1602,7 +1602,7 @@ public class CreateSignalErrorTest {
         //создаем стратегию
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyIdMaxCount, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позициями в кассандре
         createMasterPortfolioStrategyHeavyWeight();
         //создаем записи по сигналам
@@ -1655,7 +1655,7 @@ public class CreateSignalErrorTest {
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description,
             StrategyCurrency.usd, StrategyRiskProfile.aggressive, StrategyStatus.active, 0,
             LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
-            "WOW", "TestMan",true,true);
+            "WOW", "TestMan",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "10000", date);
@@ -1705,7 +1705,7 @@ public class CreateSignalErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
-            "WOW", "TestMan",true,true);
+            "WOW", "TestMan",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, "1000000", date);
@@ -1757,7 +1757,7 @@ public class CreateSignalErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
-            "WOW", "TestMan",true,true);
+            "WOW", "TestMan",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         steps.createMasterPortfolio(contractIdMaster, strategyId, null, version, Double.toString(money), date);
@@ -1809,7 +1809,7 @@ public class CreateSignalErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, StrategyRiskProfile.aggressive,
             StrategyStatus.active, 0, LocalDateTime.now(), 4, "0.2", "0.02",false, new BigDecimal(10),
-            "WOW", "TestMan",true,true);
+            "WOW", "TestMan",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerALFAperp,
@@ -2056,7 +2056,7 @@ public class CreateSignalErrorTest {
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(2), 4, "0.2", "0.02",false, new BigDecimal(10),
-            "WOW", "TestMan",true,true);
+            "WOW", "TestMan",true,true, null);
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         List<MasterPortfolio.Position> positionMasterList = steps.masterOnePositions(date, instrument.tickerYNDX,
@@ -2097,7 +2097,7 @@ public class CreateSignalErrorTest {
         strategyId = UUID.randomUUID();
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -2143,7 +2143,7 @@ public class CreateSignalErrorTest {
  //       mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -2191,7 +2191,7 @@ public class CreateSignalErrorTest {
 //        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
@@ -2238,7 +2238,7 @@ public class CreateSignalErrorTest {
 //        mocksBasicSteps.createDataForMasterSignal(instrument.tickerNOK, instrument.classCodeNOK, "SPB", "MOEX",String.valueOf(price));
         steps.createClientWithContractAndStrategy(SIEBEL_ID, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         // создаем портфель ведущего с позицией в кассандре
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());

@@ -166,7 +166,7 @@ public class HandleUnsubscribeCommandErrorTest {
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,
-            1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            1, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         //создаем подписку со статусом draft
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcription(investIdSlave,ClientRiskProfile.conservative, contractIdSlave,  ContractState.tracked,
@@ -204,7 +204,7 @@ public class HandleUnsubscribeCommandErrorTest {
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, ClientRiskProfile.conservative, contractIdMaster,
             null, ContractState.untracked, strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub,
             ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative, StrategyStatus.active,
-            1, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            1, LocalDateTime.now(), 1,"0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         //создаем подписку со статусом draft
         OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(1);
         steps.createSubcription(investIdSlave,ClientRiskProfile.conservative, contractIdSlave,  ContractState.tracked,

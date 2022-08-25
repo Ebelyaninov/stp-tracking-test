@@ -167,7 +167,7 @@ public class HandleTariffChangeEventTest {
         //Добавляем стратегию мастеру
         steps.createClientWithContractAndStrategy(SIEBEL_ID_MASTER, investIdMaster, ClientRiskProfile.conservative, contractIdMaster, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, StrategyRiskProfile.conservative,
-            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true);
+            StrategyStatus.active, 0, LocalDateTime.now(), 1, "0.2", "0.04", false, new BigDecimal(58.00), "TEST", "TEST11",true,true, null);
         //Добавляем подписку slave
         clientSlave = clientService.createClient(investIdSlave, ClientStatusType.none, null, ClientRiskProfile.aggressive);
         // создаем запись о договоре клиента в tracking.contract
