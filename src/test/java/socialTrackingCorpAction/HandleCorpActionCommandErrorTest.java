@@ -340,6 +340,7 @@ public class HandleCorpActionCommandErrorTest {
             feeRateProperties.put("management", new BigDecimal("0.04"));
             List<TestsStrategy> testsStrategiesList = new ArrayList<>();
             testsStrategiesList.add(new TestsStrategy());
+            List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
             Strategy strategyMaster = new Strategy()
                 .setId(strategyId)
                 .setContract(contractMaster)
@@ -357,7 +358,8 @@ public class HandleCorpActionCommandErrorTest {
                 .setBuyEnabled(true)
                 .setSellEnabled(true)
                 .setBuyEnabled(true)
-                .setSellEnabled(true);
+                .setSellEnabled(true)
+                .setTags(tagsStrategiesList);
             trackingService.saveStrategy(strategyMaster);
         }
 

@@ -161,6 +161,7 @@ public class CheckStrategyTitleTest {
         feeRateProperties.put("management", new BigDecimal("0.04"));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
 
         strategy = new Strategy()
             .setId(UUID.fromString("eff82a34-8b9e-4730-9ecc-7dab4b2a5412"))
@@ -178,7 +179,8 @@ public class CheckStrategyTitleTest {
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
             .setSellEnabled(true)
-            .setCloseTime(null);
+            .setCloseTime(null)
+            .setTags(tagsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
 
         Response checkStrategyTitleResponseWithStatusDraft = checkStrategyTitle(SIEBEL_ID, title, traceId);

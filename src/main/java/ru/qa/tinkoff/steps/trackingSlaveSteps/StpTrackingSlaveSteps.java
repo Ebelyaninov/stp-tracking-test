@@ -85,6 +85,7 @@ public class StpTrackingSlaveSteps {
     String apiKey = "tracking";
 
     List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+    List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
 
     //метод создает клиента, договор и стратегию в БД автоследования
     @SneakyThrows
@@ -135,7 +136,8 @@ public class StpTrackingSlaveSteps {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategy = trackingService.saveStrategy(strategy);
     }
 
