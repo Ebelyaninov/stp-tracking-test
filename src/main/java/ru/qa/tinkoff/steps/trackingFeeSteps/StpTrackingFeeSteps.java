@@ -132,6 +132,7 @@ public class StpTrackingFeeSteps {
         feeRate.put("result",new BigDecimal("0.2"));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -147,7 +148,8 @@ public class StpTrackingFeeSteps {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

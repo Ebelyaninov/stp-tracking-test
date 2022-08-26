@@ -97,6 +97,7 @@ public class StpTrackingMasterSteps {
         feeRateProperties.put("management", new BigDecimal("0.04"));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -114,7 +115,8 @@ public class StpTrackingMasterSteps {
             .setBuyEnabled(true)
             .setSellEnabled(true)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

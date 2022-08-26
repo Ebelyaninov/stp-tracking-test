@@ -225,6 +225,7 @@ public class StpTrackingApiSteps {
         feeRateProperties.put("result", new BigDecimal(result));
         feeRateProperties.put("management", new BigDecimal(management));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy().setId("russian_shares"));
         testsStrategiesList.add(new TestsStrategy().setId("option"));
         strategyMaster = new Strategy()
@@ -245,7 +246,8 @@ public class StpTrackingApiSteps {
             .setShortDescription(shortDescription)
             .setOwnerDescription(ownerDescription)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 
@@ -342,6 +344,7 @@ public class StpTrackingApiSteps {
         feeRateProperties.put("management", new BigDecimal("0.04"));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
         strategyMaster = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -357,7 +360,8 @@ public class StpTrackingApiSteps {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);
         strategyMaster = trackingService.saveStrategy(strategyMaster);
     }
 

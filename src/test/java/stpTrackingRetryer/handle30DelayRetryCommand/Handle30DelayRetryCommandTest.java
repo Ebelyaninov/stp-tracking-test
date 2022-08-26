@@ -348,6 +348,7 @@ public class Handle30DelayRetryCommandTest {
         feeRateProperties.put("management", new BigDecimal("0.04"));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contractMaster)
@@ -363,7 +364,8 @@ public class Handle30DelayRetryCommandTest {
             .setOverloaded(false)
             .setTestsStrategy(testsStrategiesList)
             .setBuyEnabled(true)
-            .setSellEnabled(true);
+            .setSellEnabled(true)
+            .setTags(tagsStrategiesList);;
         strategy = trackingService.saveStrategy(strategy);
     }
 
