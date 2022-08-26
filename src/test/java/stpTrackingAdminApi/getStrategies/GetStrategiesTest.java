@@ -25,6 +25,7 @@ import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
@@ -47,6 +48,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -195,7 +197,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now().minusHours(1), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04",closeDate);
+            "OwnerTEST", true, true, false, "0.2", "0.04",closeDate, null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position+1, 1);
@@ -221,6 +223,7 @@ public class GetStrategiesTest {
         assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
         assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
         assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
+        assertThat("tags.id не равен", responseExep.getItems().get(0).getTags().toString(), is("[]"));
     }
 
 
@@ -236,7 +239,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position, 1);
@@ -275,8 +278,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
-
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         Integer position = strategys.get(size - 1).getPosition();
@@ -303,7 +305,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         List<Strategy> strategys = strategyService.getStrategysByOrderPosition();
         int size = strategys.size();
         //вызываем метод getStrategys
@@ -340,11 +342,14 @@ public class GetStrategiesTest {
     void C1552083() {
         String percent = "0";
         UUID strategyId = UUID.randomUUID();
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_choice"));
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_not_choice"));
         //Создаем клиента в tracking: client, contract, strategy в статусе active
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, tagsStrategiesList);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);
@@ -372,6 +377,8 @@ public class GetStrategiesTest {
         assertThat("автор стратегии не равно", nickName, is(nickNameOwner));
         assertThat("признак перегруженной стратегии не равен", strategys.get(0).getOverloaded(), is(responseExep.getItems().get(0).getLoad().getIsOverloaded()));
         assertThat("процент загруженности  стратегии не равен", responseExep.getItems().get(0).getLoad().getPercent().toString(), is(percent));
+        assertThat("tags.id не равен", responseExep.getItems().get(0).getTags().get(0).getId(), is("tinkoff_choice"));
+        assertThat("tags.id не равен", responseExep.getItems().get(0).getTags().get(1).getId(), is("tinkoff_not_choice"));
     }
 
     private static Stream<Arguments> provideStrategyStatusAndTailValue() {
@@ -394,7 +401,7 @@ public class GetStrategiesTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         strategy = strategyService.getStrategy(strategyId);
         Integer position = strategy.getPosition();
         List<Strategy> strategys = strategyService.getStrategysByPositionAndLimitmit(position + 1, 1);

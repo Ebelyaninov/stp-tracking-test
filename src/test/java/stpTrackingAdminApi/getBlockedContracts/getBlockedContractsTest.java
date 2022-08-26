@@ -147,7 +147,7 @@ public class getBlockedContractsTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,
             ContractState.tracked, strategyId,true, SubscriptionStatus.active,
@@ -235,7 +235,7 @@ public class getBlockedContractsTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //создаем подписку клиента slave на strategy клиента master
         steps.createSubcription(investIdSlave, ClientRiskProfile.aggressive, contractIdSlave,null,
             ContractState.tracked, strategyId,true, SubscriptionStatus.active,

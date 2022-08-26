@@ -112,7 +112,7 @@ public class StpTrackingAdminSteps {
                                                     ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile strategyRiskProfile,
                                                     StrategyStatus strategyStatus, int slaveCount, LocalDateTime date, Integer score, BigDecimal expectedRelativeYield,
                                                     String shortDescription, String ownerDescription, Boolean buyEnabled, Boolean sellEnabled,
-                                                    Boolean overloaded,String result, String management, LocalDateTime dateClose) {
+                                                    Boolean overloaded,String result, String management, LocalDateTime dateClose, List<TestsStrategy>  tagsStrategyList) {
         //находим данные по клиенту в БД social
         String image = "";
         profile = profileService.getProfileBySiebelId(SIEBLE_ID);
@@ -141,7 +141,9 @@ public class StpTrackingAdminSteps {
         feeRateProperties.put("management", new BigDecimal(management));
         List<TestsStrategy> testsStrategiesList = new ArrayList<>();
         testsStrategiesList.add(new TestsStrategy());
-        List<TestsStrategy> tagsStrategyList = new ArrayList<>();
+        if (tagsStrategyList == null){
+            tagsStrategyList = new ArrayList<>();
+        }
         strategy = new Strategy()
             .setId(strategyId)
             .setContract(contract)

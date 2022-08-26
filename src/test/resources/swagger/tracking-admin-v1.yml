@@ -6,7 +6,13 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.18.0
+  version: 1.21.0
+
+servers:
+  - url: http://trading-test.tcsbank.ru
+    description: тестовый стенд
+  - url: http://trading.tinkoff.local
+    description: боевой стенд
 
 tags:
   - name: client
@@ -311,7 +317,7 @@ paths:
       description: Закрывает торговую стратегию {strategyId}
       operationId: closeStrategy
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/StrategyId'
       responses:
@@ -587,7 +593,7 @@ paths:
       description: Запустить снятие технической блокировки с договора {contractId} клиента
       operationId: unblockContract
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/ContractId'
       responses:
@@ -606,8 +612,6 @@ paths:
           $ref: '#/components/responses/Error'
         500:
           $ref: '#/components/responses/Error'
-
-
 
   /contract/{contractId}/order:
 
@@ -629,7 +633,7 @@ paths:
       description: Отменить последнюю заявку, застрявшую в процессе синхронизации на договоре {contractId} клиента
       operationId: cancelLastOrder
       security:
-        - apiKey: [ ]
+        - apiKey: []
       parameters:
         - $ref: '#/components/parameters/ContractId'
       responses:
@@ -1200,6 +1204,11 @@ components:
           $ref: '#/components/schemas/StrategyBuyEnabled'
         sellEnabled:
           $ref: '#/components/schemas/StrategySellEnabled'
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
 
     StrategyBuyEnabled:
       description: Признак доступности покупки на стратегии
@@ -1220,6 +1229,18 @@ components:
           type: string
           minLength: 1
           example: foreign_shares
+
+    StrategyTag:
+      description: Метка
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор метки
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tinkoff-choice
 
     NullableStrategyFeeRate:
       description: Ставка комиссии (в долях) за следование за стратегией
@@ -1355,6 +1376,7 @@ components:
         - buyEnabled
         - sellEnabled
         - slavesCount
+        - tags
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1407,6 +1429,11 @@ components:
           type: integer
           format: int32
           minimum: 0
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
 
     StrategyPreview:
       description: Торговая стратегия
@@ -1417,6 +1444,7 @@ components:
         - title
         - owner
         - load
+        - tags
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1428,6 +1456,11 @@ components:
           $ref: '#/components/schemas/PreviewStrategyOwner'
         load:
           $ref: '#/components/schemas/StrategyLoad'
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
 
     StrategyOwner:
       description: Владелец стратегии
@@ -2069,7 +2102,6 @@ components:
           type: number
           format: decimal
           minimum: 0
-
 
     FeeContextPosition:
       description: Позиция портфеля для контекста начисления комиссии
