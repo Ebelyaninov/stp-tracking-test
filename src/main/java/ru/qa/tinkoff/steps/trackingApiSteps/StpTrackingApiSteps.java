@@ -15,10 +15,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
-import ru.qa.tinkoff.creator.ApiCacheApiCreator;
-import ru.qa.tinkoff.creator.FiregInstrumentsCreator;
-import ru.qa.tinkoff.creator.InvestAccountCreator;
-import ru.qa.tinkoff.creator.MarketDataCreator;
+import ru.qa.tinkoff.creator.*;
 import ru.qa.tinkoff.investTracking.entities.MasterPortfolio;
 import ru.qa.tinkoff.investTracking.entities.MasterSignal;
 import ru.qa.tinkoff.investTracking.entities.StrategyTailValue;
@@ -33,11 +30,13 @@ import ru.qa.tinkoff.social.entities.Profile;
 import ru.qa.tinkoff.social.entities.SocialProfile;
 import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
+import ru.qa.tinkoff.swagger.CADBClientAnalytic.api.ClientAnalyticApi;
+import ru.qa.tinkoff.swagger.CADBClientAnalytic.model.ClientPositionsResponse;
 import ru.qa.tinkoff.swagger.MD.api.PricesApi;
 import ru.qa.tinkoff.swagger.fireg.api.InstrumentsApi;
-import ru.qa.tinkoff.swagger.fireg.model.InstrumentGetResponse;
 import ru.qa.tinkoff.swagger.investAccountPublic.api.BrokerAccountApi;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
+import ru.qa.tinkoff.swagger.tracking.model.GetMasterPortfolioResponse;
 import ru.qa.tinkoff.swagger.trackingApiCache.model.Entity;
 import ru.qa.tinkoff.tracking.entities.*;
 import ru.qa.tinkoff.tracking.entities.enums.*;
@@ -78,6 +77,7 @@ public class StpTrackingApiSteps {
     private final FiregInstrumentsCreator<InstrumentsApi> firegInstrumentsApiCreator;
     private final BoostedReceiverImpl<String, byte[]> boostedReceiver;
     private final StrategyService strategyService;
+    private final ApiCADBClientAnalyticCreator<ClientAnalyticApi> clientAnalyticCadbApiCreator;
 
     @Autowired(required = false)
     MasterPortfolioDao masterPortfolioDao;
@@ -755,6 +755,116 @@ public class StpTrackingApiSteps {
         return positionList;
     }
 
+    @Step("Добавляем четыре позиции в  портфель в master_portfolio")
+    public List<MasterPortfolio.Position> masterFourPositions(Date date, String ticker1, String tradingClearingAccount1, UUID positionId1,
+                                                               String quantity1, String ticker2, String tradingClearingAccount2,UUID positionId2,
+                                                               String quantity2, String ticker3, String tradingClearingAccount3,UUID positionId3,
+                                                               String quantity3,String ticker4, String tradingClearingAccount4,UUID positionId4,
+                                                              String quantity4 ) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
+            .quantity(new BigDecimal(quantity1))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
+            .quantity(new BigDecimal(quantity2))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .positionId(positionId3)
+            .quantity(new BigDecimal(quantity3))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker4)
+            .tradingClearingAccount(tradingClearingAccount4)
+            .positionId(positionId4)
+            .quantity(new BigDecimal(quantity4))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        return positionList;
+    }
+
+    @Step("Добавляем пять позиции в  портфель в master_portfolio")
+    public List<MasterPortfolio.Position> masterFivePositions(Date date, String ticker1, String tradingClearingAccount1, UUID positionId1,
+                                                              String quantity1, String ticker2, String tradingClearingAccount2,UUID positionId2,
+                                                              String quantity2, String ticker3, String tradingClearingAccount3,UUID positionId3,
+                                                              String quantity3,String ticker4, String tradingClearingAccount4,UUID positionId4,
+                                                              String quantity4, String ticker5, String tradingClearingAccount5,UUID positionId5,
+                                                              String quantity5) {
+        Tracking.Portfolio.Position positionAction = Tracking.Portfolio.Position.newBuilder()
+            .setAction(Tracking.Portfolio.ActionValue.newBuilder()
+                .setAction(Tracking.Portfolio.Action.SECURITY_BUY_TRADE).build())
+            .build();
+        List<MasterPortfolio.Position> positionList = new ArrayList<>();
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker1)
+            .tradingClearingAccount(tradingClearingAccount1)
+            .positionId(positionId1)
+            .quantity(new BigDecimal(quantity1))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker2)
+            .tradingClearingAccount(tradingClearingAccount2)
+            .positionId(positionId2)
+            .quantity(new BigDecimal(quantity2))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker3)
+            .tradingClearingAccount(tradingClearingAccount3)
+            .positionId(positionId3)
+            .quantity(new BigDecimal(quantity3))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker4)
+            .tradingClearingAccount(tradingClearingAccount4)
+            .positionId(positionId4)
+            .quantity(new BigDecimal(quantity4))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        positionList.add(MasterPortfolio.Position.builder()
+            .ticker(ticker5)
+            .tradingClearingAccount(tradingClearingAccount5)
+            .positionId(positionId5)
+            .quantity(new BigDecimal(quantity5))
+            .changedAt(date)
+            .lastChangeDetectedVersion(null)
+            .lastChangeAction((byte) positionAction.getAction().getActionValue())
+            .build());
+        return positionList;
+    }
+
     @Step("Рассчитываем price в абсолютном значениепо инструменту типа bond")
     public BigDecimal valuePosBonds(String priceTs, String nominal, BigDecimal minPriceIncrement,
                                     String aciValue) {
@@ -1109,6 +1219,20 @@ public class StpTrackingApiSteps {
         log.info("Команда в test.topic.to.delete:  {}", message);
         //отправляем событие в топик kafka test.topic.to.delete
         oldKafkaService.send(Topics.TEST_TOPIC_TO_DELETE, key, message);
+    }
+
+
+
+    @Step("Метод получения данных о позициях в портфеле пользователя - CADB")
+    @SneakyThrows
+    public ClientPositionsResponse getClientPositionsCadb(UUID investId, UUID accountId) {
+        ClientPositionsResponse res = clientAnalyticCadbApiCreator.get().apiV1ClientPositionsGet()
+            .investIdQuery(investId)
+            .accountIdQuery(accountId)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(ClientPositionsResponse.class));
+        return res;
+
     }
 
 

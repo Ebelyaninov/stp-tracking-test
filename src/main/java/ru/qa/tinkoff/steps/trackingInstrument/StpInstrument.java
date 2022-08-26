@@ -169,7 +169,9 @@ public class StpInstrument {
     public String typeYNDX = "share";
     public String companyYNDX = "Яндекс";
     public String instrumentYNDX = tickerYNDX + "_" + classCodeYNDX;
-
+    public String briefNameYNDX = "Yandex";
+    public String imageYNDX = "NL0009805522.png";
+    public String currencyYNDX = "rub";
 
     public String tickerUSD = "USD000UTSTOM";
     public String tradingClearingAccountUSD = "MB9885503216";
@@ -220,7 +222,10 @@ public class StpInstrument {
     public UUID positionUIDALFAperp = UUID.fromString("f179f0f0-ec6e-4f9f-9980-3c033ee248d1");
     public String classCodeALFAperp = "SPBBND";
     public String instrumentALFAperp = tickerALFAperp + "_" + classCodeALFAperp;
-
+    public String briefNameALFAperp = "Alfa Bond Issuance PLC";
+    public String imageALFAperp = "RU000A0JUB02.png";
+    public String currencyALFAperp = "usd";
+    public String typeALFAperp = "bond";
 
     public String tickerXS1589324075 = "XS1589324075";
     public String classCodeXS1589324075 = "TQOD";
@@ -320,10 +325,14 @@ public class StpInstrument {
     public UUID positionIdQCOM = UUID.fromString("4e614863-4656-4e4d-be0b-cb66d76e80d1");
 
     public String tickerTUSD = "TUSD";
-    public String tradingClearingAccountTUSD = "L01+00000F00";
+    public String tradingClearingAccountTUSD = "L01+00002F00";
     public String classCodeTUSD = "TQTD";
     public String instrumentTUSD = tickerTUSD + "_" + classCodeTUSD;
-    public UUID positionIdTUSD = UUID.fromString("8ccf8aee-3cdf-47e3-b8ad-737900ea64c0");
+    public UUID positionIdTUSD = UUID.fromString("0fb99984-ee17-4667-bb21-fbd8cee94223");
+    public String briefNameTUSD = "Тинькофф Вечный портфель USD";
+    public String imageTUSD = "TUSD.png";
+    public String currencyTUSD = "usd";
+    public String typeTUSD = "etf";
 
     public String tickerTECH = "TECH";
     public String tradingClearingAccountTECH = "L01+00000SPB";
@@ -349,6 +358,10 @@ public class StpInstrument {
     public String tradingClearingAccountBYN = "MB9885503216";
     public String classCodeBYN = "CETS";
     public UUID positionIdBYN = UUID.fromString("558a8c0b-9d68-4da5-a375-9be773ea32b0");
+    public String typeBYN = "currency";
+    public String briefNameBYN = "Белорусский рубль";
+    public String imageBYN = "blr.png";
+    public String currencyBYN = "rub";
 
     public String tickerXAU = "GLDRUB_TOM";
     public String tradingClearingAccountXAU = "MB9885503216";
@@ -473,6 +486,13 @@ public class StpInstrument {
     public String classCodeAMDRUB = "CETS";
     public String instrumentAMDRUB = tickerAMDRUB + "_" + classCodeAMDRUB;
     public UUID positionIdAMDRUB = UUID.fromString("4515b482-71f0-4193-aa0a-b91efdab7062");
+
+
+    public String tickerGAZP = "GAZP";
+    public String tradingClearingAccountGAZP = "L01+00002F00";
+    public UUID positionIdGAZP = UUID.fromString("4f9d0c81-cdf9-4735-8295-bacbfa3b8a51");
+    public String classCodeGAZP = "TQBR";
+    public String instrumentGAZP = tickerGAZP + "_" + classCodeGAZP;
 
 
     public List<String> tradingStatusesFalse = Arrays.asList(

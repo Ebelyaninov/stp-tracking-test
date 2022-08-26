@@ -183,7 +183,8 @@ tasks.compileJava {
         "generateFiregApi",
         "generateMDApi",
         "generateSocialTrackingStrategy",
-        "generateTariffApi"
+        "generateTariffApi",
+        "generateCADBClientAnalyticApi"
     )
 }
 
@@ -451,6 +452,30 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
     apiPackage.set("$openApiPackage.Tariff.api")
     invokerPackage.set("$openApiPackage.Tariff.invoker")
     modelPackage.set("$openApiPackage.Tariff.model")
+    library.set("rest-assured")
+    generateModelDocumentation.set(false)
+    generateApiDocumentation.set(false)
+    configOptions.set(
+        mapOf(
+            "dateLibrary" to "java8",
+            "serializationLibrary" to "jackson"
+        )
+    )
+}
+
+tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateCADBClientAnalyticApi") {
+    val openApiPackage = "ru.qa.tinkoff.swagger"
+    val path = "$buildDir/generated/sources/swagger"
+
+    inputSpec.set("$projectDir/src/test/resources/swagger/CADB-client-Analytic-API.yml")
+    outputDir.set(path)
+
+    generateApiTests.set(false)
+    skipValidateSpec.set(true)
+    generatorName.set("java")
+    apiPackage.set("$openApiPackage.CADBClientAnalytic.api")
+    invokerPackage.set("$openApiPackage.CADBClientAnalytic.invoker")
+    modelPackage.set("$openApiPackage.CADBClientAnalytic.model")
     library.set("rest-assured")
     generateModelDocumentation.set(false)
     generateApiDocumentation.set(false)
