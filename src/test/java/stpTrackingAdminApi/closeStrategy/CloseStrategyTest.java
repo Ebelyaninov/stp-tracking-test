@@ -195,7 +195,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_STRATEGY_EVENT);
         Response responseCloseStrategy = strategyApiStrategyApiAdminCreator.get().closeStrategy()
@@ -243,7 +243,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.closed, 0, LocalDateTime.now().minusHours(1), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", LocalDateTime.now());
+            "OwnerTEST", true, true, false, "0.2", "0.04", LocalDateTime.now(), null);
         Response responseCloseStrategy = strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
             .xAppNameHeader("invest")
@@ -282,7 +282,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод closeStrategy
         StrategyApi.CloseStrategyOper closeStrategy = strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -312,7 +312,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод confirmMasterClient со значением Login > 20 символов
         strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -340,7 +340,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .xAppNameHeader("invest")
             .xDeviceIdHeader("test")
@@ -365,7 +365,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод confirmMasterClient с неверным значением api-key
         strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trackidngc"))
@@ -392,7 +392,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод confirmMasterClient с неверным значением api-key
         strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, keyRead))
@@ -418,7 +418,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод CloseStrategy
         StrategyApi.CloseStrategyOper closeStrategy = strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -448,7 +448,7 @@ public class CloseStrategyTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.frozen, 423, LocalDateTime.now(), 3, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод CloseStrategy
         StrategyApi.CloseStrategyOper closeStrategy = strategyApiStrategyApiAdminCreator.get().closeStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))

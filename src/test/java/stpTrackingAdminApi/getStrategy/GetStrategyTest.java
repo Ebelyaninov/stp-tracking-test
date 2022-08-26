@@ -25,6 +25,7 @@ import ru.qa.tinkoff.investTracking.services.StrategyTailValueDao;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
 import ru.qa.tinkoff.social.entities.SocialProfile;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingAdminSteps.StpTrackingAdminSteps;
@@ -46,7 +47,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -154,7 +157,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
@@ -180,6 +183,7 @@ public class GetStrategyTest {
         assertThat("score не равно", responseExep.getScore(), is(score));
         assertThat("feeRate.management не равно", responseExep.getFeeRate().getManagement().toString(), is("0.04"));
         assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
+        assertThat("tags.id не равен", responseExep.getTags().toString(), is("[]"));
     }
 
 
@@ -193,7 +197,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, null, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
@@ -229,10 +233,13 @@ public class GetStrategyTest {
     @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
     void C536280() {
         UUID strategyId = UUID.randomUUID();
+        List<TestsStrategy> tagsStrategiesList = new ArrayList<>();
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_choice"));
+        tagsStrategiesList.add(new TestsStrategy().setId("tinkoff_not_choice"));
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, false, false, "0.2", "0.04", null);
+            "OwnerTEST", true, false, false, "0.2", "0.04", null, tagsStrategiesList);
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
@@ -260,6 +267,8 @@ public class GetStrategyTest {
         assertThat("buyEnabled не равно true", responseExep.getBuyEnabled(), is(true));
         assertThat("sellEnabled не false", responseExep.getSellEnabled(), is(false));
         assertThat("slavesCount не равен", responseExep.getSlavesCount(), is(0));
+        assertThat("tags.id не равен", responseExep.getTags().get(0).getId(), is("tinkoff_choice"));
+        assertThat("tags.id не равен", responseExep.getTags().get(1).getId(), is("tinkoff_not_choice"));
     }
 
 
@@ -273,7 +282,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -294,7 +303,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод getStrategy
         strategyApiStrategyApiAdminCreator.get().getStrategy()
             .xAppNameHeader("invest")
@@ -315,7 +324,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод getStrategy
         strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, "trading"))
@@ -338,7 +347,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //вызываем метод getStrategy
         Response expectedResponse = strategyApiStrategyApiAdminCreator.get().getStrategy()
             .reqSpec(r -> r.addHeader(xApiKey, key))
@@ -369,7 +378,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, strategyCurrency, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();
@@ -430,7 +439,7 @@ public class GetStrategyTest {
         steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now(), 1, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         Client clientDB = clientService.getClient(investId);
         String nickname = clientDB.getSocialProfile().getNickname();
         String ownerDescription = strategyService.getStrategy(strategyId).getOwnerDescription();

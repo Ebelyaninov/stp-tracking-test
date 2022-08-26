@@ -107,7 +107,7 @@ public class GetSignalsErrorTest {
         stpTrackingAdminSteps.createClientWithContractAndStrategy(siebel.siebelIdMasterAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
             strategyId, stpTrackingAdminSteps.getTitleStrategy(), description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.active, 0, LocalDateTime.now().minusDays(1), 1, new BigDecimal(10.00), "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
     }
 
     @AfterEach

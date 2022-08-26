@@ -153,7 +153,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем ActiveStrategy
@@ -199,7 +199,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04",null);
+            "OwnerTEST", true, true, false, "0.2", "0.04",null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем метод activateStrategy с некоррентным значением api-key
@@ -223,7 +223,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем метод activateStrategy с некоррентным значением api-key
@@ -247,7 +247,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем метод activateStrategy без api-key
@@ -293,7 +293,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04",null);
+            "OwnerTEST", true, true, false, "0.2", "0.04",null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем метод activateStrategy без api-key
@@ -316,7 +316,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04",null);
+            "OwnerTEST", true, true, false, "0.2", "0.04",null, null);
         //создаем запись в табл.master_portfolio_value  по стоимости портфеля
         createDateMasterPortfolioValue(strategyId, 0, 4, "6551.10", "6551.10");
         //Вызываем метод activateStrategy без api-key
@@ -343,7 +343,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04",null);
+            "OwnerTEST", true, true, false, "0.2", "0.04",null, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -376,7 +376,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -410,7 +410,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -455,7 +455,7 @@ public class ActivateStrategyErrorTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             strategyStatus, 0, LocalDateTime.now(), score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", dateClose);
+            "OwnerTEST", true, true, false, "0.2", "0.04", dateClose, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);

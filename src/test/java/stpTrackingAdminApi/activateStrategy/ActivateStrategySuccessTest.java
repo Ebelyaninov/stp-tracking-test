@@ -166,7 +166,7 @@ public class ActivateStrategySuccessTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
@@ -226,7 +226,7 @@ public class ActivateStrategySuccessTest {
         steps.createClientWithContractAndStrategy(siebelId, investId, null, contractId, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.usd, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
             StrategyStatus.draft, 0, null, score, expectedRelativeYield, "TEST",
-            "OwnerTEST", true, true, false, "0.2", "0.04", null);
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
         // создаем портфель для master в cassandra
         List<MasterPortfolio.Position> masterPos = new ArrayList<>();
         steps.createMasterPortfolio(contractId, strategyId, 1, "6551.10", masterPos);
