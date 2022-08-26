@@ -1,0 +1,477 @@
+---
+openapi: "3.0.3"
+info:
+  title: "Client Analytic API"
+  version: "1.0.0"
+tags:
+  - name: "client-analytic"
+servers:
+  - url: "http://invest-qa.tinkoff.ru/client-analytic"
+    description: "qa"
+  - url: "http://ca.invest-client-analytic-qa2.v2.dev2.k8s.tcsbank.ru/client-analytic"
+    description: "qa2"
+  - url: "http://ca.invest-client-analytic-qa3.v2.dev2.k8s.tcsbank.ru/client-analytic"
+    description: "qa3"
+  - url: "https://invest-prod.tinkoff.ru/client-analytic"
+    description: "prod"
+  - url: "https://ca.tiger-client-analytic-stage.internal.aws-euc1-prod1.prod.k8s.tcsbank.ru/client-analytic"
+    description: "aws-stage"
+paths:
+  /api/v1/client/positions:
+    get:
+      summary: "Возвращает позиции в портфеле пользователя"
+      description: "Возвращает список позиции в портфеле пользователя"
+      parameters:
+        - name: "invest_id"
+          in: "query"
+          description: "Идентификатор пользователя в Тинькофф Инвестиции"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+            x-go-type: "uuid.UUID"
+          x-oapi-codegen-extra-tags:
+            query: "invest_id,required"
+        - name: "account_id"
+          in: "query"
+          description: "Идентификатор счета пользователя, для которого нужно получить позиции"
+          required: true
+          schema:
+            type: "string"
+          x-oapi-codegen-extra-tags:
+            query: "account_id,required"
+      tags:
+        - "client-analytic"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client_positions_response"
+        "400":
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "404":
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+  /api/v1/client/portfolio:
+    get:
+      summary: "Возвращает портфель пользователя"
+      description: "Возвращает портфель пользователя"
+      parameters:
+        - name: "invest_id"
+          in: "query"
+          description: "Идентификатор пользователя в Тинькофф Инвестиции"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+            x-go-type: "uuid.UUID"
+          x-oapi-codegen-extra-tags:
+            query: "invest_id,required"
+        - name: "account_id"
+          in: "query"
+          description: "Идентификатор счета пользователя, для которого нужно получить данные по портфелю"
+          required: false
+          schema:
+            type: "string"
+          x-oapi-codegen-extra-tags:
+            query: "account_id"
+        - name: "include_isa"
+          in: "query"
+          description: "Параметр, указывающий на необходимость включить в данные портфеля счет по инвесткопилке. По умолчанию, если значение параметра не передали, include_isa = false"
+          required: false
+          schema:
+            type: "boolean"
+          x-oapi-codegen-extra-tags:
+            query: "include_isa"
+      tags:
+        - "client-analytic"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client_portfolio_response"
+        "400":
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "404":
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+  /api/v1/client/positions/bare:
+    get:
+      summary: "Возвращает позиции в портфеле пользователя"
+      description: "Возвращает список позиций в портфеле пользователя"
+      parameters:
+        - name: "invest_id"
+          in: "query"
+          description: "Идентификатор пользователя в Тинькофф Инвестиции"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+            x-go-type: "uuid.UUID"
+          x-oapi-codegen-extra-tags:
+            query: "invest_id,required"
+        - name: "accounts_id"
+          in: "query"
+          description: "Идентификаторы счетов пользователя, для которых нужно получить позиции"
+          required: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          x-oapi-codegen-extra-tags:
+            query: "accounts_id"
+        - name: "include_isa"
+          in: "query"
+          description: "Параметр, указывающий на необходимость включить в данные по позициям счет по инвесткопилке. По умолчанию, если значение параметра не передали, include_isa = false"
+          required: false
+          schema:
+            type: "boolean"
+          x-oapi-codegen-extra-tags:
+            query: "include_isa"
+      tags:
+        - "client-analytic"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client_bare_positions_response"
+        "400":
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "404":
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+components:
+  schemas:
+    client_positions_response:
+      allOf:
+        - $ref: "#/components/schemas/current_total_amounts"
+        - type: "object"
+          required:
+            - "portfolio_fifo_yields"
+            - "portfolio_average_yields"
+            - "portfolio_dailyfifo_yields"
+            - "items"
+          properties:
+            portfolio_fifo_yields:
+              $ref: "#/components/schemas/total_yields"
+            portfolio_average_yields:
+              $ref: "#/components/schemas/total_yields"
+            portfolio_dailyfifo_yields:
+              $ref: "#/components/schemas/total_yields"
+            items:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/item"
+    client_portfolio_response:
+      allOf:
+        - $ref: "#/components/schemas/current_total_amounts"
+        - type: "object"
+          required:
+            - "portfolio_fifo_yields"
+            - "portfolio_average_yields"
+            - "portfolio_dailyfifo_yields"
+          properties:
+            portfolio_fifo_yields:
+              $ref: "#/components/schemas/total_yields"
+            portfolio_average_yields:
+              $ref: "#/components/schemas/total_yields"
+            portfolio_dailyfifo_yields:
+              $ref: "#/components/schemas/total_yields"
+    client_bare_positions_response:
+      allOf:
+        - $ref: "#/components/schemas/current_total_amounts"
+        - type: "object"
+          required:
+            - "items"
+          properties:
+            items:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/bare_item"
+    current_total_amounts:
+      type: "object"
+      required:
+        - "current_amounts"
+        - "current_amounts_real"
+        - "current_amount_currencies"
+        - "current_amount_bonds"
+        - "current_amount_stocks"
+        - "current_amount_etfs"
+        - "current_amount_sps"
+        - "current_amount_options"
+      properties:
+        current_amounts:
+          $ref: "#/components/schemas/total_amounts"
+        current_amounts_real:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_currencies:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_bonds:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_stocks:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_etfs:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_sps:
+          $ref: "#/components/schemas/total_amounts"
+        current_amount_options:
+          $ref: "#/components/schemas/total_amounts"
+    total_amounts:
+      type: "object"
+      description: "Общая стоимость в разных валютах"
+      required:
+        - "rub"
+        - "usd"
+        - "eur"
+      properties:
+        rub:
+          type: "number"
+          description: "Общая стоимость в рублях"
+          x-go-type: "decimal.Decimal"
+        usd:
+          type: "number"
+          description: "Общая стоимость в долларах"
+          x-go-type: "decimal.Decimal"
+        eur:
+          type: "number"
+          description: "Общая стоимость в евро"
+          x-go-type: "decimal.Decimal"
+    amounts:
+      allOf:
+        - $ref: "#/components/schemas/total_amounts"
+        - type: "object"
+          description: "Значение в валюте инструмента"
+          required:
+            - "inst"
+          properties:
+            inst:
+              type: "number"
+              description: "Общая стоимость в валюте инструмента"
+              x-go-type: "decimal.Decimal"
+    total_yields:
+      type: "object"
+      description: "Общая доходность портфеля пользователя"
+      required:
+        - "absolute"
+        - "relative"
+      properties:
+        absolute:
+          $ref: "#/components/schemas/total_amounts"
+        relative:
+          $ref: "#/components/schemas/total_amounts"
+    yields:
+      type: "object"
+      description: "Доходность портфеля пользователя"
+      required:
+        - "absolute"
+        - "relative"
+      properties:
+        absolute:
+          $ref: "#/components/schemas/amounts"
+        relative:
+          $ref: "#/components/schemas/amounts"
+    item:
+      allOf:
+        - $ref: "#/components/schemas/common_item"
+        - type: "object"
+          description: "Список позиций портфеля"
+          required:
+            - "position_fifo_yields"
+            - "position_average_yields"
+            - "position_dailyfifo_yields"
+            - "accrued_int"
+            - "prices"
+          properties:
+            position_fifo_yields:
+              $ref: "#/components/schemas/yields"
+            position_average_yields:
+              $ref: "#/components/schemas/yields"
+            position_dailyfifo_yields:
+              $ref: "#/components/schemas/yields"
+            accrued_int:
+              type: "number"
+              description: "Накопленный купонный доход"
+              x-go-type: "decimal.Decimal"
+            portfolio_percent:
+              type: "number"
+              description: "Доля бумаги в портфеле (только для положительных позиций)"
+              x-go-type: "decimal.Decimal"
+            prices:
+              $ref: "#/components/schemas/prices"
+    bare_item:
+      allOf:
+        - $ref: "#/components/schemas/common_item"
+        - type: "object"
+          description: "Список позиций портфеля"
+          required:
+            - "current_prices"
+          properties:
+            current_prices:
+              $ref: "#/components/schemas/amounts"
+    common_item:
+      type: "object"
+      description: "Список позиций портфеля"
+      required:
+        - "class_code"
+        - "account"
+        - "instrument_type"
+        - "quantity"
+        - "currency"
+        - "internal_position_id"
+        - "internal_instrument_id"
+        - "current_position_amounts"
+        - "instrument_uid"
+        - "position_uid"
+        - "virtual_flag"
+      properties:
+        ticker:
+          type: "string"
+          description: "Тикер инструмента"
+        isin:
+          type: "string"
+          description: "ISIN инструмента"
+        instrument_type:
+          type: "string"
+          description: "Тип инструмента"
+          enum:
+            - "share"
+            - "bond"
+            - "currency"
+            - "etf"
+            - "sp"
+            - "futures"
+            - "stock"
+            - "option"
+        quantity:
+          type: "number"
+          description: "Количество бумаг в портфеле"
+          x-go-type: "decimal.Decimal"
+        currency:
+          type: "string"
+          description: "Валюта инструмента"
+        internal_position_id:
+          type: "string"
+          format: "uuid"
+          description: "Уникальный в рамках сервиса client-analytics индентификатор позиции инструмента"
+          x-go-type: "uuid.UUID"
+        internal_instrument_id:
+          type: "string"
+          format: "uuid"
+          description: "Уникальный в рамках сервиса client-analytics индентификатор инструмента"
+          x-go-type: "uuid.UUID"
+        current_var_margin:
+          type: "number"
+          description: "Вариационная маржа (параметр возвращается только для фьючерсов)"
+          x-go-type: "decimal.Decimal"
+        virtual_flag:
+          type: "boolean"
+          description: "Флаг виртуальной позиции"
+        virtual_end_date:
+          type: "string"
+          format: "date"
+          description: "Минимальная дата окончания действия виртуальной акции (параметр возвращается только для позиции с virtual_flag = true)"
+          x-go-type: "date.Date"
+        is_reserved:
+          type: "boolean"
+          description: "Флаг факта резерва позиции к продаже (параметр возвращается только для позиции с virtual_flag = true)"
+        class_code:
+          type: "string"
+          description: "Class Code инструмента"
+        account:
+          type: "string"
+          description: "Торгово-клиринговый счет"
+        current_position_amounts:
+          $ref: "#/components/schemas/amounts"
+        position_uid:
+          type: "string"
+          format: "uuid"
+          description: "Уникальный индентификатор позиции инструмента"
+          x-go-type: "uuid.UUID"
+        instrument_uid:
+          type: "string"
+          format: "uuid"
+          description: "Уникальный индентификатор инструмента"
+          x-go-type: "uuid.UUID"
+    prices:
+      type: "object"
+      description: "Цены"
+      required:
+        - "current_prices"
+        - "fifo_prices"
+        - "dailyfifo_prices"
+        - "average_prices"
+      properties:
+        current_prices:
+          $ref: "#/components/schemas/amounts"
+        fifo_prices:
+          $ref: "#/components/schemas/amounts"
+        dailyfifo_prices:
+          $ref: "#/components/schemas/amounts"
+        average_prices:
+          $ref: "#/components/schemas/amounts"
+    error:
+      type: "object"
+      description: "Сообщение об ошибке"
+      required:
+        - "error_message"
+        - "error_id"
+        - "error_code"
+        - "error_details"
+      properties:
+        error_message:
+          type: "string"
+          description: "Текст сообщения об ошибке"
+        error_id:
+          type: "string"
+          description: "Уникальный на небольшом интервале времени короткий идентификатор ошибки. Может быть показан пользователю для упрощения обратной связи, заведения сбоев."
+        error_code:
+          type: "string"
+          description: "Код ошибки. На этот код может быть завязана бизнес-логика на клиенте. Код является частью контракта API"
+        error_details:
+          type: "object"
+          description: "Детали ошибки для упрощения диагностики"

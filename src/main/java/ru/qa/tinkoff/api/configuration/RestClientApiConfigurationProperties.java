@@ -27,4 +27,6 @@ public class RestClientApiConfigurationProperties {
     private String trackingApiSocialStrategyBaseUrl;
 
     private String tradingFiregApiBaseUrl;
+
+    private String cadbClientAnalyticApiBaseUrl;
 }
