@@ -4,7 +4,7 @@ group = "ru.qa.tinkoff"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val springBootVersion = "2.7.1"
+    val springBootVersion = "2.7.3"
     java
     application
     id("io.freefair.lombok") version "6.0.0-m2"
@@ -44,7 +44,18 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDir("$buildDir/generated/sources/swagger/src/main/java")
+            srcDirs("$buildDir/generated/sources/swagger/RestAssured/src/main/java",
+                "$buildDir/generated/sources/swagger/RestAssuredAdminApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateInvestAccountPublicApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateMiofApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateTrackingSlaveCacheApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateTrackingApiCacheApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateFiregApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateMDApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateSocialTrackingStrategy/src/main/java",
+                "$buildDir/generated/sources/swagger/generateTariffApi/src/main/java",
+                "$buildDir/generated/sources/swagger/generateCADBClientAnalyticApi/src/main/java",
+            )
         }
         java {
             srcDir("$buildDir/generated/source/proto/main/java")
@@ -191,10 +202,11 @@ tasks.compileJava {
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("RestAssured") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tracking-api.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -215,10 +227,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("Res
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("RestAssuredAdminApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tracking-admin-v1.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -239,10 +252,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("Res
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateInvestAccountPublicApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/invest-account-public-api-v1.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -263,10 +277,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateMiofApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/miof-api.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -289,10 +304,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTrackingSlaveCacheApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tracking-cache-slave-v1.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -315,10 +331,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateFiregApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/fireg/swagger.yaml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -344,10 +361,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateMDApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/md-api.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -368,10 +386,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateSocialTrackingStrategy") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tracking-strategy-v1.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -392,10 +411,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTrackingApiCacheApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tracking-cache-api-v1.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -417,10 +437,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 //
 //tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTradingApi") {
 //    val openApiPackage = "ru.qa.tinkoff.swagger"
-//    val path = "$buildDir/generated/sources/swagger"
+//    val path = "$buildDir/generated/sources/swagger/$name"
 //
 //    inputSpec.set("$projectDir/src/test/resources/swagger/trading-api.yml")
 //    outputDir.set(path)
+//    outputs.dir(path)
 //
 //    generateApiTests.set(false)
 //    skipValidateSpec.set(true)
@@ -441,10 +462,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateTariffApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/tariff-module.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
@@ -465,10 +487,11 @@ tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("gen
 
 tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateCADBClientAnalyticApi") {
     val openApiPackage = "ru.qa.tinkoff.swagger"
-    val path = "$buildDir/generated/sources/swagger"
+    val path = "$buildDir/generated/sources/swagger/$name"
 
     inputSpec.set("$projectDir/src/test/resources/swagger/CADB-client-Analytic-API.yml")
     outputDir.set(path)
+    outputs.dir(path)
 
     generateApiTests.set(false)
     skipValidateSpec.set(true)
