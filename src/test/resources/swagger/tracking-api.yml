@@ -7,7 +7,7 @@ info:
   contact:
     name: Vyacheslav Klapatnyuk
     email: v.klapatnyuk@tinkoff.ru
-  version: 1.17.0
+  version: 1.18.0
 
 tags:
   - name: contract
@@ -1144,6 +1144,7 @@ components:
         - subscription
         - tests
         - isOverloaded
+        - tags
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1201,6 +1202,23 @@ components:
         isOverloaded:
           description: Признак перегруженности стратегии
           type: boolean
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
+
+    StrategyTag:
+      description: Метка
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Идентификатор тэга
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+          example: tinkoff-choice
 
     StrategyOwner:
       description: Владелец стратегии
@@ -1881,6 +1899,7 @@ components:
         - relativeYield
         - portfolioValues
         - characteristics
+        - tags
       properties:
         id:
           $ref: '#/components/schemas/StrategyId'
@@ -1912,6 +1931,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CatalogStrategyCharacteristic'
+        tags:
+          description: Список меток стратегии
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyTag'
 
     CatalogStrategyOwner:
       description: Владелец стратегии
