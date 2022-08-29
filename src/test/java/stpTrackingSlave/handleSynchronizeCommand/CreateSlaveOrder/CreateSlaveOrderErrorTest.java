@@ -303,6 +303,7 @@ public class CreateSlaveOrderErrorTest {
         Instant createdAtSlaveOrder = createdAt.toInstant();
         //проверяем параметры SlaveOrder
         assertThat("State не равно", slaveOrder2.getState().toString(), is("0"));
+        assertThat("order_id пустой", slaveOrder2.getOrderId(), is(null));
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5)).stream()
             .filter(key -> key.getKey().equals(contractIdSlave))
@@ -566,6 +567,8 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         Integer state = null;
         assertThat("State не равно", slaveOrder2.getState(), is(state));
+
+
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
         Pair<String, byte[]> message = messages.stream()
@@ -638,6 +641,7 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         Integer state = null;
         assertThat("State не равно", slaveOrder2.getState(), is(state));
+
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_CONTRACT_EVENT, Duration.ofSeconds(5)).stream()
             .filter(key -> key.getKey().equals(contractIdSlave))
@@ -780,6 +784,7 @@ public class CreateSlaveOrderErrorTest {
         //проверяем параметры SlaveOrder
         Integer state = null;
         assertThat("State не равно", slaveOrder2.getState(), is(state));
+
         //смотрим, сообщение, которое поймали в топике kafka
         List<Pair<String, byte[]>> messages = kafkaReceiver.receiveBatch(TRACKING_DELAY_COMMAND, Duration.ofSeconds(5));
         Pair<String, byte[]> message = messages.stream()

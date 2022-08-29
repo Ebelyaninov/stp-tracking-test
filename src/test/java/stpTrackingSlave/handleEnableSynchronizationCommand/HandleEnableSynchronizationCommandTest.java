@@ -347,7 +347,8 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(109), new BigDecimal(3), (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            id, new BigDecimal(109), new BigDecimal(3), (byte) 0, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -417,7 +418,8 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, attempts_count, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(2), (byte) 0, instrument.tickerALFAperp, instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp);
+            id, new BigDecimal(500), new BigDecimal(2), (byte) 0, instrument.tickerALFAperp,
+            instrument.tradingClearingAccountALFAperp, instrument.positionIdALFAperp, null);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -514,7 +516,7 @@ public class HandleEnableSynchronizationCommandTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 100, action, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA, positionIdA);
+            id, new BigDecimal(500), new BigDecimal(3), (byte) 0, tickerA, tradingClearingAccountA, positionIdA, null);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию

@@ -364,7 +364,7 @@ public class getOrdersErrorTest {
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
             action, classCode, 3, filledQuantity, idempotencyKey,
-            UUID.randomUUID(), price, quantity, state, ticker, tradingClearingAccount, positionId) ;
+            UUID.randomUUID(), price, quantity, state, ticker, tradingClearingAccount, positionId, null) ;
     }
 
     //метод создает записи по заявкам в рамках одной стратегии
