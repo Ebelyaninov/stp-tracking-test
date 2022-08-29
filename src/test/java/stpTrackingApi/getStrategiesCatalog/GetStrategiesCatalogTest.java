@@ -53,8 +53,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 @Epic("getStrategiesCatalog - Получение каталога стратегий")
@@ -309,6 +308,7 @@ public class GetStrategiesCatalogTest {
 
     @Test
     @AllureId("1105850")
+    @Disabled
     @DisplayName("C1105850.GetStrategiesCatalog.Получение каталога торговых стратегий, фильтр conservative-risk-profile")
     @Subfeature("Успешные сценарии")
     @Description("Метод для получения каталога торговых стратегий.")
@@ -395,6 +395,15 @@ public class GetStrategiesCatalogTest {
             listStrategyIdsFromSocialApi.add(liteStrategies.get(i).getId());
         }
         assertThat("идентификаторы стратегий не совпадают", listStrategyIdsFromApi, is(listStrategyIdsFromSocialApi));
+        Set<List<StrategyTag>> getStrategiesCatalogTagsList = new HashSet<>();
+        for (int i = 0; i < getStrategiesCatalog.getItems().size(); i++) {
+            getStrategiesCatalogTagsList.add(buildTags(getStrategiesCatalog.getItems().get(i).getTags()));
+        }
+        Set<List<StrategyTag>> getLiteStrategiesResponseTagsList = new HashSet<>();
+        for (int i = 0; i < liteStrategies.size(); i++) {
+            getLiteStrategiesResponseTagsList.add(liteStrategies.get(i).getTags());
+        }
+        assertThat("tags стратегии не равен", getStrategiesCatalogTagsList, is(getLiteStrategiesResponseTagsList));
     }
 
 
@@ -602,7 +611,8 @@ public class GetStrategiesCatalogTest {
             is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(0).getSubtitle()));
         assertThat("characteristics.expected-relative-yield стратегии не равно", getStrategiesCatalog.getItems().get(0).getCharacteristics().get(2).getValue(),
             is(liteStrategies.get(liteStrategies.size() - 1).getCharacteristics().get(2).getValue()));
-
+        assertThat("tags стратегии не равно", getStrategiesCatalog.getItems().get(0).getTags(),
+            equalTo(liteStrategies.get(liteStrategies.size() - 1).getTags()));
     }
 
 
@@ -825,5 +835,17 @@ public class GetStrategiesCatalogTest {
         return Long.parseLong(valueNew);
     }
 
+    private List<StrategyTag> buildTags(List<ru.qa.tinkoff.swagger.tracking.model.StrategyTag> tags) {
+        return tags.stream()
+            .map(ru.qa.tinkoff.swagger.tracking.model.StrategyTag::getId)
+            .map(this::buildTag)
+            .collect(Collectors.toList());
+    }
+
+    private StrategyTag buildTag(String id) {
+        StrategyTag strategyTag = new StrategyTag();
+        strategyTag.setId(id);
+        return strategyTag;
+    }
 
 }

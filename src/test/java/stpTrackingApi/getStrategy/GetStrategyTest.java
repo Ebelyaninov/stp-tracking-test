@@ -28,6 +28,7 @@ import ru.qa.tinkoff.investTracking.services.*;
 import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingAdminStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingApiStepsConfiguration;
@@ -301,6 +302,7 @@ public class GetStrategyTest {
         assertThat("Получили expected-relative-yield", checkStrategyCharacteristicsExpectedRelativeYield, is(false));
         assertThat("value не равно", strategyCharacteristics.get(0).getItems().get(1).getValue(), is("30,0%"));
         assertThat("isOverload != false", getStrategy.getIsOverloaded(), is(false));
+        assertThat("tags.id != []", getStrategy.getTags().toString(), is("[]"));
     }
 
     @Test
@@ -313,9 +315,12 @@ public class GetStrategyTest {
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         Date date = Date.from(utc.toInstant());
         //создаем в БД tracking данные: client, contract, strategy в статусе active
+        List<TestsStrategy> tagsStrategieList = new ArrayList<>();
+        tagsStrategieList.add(new TestsStrategy().setId("tinkoff_choice"));
+        tagsStrategieList.add(new TestsStrategy().setId("tinkoff_not_choice"));
         steps.createClientWithContractAndStrategy(siebelIdMaster, investIdMaster, null, contractIdMaster, null, ContractState.untracked,
             strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
-            StrategyStatus.active, 2, LocalDateTime.now(), 1, "0.3", "0.05", true, null, "TEST", "TEST11",true,true, null);
+            StrategyStatus.active, 2, LocalDateTime.now(), 1, "0.3", "0.05", true, null, "TEST", "TEST11",true,true, tagsStrategieList);
         //изменяем время активации стратегии
         strategy = strategyService.getStrategy(strategyId);
         LocalDateTime updateTime = LocalDateTime.now().minusDays(5).minusHours(2);
@@ -354,6 +359,9 @@ public class GetStrategyTest {
         assertThat("description не равно", getStrategy.getDescription(), is(strategyMaster.getDescription()));
         assertThat("riskProfile не равно", getStrategy.getRiskProfile().toString(), is(strategyMaster.getRiskProfile().toString()));
         assertThat("isOverloaded != true", getStrategy.getIsOverloaded(), is(true));
+        assertThat("tags.id != tinkoff_choice", getStrategy.getTags().get(0).getId(), is("tinkoff_choice"));
+        assertThat("tags.id != tinkoff_not_choice", getStrategy.getTags().get(1).getId(), is("tinkoff_not_choice"));
+        assertThat("tags.id.size != 2", getStrategy.getTags().size(), is(2));
     }
 
 
