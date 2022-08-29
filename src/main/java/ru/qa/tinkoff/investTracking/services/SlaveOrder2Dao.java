@@ -73,8 +73,9 @@ public class SlaveOrder2Dao {
 
     @Step("Создаем запись о выставленной заявке в slave_order_2")
     public void insertIntoSlaveOrder2(String contractId, OffsetDateTime createAt, UUID strategyId, int version, int attemptsCount,
-                                                       int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
-                                                       BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId) {
+                                                       int action, String classCode, Integer comparedToMasterVersion, BigDecimal filledQuantity,
+                                      UUID idempotencyKey, UUID id, BigDecimal price, BigDecimal quantity, Byte state, String ticker,
+                                      String tradingClearingAccount, UUID positionId, String orderId) {
         Statement insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
             .value("created_at", Date.from(createAt.toInstant()))
@@ -93,13 +94,15 @@ public class SlaveOrder2Dao {
             .value("ticker", ticker)
             .value("trading_clearing_account",tradingClearingAccount)
             .value("position_id", positionId)
+            .value("order_id", orderId)
             .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }
 
     public void insertIntoSlaveOrder2WithFilledQuantity(String contractId, UUID strategyId, int version, int attemptsCount,
                                                         int action, String classCode,BigDecimal filledQuantity, UUID idempotencyKey, UUID id, BigDecimal price,
-                                                        BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId) {
+                                                        BigDecimal quantity, Byte state, String ticker, String tradingClearingAccount, UUID positionId,
+                                                        String orderId) {
         Statement insertQueryBuilder = QueryBuilder.insertInto("slave_order_2")
             .value("contract_id", contractId)
             .value("created_at", Date.from(OffsetDateTime.now(ZoneOffset.UTC).toInstant()))
@@ -117,6 +120,7 @@ public class SlaveOrder2Dao {
             .value("ticker", ticker)
             .value("trading_clearing_account",tradingClearingAccount)
             .value("position_id", positionId)
+            .value("order_id", orderId)
             .setConsistencyLevel(ConsistencyLevel.EACH_QUORUM);
         cqlTemplate.execute(insertQueryBuilder);
     }

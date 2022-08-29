@@ -569,5 +569,6 @@ public class CreateSlaveOrderTest {
         assertThat("filled_quantity  не равен", slaveOrder2.getFilledQuantity(), is(new BigDecimal("0")));
         assertThat("createAt  не равен", slaveOrder2.getCreateAt(), is(notNullValue()));
         assertThat("position_id  не равен", slaveOrder2.getPositionId(), is(positionId));
+        assertThat("order_id пустой", slaveOrder2.getOrderId(), is(notNullValue()));
     }
 }

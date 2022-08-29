@@ -300,7 +300,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 1, 1,
             0, instrument.classCodeAAPL, 3, null, orderKey, orderKey, priceOrder, orderQty,
-            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -368,7 +368,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), orderKey, priceOrder, orderQty,
-            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -439,7 +439,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             action, instrument.classCodeAAPL, 33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdABBV);
+            state, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdABBV, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->
@@ -512,7 +512,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             1, instrument.classCodeAAPL, 33, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().pollDelay(Duration.ofSeconds(2)).atMost(FIVE_SECONDS).until(() ->
@@ -575,7 +575,7 @@ public class handleSynchronizeCommandTest {
             OffsetDateTime dateOfSlaveOrder = OffsetDateTime.ofInstant(getSlaveOrder.get().getCreateAt().toInstant(), ZoneId.of("UTC")).plusSeconds(2);
             slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, dateOfSlaveOrder, strategyId, 2, 123,
                 0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), getSlaveOrder.get().getPrice(), getSlaveOrder.get().getQuantity(),
-                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
             getSlaveOrder = slaveOrder2Dao.getLatestSlaveOrder2(contractIdSlave);
             Thread.sleep(30000);
         }
@@ -645,13 +645,13 @@ public class handleSynchronizeCommandTest {
             baseMoneySl, date, createListSlaveOnePos);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(90), strategyId, 2, 124,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(60), strategyId, 2, 125,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc.minusSeconds(30), strategyId, 2, 126,
             1, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), priceOrder, orderQty,
-            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         //получаем портфель мастера
@@ -738,7 +738,7 @@ public class handleSynchronizeCommandTest {
         //создаем запись о выставлении заявки
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, utc, strategyId, 2, 1,
             actionSlave, instrument.classCodeAAPL, 3, new BigDecimal("0"), orderKey, orderKey, priceOrder, orderQty,
-            state, tickerSlave, tradingClearingAccountSlave, instrument.positionIdAAPL);
+            state, tickerSlave, tradingClearingAccountSlave, instrument.positionIdAAPL, null);
         //отправляем команду на  повторную синхронизацию
         steps.createCommandSynTrackingSlaveCommand(contractIdSlave);
         await().atMost(FIVE_SECONDS).until(() ->

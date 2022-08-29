@@ -262,8 +262,9 @@ public class HandleEnableSynchronizationCommandErrorTest {
             baseMoneySl, date, createListSlaveOnePos);
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
-            2, 1, 0, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(107), new BigDecimal(1), (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            2, 1, 0, "SPBMX", 2, new BigDecimal(1),
+            idempotencyKey,id, new BigDecimal(107), new BigDecimal(1), (byte) 1, instrument.tickerAAPL,
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //Вычитываем из топика кафка tracking.event все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию
@@ -460,7 +461,8 @@ public class HandleEnableSynchronizationCommandErrorTest {
         //добавляем запись в таблицу slave_order_2
         slaveOrderDao.insertIntoSlaveOrder2(contractIdSlave, OffsetDateTime.now(), strategyId,
             2, 1, 1, "SPBMX", 2, new BigDecimal(1), idempotencyKey,
-            id, new BigDecimal(500), new BigDecimal(3), state, instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB);
+            id, new BigDecimal(500), new BigDecimal(3), state, instrument.tickerFB, instrument.tradingClearingAccountFB,
+            instrument.positionIdFB, null);
         //Вычитываем из топика кафка tracking.slave.command все offset
         steps.resetOffsetToLate(TRACKING_SLAVE_COMMAND);
         //отправляем команду на синхронизацию

@@ -31,6 +31,7 @@ public class SlaveOrder2RowMapper implements RowMapper<SlaveOrder2> {
             .tradingClearingAccount(row.getString("trading_clearing_account"))
             .version(row.getInt("version"))
             .positionId(row.getUUID("position_id"))
+            .orderId(row.getString("order_id"))
             .build();
     }
 }

@@ -422,7 +422,7 @@ public class GetTimelineTest {
         //Добавляем запись в slave_order
         slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
             0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL , null);
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
         //создаем body post запроса
@@ -515,7 +515,7 @@ public class GetTimelineTest {
         //Добавляем запись в slave_order
         slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, 1,
             0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 1, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //создаем записи в табл. management_fee
         createManagemetFee(subscriptionId);
         createsSlaveAdjust(contractIdSlave, strategyId, OffsetDateTime.now().minusMonths(1).plusDays(1).plusMinutes(5), Long.parseLong(operId),
@@ -671,7 +671,7 @@ public class GetTimelineTest {
         for (int i = 1; i < limit; i++) {
             slaveOrder2Dao.insertIntoSlaveOrder2WithFilledQuantity(contractIdSlave, strategyId, 1, i,
                 0, instrument.classCodeAAPL, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("110.15"), new BigDecimal("5"),
-                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+                (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
             Thread.sleep(500);
         }
         //создаем body post запроса
@@ -939,7 +939,7 @@ public class GetTimelineTest {
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
             action, classCode, 3, filledQuantity, idempotencyKey,
-            UUID.randomUUID(), price, quantity, state,  ticker, tradingClearingAccount, positionId);
+            UUID.randomUUID(), price, quantity, state,  ticker, tradingClearingAccount, positionId, null);
     }
 
     void checkParamManagementFee(GetTimelineResponse responseExep, List<ManagementFee> managemenstFee) {

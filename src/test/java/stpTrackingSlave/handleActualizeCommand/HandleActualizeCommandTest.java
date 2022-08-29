@@ -1419,7 +1419,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, versionMiddle - 4, 1,
             0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
             new BigDecimal("107.79"), new BigDecimal("2"), null, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(baseMoney.scale(),
@@ -1537,7 +1537,7 @@ public class HandleActualizeCommandTest {
         // создаем выставленную заявку на прошлую подписку state= 2
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, versionMiddle - 4, 1,
             0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"),
-            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 2, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, "31758861518");
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(baseMoney.scale(), baseMoney.unscaledValue().intValue(),
@@ -2591,7 +2591,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
@@ -2688,7 +2688,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             1, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
             new BigDecimal("107.79"), positionQuantity, state, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
@@ -2785,7 +2785,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 1, 1,
             1, instrument.classCodeUSDRUB, 2, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
-            null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
+            null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(2, 434827, contractIdSlave,
@@ -2872,7 +2872,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 1, 1,
             1, instrument.classCodeGBP, 2, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.31"), slavePosQuantityBefore,
-            null, instrument.tickerGBP, instrument.tradingClearingAccountGBP, instrument.positionIdGBP);
+            null, instrument.tickerGBP, instrument.tradingClearingAccountGBP, instrument.positionIdGBP, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(2, 434827, contractIdSlave,
@@ -2961,7 +2961,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 1, 1,
             1, instrument.classCodeAMDRUB, 2, new BigDecimal("0"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("16.82"), slavePosQuantityBefore,
-            null, instrument.tickerAMDRUB, instrument.tradingClearingAccountAMDRUB, instrument.positionIdAMDRUB);
+            null, instrument.tickerAMDRUB, instrument.tradingClearingAccountAMDRUB, instrument.positionIdAMDRUB, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(2, 434827, contractIdSlave,
@@ -3051,7 +3051,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeUSDRUB, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("65.71"), new BigDecimal("275"),
-            null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB);
+            null, instrument.tickerUSDRUB, instrument.tradingClearingAccountUSDRUB, instrument.positionIdUSDRUB, null);
         //формируем команду на актуализацию для slave с количеством по позиции меншь сеи по выставленой заявке
         BigDecimal positionQuantityCommand = new BigDecimal("200");
         OffsetDateTime time = OffsetDateTime.now();
@@ -3135,7 +3135,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"),
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave, но с меньшим количеством по позиции чем выставили в заявке
         BigDecimal positionQuantityCommand = new BigDecimal("2");
         OffsetDateTime time = OffsetDateTime.now();
@@ -3230,7 +3230,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAtLast = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("107.79"), positionQuantity,
-            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            null, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave по позиции с выставленной ранее заявкой
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 68556, contractIdSlave,
@@ -3315,7 +3315,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
             new BigDecimal("107.79"), positionQuantity, null, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //блокируем договор slave
         contract = contractService.updateBlockedContract(contractIdSlave, true);
         //steps.createEventInTrackingEventWithBlock(contractIdSlave, true);
@@ -3403,7 +3403,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
             new BigDecimal("107.79"), new BigDecimal("3"), (byte) 1, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 6784, contractIdSlave,
@@ -3487,7 +3487,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             1, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("1"), (byte) 0, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(1, 58556, contractIdSlave,
@@ -3569,7 +3569,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 3, 125,
             0, instrument.classCodeAAPL, 4, new BigDecimal("0"), UUID.randomUUID(), UUID.randomUUID(),
             new BigDecimal("107.79"), new BigDecimal("2"),
-            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            (byte) 0, instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave c позицией и Action совпадающей по выставленной ранее заявке
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeWithPosition(0, 6784, contractIdSlave,
@@ -3731,7 +3731,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"), null, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 3,
@@ -3949,7 +3949,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyId, 2, 1,
             0, instrument.classCodeAAPL, 3, new BigDecimal("0"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("5"), null,
-            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL);
+            instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave
         OffsetDateTime time = OffsetDateTime.now();
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 3,
@@ -4446,7 +4446,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyIdNew, 2, 1,
             0, instrument.classCodeFB, 12, new BigDecimal("2"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"), (byte) 0,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB);
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB, null);
         //создаем запись по портфелю на прошлую стратегию
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerFB,
             instrument.tradingClearingAccountFB, instrument.positionIdFB, "3", date);
@@ -4555,7 +4555,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, createAtLast, strategyIdNew, 2, 1,
             0, instrument.classCodeFB, 12, new BigDecimal("2"), UUID.randomUUID(),
             UUID.randomUUID(), new BigDecimal("107.79"), new BigDecimal("2"), null,
-            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB);
+            instrument.tickerFB, instrument.tradingClearingAccountFB, instrument.positionIdFB, null);
         //создаем запись по портфелю на прошлую стратегию
         List<SlavePortfolio.Position> createListSlaveOnePos = steps.createListSlavePositionWithOnePosLight(instrument.tickerFB,
             instrument.tradingClearingAccountFB, instrument.positionIdFB, "3", date);
@@ -5155,7 +5155,7 @@ public class HandleActualizeCommandTest {
         slaveOrder2Dao.insertIntoSlaveOrder2(contractIdSlave, time.minusHours(5), strategyId, 1, 2,
             0, instrument.classCodeAAPL, 2, new BigDecimal("0"), idempotencyKey, id,
             new BigDecimal("151"), new BigDecimal(5), null, instrument.tickerAAPL,
-            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL);
+            instrument.tradingClearingAccountAAPL,instrument.positionIdAAPL, null);
         //формируем команду на актуализацию для slave о покупке CCL
         Tracking.PortfolioCommand command = createCommandActualizeOnlyPosition(contractIdSlave, 5,
             steps.createPosInCommand(instrument.tickerAAPL, instrument.tradingClearingAccountAAPL, instrument.positionIdAAPL,
@@ -5206,7 +5206,7 @@ public class HandleActualizeCommandTest {
         OffsetDateTime createAt = OffsetDateTime.now(ZoneOffset.UTC).minusDays(minusDays).minusHours(minusHours);
         slaveOrder2Dao.insertIntoSlaveOrder2(contractId, createAt, strategyId, version, attemptsCount,
             action, classCode, 3, filledQuantity, idempotencyKey,
-            id, price, quantity, state, ticker, tradingClearingAccount, positionId);
+            id, price, quantity, state, ticker, tradingClearingAccount, positionId, null);
     }
 
     @Step("Формируем команду на актуализацию для slave с базовой валютой: ")

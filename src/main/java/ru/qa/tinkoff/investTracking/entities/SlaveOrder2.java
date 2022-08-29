@@ -28,6 +28,7 @@ public class SlaveOrder2 {
     private final String tradingClearingAccount;
     private final Integer version;
     private final UUID positionId;
+    private final String orderId;
 
 
 
