@@ -11,10 +11,7 @@ import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
 import ru.qa.tinkoff.tracking.repositories.StrategyRepository;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 //*** Методы для работы с таблицами contract & strategy БД postgres@db-tracking.trading.local ***//
 
 
@@ -103,13 +100,9 @@ public class StrategyService {
 
     @Step("Удаление стратегии по идентификатору")
     @SneakyThrows
-    public void deleteStrategyByIds(Collection<UUID> ids) {
-        if (ids.isEmpty()) {
-            log.error("Удаление стратегий не выполняется - пустой список идентификаторов стратегий");
-        }
-        // todo Allure.addAttachment("Удаленная стратегия", "application/json", strategy));
-        strategyRepository.deleteStrategiesByIdIn(ids);
-        log.info("Successfully deleted strategy {}", ids);
+    public void deleteAllStrategyByContractId(String contractId) {
+        strategyRepository.deleteAllStrategyByContractId(contractId);
+        log.info("Successfully deleted strategy {}", contractId);
     }
 
 

@@ -88,4 +88,11 @@ public interface StrategyRepository extends JpaRepository<Strategy, UUID> {
     @Query(nativeQuery = true, value = "select * from strategy order by slaves_count desc limit 10")
     List<Strategy> findListStrategysBySlavesCount ();
 
+    @Transactional
+    @Modifying
+    @Query(value =
+        "DELETE FROM strategy " +
+            "WHERE contract_id = :contractId", nativeQuery = true)
+    void deleteAllStrategyByContractId (@Param("contractId") String contractId);
+
 }
