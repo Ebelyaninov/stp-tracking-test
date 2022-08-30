@@ -23,12 +23,14 @@ import ru.qa.tinkoff.kafka.configuration.KafkaAutoConfiguration;
 import ru.qa.tinkoff.kafka.services.ByteArrayReceiverService;
 import ru.qa.tinkoff.kafka.services.StringToByteSenderService;
 import ru.qa.tinkoff.social.configuration.SocialDataBaseAutoConfiguration;
+import ru.qa.tinkoff.social.entities.TestsStrategy;
 import ru.qa.tinkoff.social.services.database.ProfileService;
 import ru.qa.tinkoff.steps.StpTrackingMasterStepsConfiguration;
 import ru.qa.tinkoff.steps.StpTrackingSiebelConfiguration;
 import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
+import ru.qa.tinkoff.tracking.entities.Strategy;
 import ru.qa.tinkoff.tracking.entities.enums.ContractState;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyCurrency;
 import ru.qa.tinkoff.tracking.entities.enums.StrategyStatus;
@@ -41,14 +43,10 @@ import ru.qa.tinkoff.utils.UtilsTest;
 import ru.tinkoff.trading.tracking.Tracking;
 
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static java.time.ZoneOffset.UTC;
@@ -94,6 +92,8 @@ public class HandleInitializeCommandTest {
     StpTrackingMasterSteps steps;
     @Autowired
     StpSiebel stpSiebel;
+    @Autowired
+    StrategyService strategyService;
 
 
     MasterPortfolio masterPortfolio;
@@ -121,15 +121,15 @@ public class HandleInitializeCommandTest {
     void deleteClient() {
         step("Удаляем клиента автоследования", () -> {
             try {
-                trackingService.deleteStrategy(steps.strategyMaster);
+                strategyService.deleteAllStrategyByContractId(contractId);
             } catch (Exception e) {
             }
             try {
-                contractService.deleteContract(steps.contractMaster);
+                contractService.deleteContract(contractService.getContract(contractId));
             } catch (Exception e) {
             }
             try {
-                clientService.deleteClient(steps.clientMaster);
+                clientService.deleteClient(clientService.getClient(investId));
             } catch (Exception e) {
             }
             try {
@@ -265,6 +265,92 @@ public class HandleInitializeCommandTest {
         assertThat("версия портеля мастера не равно", masterPortfolio.getVersion(), is(1));
         assertThat("размер positions мастера не равно", masterPortfolio.getPositions().size(), is(0));
         assertThat("дата  портеля мастера не равно", masterPortfolio.getBaseMoneyPosition().getChangedAt(), is(date));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @AllureId("2092684")
+    @DisplayName("C2092684.HandleInitializeCommand. Успешная инициализация новой стратегиями если уже были закрытые стратегии")
+    @Subfeature("Успешные сценарии")
+    @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
+    void C2092684() {
+        strategyId = UUID.randomUUID();
+        steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
+            strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.draft, 0, null);
+        int randomNumber = 0 + (int) (Math.random() * 10000);
+        String newTitle = "Autotest " + String.valueOf(randomNumber);
+        //создаем запись о стратегии клиента
+        Map<String, BigDecimal> feeRateProperties = new HashMap<>();
+        feeRateProperties.put("result", new BigDecimal("0.2"));
+        feeRateProperties.put("management", new BigDecimal("0.04"));
+        List<TestsStrategy> testsStrategiesList = new ArrayList<>();
+        Strategy strategyClosed = new Strategy()
+            .setId(UUID.randomUUID())
+            .setContract(steps.contractMaster)
+            .setTitle(newTitle)
+            .setBaseCurrency(StrategyCurrency.rub)
+            .setRiskProfile(ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative)
+            .setDescription(description)
+            .setStatus(StrategyStatus.closed)
+            .setSlavesCount(3)
+            .setActivationTime(LocalDateTime.now().minusMonths(1).minusMinutes(10))
+            .setCloseTime(LocalDateTime.now().minusMonths(1))
+            .setScore(1)
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true)
+            .setBuyEnabled(true)
+            .setSellEnabled(true)
+            .setTags(testsStrategiesList);
+        strategyService.saveStrategy(strategyClosed);
+
+        int secondRandomNumber = 0 + (int) (Math.random() * 10000);
+        String newSecondTitle = "Autotest " + String.valueOf(secondRandomNumber);
+        Strategy strategyFrozen = new Strategy()
+            .setId(UUID.randomUUID())
+            .setContract(steps.contractMaster)
+            .setTitle(newSecondTitle)
+            .setBaseCurrency(StrategyCurrency.rub)
+            .setRiskProfile(ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative)
+            .setDescription(description)
+            .setStatus(StrategyStatus.frozen)
+            .setSlavesCount(3)
+            .setActivationTime(LocalDateTime.now().minusMinutes(10))
+            .setScore(1)
+            .setFeeRate(feeRateProperties)
+            .setOverloaded(false)
+            .setTestsStrategy(testsStrategiesList)
+            .setBuyEnabled(true)
+            .setSellEnabled(true)
+            .setBuyEnabled(true)
+            .setSellEnabled(true)
+            .setTags(testsStrategiesList);
+        strategyService.saveStrategy(strategyFrozen);
+        //создаем портфель master в cassandra
+        BigDecimal baseMoney = new BigDecimal("370000.0");
+        //формируем событие для топика kafka tracking.master.command
+        long unscaled = 3700000;
+        int scale = 1;
+        OffsetDateTime now = OffsetDateTime.now();
+        //создаем команду для топика tracking.master.command
+        Tracking.PortfolioCommand command = steps.createCommandToTrackingMasterCommand(contractId, now, unscaled, scale);
+        log.info("Команда в tracking.master.command:  {}", command);
+        //кодируем событие по protobuf схеме social и переводим в byteArray
+        byte[] eventBytes = command.toByteArray();
+        String key = contractId;
+        //отправляем команду в топик kafka tracking.master.command
+        kafkaSender.send(TRACKING_MASTER_COMMAND, key, eventBytes);
+        //находим запись о портфеле мастера в cassandra
+        await().atMost(FIVE_SECONDS).until(() ->
+            masterPortfolio = masterPortfolioDao.getLatestMasterPortfolio(contractId, strategyId), notNullValue());
+        assertThat("версия портеля мастера не равно", masterPortfolio.getVersion(), is(1));
+        assertThat("portfolio.base_money_position.quantity не равно", masterPortfolio.getBaseMoneyPosition().getQuantity(), is(baseMoney));
+        assertThat("contract_id не равен", masterPortfolio.getContractId(), is(contractId));
+        assertThat("версия портеля мастера не равно", masterPortfolio.getStrategyId(), is(strategyId));
     }
 
 }

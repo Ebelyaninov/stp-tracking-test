@@ -10,6 +10,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.qa.tinkoff.allure.Subfeature;
@@ -37,6 +40,7 @@ import ru.tinkoff.trading.tracking.Tracking;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -123,18 +127,27 @@ public class HandleInitializeCommandErrorTest {
         });
     }
 
+    private static Stream<Arguments> provideParametresForStrategyStatus() {
+        return Stream.of(
+            Arguments.of(StrategyStatus.active),
+            Arguments.of(StrategyStatus.frozen)
+        );
+    }
+
     @SneakyThrows
-    @Test
+    @Tag("qa2")
+    @ParameterizedTest
+    @MethodSource("provideParametresForStrategyStatus")
     @AllureId("640030")
     @DisplayName("C640030.HandleInitializeCommand. Статус статегии != draft")
     @Subfeature("Успешные сценарии")
     @Description("Операция для обработки команд, направленных на первичную инициализацию виртуального портфеля master'а.")
-    void C640030() {
+    void C640030(StrategyStatus strategyStatus) {
         strategyId = UUID.randomUUID();
         //создаем клиента со стратегией в статусе активная
         steps.createClientWithContractAndStrategy(investId, null, contractId, null, ContractState.untracked,
             strategyId, title, description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.aggressive,
-            StrategyStatus.active, 0, LocalDateTime.now());
+            strategyStatus, 0, LocalDateTime.now());
         //формируем событие для топика kafka tracking.master.command
         long unscaled = 3500000;
         int scale = 1;
