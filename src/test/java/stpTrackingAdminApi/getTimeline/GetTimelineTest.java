@@ -917,6 +917,47 @@ public class GetTimelineTest {
         assertThat("changed_at инструмента не равен", ((MasterPortfolioItem) responseExep.getItems().get(0).getContent()).getPositions().get(0).getLastChange().getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS), is(masterPortfolio.getPositions().get(0).getChangedAt().toInstant().truncatedTo(ChronoUnit.SECONDS)));
     }
 
+    @SneakyThrows
+    @Test
+    @AllureId("2097714")
+    @DisplayName("C2097714.GetTimeline. Заголовок X-API-KEY содержит значение с доступом read")
+    @Subfeature("Успешные сценарии")
+    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
+    void C2097714() {
+        strategyId = UUID.randomUUID();
+        //создаем в БД tracking данные по ведущему: client, contract, strategy в статусе active
+        steps.createClientWithContractAndStrategy(siebel.siebelIdAdmin, investIdMaster, null, contractIdMaster,  ContractState.untracked,
+            strategyId, steps.getTitleStrategy(), description, StrategyCurrency.rub, ru.qa.tinkoff.tracking.entities.enums.StrategyRiskProfile.conservative,
+            StrategyStatus.active, 0,  LocalDateTime.now().minusDays(30), score, expectedRelativeYield, "TEST",
+            "OwnerTEST", true, true, false, "0.2", "0.04", null, null);
+        //создаем подписку на стратегию
+        OffsetDateTime startSubTime = OffsetDateTime.now().minusDays(3);
+        steps.createSubcription(investIdSlave, null, contractIdSlave, null, ContractState.tracked,
+            strategyId, false, SubscriptionStatus.active, new java.sql.Timestamp(startSubTime.toInstant().toEpochMilli()), null, false);
+        subscription = subscriptionService.getSubscriptionByContract(contractIdSlave);
+        //получаем идентификатор подписки
+        long subscriptionId = subscription.getId();
+        //создаем записи в табл. management_fee
+        createManagemetFee(subscriptionId);
+        OffsetDateTime date = OffsetDateTime.now().minusDays(6);
+        Date dateAt = Date.from(date.toInstant());
+        String cursor = Long.toString(date.toInstant().toEpochMilli() * 1000);
+
+        GetTimelineRequest request = new GetTimelineRequest();
+        request.setStrategyId(strategyId);
+        request.setSlaveContractId(contractIdSlave);
+        //вызываем метод getStrategy
+        GetTimelineResponse responseExep = timeLineApiAdminCreator.get().getTimeline()
+            .reqSpec(r -> r.addHeader(xApiKey, "tcrm"))
+            .xAppNameHeader("invest")
+            .xTcsLoginHeader("tracking_admin")
+            .body(request)
+            .cursorQuery(cursor)
+            .respSpec(spec -> spec.expectStatusCode(200))
+            .execute(response -> response.as(GetTimelineResponse.class));
+        assertThat("В ответе метода не вернулось ни одной сущности", responseExep.getItems().size() > 0);
+    }
+
     //метод создает записи по заявкам в рамках одной стратегии
     @SneakyThrows
     void createTestDataSlaveOrder2 (int version, int count, int attemptsCounts, int action, String classCode,

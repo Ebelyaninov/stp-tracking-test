@@ -26,6 +26,7 @@ import ru.qa.tinkoff.steps.trackingSiebel.StpSiebel;
 import ru.qa.tinkoff.swagger.investAccountPublic.model.GetBrokerAccountsResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.ErrorResponse;
 import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineRequest;;
+import ru.qa.tinkoff.swagger.tracking_admin.model.GetTimelineResponse;
 import ru.qa.tinkoff.tracking.configuration.TrackingDatabaseAutoConfiguration;
 import ru.qa.tinkoff.tracking.services.database.*;
 
@@ -170,22 +171,6 @@ public class GetTimeLineErrorTest {
         GetTimelineRequest request = createBody(strategyId, contractIdSlave);
         //вызываем метод getTimeline
         timeLineApiAdminCreator.get().getTimeline()
-            .xAppNameHeader("invest")
-            .xTcsLoginHeader("tracking_admin")
-            .body(request)
-            .respSpec(spec -> spec.expectStatusCode(401));
-    }
-
-    @Test
-    @AllureId("1705744")
-    @DisplayName("C1705744.GetTimeline. Заголовок X-API-KEY не передан")
-    @Description("Метод для получения информации о торговой стратегии по ее идентификатору.")
-    void C1705744() {
-        strategyId = UUID.randomUUID();
-        GetTimelineRequest request = createBody(strategyId, contractIdSlave);
-        //вызываем метод getTimeline
-        timeLineApiAdminCreator.get().getTimeline()
-            .reqSpec(r -> r.addHeader(xApiKey, keyRead))
             .xAppNameHeader("invest")
             .xTcsLoginHeader("tracking_admin")
             .body(request)
